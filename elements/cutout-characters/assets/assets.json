@@ -1,0 +1,292 @@
+{
+ "format": "gamedna-assets/1",
+ "pack": "cutout-characters sample: three original adventurers (sword, spear, mage) as painted cut-out parts",
+ "budgetBytes": 600000,
+ "generated": {
+  "tool": "codex image_gen.imagegen (built-in)",
+  "model": "image generator",
+  "effort": "high",
+  "date": "2026-11-17"
+ },
+ "styleLock": {
+  "text": "prompts/style-lock.txt",
+  "reference": null,
+  "note": "the style mother line-up (gen/mother/lineup.png, local) fixed the three designs; it was made with private style references passed as referenced_image_paths for rendering only (their sha256 are in gen/mother/meta.json; the files are not in this repo)"
+ },
+ "imagegenCalls": 4,
+ "imagegenBudget": 18,
+ "generations": [
+  {
+   "run": "gen/mother",
+   "file": "lineup.png",
+   "sha256": "0a414bd68475293bb7e6df862f52e8171f5e7023a6f1055464620ca07791411c",
+   "w": 1967,
+   "h": 799,
+   "fromGenerator": true,
+   "generationId": "7faeb7e8-5483-40e8-917a-4708c05a5dd5",
+   "revisedPrompt": "Character line-up for an original fantasy tactics game: three different original adventurers standing side by side in one row on a wide landscape canvas, evenly spaced with clear transparent space between them, all at the same scale, feet on the same baseline, each full body from head to boots, nothing cropped.\n1. LEFT: a young swordswoman, auburn hair in one low braid, a short slate-teal shoulder cloak with an ochre lining, one brass-edged dark leather pauldron on her near shoulder, a quilted cream under-tunic to mid-thigh, an oxblood leather belt with a small pouch, fitted grey breeches, tall dark-brown riding boots; a straight single-edged sword with a bronze disc pommel in her near hand held low and forward, a small round wooden buckler with a riveted iron rim and a plain ochre band on her far forearm.\n2. CENTRE: a tall spear fighter, a young man with dark brown skin and short black curly hair, a moss-green hooded half-cape thrown back, a bronze scale chest piece over a sand-coloured tunic, a rust-orange waist sash, charcoal trousers, tall cloth-wrapped boots with leather shin guards; a long ash-wood spear with a leaf-shaped steel head and a short side crossbar, held in both hands, point forward and low.\n3. RIGHT: a mage, a woman in her forties with silver-grey chin-length hair, a long deep-plum coat open at the front with embroidered gold cuffs and a high collar, a mustard under-tunic, a brown belt with two small scroll cases, dark leggings and tall soft brown boots; a twisted driftwood staff with a small amber crystal caged in wire at its top, held in her far hand, her near hand raised with open fingers.\nAll three in a three-quarter view turned toward the viewer's right, in a low, ready combat stance: knees slightly bent, feet apart, weight low, looking to the right.\nSlender figures about 6.5 to 7 heads tall. Thin dark warm-brown line art (never black), soft hand-painted gradients with only 2 to 3 value steps per material, clearly distinct materials (cloth, leather, brass, steel, wood). Strong warm key light from the upper LEFT like a low sun or a torch, cool soft shade on the right side of every form, a bright thin rim of light on metal edges, a soft dark contact shadow ellipse under the feet. Fully transparent background (real alpha), no ground, no backdrop, no frame. No labels, no captions, no colour swatches.\nOriginal, no resemblance to any existing game, film or franchise character, no text, no logo, no watermark.",
+   "transparentBackground": true,
+   "inputImages": [
+    {
+     "name": "style-ref-sprite-1.png",
+     "sha256": "30b4d92001447b946385e17499b2d8b1aa3095153749e3db0056e866f53a7d00",
+     "matches": [
+      "refs/style-ref-sprite-1.png"
+     ]
+    },
+    {
+     "name": "style-ref-sprite-2.png",
+     "sha256": "4b700504ce334c4df6d41cd73b344d1fa71a6d82d51b086cc207ba18a0db0aa6",
+     "matches": [
+      "refs/style-ref-sprite-2.png"
+     ]
+    },
+    {
+     "name": "style-ref-scene.png",
+     "sha256": "8ae4f478090774ba67d542ea6e5172afa3eae5ffce3fa68139def570baca56b2",
+     "matches": [
+      "refs/style-ref-scene.png"
+     ]
+    }
+   ],
+   "model": "image generator",
+   "effort": "high",
+   "date": "2026-11-17 12:26 CST",
+   "verified": true
+  },
+  {
+   "run": "gen/parts-sword",
+   "file": "sword-parts.png",
+   "sha256": "be0c8901a66f9a4f1fde95a632b6e05e1ad3ad63e106b1e923a92acc4b58dd79",
+   "w": 1536,
+   "h": 1024,
+   "fromGenerator": true,
+   "generationId": "f667fec6-fdbf-4ff2-a4d8-a99cbd94d680",
+   "revisedPrompt": "2D cutout-animation parts sheet (a rigging kit for skeletal 2D animation) of the character in the attached reference image: the SAME character with the same costume, colours, thin dark warm-brown line art and soft hand-painted shading, taken apart into separate pieces. Each piece is complete and fully painted on its own, like a separate paper cut-out, and is separated from every other piece by clear transparent space: no piece touches or overlaps another. All pieces at the same scale as each other, arranged in neat rows on a wide landscape canvas, in this order, left to right, top row first:\nRow 1: (1) the head with her braided hair and neck, three-quarter view looking right; (2) the torso from the base of the neck to the waist, with the quilted tunic top and the cloak clasp, without arms and without head; (3) the hips: belt, pouch and the quilted tunic skirt down to mid-thigh, without legs; (4) the slate-teal cloak on its own, seen from behind her shoulders, hanging straight down.\nRow 2: (5) the near upper arm with the brass-edged leather pauldron on top; (6) the near forearm with its glove and closed fist; (7) the far upper arm; (8) the far forearm with its glove and closed fist; (9) the sword alone, horizontal, tip pointing right, hilt on the left; (10) the round wooden buckler alone, seen at a slight angle.\nRow 3: (11) the near thigh in grey breeches; (12) the near lower leg with the tall brown boot, toe pointing right; (13) the far thigh; (14) the far lower leg with its boot, toe pointing right.\nEvery limb piece is perfectly straight (no bend at the elbow or knee), drawn vertically, hanging straight down, in the same three-quarter view as the reference. Every piece has rounded, slightly extended ends at its joints: the shoulder, elbow, hip and knee ends continue a little past the joint as a smooth rounded cap of the same cloth, leather or skin, so that it overlaps its neighbouring piece when rotated; no flat cut edge, no gap, no hole. The torso extends rounded flaps at the shoulders and at the waist, and the neck continues down below the collar. Hands are empty, closed fists (no weapon in any hand); the weapon is drawn only once, on its own. Nothing is missing and nothing is duplicated.\nSame warm key light from the upper LEFT on every piece, cool soft shade on the right side, a thin bright rim on metal edges, soft hand-painted gradients with 2 to 3 value steps. Fully transparent background (real alpha), no shadows on the ground, no backdrop, no frame, no labels, no numbers, no guide lines, no colour swatches.\nOriginal, no resemblance to any existing game, film or franchise character, no text, no logo, no watermark.",
+   "transparentBackground": true,
+   "inputImages": [
+    {
+     "name": "sword-body.png",
+     "sha256": "6f97c084769858854deacc494c6ab7214e3f5017ba9b14f4b0a816c266519ef3",
+     "matches": [
+      "refs/sword-body.png"
+     ]
+    }
+   ],
+   "model": "image generator",
+   "effort": "high",
+   "date": "2026-11-17 12:30 CST",
+   "verified": true
+  },
+  {
+   "run": "gen/parts-spear",
+   "file": "spear-parts.png",
+   "sha256": "97ac5b18ce48b49875c262c5d9733f69950dff646a659329829888fcaddb6437",
+   "w": 1536,
+   "h": 1024,
+   "fromGenerator": true,
+   "generationId": "6f266a8c-9600-48a4-9728-5d650e13bbff",
+   "revisedPrompt": "2D cutout-animation parts sheet (a rigging kit for skeletal 2D animation) of the character in the attached reference image: the SAME character with the same costume, colours, thin dark warm-brown line art and soft hand-painted shading, taken apart into separate pieces. Each piece is complete and fully painted on its own, like a separate paper cut-out, and is separated from every other piece by clear transparent space: no piece touches or overlaps another. All pieces at the same scale as each other, arranged in neat rows on a wide landscape canvas, in this order, left to right, top row first:\nRow 1: (1) the head with his curly hair and neck, three-quarter view looking right; (2) the torso from the base of the neck to the waist with the bronze scale chest piece and the cape clasp, without arms and without head; (3) the hips: the rust-orange sash with its hanging ends and the tunic hem, down to mid-thigh, without legs; (4) the moss-green half-cape on its own, seen from behind his shoulders, hanging straight down.\nRow 2: (5) the near upper arm with the rolled sand-coloured sleeve; (6) the near forearm with the leather bracer and closed fist; (7) the far upper arm with its sleeve; (8) the far forearm with its bracer and closed fist; (9) the spear alone, horizontal across the canvas, leaf-shaped head pointing right.\nRow 3: (10) the near thigh in charcoal trousers; (11) the near lower leg with the cloth-wrapped boot and leather shin guard, toe pointing right; (12) the far thigh; (13) the far lower leg with its boot, toe pointing right.\nEvery limb piece is perfectly straight (no bend at the elbow or knee), drawn vertically, hanging straight down, in the same three-quarter view as the reference. Every piece has rounded, slightly extended ends at its joints: the shoulder, elbow, hip and knee ends continue a little past the joint as a smooth rounded cap of the same cloth, leather or skin, so that it overlaps its neighbouring piece when rotated; no flat cut edge, no gap, no hole. The torso extends rounded flaps at the shoulders and at the waist, and the neck continues down below the collar. Hands are empty, closed fists (no weapon in any hand); the weapon is drawn only once, on its own. Nothing is missing and nothing is duplicated.\nSame warm key light from the upper LEFT on every piece, cool soft shade on the right side, a thin bright rim on metal edges, soft hand-painted gradients with 2 to 3 value steps. Fully transparent background (real alpha), no shadows on the ground, no backdrop, no frame, no labels, no numbers, no guide lines, no colour swatches.\nOriginal, no resemblance to any existing game, film or franchise character, no text, no logo, no watermark.",
+   "transparentBackground": true,
+   "inputImages": [
+    {
+     "name": "spear-body.png",
+     "sha256": "d0960b12c132fccfff22abebfd7eddadec440b65097c0e1460f744b26199d0b9",
+     "matches": [
+      "refs/spear-body.png"
+     ]
+    }
+   ],
+   "model": "image generator",
+   "effort": "high",
+   "date": "2026-11-17 12:30 CST",
+   "verified": true
+  },
+  {
+   "run": "gen/parts-mage",
+   "file": "mage-parts.png",
+   "sha256": "df6629d6e88c7c01b1a86fcdb425b45f06584d0d3e2b25dc9fb4d1d6110f5312",
+   "w": 1536,
+   "h": 1024,
+   "fromGenerator": true,
+   "generationId": "11df0c00-d9ca-4ee6-8eb0-2889d81002d4",
+   "revisedPrompt": "2D cutout-animation parts sheet (a rigging kit for skeletal 2D animation) of the character in the attached reference image: the SAME character with the same costume, colours, thin dark warm-brown line art and soft hand-painted shading, taken apart into separate pieces. Each piece is complete and fully painted on its own, like a separate paper cut-out, and is separated from every other piece by clear transparent space: no piece touches or overlaps another. All pieces at the same scale as each other, arranged in neat rows on a wide landscape canvas, in this order, left to right, top row first:\nRow 1: (1) the head with her silver-grey hair and neck and the high collar, three-quarter view looking right; (2) the torso from the base of the neck to the waist: the upper part of the deep-plum coat over the mustard under-tunic, without arms and without head; (3) the hips: brown belt with the two scroll cases and the mustard tunic hem, without legs; (4) the long plum coat skirt on its own (the coat from the waist down to the boots, open at the front), hanging straight down.\nRow 2: (5) the near upper arm in the wide plum sleeve; (6) the near forearm with the embroidered gold cuff and an open hand with relaxed fingers; (7) the far upper arm; (8) the far forearm with its cuff and a closed fist; (9) the driftwood staff alone, vertical, the caged amber crystal at the top.\nRow 3: (10) the near thigh in dark leggings; (11) the near lower leg with the tall soft brown boot, toe pointing right; (12) the far thigh; (13) the far lower leg with its boot, toe pointing right.\nEvery limb piece is perfectly straight (no bend at the elbow or knee), drawn vertically, hanging straight down, in the same three-quarter view as the reference. Every piece has rounded, slightly extended ends at its joints: the shoulder, elbow, hip and knee ends continue a little past the joint as a smooth rounded cap of the same cloth, leather or skin, so that it overlaps its neighbouring piece when rotated; no flat cut edge, no gap, no hole. The torso extends rounded flaps at the shoulders and at the waist, and the neck continues down below the collar. Hands are empty, closed fists (no weapon in any hand); the weapon is drawn only once, on its own. Nothing is missing and nothing is duplicated.\nSame warm key light from the upper LEFT on every piece, cool soft shade on the right side, a thin bright rim on metal edges, soft hand-painted gradients with 2 to 3 value steps. Fully transparent background (real alpha), no shadows on the ground, no backdrop, no frame, no labels, no numbers, no guide lines, no colour swatches.\nOriginal, no resemblance to any existing game, film or franchise character, no text, no logo, no watermark.",
+   "transparentBackground": true,
+   "inputImages": [
+    {
+     "name": "mage-body.png",
+     "sha256": "643068b4ab6934d5bcbead267f146c5c4c2a4fac85b4d143013b9cef078d21ae",
+     "matches": [
+      "refs/mage-body.png"
+     ]
+    }
+   ],
+   "model": "image generator",
+   "effort": "high",
+   "date": "2026-11-17 12:29 CST",
+   "verified": true
+  }
+ ],
+ "runtime": {
+  "pack": "pack.json",
+  "script": "pack.js",
+  "module": "../module/cutout-characters.js"
+ },
+ "assets": [
+  {
+   "key": "sword",
+   "role": "sheet",
+   "kind": "cutout-atlas",
+   "file": "chars/sword.webp",
+   "w": 995,
+   "h": 326,
+   "sha256": "64c34036aa646c932dfd1eebf9fa46d61577960f8a107ea514ca489c92d1b218",
+   "bytes": 61968,
+   "alpha": true,
+   "maxHalo": 0.16,
+   "haloNote": "the outer edge is the dark warm-brown line art, so anti-aliased outline pixels differ from the lighter paint inside; the score is 0.13-0.14 with or without defringe 2-4 and with or without the ankle split (checked); no light or dark fringe shows on any ground",
+   "source": {
+    "run": "gen/parts-sword",
+    "file": "sword-parts.png",
+    "sha256": "be0c8901a66f9a4f1fde95a632b6e05e1ad3ad63e106b1e923a92acc4b58dd79"
+   },
+   "prompt": [
+    "gen/parts-sword/PROMPT.md",
+    "gen/parts-sword/GEN.md"
+   ],
+   "post": [
+    "make-pack.py: pieces = alpha regions of the sheet, own-mask crop, postproc alpha (defringe 2), premultiplied resize x0.5, foot split at the ankle (alpha feather only), shelf pack, WebP q90"
+   ],
+   "rig": {
+    "pack": "pack.json",
+    "id": "sword",
+    "height": 567.86,
+    "parts": [
+     "armF",
+     "armN",
+     "cape",
+     "collar",
+     "footF",
+     "footN",
+     "foreF",
+     "foreN",
+     "head",
+     "pelvis",
+     "shield",
+     "shinF",
+     "shinN",
+     "thighF",
+     "thighN",
+     "torso",
+     "weapon"
+    ]
+   },
+   "identityFrom": {
+    "run": "gen/mother",
+    "file": "lineup.png"
+   }
+  },
+  {
+   "key": "spear",
+   "role": "sheet",
+   "kind": "cutout-atlas",
+   "file": "chars/spear.webp",
+   "w": 1021,
+   "h": 356,
+   "sha256": "38ad054ab24abb85019187e2bffabbd027fad16c69b91dd6fd9063971da5c4f3",
+   "bytes": 63320,
+   "alpha": true,
+   "maxHalo": 0.16,
+   "haloNote": "the outer edge is the dark warm-brown line art, so anti-aliased outline pixels differ from the lighter paint inside; the score is 0.13-0.14 with or without defringe 2-4 and with or without the ankle split (checked); no light or dark fringe shows on any ground",
+   "source": {
+    "run": "gen/parts-spear",
+    "file": "spear-parts.png",
+    "sha256": "97ac5b18ce48b49875c262c5d9733f69950dff646a659329829888fcaddb6437"
+   },
+   "prompt": [
+    "gen/parts-spear/PROMPT.md",
+    "gen/parts-spear/GEN.md"
+   ],
+   "post": [
+    "make-pack.py: pieces = alpha regions of the sheet, own-mask crop, postproc alpha (defringe 2), premultiplied resize x0.5, foot split at the ankle (alpha feather only), shelf pack, WebP q90"
+   ],
+   "rig": {
+    "pack": "pack.json",
+    "id": "spear",
+    "height": 599.81,
+    "parts": [
+     "armF",
+     "armN",
+     "cape",
+     "footF",
+     "footN",
+     "foreF",
+     "foreN",
+     "head",
+     "pelvis",
+     "shinF",
+     "shinN",
+     "thighF",
+     "thighN",
+     "torso",
+     "weapon"
+    ]
+   },
+   "identityFrom": {
+    "run": "gen/mother",
+    "file": "lineup.png"
+   }
+  },
+  {
+   "key": "mage",
+   "role": "sheet",
+   "kind": "cutout-atlas",
+   "file": "chars/mage.webp",
+   "w": 999,
+   "h": 474,
+   "sha256": "94f7cfcda39bf328d85a29c4a4cdbae75443c5ea83db4b025542972972056638",
+   "bytes": 54594,
+   "alpha": true,
+   "maxHalo": 0.16,
+   "haloNote": "the outer edge is the dark warm-brown line art, so anti-aliased outline pixels differ from the lighter paint inside; the score is 0.13-0.14 with or without defringe 2-4 and with or without the ankle split (checked); no light or dark fringe shows on any ground",
+   "source": {
+    "run": "gen/parts-mage",
+    "file": "mage-parts.png",
+    "sha256": "df6629d6e88c7c01b1a86fcdb425b45f06584d0d3e2b25dc9fb4d1d6110f5312"
+   },
+   "prompt": [
+    "gen/parts-mage/PROMPT.md",
+    "gen/parts-mage/GEN.md"
+   ],
+   "post": [
+    "make-pack.py: pieces = alpha regions of the sheet, own-mask crop, postproc alpha (defringe 2), premultiplied resize x0.5, foot split at the ankle (alpha feather only), shelf pack, WebP q90"
+   ],
+   "rig": {
+    "pack": "pack.json",
+    "id": "mage",
+    "height": 504.49,
+    "parts": [
+     "armF",
+     "armN",
+     "footF",
+     "footN",
+     "foreF",
+     "foreN",
+     "head",
+     "pelvis",
+     "shinF",
+     "shinN",
+     "skirt",
+     "thighF",
+     "thighN",
+     "torso",
+     "weapon"
+    ]
+   },
+   "identityFrom": {
+    "run": "gen/mother",
+    "file": "lineup.png"
+   }
+  }
+ ]
+}

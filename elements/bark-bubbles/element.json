@@ -1,0 +1,224 @@
+{
+  "id": "bark-bubbles",
+  "code": "H-05",
+  "kind": "addon",
+  "name": "World-space bark bubbles",
+  "family": "bark-bubbles",
+  "oneLiner": "Short lines in speech bubbles above characters, in the world, while the game keeps running: guards shout \"Halt!\" in a yellow alarm bubble when they spot you, monsters grunt when hit, villagers chat when idle. Each bubble pops out of its speaker, types its line, follows the speaker as it walks, keeps clear of other bubbles, characters and the HUD, stays on screen with a pointer when the speaker walks off the edge, and fades after a reading time. Six tones (talk, shout, alarm, hurt, whisper, think); smooth vector bubbles on HD canvases, crisp pixel bubbles with a built-in bitmap font on native pixel canvases.",
+  "fits": [
+    "action RPG",
+    "top-down adventure",
+    "stealth (guards noticing you)",
+    "town and village scenes",
+    "roguelite / ARPG",
+    "platformer with NPCs",
+    "life sim / farming",
+    "tactics map scenes"
+  ],
+  "notFor": [
+    "long conversations the player must read (use H-01 dialogue box)",
+    "choices and branching (H-02)",
+    "games without visible characters (menus, card games)",
+    "voiced cutscenes with subtitles"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "speaker screen anchor: centre x and top of head (screen px), or null when gone",
+      "events on the frame they happen: spotted, lost, hurt, lowhp, kill, greet, idle (or exact lines)",
+      "frame clock in ms (0 while the world is frozen)",
+      "optional: unit sprite rects with ids and UI rects without id (HUD, open windows) to avoid",
+      "optional: list of NPCs allowed to chat when idle"
+    ],
+    "provides": [
+      "list of drawn bubble rects (for other overlays to avoid)",
+      "onBark callback per shown line (for voice blips)"
+    ]
+  },
+  "params": [
+    {
+      "key": "size",
+      "label": "Text size (0 = auto)",
+      "type": "range",
+      "min": 0,
+      "max": 28,
+      "step": 1,
+      "default": 0
+    },
+    {
+      "key": "width",
+      "label": "Line width (characters)",
+      "type": "range",
+      "min": 8,
+      "max": 40,
+      "step": 1,
+      "default": 20
+    },
+    {
+      "key": "cps",
+      "label": "Typing speed (chars/s, 0 = instant)",
+      "type": "range",
+      "min": 0,
+      "max": 120,
+      "step": 5,
+      "default": 45
+    },
+    {
+      "key": "read",
+      "label": "Reading time (ms per char)",
+      "type": "range",
+      "min": 20,
+      "max": 120,
+      "step": 5,
+      "default": 55
+    },
+    {
+      "key": "hold",
+      "label": "Minimum hold (ms)",
+      "type": "range",
+      "min": 600,
+      "max": 4000,
+      "step": 100,
+      "default": 1500
+    },
+    {
+      "key": "max",
+      "label": "Max bubbles (0 = auto)",
+      "type": "range",
+      "min": 0,
+      "max": 8,
+      "step": 1,
+      "default": 0
+    },
+    {
+      "key": "cooldown",
+      "label": "Same event cooldown (ms)",
+      "type": "range",
+      "min": 0,
+      "max": 15000,
+      "step": 500,
+      "default": 4000
+    },
+    {
+      "key": "stagger",
+      "label": "Crowd stagger (ms)",
+      "type": "range",
+      "min": 0,
+      "max": 2000,
+      "step": 50,
+      "default": 600
+    },
+    {
+      "key": "idle",
+      "label": "Idle chatter every (ms, 0 = off)",
+      "type": "range",
+      "min": 0,
+      "max": 12000,
+      "step": 500,
+      "default": 7000
+    },
+    {
+      "key": "pop",
+      "label": "Pop (overshoot)",
+      "type": "range",
+      "min": 0,
+      "max": 1.5,
+      "step": 0.05,
+      "default": 0.5
+    },
+    {
+      "key": "palette",
+      "label": "Palette",
+      "type": "select",
+      "options": [
+        "light",
+        "dark",
+        "parchment",
+        "skin"
+      ],
+      "default": "light"
+    },
+    {
+      "key": "render",
+      "label": "Render",
+      "type": "select",
+      "options": [
+        "auto",
+        "smooth",
+        "crisp"
+      ],
+      "default": "auto"
+    },
+    {
+      "key": "edge",
+      "label": "Speaker off screen",
+      "type": "select",
+      "options": [
+        "pointer",
+        "hide"
+      ],
+      "default": "pointer"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Modern action RPG",
+      "params": {
+        "cps": 45,
+        "palette": "light",
+        "pop": 0.5
+      }
+    },
+    {
+      "name": "Night / dark UI",
+      "params": {
+        "palette": "dark"
+      }
+    },
+    {
+      "name": "Storybook",
+      "params": {
+        "palette": "parchment",
+        "cps": 30,
+        "read": 70
+      }
+    },
+    {
+      "name": "Busy town",
+      "params": {
+        "idle": 3500,
+        "max": 5,
+        "width": 16
+      }
+    },
+    {
+      "name": "Pixel host",
+      "params": {
+        "render": "crisp",
+        "size": 8
+      }
+    },
+    {
+      "name": "Instant, terse",
+      "params": {
+        "cps": 0,
+        "hold": 1000,
+        "read": 40
+      }
+    }
+  ],
+  "assets": [
+    "module/bark-bubbles.js: the element as one dependency-free script (global GameDNA_BarkBubbles): line tables, cooldowns, idle chatter, placement, tones, smooth and crisp drawing, a built-in 6x8 bitmap font",
+    "no image, font or audio files in the module (a rounded UI font stack from the system, never loaded from the network; optional `font` option)",
+    "demo only: demo/assets/ (seven generated Lanternwood sprites, two generated walk sheets and vendored copies of the L-00 / L-06 files the scene uses, with prompts and sha256 in assets.json; the pixel atlas of props derived by tools/pixelize.py); the pixel cast is drawn in code (src/pixelcast.js)"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/bark-bubbles.js",
+    "global": "GameDNA_BarkBubbles",
+    "version": "1.3.1",
+    "docs": "module/README.md"
+  }
+}

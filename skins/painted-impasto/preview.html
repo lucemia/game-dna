@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painted Impasto HD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alegreya+SC:wght@700;800&family=Alegreya+Sans:wght@500;700;900&family=Alegreya:wght@500;700&display=block" rel="stylesheet">
+<style>
+  :root { --bg: #17100d; --surface: #22170f; --fg: #f6ead0; --muted: #b8a68a; --line: #3a2a1e; --accent: #e0b052; --cool: #a9c2e4; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); }
+  body { padding: 20px 16px 32px; color: var(--fg); font: 15px/1.55 "Alegreya Sans", "Gill Sans", system-ui, sans-serif; }
+  main { max-width: 820px; margin: 0 auto; }
+  h1 { font: 800 26px/1.2 "Alegreya SC", Georgia, serif; margin: 0 0 4px; letter-spacing: .02em; color: #fbe3a0; }
+  h1 span { white-space: nowrap; display: inline-block; font: 700 11px/1 "Alegreya Sans", system-ui, sans-serif; color: var(--accent); letter-spacing: .14em; text-transform: uppercase; margin-left: 8px; vertical-align: middle; }
+  p { margin: 0 0 14px; color: var(--muted); max-width: 70ch; }
+  figure { margin: 0 0 22px; }
+  .stage { position: relative; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: #000; }
+  canvas { display: block; width: 100%; height: auto; }
+  #scene { aspect-ratio: 256 / 224; }
+  #sheet { aspect-ratio: 256 / 128; }
+  #pack { aspect-ratio: 256 / 96; }
+  figcaption { color: var(--muted); font-size: 13.5px; margin-top: 8px; }
+  code { color: var(--accent); font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
+  .status { display: inline-flex; gap: 6px; align-items: center; padding: 3px 10px; border-radius: 99px; background: var(--surface); border: 1px solid var(--line); font-size: 12.5px; margin: 0 0 10px; }
+  .status i { width: 7px; height: 7px; border-radius: 50%; background: #666; display: inline-block; }
+  .status[data-on="1"] i { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .links { margin: 0 0 12px; }
+  .links a { color: var(--cool); margin-right: 14px; font-size: 13.5px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Painted Impasto HD <span>skin: painted-impasto</span></h1>
+  <p>Hand-painted HD 2D in thick oil: broad impasto strokes with a lit ridge and a dark lip, a warm golden key light from the upper left, deep plum-brown shadows, bold umber outlines on every figure, and ornate framed UI in oxblood lacquer and hammered gold. Units, props, the HUD portrait, the ground and the window frames come from a small generated pack locked to one style sheet; everything else, and everything when the pack is missing, is painted in code with the same brush.</p>
+  <div class="status" id="status"><i></i><span>starting</span></div>
+  <div class="links"><a href="?t=1400&amp;freeze=1">With generated art</a><a href="?t=1400&amp;freeze=1&amp;art=0">Code-drawn only</a></div>
+  <figure><div class="stage"><canvas id="scene" aria-label="Painted impasto style: the shared tactics scene with range, path arrow, damage numbers and an open menu"></canvas></div>
+    <figcaption>Shared scene (same map, seed and moment as every style). The modules draw through this skin: <code>grid-range-path</code> (range, path arrow), <code>damage-numbers</code> (numerals, bounce), <code>window-cursor</code> (menu, pointer). <code>?t=1400&amp;freeze=1</code> renders one moment; <code>?art=0</code> shows the code-drawn fallback.</figcaption></figure>
+  <figure><div class="stage"><canvas id="sheet" aria-label="Skin sheet"></canvas></div>
+    <figcaption>Skin sheet: plate, banner, windows by team, gauges of every kind with haste / slow tags, HP meters, every number kind, the four range kinds, cursors, selected row and backing.</figcaption></figure>
+  <figure><div class="stage"><canvas id="pack" aria-label="Generated pack"></canvas></div>
+    <figcaption>The generated pack as the skin draws it (left to right): the two HUD portraits, the four unit sprites, the six props, and the window frame at two sizes. Provenance (prompts, model check, sha256) in <code>assets/assets.json</code>.</figcaption></figure>
+</main>
+<script src="../skin-api.js"></script>
+<script src="../pixel16.js"></script>
+<script src="painted-impasto.js"></script>
+<script src="../../elements/grid-range-path/module/grid-range-path.js"></script>
+<script src="../../elements/damage-numbers/module/damage-numbers.js"></script>
+<script src="../../elements/window-cursor/module/window-cursor.js"></script>
+<script src="../scene/shared-scene.js"></script>
+<script>
+'use strict';
+var Q = new URLSearchParams(location.search), FREEZE = Q.get('freeze') === '1', T0 = Q.has('t') ? +Q.get('t') : 1400, LOOP = 4000;
+var SK = GameDNA_Skin.resolve('painted-impasto'), P = SK.palette, IMP = SK.impasto, curT = T0;
+if (Q.get('art') === '0') IMP.useArt(false);
+
+function frame(T) {
+  curT = T; var cv = document.getElementById('scene'), dpr = window.devicePixelRatio || 1, width = Math.max(256, Math.round(cv.clientWidth * dpr));
+  GameDNA_Scene.draw(cv, 'painted-impasto', T, { width: width });
+  drawSheet(T); drawPack(T);
+  var st = document.getElementById('status'), n = IMP.art.loaded, on = IMP.art.on && n > 0;
+  st.dataset.on = on ? '1' : '0';
+  st.lastChild.textContent = on ? 'Generated pack: ' + n + ' images loaded' + (IMP.art.failed ? ', ' + IMP.art.failed + ' missing (code-drawn)' : '') : 'Code-drawn only' + (IMP.art.on ? ' (pack not found)' : ' (?art=0)');
+}
+function stage(id, h) {
+  var c = document.getElementById(id), dpr = window.devicePixelRatio || 1, W = Math.max(256, Math.round(c.clientWidth * dpr)), s = W / 256;
+  c.width = W; c.height = Math.round(W * h / 256); var g = c.getContext('2d'); g.setTransform(s, 0, 0, s, 0, 0); GameDNA_Skin.setup(SK, g); return g;
+}
+function drawSheet(T) {
+  var g = stage('sheet', 128), t = T / 1000;
+  for (var y = 0; y < 8; y++) for (var x = 0; x < 16; x++) SK.tile(g, { x: x * 16, y: y * 16, w: 16, h: 16 }, x > 13 ? 'water' : 'grass', t);
+  SK.atmosphere(g, { x: 0, y: 0, w: 256, h: 128 }, t, { phase: 'world', lights: [{ x: 200, y: 112, r: 50, col: '#ffb860', intensity: 0.6, kind: 'fire' }] });
+  var pw = SK.measure('Turn 3', { font: 'plate' }); SK.frame(g, { x: 4, y: 4, w: pw + 14, h: 13 }, { role: 'plate' }); SK.text(g, 'Turn 3', 11, 6.5, { font: 'plate', color: P.text.plate });
+  SK.frame(g, { x: pw + 24, y: 4, w: 58, h: 13 }, { role: 'plate', alert: true }); SK.text(g, 'Enemy phase', pw + 53, 6.8, { font: 'small', align: 'center', color: P.text.accent });
+  SK.frame(g, { x: 150, y: 3, w: 98, h: 16 }, { role: 'banner' }); SK.text(g, 'Ember Storm', 199, 6, { font: 'title', align: 'center', color: P.text.title, color2: P.text.title2 });
+  SK.frame(g, { x: 4, y: 22, w: 124, h: 70 }, { role: 'window', team: 'a' });
+  SK.frame(g, { x: 9, y: 40, w: 114, h: 11 }, { role: 'row' });
+  [['Rowan', 0.62, 'charge', null], ['Mira', 0.35, 'haste', 'haste'], ['Bram', 1, 'ready', null], ['Ilsa', 1, 'queued', 'slow'], ['Osric', 0, null, null]].forEach(function (r, i) {
+    var yy = 29 + i * 12; SK.text(g, r[0], 12, yy, { color: i === 1 ? P.text.select : P.text.main }); SK.bar(g, { x: 46, y: yy + 3, w: 66, h: 3.5 }, r[1], r[2], { tag: r[3], t: t });
+  });
+  SK.frame(g, { x: 4, y: 96, w: 124, h: 28 }, { role: 'window', team: 'b' });
+  SK.bar(g, { x: 11, y: 103, w: 50, h: 3.5 }, 0.45, 'enemy'); SK.bar(g, { x: 70, y: 103, w: 50, h: 3.5 }, 1, 'enemyFull', { t: t });
+  SK.bar(g, { x: 11, y: 114, w: 50, h: 3.5 }, 0.8, 'hp', { style: 'meter' }); SK.bar(g, { x: 70, y: 114, w: 50, h: 3.5 }, 0.22, 'hpLow', { style: 'meter' });
+  SK.number(g, '128', 140, 36, { kind: 'damage' }); SK.number(g, '57', 178, 38, { kind: 'crit', big: true, label: 'CRITICAL' }); SK.number(g, '+30', 214, 36, { kind: 'heal' });
+  SK.number(g, '12', 140, 62, { kind: 'mp', suffix: 'MP' }); SK.number(g, 'MISS', 174, 64, { kind: 'miss' }); SK.number(g, 'POISON', 206, 64, { kind: 'status' });
+  ['move', 'attack', 'threat', 'heal'].forEach(function (k, i) { for (var j = 0; j < 2; j++) SK.overlay(g, { x: 140 + i * 28 + j * 12, y: 80, w: 12, h: 12 }, k, t, { tile: { x: j, y: 0 }, edges: { top: true, bottom: true, left: j === 0, right: j === 1 }, seams: { right: j === 0 } }); });
+  SK.frame(g, { x: 140, y: 100, w: 64, h: 22 }, { role: 'backing' });
+  SK.cursor(g, { x: 145, y: 108, w: 8, h: 6 }, 'hand', t); SK.text(g, 'Pointer', 157, 107);
+  SK.cursor(g, { x: 218, y: 102, w: 16, h: 16 }, 'bracket', t);
+  SK.atmosphere(g, { x: 0, y: 0, w: 256, h: 128 }, t, { phase: 'final', lights: [] });
+}
+function drawPack(T) {
+  var g = stage('pack', 96), t = T / 1000;
+  for (var y = 0; y < 6; y++) for (var x = 0; x < 16; x++) SK.tile(g, { x: x * 16, y: y * 16, w: 16, h: 16 }, 'grass', t);
+  SK.atmosphere(g, { x: 0, y: 0, w: 256, h: 96 }, t, { phase: 'world', lights: [] });
+  SK.frame(g, { x: 4, y: 6, w: 34, h: 44 }, { role: 'backing' }); SK.unitToken(g, { x: 9, y: 12, w: 24, h: 34 }, { id: 'card', team: 'a', kind: 'knight', noShadow: true }, t);
+  SK.frame(g, { x: 42, y: 6, w: 34, h: 44 }, { role: 'backing' }); SK.unitToken(g, { x: 47, y: 12, w: 24, h: 34 }, { id: 'card', team: 'a', kind: 'mage', noShadow: true }, t);
+  [['a', 'knight', 1], ['a', 'mage', 1], ['b', 'fighter', -1], ['b', 'mage', -1]].forEach(function (u, i) { SK.unitToken(g, { x: 84 + i * 20, y: 18, w: 16, h: 24 }, { team: u[0], kind: u[1], facing: u[2], id: 'p' + i }, t); });
+  ['tree', 'bush', 'stone', 'brazier', 'lamp', 'crystal'].forEach(function (k, i) { SK.prop(g, { x: 8 + i * 22, y: 76, w: 16, h: 16 }, k, t, { seed: 3 + i, light: /brazier|lamp|crystal/.test(k) ? { x: 16 + i * 22, y: 90, r: 30, col: k === 'crystal' ? '#7ae8ff' : '#ffb860', intensity: 0.6 } : null }); });
+  SK.frame(g, { x: 170, y: 8, w: 80, h: 40 }, { role: 'window', team: 'n' }); SK.text(g, 'Window', 210, 22, { font: 'title', align: 'center', color: P.text.title, color2: P.text.title2 });
+  SK.frame(g, { x: 170, y: 56, w: 80, h: 30 }, { role: 'window', team: 'a' }); SK.text(g, 'Squad', 210, 65, { font: 'title', align: 'center', color: P.text.title, color2: P.text.title2 });
+  SK.atmosphere(g, { x: 0, y: 0, w: 256, h: 96 }, t, { phase: 'final', lights: [] });
+}
+
+Promise.all([GameDNA_Skin.ready(SK), IMP.ready]).then(function () {
+  var rt = 0; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(function () { if (FREEZE) frame(T0); }, 120); });
+  if (FREEZE) { frame(T0); requestAnimationFrame(function () { frame(T0); document.documentElement.dataset.ready = '1'; }); return; }
+  var start = performance.now() - T0;
+  (function loop(now) { frame((now - start) % LOOP); requestAnimationFrame(loop); })(performance.now());
+  document.documentElement.dataset.ready = '1';
+});
+window.__impastoPreview = function () { return { t: curT, art: IMP.art.on, loaded: IMP.art.loaded, failed: IMP.art.failed }; };
+</script>
+</body>
+</html>

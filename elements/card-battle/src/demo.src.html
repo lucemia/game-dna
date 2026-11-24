@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Card Battle Demo</title>
+<style>
+:root { --bg: #0d0a16; --panel: #171228; --line: #3a3160; --ink: #ece2fa; --dim: #9a8fbc; --gold: #ffd27a; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font: 13px/1.45 "Trebuchet MS", "Segoe UI", system-ui, -apple-system, sans-serif; }
+main { max-width: 1180px; margin: 0 auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+h1 { font-size: 18px; margin: 0; color: var(--gold); letter-spacing: 0.5px; }
+.sub { color: var(--dim); margin: 2px 0 0; }
+#stage { width: 100%; }
+#game { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); touch-action: none; background: #000; }
+#live { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; min-height: 40px; }
+#live b { color: #ffe7b0; } #live .dim { color: var(--dim); } #live .ok { color: #9ff0b0; } #live .bad { color: #ff9a8a; }
+.controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+.controls label { display: flex; flex-direction: column; gap: 3px; color: var(--dim); font-size: 12px; min-width: 0; }
+.controls label span b { color: var(--ink); }
+.controls input[type=range], .controls select { width: 100%; }
+select, button { background: #241d3c; color: var(--ink); border: 1px solid #40366a; border-radius: 6px; padding: 5px 8px; font: inherit; }
+button { cursor: pointer; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.keys { color: var(--dim); font-size: 12px; }
+</style>
+</head>
+<body>
+<main>
+  <div><h1>A-10 Card battle with intents</h1><p class="sub">Drag a card onto a foe (or tap the card, then the foe). Every foe shows what it will do next; end the turn and it does exactly that.</p></div>
+  <div id="stage"><canvas id="game" width="640" height="360"></canvas></div>
+  <div id="live" aria-live="polite"></div>
+  <div class="row"><button id="restart">New fight</button><button id="autoBtn">Auto: on</button><button id="endBtn">End turn (E)</button>
+    <span class="keys">Keys: arrows choose, Z lift / play, X back, E end turn, P auto.</span></div>
+  <div class="controls" id="controls"></div>
+</main>
+<script>
+/*@@ART@@*/
+</script>
+<script>
+/*@@MODULE@@*/
+</script>
+<script>
+/*@@DEMO@@*/
+</script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en" data-theme="dark" class="sc">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Game DNA works · Game DNA</title>
+<meta name="description" content="How Game DNA elements are built and tested: cold tests by a fresh agent on unseen games, a judge that plays, a strict visual critic, and four failures that changed the method.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Game DNA">
+<meta property="og:title" content="How Game DNA works · Game DNA">
+<meta property="og:description" content="How Game DNA elements are built and tested: cold tests by a fresh agent on unseen games, a judge that plays, a strict visual critic, and four failures that changed the method.">
+<meta property="og:url" content="https://game-dna-preview.pages.dev/site/preview/blog/how-game-dna-works/">
+<meta property="og:image" content="https://game-dna-preview.pages.dev/site/preview/og/blog-how-game-dna-works.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="How Game DNA works · Game DNA">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="How Game DNA works · Game DNA">
+<meta name="twitter:description" content="How Game DNA elements are built and tested: cold tests by a fresh agent on unseen games, a judge that plays, a strict visual critic, and four failures that changed the method.">
+<meta name="twitter:image" content="https://game-dna-preview.pages.dev/site/preview/og/blog-how-game-dna-works.jpg">
+<link rel="stylesheet" href="../../assets/fonts.css">
+<link rel="stylesheet" href="../../../assets/families.css">
+<link rel="stylesheet" href="../../assets/showcase.css">
+</head>
+<body>
+<a class="sc-skip" href="#main">Skip to content</a>
+<header class="sc-top"><div class="sc-wrap">
+<a class="sc-brand" href="../../"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 2c0 6 12 6 12 10S6 16 6 22" stroke="var(--fam-C)" stroke-width="2.2" stroke-linecap="round"/><path d="M18 2c0 6-12 6-12 10s12 4 12 10" stroke="var(--fam-A)" stroke-width="2.2" stroke-linecap="round"/><path d="M8 5h8M9 9h6M9 15h6M8 19h8" stroke="var(--fg)" stroke-width="1.6" stroke-linecap="round"/></svg><span>Game DNA</span></a>
+<nav class="sc-nav" aria-label="Main"><a href="../../#gallery">Elements</a><a href="../../styles/">Styles</a><a href="../../#how">How it works</a><a href="../../start/">Start</a><a class="sc-bk-link" href="../../basket/">Basket<b data-bk-count hidden></b></a></nav>
+<a class="sc-btn sc-btn-hot sm sc-top-cta" href="../../dna/damage-pop/"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5v11l9-5.5z"/></svg><span>Play a demo</span></a>
+</div></header>
+<main id="main">
+<article class="sc-sec sc-tight sc-post"><div class="sc-wrap">
+<p class="sc-eyebrow"><a href="../../#how">How it works</a> · Method</p>
+<h1 class="sc-post-h1">I let AI agents add 101 game features to games they'd never seen. A lot of the bugs were mine.</h1>
+<p class="sc-post-meta">Game DNA · about 6 minutes to read</p>
+<figure class="sc-post-hero"><a href="../../dna/kart-racer-3d/" aria-label="Play the Arcade kart racer (3D) demo" style="background-image:url('../../../assets/hero/kart-racer-3d-poster.webp')"><span class="sc-post-loop" style="background-image:url('../../../assets/hero/kart-racer-3d.webp');background-size:2000% 100%;animation-duration:2400ms;animation-timing-function:steps(20, jump-none)"></span></a><figcaption>Arcade kart racer (3D), one of the 101 elements, running in its demo. <a href="../../dna/kart-racer-3d/">Play it</a>.</figcaption></figure>
+<div class="sc-md sc-post-body"><p>You ask your coding agent for &quot;damage numbers that pop out of the enemy&quot;. It says done. Then the numbers float next to the wrong unit, the turn loop freezes, or the game's own autoplay can't finish a run anymore. The request was one sentence. The fix takes an afternoon.</p>
+<p>I wanted that one sentence to be reliable. So I built Game DNA: 101 browser-game elements, from <a href="../../dna/hit-stop-shake/">hit-stop and screen shake</a> to <a href="../../dna/card-battle/">card battles</a>, <a href="../../dna/tactics-grid-3d/">tactics grids</a> and a <a href="../../dna/kart-racer-3d/">3D kart racer</a>, and tested every one of them the hard way: an agent with no hints adds it to a game it has never seen, and another agent plays the result. More than 700 judged runs later, the most useful finding is uncomfortable. When the agents failed, the cause was surprisingly often in my own docs.</p>
+<p>Here is what's in the library, how the testing works, and the four stories that changed how I build it.</p>
+<h2 id="what-an-element-is">What an element is</h2>
+<p>Each element is three things:</p>
+<ul><li>a small JavaScript module with no dependencies,</li><li>a prompt of at most 600 words that tells <em>your</em> agent how to wire the module into <em>your</em> game (it names the interfaces to look for, not a specific engine),</li><li>a playable demo.</li></ul>
+<p>81 are drop-in add-ons: feel and effects, UI, audio. 20 are systems that would replace your core loop, like a card battle or a <a href="../../dna/squad-clash/">squad tactics clash</a>; those also come as starter games you can build on. There are 14 <a href="../../styles/">art styles</a>, and a <a href="../../basket/">basket</a> that merges several elements into one prompt.</p>
+<h2 id="how-an-element-earns-its-place">How an element earns its place</h2>
+<ol><li><strong>Cold test.</strong> A separate coding agent gets a clean folder: a host game it has never seen, the prompt, the module. Nothing else. No hints, no browser of its own, one pinned model at one pinned reasoning effort. The six host games (turn-based battle, tactics map, side-scroller, top-down adventure, two HD games) were written by yet another agent that never saw the modules. Most elements run three times on each of two hosts and must work at least two times out of three on each.</li><li><strong>A judge that plays.</strong> A different agent opens the result in Playwright and plays it. Does the element show up where and when it should? Does the original game still work? Does the game's own autoplay still finish? Was the module file left untouched? The coding agent's own summary of what it did counts for nothing.</li><li><strong>A strict visual critic.</strong> Every demo is scored against commercial indie games, character by character at 2× zoom. Parts that don't connect, programmer art, debug leftovers or a style mismatch are each a major issue. Pass: 7.5 or higher, no majors.</li><li><strong>Failures stay in the record.</strong> Every failed run keeps its cause next to the fix. Each element's score and runs are on the <a href="../../tests/">test records page</a>, and the verdict files are in the repo: <a href="https://github.com//game-dna">github.com//game-dna</a>.</li></ol>
+<h2 id="story-1-my-prompt-fixes-made-things-worse">Story 1: my prompt fixes made things worse</h2>
+<p>The first version had no modules, just prompts. Three elements, three cold runs each: 3 of 9 worked. I studied every failure and rewrote the prompts to forbid exactly those mistakes. Next round: 1 of 9. Each fix closed one hole; the agent found another.</p>
+<p>So I flipped it. Ship a module that does the work, and let the prompt only explain how to plug it in. 9 of 9.</p>
+<h2 id="story-2-half-my-conclusions-were-measurement-errors">Story 2: half my conclusions were measurement errors</h2>
+<p>Then I looked at my own logs. I had never pinned the model. Early runs had silently used a much weaker default; later runs used a stronger one at low effort. My &quot;results&quot; were a mix of both.</p>
+<p>I pinned one model and one effort level and re-ran the experiments that had decided things. Prompt alone: 7 of 9. Prompt plus module: still 9 of 9. And my rule that &quot;systems can't be added to unfamiliar games&quot;, based on 0–1 out of 3, became 6 of 6 clean integrations. Starter games went from requirement to option. A cold test without a pinned model and effort is not a measurement.</p>
+<h2 id="story-3-five-agents-five-pink-enemies">Story 3: five agents, five pink enemies</h2>
+<p>A <a href="../../dna/match3-battle/">match-3 battle</a> starter has a small cold-test task: add a new enemy. The first five runs all failed identically. Every new enemy came out pink.</p>
+<p>The agents had done exactly what our README said. Our sample tinted sprites with CSS <code>hue-rotate()</code> alone, and at the angle we gave, cyan turns pink. The fix was in our docs: <code>sepia(1) saturate(4)</code> before the rotation, and the sample colour checked by actually rendering it. Later versions: 16 of 16.</p>
+<p>It happened again with a <a href="../../dna/raycast-dungeon/">raycast dungeon</a> starter: 3 of 6, then 5 of 6, then 2 of 2. Every failure was a wrong sample in our README. Agents copy samples word for word. A wrong sample is not a hint; it is a guaranteed bug.</p>
+<h2 id="story-4-my-critic-was-too-nice">Story 4: my critic was too nice</h2>
+<p>Three demos passed the first visual critic with 7.5 to 8.0. Then I actually looked. <a href="../../dna/cutout-characters/">Cut-out characters</a> with shields floating in front of their legs and joints showing at the elbows. Geometric placeholder people.</p>
+<p>I wrote a stricter standard and re-scored all 61 demos that existed at the time. 18 passed. Fixing it meant real work: new character rigs with automatic joint checks, a shared set of hand-drawn characters for HD demos, a shared pixel scene kit. 51 passed, then 60 of 61. Later I added a rule that every character is rendered alone on a transparent sheet so loose parts can't hide in a busy frame.</p>
+<p>Two elements never passed and were cut: a pixel-terrain effect stuck at 6.3, and an NPC generator that climbed from 6.5 to 7.4 over six rounds because every name-tag fix created a new problem.</p>
+<h2 id="combos-elements-that-have-to-share-a-game">Combos: elements that have to share a game</h2>
+<p>Real games don't get one feature. They get five. The <a href="../../basket/">basket</a> checks compatibility (two elements that both want to own the turn loop can't go together), merges the prompts, and drops the module files in one zip. Combos are cold-tested too: <a href="../../dna/damage-pop/">damage numbers</a> went into an unseen battle, an unseen tactics game and two starter games, 12 of 12 integrations clean. Under strict placement scoring (every number at the right unit, never mistaken for a neighbour's) it was 10 of 12, and that gap is listed on the element page as a known issue, not hidden.</p>
+<h2 id="how-to-use-it-in-3-steps">How to use it in 3 steps</h2>
+<ol><li><strong>Pick.</strong> Open <a href="https://game-dna.pages.dev">game-dna.pages.dev</a>, play a few demos, pick one element, or drop several into the <a href="../../basket/">basket</a> for one combined prompt. No game yet? Start from a starter game.</li><li><strong>Hand it over.</strong> Put the module file in your project and paste the prompt into your own coding agent.</li><li><strong>Check.</strong> Each element lists its acceptance moments: what you should see, and when. Play, check those moments, and make sure what you had before still works. The <a href="../../start/">five-minute guide</a> walks through it.</li></ol>
+<h2 id="limits-plainly">Limits, plainly</h2>
+<ul><li>One agent, one pinned model. Yours may behave differently.</li><li>Three runs per host is a small sample. A pass means &quot;went in cleanly most of the time on games it hadn't seen&quot;, not &quot;always works&quot;.</li><li>Hosts are small single-file canvas games. Big projects and other engines are untested.</li><li>3D frame times were measured on a busy machine with software WebGL. Treat them as upper bounds.</li><li>Some demo art was made with an AI image generator and is marked ✦ AI art. The modules never call a generator; most art is drawn in code.</li><li>The mechanics are common genre patterns, the art is original, and the project isn't affiliated with any game company.</li></ul>
+<h2 id="try-to-break-it">Try to break it</h2>
+<div class="sc-cta"><div><h3>Try it on your game</h3><p class="sc-muted">Pick one element, copy its prompt, hand it to your agent.</p></div><a class="sc-btn sc-btn-hot lg" href="../../start/"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5v11l9-5.5z"/></svg>Start in 5 minutes</a></div>
+</div></article>
+</main>
+<footer class="sc-foot"><div class="sc-wrap">
+<div class="sc-foot-brand"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 2c0 6 12 6 12 10S6 16 6 22" stroke="var(--fam-C)" stroke-width="2.2" stroke-linecap="round"/><path d="M18 2c0 6-12 6-12 10s12 4 12 10" stroke="var(--fam-A)" stroke-width="2.2" stroke-linecap="round"/><path d="M8 5h8M9 9h6M9 15h6M8 19h8" stroke="var(--fg)" stroke-width="1.6" stroke-linecap="round"/></svg><span>Game DNA</span></div>
+<p>Playable game elements for games you make with an AI coding agent. Original art only; not affiliated with any game company.</p>
+<nav class="sc-foot-links" aria-label="More"><a href="../../#gallery">All elements</a><a href="../../basket/">Basket</a><a href="../../styles/">Art styles</a><a href="../../start/">Start in 5 minutes</a><a href="../../tests/">How we test</a><a href="../../blog/how-game-dna-works/">How Game DNA works (blog)</a><a href="../../about/">About &amp; credits</a></nav>
+</div></footer>
+<script src="../../assets/showcase.js"></script>
+</body>
+</html>

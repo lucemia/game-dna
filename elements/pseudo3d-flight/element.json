@@ -1,0 +1,67 @@
+{
+  "id": "pseudo3d-flight",
+  "code": "B-06",
+  "name": "Pseudo-3D flight ground",
+  "kind": "system",
+  "family": "B: map & movement",
+  "oneLiner": "Call a mount on the top-down map and the ground zooms, turns and tilts into a perspective, scanline-scaled plane with a horizon sky band; fly (turn with a slight horizon tilt, speed up, slow down) over the wrapping world past distance-scaled billboards, with the mount's shadow below and a mini-map, then land only on flat ground and the view eases back to the walking map.",
+  "fits": [
+    "top-down RPG overworld (airship, bird, dragon, glider travel)",
+    "top-down adventure with a mount or vehicle",
+    "exploration games with islands or large maps",
+    "delivery / courier games",
+    "flight-based travel between walkable areas"
+  ],
+  "notFor": [
+    "side-scrollers (no top-down map to tilt)",
+    "racing on a track (needs track physics, laps and opponents, a different element)",
+    "true 3D terrain with height (the ground is one flat plane; heights are billboards)",
+    "isometric maps (the texture is a north-up grid)"
+  ],
+  "interfaces": {
+    "time": "realtime",
+    "coords": "pseudo3d",
+    "layer": "scene",
+    "needs": [
+      "a top-down tile map: size, tile size, tile id per tile, the tile art (canvas per tile) or a colour per tile id",
+      "a landing rule per tile: canLand(tx, ty) (flat, walkable, free)",
+      "the walking camera {x, y} (world px at the view's top-left) and the map viewport rect in the canvas",
+      "the hero's world position and facing at take-off, and a way to place the hero (and recompute the camera) at the landing tile",
+      "a fixed-step update (60 Hz) and the map draw pass, where the flight view replaces the walking map while busy",
+      "input: a free take-off key; arrows/WASD and a land key are routed to the module while flying",
+      "optional: billboard list (trees, rocks, houses, towns), mini-map markers (goals)"
+    ],
+    "provides": [
+      "busy flag (take-off, flight, landing): the walking update is skipped meanwhile",
+      "event onLand {tx, ty, x, y} at the start of a landing, onLanded at its end, onLandDenied {tx, ty}, onPhase(rising|flying|landing|walk)",
+      "data mount anchor {x, top, w, h, footY} and sprite rect in canvas px, for effects and numbers",
+      "data project(wx, wy, wz) -> screen point, for anything the game draws in the flight view",
+      "data UI rects of the mini-map, landing prompt and speed gauge",
+      "data flight state: phase, progress, x, y, heading, speed, roll, altitude, tile, draw timing"
+    ]
+  },
+  "params": [
+    { "key": "speed", "label": "Cruise speed (world px/s)", "type": "int", "min": 40, "max": 140, "step": 2, "default": 72 },
+    { "key": "turn", "label": "Turn rate (deg/s)", "type": "int", "min": 60, "max": 180, "step": 5, "default": 100 },
+    { "key": "bank", "label": "Bank / horizon tilt (deg)", "type": "int", "min": 0, "max": 10, "step": 1, "default": 5 },
+    { "key": "height", "label": "Camera height (world px)", "type": "int", "min": 32, "max": 96, "step": 2, "default": 56 },
+    { "key": "horizon", "label": "Horizon (fraction of the view height)", "type": "float", "min": 0.2, "max": 0.45, "step": 0.01, "default": 0.3 },
+    { "key": "transition", "label": "Take-off / landing transition (ms)", "type": "int", "min": 300, "max": 1200, "step": 50, "default": 600 },
+    { "key": "fog", "label": "Distance fog", "type": "float", "min": 0, "max": 1, "step": 0.05, "default": 0.6 },
+    { "key": "sky", "label": "Sky", "type": "select", "options": ["day", "dusk"], "default": "day" },
+    { "key": "mount", "label": "Mount", "type": "select", "options": ["bird", "glider"], "default": "bird" },
+    { "key": "minimap", "label": "Mini-map", "type": "select", "options": ["on", "off"], "default": "on" },
+    { "key": "res", "label": "Native resolution", "type": "select", "options": ["256x224"], "default": "256x224" }
+  ],
+  "variants": [
+    { "name": "Island courier (default)", "params": { "speed": 72, "turn": 100, "bank": 5, "height": 56, "horizon": 0.3, "transition": 600, "fog": 0.6, "sky": "day", "mount": "bird", "minimap": "on", "res": "256x224" } },
+    { "name": "Dusk glider", "params": { "speed": 60, "turn": 80, "bank": 7, "height": 48, "horizon": 0.33, "transition": 800, "fog": 0.8, "sky": "dusk", "mount": "glider", "minimap": "on", "res": "256x224" } },
+    { "name": "Low and fast", "params": { "speed": 120, "turn": 140, "bank": 8, "height": 36, "horizon": 0.26, "transition": 450, "fog": 0.5, "sky": "day", "mount": "bird", "minimap": "off", "res": "256x224" } },
+    { "name": "High survey", "params": { "speed": 64, "turn": 90, "bank": 3, "height": 90, "horizon": 0.38, "transition": 900, "fog": 0.4, "sky": "day", "mount": "bird", "minimap": "on", "res": "256x224" } }
+  ],
+  "assets": "none: ground texture from the host's own tile art; sky, billboards (mountain, peak, tree, pine, town, tower, rock, cloud), mount (bird, glider), mini-map and UI are drawn by code in the module",
+  "status": "draft",
+  "delivery": { "version": "v1", "module": "module/pseudo3d-flight.js", "global": "GameDNA_Flight", "readme": "module/README.md" },
+  "starter": "starter/index.html",
+  "starterReadme": "starter/README.md"
+}

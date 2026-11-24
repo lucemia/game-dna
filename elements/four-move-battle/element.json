@@ -1,0 +1,65 @@
+{
+  "id": "four-move-battle",
+  "code": "A-02",
+  "kind": "system",
+  "name": "Four-move menu battle with type matchups",
+  "family": "Battle flow",
+  "oneLiner": "Turn-based creature battle, one on one (or two on two): each creature has up to four moves with uses left and a type; a type chart doubles, halves or cancels damage and says so in the message box; speed decides who moves first; switching to a bench creature costs the turn.",
+  "fits": [
+    "monster-taming battle",
+    "turn-based duel RPG",
+    "party RPG where one member fights at a time",
+    "card-like creature collector",
+    "arena gauntlet"
+  ],
+  "notFor": [
+    "real-time action combat",
+    "active-time gauges (speed gives extra turns, not first move)",
+    "grid tactics with movement",
+    "battles with more than two combatants per side on screen"
+  ],
+  "interfaces": {
+    "time": "turn",
+    "coords": "side",
+    "layer": "ui",
+    "needs": [
+      "creature list per side: id, name, level, types, hp, atk, def, spd, up to 4 moves",
+      "move table: name, type, power, accuracy, uses, optional status / heal / guard / drain effect",
+      "type table: strong / weak / none lists per type",
+      "a 60 Hz tick (or delta time converted to ticks)",
+      "keys up / down / left / right / ok / back (and taps in native pixels)",
+      "optional: sprites (front and back), backdrop, foe AI chooser, items"
+    ],
+    "provides": [
+      "turn resolution: priority, speed order, accuracy, critical hits, type multiplier, statuses, switching, fainting, win / lose",
+      "message queue with typewriter and key / auto advance",
+      "command, move, team, item menus and target picker",
+      "battle screen drawing: platforms, creatures, info boxes, message box, move menu",
+      "hit site beforeHit / onHit with amount, type multiplier, crit, killed",
+      "events: turn, phase, message, moveUsed, miss, faint, sendOut, withdraw, end",
+      "creature anchors and UI rects in native pixels",
+      "autoplay that presses the same menu keys as a player"
+    ]
+  },
+  "params": [
+    { "key": "format", "label": "Format", "type": "select", "options": ["single", "double"], "default": "single" },
+    { "key": "textSpeed", "label": "Text speed", "type": "select", "options": ["slow", "normal", "fast", "instant"], "default": "normal" },
+    { "key": "advance", "label": "Messages advance", "type": "select", "options": ["auto", "key"], "default": "auto" },
+    { "key": "drain", "label": "HP drain speed", "type": "select", "options": ["slow", "normal", "fast"], "default": "normal" },
+    { "key": "hints", "label": "Matchup hint in the move panel", "type": "select", "options": ["on", "off"], "default": "on" },
+    { "key": "critRate", "label": "Critical-hit rate", "type": "range", "min": 0, "max": 0.25, "step": 0.0125, "default": 0.0625 },
+    { "key": "res", "label": "Native resolution", "type": "select", "options": ["240x160", "256x224"], "default": "240x160" }
+  ],
+  "variants": [
+    { "name": "One on one (default)", "params": {} },
+    { "name": "Two on two", "params": { "format": "double" } },
+    { "name": "Classic: wait for OK", "params": { "advance": "key" } },
+    { "name": "Fast text and drain", "params": { "textSpeed": "fast", "drain": "fast" } },
+    { "name": "No hints", "params": { "hints": "off" } },
+    { "name": "Console 256x224", "params": { "res": "256x224" } }
+  ],
+  "assets": "module/four-move-battle.js (global GameDNA_FourMove, no dependencies; API in module/README.md). Draws through skins/skin-api.js + a skin when loaded, else a built-in pixel16 copy. Creature art, backdrop and platforms come from the host; the starter and demo use original procedural art (src/art.js).",
+  "status": "v1-module",
+  "module": { "file": "module/four-move-battle.js", "global": "GameDNA_FourMove", "version": "1.0.0" },
+  "starter": "starter/index.html"
+}

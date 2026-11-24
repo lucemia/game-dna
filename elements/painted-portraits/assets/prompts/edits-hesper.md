@@ -1,0 +1,50 @@
+Generate exactly 6 images, one image_gen call each, every call with `transparent_background: true` and the reference image `hesper-neutral.png` (listed above) as `referenced_image_paths`. Each is an EDIT of that reference portrait. Save them here as: `hesper-blink.png`, `hesper-happy.png`, `hesper-angry.png`, `hesper-sad.png`, `hesper-surprised.png`, `hesper-determined.png`.
+
+## `hesper-blink.png`
+
+Prompt to send (verbatim, then the style lock):
+
+Edit the referenced portrait: change ONLY the facial expression to eyes fully closed in a natural, relaxed blink (upper lids down, lashes resting), with the same calm closed mouth and relaxed brows as the reference. Keep the identical person, face shape, skin, hair, every mark, clothing and accessories, the same head angle and gaze direction, the same pose, position, size and crop on the canvas (do not move, scale, rotate or re-frame the figure), the same light, palette and the fully transparent background (real alpha).
+
+STYLE LOCK (identical in every prompt of this set): modern hand-painted 2D character portrait for the dialogue scenes of an original fantasy role-playing game; soft painterly brushwork over clean readable shapes, gentle colour transitions on the skin; head-and-shoulders bust in three-quarter view, head and body turned slightly toward the viewer's right, eyes looking to the right; one key light from the TOP-LEFT, warm golden highlights against cool violet-grey shadows, a faint cool rim light on the right edge; a thin dark warm-brown outline; muted natural palette with one accent colour per character; framing: the top of the head about 6 percent below the top edge of a square canvas, the eyes at about 36 percent of the height, the bust cut off flat at mid-chest by the bottom edge of the canvas, the figure centred horizontally; fully transparent background (real alpha), no backdrop, no frame, no vignette, no cast shadow. Original, no resemblance to any existing game, film or franchise character, no text, no logo, no watermark.
+
+## `hesper-happy.png`
+
+Prompt to send (verbatim, then the style lock):
+
+Edit the referenced portrait: change ONLY the facial expression to a warm, open smile showing a little of the upper teeth, cheeks lifted, eyes slightly narrowed with gentle smile lines. Keep the identical person, face shape, skin, hair, every mark, clothing and accessories, the same head angle and gaze direction, the same pose, position, size and crop on the canvas (do not move, scale, rotate or re-frame the figure), the same light, palette and the fully transparent background (real alpha).
+
+STYLE LOCK (identical in every prompt of this set): modern hand-painted 2D character portrait for the dialogue scenes of an original fantasy role-playing game; soft painterly brushwork over clean readable shapes, gentle colour transitions on the skin; head-and-shoulders bust in three-quarter view, head and body turned slightly toward the viewer's right, eyes looking to the right; one key light from the TOP-LEFT, warm golden highlights against cool violet-grey shadows, a faint cool rim light on the right edge; a thin dark warm-brown outline; muted natural palette with one accent colour per character; framing: the top of the head about 6 percent below the top edge of a square canvas, the eyes at about 36 percent of the height, the bust cut off flat at mid-chest by the bottom edge of the canvas, the figure centred horizontally; fully transparent background (real alpha), no backdrop, no frame, no vignette, no cast shadow. Original, no resemblance to any existing game, film or franchise character, no text, no logo, no watermark.
+
+## `hesper-angry.png`
+
+Prompt to send (verbatim, then the style lock):
+
+Edit the referenced portrait: change ONLY the facial expression to angry: brows drawn down hard and together, eyes narrowed and fierce, nostrils slightly flared, jaw set, lips pressed into a hard line. Keep the identical person, face shape, skin, hair, every mark, clothing and accessories, the same head angle and gaze direction, the same pose, position, size and crop on the canvas (do not move, scale, rotate or re-frame the figure), the same light, palette and the fully transparent background (real alpha).
+
+STYLE LOCK (identical in every prompt of this set): modern hand-painted 2D character portrait for the dialogue scenes of an original fantasy role-playing game; soft painterly brushwork over clean readable shapes, gentle colour transitions on the skin; head-and-shoulders bust in three-quarter view, head and body turned slightly toward the viewer's right, eyes looking to the right; one key light from the TOP-LEFT, warm golden highlights against cool violet-grey shadows, a faint cool rim light on the right edge; a thin dark warm-brown outline; muted natural palette with one accent colour per character; framing: the top of the head about 6 percent below the top edge of a square canvas, the eyes at about 36 percent of the height, the bust cut off flat at mid-chest by the bottom edge of the canvas, the figure centred horizontally; fully transparent background (real alpha), no backdrop, no frame, no vignette, no cast shadow. Original, no resemblance to any existing game, film or franchise character, no text, no logo, no watermark.
+
+## `hesper-sad.png`
+
+Prompt to send (verbatim, then the style lock):
+
+Edit the referenced portrait: change ONLY the facial expression to sad: inner ends of the brows raised and drawn together, eyelids lowered, gaze cast slightly down, mouth corners turned down. Keep the identical person, face shape, skin, hair, every mark, clothing and accessories, the same head angle and gaze direction, the same pose, position, size and crop on the canvas (do not move, scale, rotate or re-frame the figure), the same light, palette and the fully transparent background (real alpha).
+
+STYLE LOCK (identical in every prompt of this set): modern hand-painted 2D character portrait for the dialogue scenes of an original fantasy role-playing game; soft painterly brushwork over clean readable shapes, gentle colour transitions on the skin; head-and-shoulders bust in three-quarter view, head and body turned slightly toward the viewer's right, eyes looking to the right; one key light from the TOP-LEFT, warm golden highlights against cool violet-grey shadows, a faint cool rim light on the right edge; a thin dark warm-brown outline; muted natural palette with one accent colour per character; framing: the top of the head about 6 percent below the top edge of a square canvas, the eyes at about 36 percent of the height, the bust cut off flat at mid-chest by the bottom edge of the canvas, the figure centred horizontally; fully transparent background (real alpha), no backdrop, no frame, no vignette, no cast shadow. Original, no resemblance to any existing game, film or franchise character, no text, no logo, no watermark.
+
+## `hesper-surprised.png`
+
+Prompt to send (verbatim, then the style lock):
+
+Edit the referenced portrait: change ONLY the facial expression to surprised: brows raised high, eyes wide open showing white around the irises, mouth dropped open in a small round shape. Keep the identical person, face shape, skin, hair, every mark, clothing and accessories, the same head angle and gaze direction, the same pose, position, size and crop on the canvas (do not move, scale, rotate or re-frame the figure), the same light, palette and the fully transparent background (real alpha).
+
+STYLE LOCK (identical in every prompt of this set): modern hand-painted 2D character portrait for the dialogue scenes of an original fantasy role-playing game; soft painterly brushwork over clean readable shapes, gentle colour transitions on the skin; head-and-shoulders bust in three-quarter view, head and body turned slightly toward the viewer's right, eyes looking to the right; one key light from the TOP-LEFT, warm golden highlights against cool violet-grey shadows, a faint cool rim light on the right edge; a thin dark warm-brown outline; muted natural palette with one accent colour per character; framing: the top of the head about 6 percent below the top edge of a square canvas, the eyes at about 36 percent of the height, the bust cut off flat at mid-chest by the bottom edge of the canvas, the figure centred horizontally; fully transparent background (real alpha), no backdrop, no frame, no vignette, no cast shadow. Original, no resemblance to any existing game, film or franchise character, no text, no logo, no watermark.
+
+## `hesper-determined.png`
+
+Prompt to send (verbatim, then the style lock):
+
+Edit the referenced portrait: change ONLY the facial expression to determined and thoughtful: brows slightly lowered and focused, steady narrowed gaze, lips closed in a small firm line, chin slightly raised. Keep the identical person, face shape, skin, hair, every mark, clothing and accessories, the same head angle and gaze direction, the same pose, position, size and crop on the canvas (do not move, scale, rotate or re-frame the figure), the same light, palette and the fully transparent background (real alpha).
+
+STYLE LOCK (identical in every prompt of this set): modern hand-painted 2D character portrait for the dialogue scenes of an original fantasy role-playing game; soft painterly brushwork over clean readable shapes, gentle colour transitions on the skin; head-and-shoulders bust in three-quarter view, head and body turned slightly toward the viewer's right, eyes looking to the right; one key light from the TOP-LEFT, warm golden highlights against cool violet-grey shadows, a faint cool rim light on the right edge; a thin dark warm-brown outline; muted natural palette with one accent colour per character; framing: the top of the head about 6 percent below the top edge of a square canvas, the eyes at about 36 percent of the height, the bust cut off flat at mid-chest by the bottom edge of the canvas, the figure centred horizontally; fully transparent background (real alpha), no backdrop, no frame, no vignette, no cast shadow. Original, no resemblance to any existing game, film or franchise character, no text, no logo, no watermark.
+

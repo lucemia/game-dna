@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chip Music</title>
+<style>
+:root {
+  --bg: #0b0a13; --panel: #15131f; --panel2: #1b1829; --line: #2b2742; --text: #eeeaf8; --dim: #9d96b8; --accent: #7ee0c3;
+  --p1: #5ee6ff; --p2: #ff7ad9; --tri: #ffc44d; --noise: #d9d4f0; --jingle: #ffd166; --ok: #5be3a0; --warn: #ffb547; --bad: #ff6b7a;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1100px 560px at 18% -14%, #24224a 0%, var(--bg) 62%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 16px 20px 8px; max-width: 1280px; margin: 0 auto; flex-wrap: wrap; }
+.code { white-space: nowrap; font: 800 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #06221a; background: linear-gradient(#b4f5e2, var(--accent)); padding: 6px 8px; border-radius: 5px; box-shadow: 0 2px 12px #7ee0c340; }
+h1 { font-size: 19px; margin: 0; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; max-width: 880px; }
+.hgrow { flex: 1 1 320px; min-width: 0; }
+#soundState { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 999px; background: #2a1a24; border: 1px solid #5a2c3c; color: #ffd0d8; font: 600 13px/1.2 inherit; cursor: pointer; user-select: none; }
+#soundState .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--bad); box-shadow: 0 0 10px var(--bad); flex: none; }
+#soundState.on { background: #13281f; border-color: #2c5a44; color: #c8f5e0; }
+#soundState.on .dot { background: var(--ok); box-shadow: 0 0 10px var(--ok); }
+#soundState.muted { background: #2a2614; border-color: #5a4c24; color: #ffe8b0; }
+#soundState.muted .dot { background: var(--warn); box-shadow: 0 0 10px var(--warn); }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 18px; padding: 8px 20px 28px; max-width: 1280px; margin: 0 auto; align-items: start; }
+.col { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.card { background: linear-gradient(180deg, var(--panel2), var(--panel)); border: 1px solid var(--line); border-radius: 14px; padding: 14px; box-shadow: 0 18px 50px #0007; min-width: 0; }
+.card h2 { font-size: 13px; margin: 0 0 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); font-weight: 700; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.card h2 .sp { flex: 1; }
+.card h2 .aside { text-transform: none; letter-spacing: 0; font-weight: 500; }
+/* now playing */
+.np { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.np .tt { font: 700 18px/1.2 inherit; }
+.np .sub { color: var(--dim); font-size: 12.5px; }
+.kind { font: 800 10px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; padding: 4px 7px; border-radius: 5px; background: #23304a; color: #b8d8ff; }
+.kind.jingle { background: #3a2f12; color: var(--jingle); }
+.kind.wait { background: #2c2a40; color: #c8c2e8; }
+.pos { display: flex; gap: 6px; margin-left: auto; }
+.pos .box { min-width: 58px; text-align: center; background: #0e0c18; border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; }
+.pos .box b { display: block; font: 700 16px/1.15 ui-monospace, Menlo, monospace; }
+.pos .box span { font-size: 10.5px; color: var(--dim); text-transform: uppercase; letter-spacing: .05em; }
+.pats { display: flex; gap: 4px; align-items: center; }
+.pats i { font: 700 11px/1 ui-monospace, Menlo, monospace; font-style: normal; width: 20px; height: 20px; display: grid; place-items: center; border-radius: 5px; background: #1f1c30; color: #8e88aa; border: 1px solid #2e2a46; }
+.pats i.on { background: #34305a; color: #fff; border-color: #7e74d8; box-shadow: 0 0 10px #7e74d855; }
+#rollWrap { position: relative; }
+#roll { width: 100%; height: 300px; display: block; border-radius: 10px; background: #08070f; box-shadow: 0 0 0 1px var(--line) inset; }
+.status { margin-top: 8px; font-size: 12.5px; color: var(--dim); min-height: 18px; }
+.status b { color: var(--text); font-weight: 600; }
+/* channel strips */
+.strips { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+.strip { --c: var(--p1); position: relative; background: #0f0d19; border: 1px solid #ffffff12; border-radius: 10px; padding: 8px 9px 9px; min-width: 0; }
+.strip.off { opacity: .45; }
+.strip .hd { display: flex; align-items: center; gap: 6px; font: 600 12px/1.2 inherit; }
+.strip .hd::before { content: ""; width: 8px; height: 8px; border-radius: 2px; background: var(--c); box-shadow: 0 0 8px var(--c); flex: none; }
+.strip .hd small { color: var(--dim); font-weight: 500; font-size: 11px; margin-left: auto; font-family: ui-monospace, Menlo, monospace; white-space: nowrap; }
+.strip .nt { display: flex; align-items: baseline; gap: 6px; margin: 4px 0 2px; }
+.strip .nt b { font: 700 20px/1 ui-monospace, Menlo, monospace; color: var(--c); min-width: 3.2ch; }
+.strip .nt span { font-size: 11px; color: var(--dim); }
+.strip canvas { width: 100%; height: 30px; display: block; }
+.strip .lv { height: 5px; background: #24203a; border-radius: 3px; overflow: hidden; margin-top: 5px; }
+.strip .lv i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--c), #fff); }
+
+.mbtn { font: 700 10px/1 ui-monospace, Menlo, monospace; color: var(--dim); background: #221e36; border: 1px solid #3a3456; border-radius: 5px; padding: 3px 5px; cursor: pointer; }
+.mbtn.on { color: #1a0d10; background: var(--warn); border-color: var(--warn); }
+/* scene */
+.frame { padding: 6px; background: linear-gradient(#25304a, #121624); border-radius: 12px; box-shadow: 0 0 0 1px #34405e; position: relative; }
+#stage { display: flex; justify-content: center; align-items: center; background: #05060a; border-radius: 7px; overflow: hidden; }
+#game { display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
+#sceneOver { position: absolute; inset: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; background: #08081299; border-radius: 7px; backdrop-filter: blur(1.5px); text-align: center; padding: 0 12px; }
+#sceneOver.hide { display: none; }
+#sceneOver .k { color: #dfe6ff; font-size: 13px; }
+.rail { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; align-items: center; }
+.rail .st { display: flex; flex-direction: column; gap: 2px; padding: 5px 9px; border-radius: 8px; background: #16132a; border: 1px solid #2a2644; font-size: 12px; min-width: 0; }
+.rail .st small { font: 600 10px/1.1 ui-monospace, Menlo, monospace; color: var(--dim); }
+.rail .st.on { background: #24304e; border-color: var(--accent); box-shadow: 0 0 12px #7ee0c333; }
+.rail .st.j small { color: var(--jingle); }
+.rail .ar { color: #4c4670; font-size: 12px; }
+.help { color: var(--dim); font-size: 12px; margin-top: 8px; }
+/* side */
+.tracks { display: flex; flex-direction: column; gap: 6px; }
+.trk { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; gap: 2px 8px; text-align: left; padding: 7px 9px; border-radius: 9px; border: 1px solid #ffffff12; background: linear-gradient(180deg, #ffffff0b, #ffffff04); color: var(--text); font: 600 13px/1.25 inherit; cursor: pointer; }
+.trk:hover { border-color: #7e74d8; }
+.trk.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.trk.jg.on { border-color: var(--jingle); box-shadow: 0 0 0 1px var(--jingle) inset; }
+.trk small { color: var(--dim); font: 500 11px/1.2 ui-monospace, Menlo, monospace; text-align: right; }
+.trk canvas { grid-column: 1 / 3; width: 100%; height: 22px; display: block; }
+.grp { font: 700 11px/1 inherit; color: var(--dim); letter-spacing: .06em; text-transform: uppercase; margin: 8px 0 2px; }
+.ctl { display: grid; grid-template-columns: 92px 1fr 46px; align-items: center; gap: 8px; margin: 7px 0; font-size: 12.5px; }
+.ctl label { color: var(--dim); }
+.ctl output { text-align: right; font: 600 12px ui-monospace, Menlo, monospace; color: var(--text); }
+.ctl input[type=range] { width: 100%; accent-color: var(--accent); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+.seg button { font: 600 12px/1 inherit; color: var(--dim); background: transparent; border: 0; padding: 7px 10px; cursor: pointer; white-space: nowrap; }
+.ctl.two { grid-template-columns: 92px 1fr; }
+.seg button.on { background: #2f2a4c; color: var(--text); }
+button.b { font: 600 13px/1 inherit; color: var(--text); background: #2a2642; border: 1px solid #3c3660; padding: 8px 12px; border-radius: 9px; cursor: pointer; }
+button.b:hover { background: #342f52; }
+button.b.pri { background: linear-gradient(180deg, #8af0d2, #4fc6a4); color: #062018; border-color: #8af0d2; }
+.note { color: var(--dim); font-size: 12px; margin: 6px 0 0; }
+#log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 12px; min-height: 150px; }
+#log li { display: grid; grid-template-columns: 50px 1fr auto; gap: 8px; align-items: center; padding: 4px 8px; border-radius: 7px; background: #ffffff07; }
+#log li .t { color: var(--dim); font-family: ui-monospace, Menlo, monospace; font-size: 11px; }
+#log li .p { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pill { font: 700 10px/1 ui-monospace, Menlo, monospace; padding: 3px 6px; border-radius: 999px; letter-spacing: .03em; text-transform: uppercase; white-space: nowrap; }
+.pill.switch, .pill.loop { background: #1d3446; color: #a8dcff; } .pill.queued { background: #2c2a40; color: #c8c2e8; }
+.pill.jingle { background: #3a3414; color: #ffe08a; } .pill.resume { background: #1d4634; color: #9ff0c8; } .pill.stop, .pill.jingle-end { background: #2a2433; color: #b9b0d2; } .pill.unlocked { background: #1d4634; color: #9ff0c8; }
+@media (max-width: 980px) { main { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 620px) {
+  header, main { padding-left: 12px; padding-right: 12px; }
+  .strips { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pos { margin-left: 0; width: 100%; }
+  .pos .box { flex: 1; min-width: 0; }
+  #roll { height: 240px; }
+  .ctl { grid-template-columns: 84px 1fr 42px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <span class="code">F-03</span>
+  <div class="hgrow">
+    <h1>Chip Music</h1>
+    <p>A four-channel chip band synthesized in the browser: two pulse leads with duty cycle, a stepped triangle bass and a noise drum kit, playing pattern data as seamless loops. Jingles pause the loop and bring it back on the beat. The scene below drives the music from its game state; every note you hear is drawn in the piano roll.</p>
+  </div>
+  <button type="button" id="soundState" title="Browsers keep audio off until you click"><span class="dot"></span><span id="soundText">Sound off: click anywhere to turn it on</span></button>
+</header>
+<main>
+  <div class="col">
+    <section class="card" id="nowCard">
+      <div class="np">
+        <span class="kind" id="kind">LOOP</span>
+        <div><div class="tt" id="trackTitle">-</div><div class="sub" id="trackSub">-</div></div>
+        <div class="pats" id="pats"></div>
+        <div class="pos"><div class="box"><b id="posBar">1</b><span>bar</span></div><div class="box"><b id="posBeat">1</b><span>beat</span></div><div class="box"><b id="posBpm">120</b><span>bpm</span></div></div>
+      </div>
+      <div id="rollWrap"><canvas id="roll"></canvas></div>
+      <div class="status" id="status">&nbsp;</div>
+      <div class="strips" id="strips"></div>
+    </section>
+    <section class="card">
+      <h2>The game picks the music<span class="sp"></span><span class="seg" id="mode"><button data-m="scene">Watch the scene</button><button data-m="jukebox">Jukebox</button></span></h2>
+      <div class="frame"><div id="stage"><canvas id="game" width="256" height="144"></canvas></div>
+        <div id="sceneOver" class="hide"><div class="k">Jukebox mode: you pick the tracks on the right, the scene waits.</div><button class="b pri" id="backScene">Back to the scene</button></div>
+      </div>
+      <div class="rail" id="rail"></div>
+      <div class="help">The scene calls <b>play(track)</b> every step from its state (title, field, battle) and <b>jingle()</b> once at each event (slime defeated, chest opened). A switch waits for the next beat; after a jingle the field loop resumes on a beat, not from its start.</div>
+    </section>
+  </div>
+  <aside class="col">
+    <section class="card">
+      <h2>Jukebox<span class="sp"></span><span class="aside">click to play</span></h2>
+      <div class="grp">Loops</div><div class="tracks" id="loops"></div>
+      <div class="grp">Jingles</div><div class="tracks" id="jingles"></div>
+    </section>
+    <section class="card">
+      <h2>Mixer</h2>
+      <div id="ctls"></div>
+      <div class="ctl two"><label>Jingles</label><span><span class="seg" id="jmode"><button data-v="pause">Pause loop</button><button data-v="duck">Duck loop</button></span></span></div>
+      <div class="ctl two"><label>Resume on</label><span><span class="seg" id="rmode"><button data-v="beat">Beat</button><button data-v="bar">Bar</button></span></span></div>
+      <div class="note">Tempo and key changes apply from the next beat; the loop is re-synthesized, never time-stretched.</div>
+    </section>
+    <section class="card">
+      <h2>Events<span class="sp"></span><span class="aside" id="clockOut">0.0 s</span></h2>
+      <ul id="log"></ul>
+    </section>
+  </aside>
+</main>
+<script>/*PIXELSCENE*/</script>
+<script>/*PIXELFONT*/</script>
+<script>/*MODULE*/</script>
+<script>/*MAIN*/</script>
+</body>
+</html>

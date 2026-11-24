@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Crafting Recipes</title>
+<style>
+  :root { --bg: #140f18; --panel: #211926; --line: #3d2e40; --text: #f0e6dc; --dim: #a8988e; --accent: #ffc65a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; overflow-x: hidden; }
+  main { max-width: 1180px; margin: 0 auto; padding: 14px 16px 28px; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin-bottom: 10px; }
+  h1 { font-size: 20px; margin: 0; letter-spacing: 0.02em; }
+  header p { margin: 0; color: var(--dim); font-size: 13px; }
+  .tabs { display: flex; gap: 6px; margin: 4px 0 10px; flex-wrap: wrap; }
+  .tabs button, .ctl button, #play { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; font: inherit; cursor: pointer; }
+  .tabs button.on { background: #3e2c36; border-color: #c8995a; }
+  #stage { background: #000; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; display: flex; justify-content: center; }
+  canvas#game { display: block; touch-action: manipulation; }
+  .bar { display: flex; align-items: center; gap: 10px; margin: 10px 0 4px; flex-wrap: wrap; }
+  .bar input[type=range] { flex: 1 1 200px; min-width: 120px; accent-color: #c8995a; }
+  .bar .time { font-variant-numeric: tabular-nums; color: var(--dim); min-width: 64px; }
+  .ctl { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 14px; margin-top: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+  .ctl label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--dim); }
+  .ctl select { font: inherit; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 5px; padding: 4px; }
+  .keys { color: var(--dim); font-size: 12px; margin-top: 8px; }
+  kbd { background: #2a2030; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; font: 12px ui-monospace, monospace; color: var(--text); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Crafting Recipes</h1>
+    <p>A recipe book with discovery and a slot bench. Ingredients come out of the game's own inventory exactly once, the result goes in exactly once; failed tries cost nothing; new recipes arrive with a toast.</p>
+  </header>
+  <div class="tabs" id="tabs"><button data-look="hd">HD look</button><button data-look="pixel">Pixel look</button></div>
+  <div id="stage"><canvas id="game"></canvas></div>
+  <div class="bar"><button id="play">Pause</button><input id="scrub" type="range" min="0" max="23000" step="50" value="0"><span class="time" id="time">0.0 s</span></div>
+  <div class="ctl">
+    <label>Look <select id="theme"><option value="forge">forge</option><option value="parchment">parchment</option></select></label>
+    <label>Bench slots <select id="slots"><option value="3">3</option><option value="4">4</option></select></label>
+    <label>Work time <select id="craftMs"><option value="650">650 ms</option><option value="300">300 ms</option><option value="1200">1200 ms</option></select></label>
+    <label>Unlock toasts <select id="toasts"><option value="on">on</option><option value="off">off</option></select></label>
+    <label>Key hints <select id="keyHints"><option value="on">on</option><option value="off">off</option></select></label>
+  </div>
+  <p class="keys">Click the stage or press a key to take over: <kbd>E</kbd> open / close the bench &middot; arrows pick a recipe &middot; <kbd>Z</kbd> craft &middot; <kbd>&darr;</kbd> pouch, <kbd>Z</kbd> add, <kbd>C</kbd> try the mix, <kbd>X</kbd> take back / close &middot; tap a recipe, tap it again to craft &middot; <kbd>R</kbd> replays the script.</p>
+</main>
+<script src="../../../demo-kit/kit-art.js"></script>
+<script src="../../../demo-kit/kit.js"></script>
+<script src="../../../pixel-kit/pixel-scene.js"></script>
+<script src="../module/crafting-recipes.js"></script>
+<script>
+/* G-06 crafting-recipes demo. The scene is a stand-in host game with its own inventory (a plain bag object); the module
+ * owns the book, bench, discovery and toasts. Everything is a function of one clock: ?t=<ms>&freeze=1 replays the script.
+ * HD look: painted forge hall, knight, herbalist and props from demo-kit, painted icons and frames from painted-ui.
+ * Pixel look: a pixel-kit workshop and the pixel-kit walking hero (4 facings, 2 walk frames), the module's own pixel icons. */
+(function () {
+  'use strict';
+  var Q = new URLSearchParams(location.search), STEP = 1000 / 60, END = 23000;
+  var LOOK = Q.get('look') === 'pixel' ? 'pixel' : 'hd', PIX = LOOK === 'pixel';
+  var VW = PIX ? 256 : 960, VH = PIX ? 192 : 540;
+  var cv = document.getElementById('game'), g = cv.getContext('2d'), nat = null, ng = null;
+  if (PIX) { nat = document.createElement('canvas'); nat.width = VW; nat.height = VH; ng = nat.getContext('2d'); ng.imageSmoothingEnabled = false; }
+  var CR = window.GameDNA_CraftingRecipes, Kit = window.GameDNA_DemoKit, PX = window.PXS;
+  var params = { theme: Q.get('theme') || 'forge', slots: Q.get('slots') || 3, craftMs: Q.get('craftMs') || 650, toasts: Q.get('toasts') || 'on', keyHints: Q.get('keyHints') || 'on' };
+
+  /* ---------- the host's data: items, recipes, starting bag (one table per look, same roles) ---------- */
+  var IMG = {}, IMGSRC = PIX ? {} : { icons: '../../painted-ui/assets/kit/icons.webp', win: '../../painted-ui/assets/kit/frame-window.webp', slot: '../../painted-ui/assets/kit/slot.webp', small: '../../painted-ui/assets/kit/frame-small.webp' };
+  var ICON_KEYS = ['potion', 'mana-potion', 'antidote', 'bread', 'scroll', 'gem', 'sword', 'axe', 'bow', 'staff', 'shield', 'helmet', 'armor', 'boots', 'ring', 'amulet', 'coins', 'key', 'poison', 'burn', 'frost', 'shock', 'regen', 'guard'];
+  var DATA = PIX ? {
+    items: { herb: { name: 'Meadow Herb' }, gel: { name: 'Slime Gel' }, wood: { name: 'Oak Branch' }, coal: { name: 'Coal' }, ore: { name: 'Iron Ore' }, crystal: { name: 'Glow Crystal' },
+      salve: { name: 'Healing Salve', icon: 'potion', desc: 'Restores 3 hearts.' }, torch: { name: 'Torch', desc: 'Burns for a night.' }, ingot: { name: 'Iron Ingot', desc: 'Smelted iron.' },
+      sword: { name: 'Iron Sword', desc: 'Attack +2.' }, lantern: { name: 'Glow Lantern', desc: 'Lights the dark.' }, bomb: { name: 'Coal Bomb' }, rope: { name: 'Herb Rope' }, arrow: { name: 'Iron Arrows' } },
+    recipes: [
+      { id: 'salve', out: 'salve', inputs: { herb: 2, gel: 1 }, discover: 'known' },
+      { id: 'ingot', out: 'ingot', inputs: { ore: 2, coal: 1 }, discover: 'have:ore,coal' },
+      { id: 'sword', out: 'sword', inputs: { ingot: 2, wood: 1 }, discover: 'crafted:ingot' },
+      { id: 'torch', out: 'torch', inputs: { wood: 1, coal: 1 }, discover: 'known' },
+      { id: 'lantern', out: 'lantern', inputs: { crystal: 1, gel: 1, ingot: 1 }, discover: 'experiment' },
+      { id: 'bomb', out: 'bomb', inputs: { coal: 2, gel: 1 }, discover: 'experiment' },
+      { id: 'rope', out: 'rope', inputs: { herb: 3 }, discover: 'manual', hint: 'The weaver in town can teach this' },
+      { id: 'arrow', out: { id: 'arrow', n: 5 }, inputs: { ingot: 1, wood: 1 }, discover: 'crafted:sword' }],
+    bag: { herb: 3, gel: 2, wood: 2, crystal: 1, coal: 0, ore: 0 }, gift: { ore: 2, coal: 2 },
+    wrong: ['herb', 'coal'], mix: ['gel', 'crystal', 'ingot'], A: 'salve', B: 'ingot', C: 'sword', D: 'lantern', title: 'Workbench'
+  } : {
+    items: { bloom: { name: 'Lifebloom', icon: 'regen' }, venom: { name: 'Venom Sac', icon: 'poison' }, ember: { name: 'Ember Core', icon: 'burn' }, frost: { name: 'Frost Shard', icon: 'frost' },
+      spark: { name: 'Storm Spark', icon: 'shock' }, ruby: { name: 'Ruby', icon: 'gem' }, scroll: { name: 'Rune Scroll', icon: 'scroll' },
+      draught: { name: 'Healing Draught', icon: 'potion', desc: 'Restores 40 HP.' }, antidote: { name: 'Antidote', icon: 'antidote', desc: 'Cures poison.' },
+      tonic: { name: 'Storm Tonic', icon: 'mana-potion', desc: 'Restores 30 MP.' }, staff: { name: 'Tempest Staff', icon: 'staff', desc: 'Magic +6.' },
+      ring: { name: 'Ember Ring', icon: 'ring', desc: 'Attack +3, burns on hit.', draw: function (g2, x, y, w, h) { var im = ringIcon(); if (!im) return false; g2.imageSmoothingEnabled = true; g2.imageSmoothingQuality = 'high'; g2.drawImage(im, x, y, w, h); return true; } }, ward: { name: 'Frost Ward', icon: 'amulet' }, edge: { name: 'Sunsteel Edge', icon: 'sword' }, bow: { name: 'Bramble Bow', icon: 'bow' } },
+    recipes: [
+      { id: 'draught', out: 'draught', inputs: { bloom: 2 }, discover: 'known' },
+      { id: 'tonic', out: 'tonic', inputs: { spark: 1, frost: 1 }, discover: 'have:spark,frost' },
+      { id: 'staff', out: 'staff', inputs: { tonic: 2, ruby: 1 }, discover: 'crafted:tonic' },
+      { id: 'antidote', out: 'antidote', inputs: { venom: 1, bloom: 1 }, discover: 'known' },
+      { id: 'ring', out: 'ring', inputs: { ember: 2, ruby: 1 }, discover: 'experiment' },
+      { id: 'ward', out: 'ward', inputs: { frost: 2, scroll: 1 }, discover: 'experiment' },
+      { id: 'bow', out: 'bow', inputs: { bloom: 3, venom: 1 }, discover: 'manual', hint: 'The ranger at the gate can teach this' },
+      { id: 'edge', out: 'edge', inputs: { ember: 1, spark: 1, ruby: 1 }, discover: 'crafted:staff' }],
+    bag: { bloom: 3, venom: 1, ember: 2, ruby: 2, scroll: 1, spark: 0, frost: 0 }, gift: { spark: 1, frost: 2 },
+    wrong: ['bloom', 'ember'], mix: ['ember', 'ruby', 'ember'], A: 'draught', B: 'tonic', C: 'staff', D: 'ring', title: 'Forge Bench'
+  };
+
+  /* ---------- host world state ---------- */
+  var W = null, simT = 0, craft = null, log = [], manual = false;
+  var HERO_PATH = [[150, 150], [150, 126], 'pick', [92, 108], [56, 84], 'bench'];
+  function resetWorld() {
+    var bag = JSON.parse(JSON.stringify(DATA.bag));
+    W = { bag: bag, hp: PIX ? 2 : 64, hpMax: PIX ? 3 : 100, atk: 12, light: false, ring: false, crafted: [],
+      hero: { x: PIX ? 176 : 330, y: PIX ? 176 : 448, dir: 'up', walk: 0, moving: false, vx: 0, vy: 0, path: PIX ? HERO_PATH.slice() : [], wait: 0, at: null },
+      giveT: -1, auraT: -1, kx: 330 };
+    if (!PIX) { W.knight = Kit.actor('knight', { h: 178 }); W.herb = Kit.actor('herbalist', { h: 156 }); }
+    simT = 0; log = [];
+  }
+  function note(s) { log.push(Math.round(simT) + ' ' + s); if (log.length > 60) log.shift(); }
+
+  /* ---------- screen rects the module needs ---------- */
+  function heroBox() {
+    if (PIX) { var h = W.hero; return { x: Math.round(h.x) - 7, y: Math.round(h.y) - 19, w: 14, h: 21 }; }
+    return W.knight.box(W.kx, 448, { h: 178 });
+  }
+  function benchBox() { return PIX ? { x: 18, y: 48, w: 44, h: 26 } : { x: 404, y: 370, w: 92, h: 82 }; }
+  function herbBox() { return PIX ? null : W.herb.box(166, 448, { h: 156 }); }
+  var HUDBAR = Q.get('hud') === 'bar';   // a full-width HUD band along the top (layout checks: everything must keep clear of it)
+  function uiRects() { if (HUDBAR) return PIX ? [{ x: 0, y: 0, w: VW, h: 18 }] : [{ x: 0, y: 0, w: VW, h: 96 }]; return PIX ? [{ x: 2, y: 2, w: 64, h: 15 }] : [{ x: 14, y: 14, w: 252, h: 74 }]; }
+  function avoidRects() { var a = [heroBox(), benchBox()]; var hb = herbBox(); if (hb) a.push(hb); return a; }
+  function cssScale() { var b = cv.getBoundingClientRect(); return b.width > 0 ? b.width / VW : 1; }
+
+  /* ---------- painted frames for the HD look (painted-ui kit, 9-slice) ---------- */
+  function nine(c, im, sl, x, y, w, h, s, centre) {
+    if (!im || !im.naturalWidth) return false;
+    var W0 = im.naturalWidth, H0 = im.naturalHeight, L = sl[0], T = sl[1], R = sl[2], B = sl[3], l = L * s, t = T * s, r = R * s, b = B * s;
+    var xs = [0, L, W0 - R, W0], ys = [0, T, H0 - B, H0], dx = [x, x + l, x + w - r, x + w], dy = [y, y + t, y + h - b, y + h];
+    for (var j = 0; j < 3; j++) for (var i = 0; i < 3; i++) { if (i === 1 && j === 1 && !centre) continue; var sw = xs[i + 1] - xs[i], sh = ys[j + 1] - ys[j], dw = dx[i + 1] - dx[i], dh = dy[j + 1] - dy[j]; if (sw > 0 && sh > 0 && dw > 0 && dh > 0) c.drawImage(im, xs[i], ys[j], sw, sh, dx[i], dy[j], dw, dh); }
+    return true;
+  }
+  function frame(c, r, role) {
+    if (PIX) return false;
+    c.save(); c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high';
+    try {
+      if (role === 'panel') {
+        var e = 9, s = 0.36;
+        var gr = c.createLinearGradient(0, r.y, 0, r.y + r.h); gr.addColorStop(0, '#30241f'); gr.addColorStop(1, '#1c1418');
+        c.shadowColor = 'rgba(5,2,8,0.6)'; c.shadowBlur = 22; c.shadowOffsetY = 6; c.fillStyle = gr; c.fillRect(r.x - 2, r.y - 2, r.w + 4, r.h + 4); c.shadowColor = 'transparent';
+        var hg = c.createLinearGradient(0, r.y, 0, r.y + 32); hg.addColorStop(0, 'rgba(120,80,40,0.35)'); hg.addColorStop(1, 'rgba(120,80,40,0)'); c.fillStyle = hg; c.fillRect(r.x, r.y, r.w, 34);
+        c.globalAlpha = 0.06; c.fillStyle = '#ffffff'; for (var i = 0; i < 80; i++) { var gx = r.x + ((i * 97) % 101) / 101 * r.w, gy = r.y + ((i * 61) % 89) / 89 * r.h; c.fillRect(gx, gy, 6 + (i % 7) * 3, 1); } c.globalAlpha = 1;
+        nine(c, IMG.win, [71, 66, 71, 66], r.x - e, r.y - e, r.w + 2 * e, r.h + 2 * e, s);
+        return true;
+      }
+      if (role === 'well') return nine(c, IMG.slot, [38, 38, 38, 38], r.x, r.y, r.w, r.h, Math.min(0.32, r.w / 140), true);
+      if (role === 'toast') {
+        var tg = c.createLinearGradient(0, r.y, 0, r.y + r.h); tg.addColorStop(0, '#33261f'); tg.addColorStop(1, '#1d1518');
+        c.shadowColor = 'rgba(5,2,8,0.55)'; c.shadowBlur = 16; c.shadowOffsetY = 4; c.fillStyle = tg; c.fillRect(r.x + 3, r.y + 3, r.w - 6, r.h - 6); c.shadowColor = 'transparent';
+        return nine(c, IMG.small, [17, 16, 17, 16], r.x, r.y, r.w, r.h, 0.7);
+      }
+    } finally { c.restore(); }
+    return false;
+  }
+
+  /* ---------- the module ---------- */
+  function makeCraft() {
+    var c = CR.create({ items: DATA.items, recipes: DATA.recipes, inventory: { count: function (id) { return W.bag[id] || 0; }, take: function (id, n) { W.bag[id] = (W.bag[id] || 0) - n; }, give: function (id, n) { W.bag[id] = (W.bag[id] || 0) + n; } },
+      view: { x: 0, y: 0, w: VW, h: VH }, cssScale: cssScale, avoid: avoidRects, uiRects: uiRects, frame: frame,
+      icons: PIX ? null : { image: IMG.icons, cell: 128, cols: 6, keys: ICON_KEYS },
+      params: Object.assign({ title: DATA.title, margin: PIX ? 0 : 14 }, params),
+      onCraft: function (i) { W.crafted.push(i.recipe); note('craft ' + i.recipe); if (i.recipe === DATA.D) { if (PIX) W.light = true; else { W.ring = true; W.atk += 3; W.auraT = simT; } } if (i.recipe === DATA.A && !PIX) W.hp = Math.min(W.hpMax, W.hp); },
+      onUnlock: function (i) { note('unlock ' + i.recipe + ' ' + i.why); }, onFail: function (i) { note('fail ' + i.reason); } });
+    window.__craftDemo = c; return c;
+  }
+
+  /* ---------- the script (one clock; actions retry every 200 ms until done) ---------- */
+  function pouchTo(id) { return function () { var s = craft.state(); if (s.focus !== 'pouch') { craft.input('down'); return false; } var i = s.pouch.map(function (p) { return p.id; }).indexOf(id); if (i < 0) return true; if (s.pouchSel < i) { craft.input('right'); return false; } if (s.pouchSel > i) { craft.input('left'); return false; } craft.input('ok'); return true; }; }
+  function selectTo(rid) { return function () { var s = craft.state(); if (s.focus !== 'book') { craft.input('up'); return false; } var ids = craft.recipes().map(function (r) { return r.id; }), i = ids.indexOf(rid), j = ids.indexOf(s.selected); if (j === i) return true; craft.input(i > j ? 'right' : 'left'); return false; }; }
+  function act(a) { return function () { craft.input(a); return true; }; }
+  var SCRIPT = [
+    [900, function () { if (PIX && !W.hero.picked) return false; for (var k in DATA.gift) W.bag[k] = (W.bag[k] || 0) + DATA.gift[k]; note('gift'); W.giveT = simT; return true; }],
+    [3200, function () { if (PIX && W.hero.at !== 'bench') return false; craft.open(DATA.title); note('open'); return true; }],
+    [4300, act('ok')],
+    [5800, selectTo(DATA.B)], [6300, act('ok')],
+    [8200, selectTo(DATA.C)], [8700, act('ok')],
+    [9600, act('tab')], [10000, pouchTo(DATA.wrong[0])], [10600, pouchTo(DATA.wrong[1])], [11400, act('craft')],
+    [12300, act('back')], [12600, act('back')],
+    [13000, pouchTo(DATA.mix[0])], [13600, pouchTo(DATA.mix[1])], [14200, pouchTo(DATA.mix[2])], [15200, act('craft')],
+    [17200, act('up')], [17800, act('back')]
+  ];
+  var MOMENTS = [
+    { t: 1500, event: 'unlock', recipe: DATA.B, what: 'unlock toast: holding both ingredients teaches a recipe' },
+    { t: 3800, event: 'open', what: 'bench open beside the player: recipe grid (learned, new, locked), slots with have/need, result preview, pouch' },
+    { t: 5100, event: 'craft', recipe: DATA.A, what: 'craft granted: result pops, +1 line, pouch counts dropped' },
+    { t: 7500, event: 'unlock', recipe: DATA.C, what: 'crafting one recipe teaches another: toast clear of the window and the player' },
+    { t: 8850, event: 'fail', reason: 'missing', what: 'failure: not enough ingredients, bench shakes, red reason, nothing consumed' },
+    { t: 11550, event: 'fail', reason: 'nothing', what: 'failure: a mix that matches nothing, nothing consumed' },
+    { t: 14700, event: 'put', what: 'own mix on the bench: unknown result previewed as ?' },
+    { t: 16300, event: 'unlock', recipe: DATA.D, what: 'discovery by experiment: DISCOVERED toast and the result granted' },
+    { t: 19500, event: 'close', within: 2500, what: 'the game reacts to the crafted item (' + (PIX ? 'lantern light' : 'ring aura, attack +3') + ')' }];
+  var queue = [];
+  function resetAll() { resetWorld(); craft = makeCraft(); queue = SCRIPT.map(function (s) { return { at: s[0], fn: s[1] }; }); }
+  function stepScript() { if (manual) return; for (var i = 0; i < queue.length; i++) { var q = queue[i]; if (q.done || simT < q.at) continue; var ok = q.fn(); if (ok) q.done = true; else q.at += 150; } }
+
+  /* ---------- the host's own step ---------- */
+  function stepHero() {
+    var h = W.hero;
+    if (!PIX) { W.knight.update(STEP, { facing: 'right' }); W.herb.update(STEP, { facing: 'right' }); if (W.giveT >= 0 && simT - W.giveT < 20) W.herb.play('cast', { dur: 620 }); return; }
+    if (craft.busy()) { h.moving = false; return; }
+    if (h.wait > 0) { h.wait -= STEP; h.moving = false; return; }
+    if (simT > 18300 && !h.leaving) { h.leaving = true; h.path = [[70, 104], [110, 140], [128, 160], [128, 186]]; }
+    var p = h.path[0];
+    if (p === 'pick') { h.path.shift(); h.wait = 420; h.dir = 'up'; h.picked = true; return; }
+    if (p === 'bench') { h.path.shift(); h.dir = 'up'; h.at = 'bench'; return; }
+    if (!p || simT < (h.leaving ? 18300 : 200)) { h.moving = false; h.vx = h.vy = 0; return; }
+    var dx = p[0] - h.x, dy = p[1] - h.y, d = Math.hypot(dx, dy), sp = 78 * STEP / 1000;
+    if (d <= sp) { h.x = p[0]; h.y = p[1]; h.path.shift(); }
+    else { h.x += dx / d * sp; h.y += dy / d * sp; h.walk += sp; h.vx = dx / d; h.vy = dy / d; h.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'); }
+    h.moving = d > sp; h.at = null;
+  }
+  function step() { simT += STEP; stepScript(); stepHero(); craft.update(STEP); }
+
+  /* ---------- drawing: pixel ---------- */
+  var ROOM = null;
+  function buildRoom() {
+    ROOM = PX.room({ cols: 16, rows: 12, wallH: 46, floor: 'wood', wall: 'stone', seed: 4, rugs: [{ x: 92, y: 104, w: 72, h: 40, color: 'red' }],
+      props: [{ k: 'fireplace', x: 208, y: 45 }, { k: 'shelf', x: 150, y: 30 }, { k: 'window', x: 104, y: 28 }, { k: 'table', x: 36, y: 66 }, { k: 'anvil', x: 66, y: 70 },
+        { k: 'crate', x: 150, y: 118 }, { k: 'crate', x: 166, y: 122 }, { k: 'barrel', x: 232, y: 118 }, { k: 'sack', x: 134, y: 122 }, { k: 'rack', x: 92, y: 56 }, { k: 'plant', x: 16, y: 150 }, { k: 'barrel', x: 16, y: 120 }] });
+  }
+  /* 9x8 pixel heart: two lobes and a point, 1 px outline, highlight; a dark empty variant */
+  var HEARTS = {};
+  function heart(full) {
+    var key = full ? 'f' : 'e'; if (HEARTS[key]) return HEARTS[key];
+    var M = ['.##...##.', '####.####', '#########', '#########', '.#######.', '..#####..', '...###...', '....#....'];
+    var cv0 = document.createElement('canvas'); cv0.width = 11; cv0.height = 10; var q = cv0.getContext('2d');
+    var on = function (x, y) { return y >= 0 && y < 8 && x >= 0 && x < 9 && M[y][x] === '#'; };
+    for (var y = -1; y <= 8; y++) for (var x = -1; x <= 9; x++) {
+      var col = null;
+      if (on(x, y)) { col = full ? '#e04848' : '#4a3040'; if (x + y >= 10 || (y >= 4 && x >= 5)) col = full ? '#a8283a' : '#3a2434'; if (full && ((x === 1 && y === 1) || (x === 2 && y === 1) || (x === 1 && y === 2))) col = '#ffb4b4'; }
+      else if (on(x + 1, y) || on(x - 1, y) || on(x, y + 1) || on(x, y - 1)) col = '#0c0a14';
+      if (col) { q.fillStyle = col; q.fillRect(x + 1, y + 1, 1, 1); }
+    }
+    return (HEARTS[key] = cv0);
+  }
+  function drawPixel() {
+    var c = ng, t = simT, h = W.hero;
+    c.fillStyle = '#000'; c.fillRect(0, 0, VW, VH);
+    var extras = [{ y: h.y, draw: function (gg) { PX.actor(gg, h.x, h.y, { pal: 'hero', dir: h.dir, frame: h.moving && Math.floor(h.walk / 7) % 2 }); if (W.light) { gg.fillStyle = '#ffe070'; gg.fillRect(Math.round(h.x) + 5, Math.round(h.y) - 9, 2, 3); gg.fillStyle = '#5a4a3a'; gg.fillRect(Math.round(h.x) + 5, Math.round(h.y) - 10, 2, 1); } } }];
+    ROOM.draw(c, t, extras, 0, 0);
+    // evening light: banded darkness with the fire's pool and (once crafted) the lantern's pool
+    var dk = document.createElement('canvas'); dk.width = VW; dk.height = VH; var d = dk.getContext('2d');
+    d.fillStyle = 'rgba(14,8,30,0.5)'; d.fillRect(0, 0, VW, VH); d.globalCompositeOperation = 'destination-out';
+    function pool(x, y, r) { [[1, 0.35], [0.72, 0.6], [0.5, 1]].forEach(function (b) { d.fillStyle = 'rgba(0,0,0,' + b[1] + ')'; d.beginPath(); d.arc(Math.round(x), Math.round(y), Math.round(r * b[0]), 0, 6.283); d.fill(); }); }
+    pool(208, 52, 46 + Math.round(Math.sin(t / 140) * 2)); pool(104, 34, 26); if (W.light) pool(h.x, h.y - 8, 42);
+    c.drawImage(dk, 0, 0);
+    if (W.light) { c.fillStyle = 'rgba(255,214,120,0.10)'; c.beginPath(); c.arc(Math.round(h.x), Math.round(h.y) - 8, 28, 0, 6.283); c.fill(); }
+    // HUD: hearts and the light slot
+    c.fillStyle = '#0c0a14'; c.fillRect(2, 2, 64, 15); c.fillStyle = '#2a1e2e'; c.fillRect(3, 3, 62, 13); c.fillStyle = '#5a4458'; c.fillRect(3, 3, 62, 1);
+    for (var i = 0; i < W.hpMax; i++) c.drawImage(heart(i < W.hp), 4 + i * 11, 4);
+    c.fillStyle = '#0c0a14'; c.fillRect(50, 4, 13, 11); c.fillStyle = '#120c18'; c.fillRect(51, 5, 11, 9);
+    if (W.light) { var ic = CR.renderIcon('lantern', 9, true); if (ic) c.drawImage(ic, 52, 5); }
+    if (HUDBAR) { c.fillStyle = 'rgba(12,10,20,0.85)'; c.fillRect(0, 0, VW, 18); c.fillStyle = '#c8903c'; c.fillRect(0, 18, VW, 1); }
+    craft.draw(c);
+    g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = false; g.clearRect(0, 0, cv.width, cv.height); g.drawImage(nat, 0, 0, cv.width, cv.height);
+  }
+
+  /* ---------- drawing: HD ---------- */
+  /* the game's reaction to the Ember Ring: a dark-rimmed warm pool at the knight's feet and embers rising around him
+     (source-over streaks with a dark red rim, orange body and a yellow core, flickering; a short white flash when it is made) */
+  function emberGround(c, t) {
+    var ak = Math.min(1, (t - W.auraT) / 500), x = W.kx, y = 446, pul = 1 + 0.06 * Math.sin(t / 170);
+    c.save(); c.translate(x, y); c.scale(1, 0.32);
+    var g0 = c.createRadialGradient(0, 0, 10, 0, 0, 96 * pul); g0.addColorStop(0, 'rgba(255,170,70,' + 0.55 * ak + ')'); g0.addColorStop(0.55, 'rgba(230,90,30,' + 0.32 * ak + ')'); g0.addColorStop(0.8, 'rgba(70,14,6,' + 0.45 * ak + ')'); g0.addColorStop(1, 'rgba(40,8,4,0)');
+    c.fillStyle = g0; c.beginPath(); c.arc(0, 0, 96 * pul, 0, 6.283); c.fill(); c.restore();
+  }
+  function embers(c, t) {
+    var ak = Math.min(1, (t - W.auraT) / 400);
+    for (var e = 0; e < 26; e++) {
+      var life = 1200 + (e * 137) % 700, ph = ((t + e * 311) % life) / life, side = e % 2 ? -1 : 1, sx = W.kx + side * (40 + (e * 17) % 46), sw = Math.sin(t / 240 + e * 1.7) * 7 * ph;
+      var ex = sx + sw, ey = 444 - ph * (110 + (e * 29) % 90), a = ak * (ph < 0.12 ? ph / 0.12 : 1 - (ph - 0.12) / 0.88) * (0.7 + 0.3 * Math.sin(t / 45 + e * 3.1));
+      if (a <= 0.03) continue;
+      var r = 2.4 + (e % 3) * 0.7, tr = 18 + (e % 4) * 6;
+      c.save(); c.globalAlpha = a;
+      var tg = c.createLinearGradient(ex, ey, ex - sw * 0.3, ey + tr); tg.addColorStop(0, 'rgba(255,220,120,0.95)'); tg.addColorStop(0.35, 'rgba(255,110,30,0.8)'); tg.addColorStop(1, 'rgba(140,20,8,0)');
+      c.strokeStyle = tg; c.lineWidth = r * 1.5; c.lineCap = 'round'; c.beginPath(); c.moveTo(ex, ey); c.lineTo(ex - sw * 0.3, ey + tr); c.stroke();
+      c.globalCompositeOperation = 'lighter'; var hg = c.createRadialGradient(ex, ey, 0, ex, ey, r * 6); hg.addColorStop(0, 'rgba(255,170,60,0.7)'); hg.addColorStop(1, 'rgba(255,90,20,0)'); c.fillStyle = hg; c.fillRect(ex - r * 6, ey - r * 6, r * 12, r * 12);
+      c.globalCompositeOperation = 'source-over';
+      var ang = Math.atan2(-tr, sw * 0.3) + Math.PI / 2;   // a teardrop streak along its path: red tail, orange body, white-hot head
+      c.translate(ex, ey); c.rotate(ang);
+      c.fillStyle = 'rgba(200,40,10,0.85)'; c.beginPath(); c.ellipse(0, r * 1.4, r * 0.8, r * 2.6, 0, 0, 6.283); c.fill();
+      c.fillStyle = '#ff7a1a'; c.beginPath(); c.ellipse(0, r * 0.5, r * 0.9, r * 1.7, 0, 0, 6.283); c.fill();
+      c.fillStyle = '#ffd860'; c.beginPath(); c.ellipse(0, 0, r * 0.7, r * 1.0, 0, 0, 6.283); c.fill(); c.fillStyle = '#fffbe8'; c.beginPath(); c.ellipse(0, -r * 0.1, r * 0.38, r * 0.5, 0, 0, 6.283); c.fill();
+      c.restore();
+    }
+  }
+  /* the ring icon with its gem painted ember-red (the painted-ui ring has a green gem): the gem region hue-shifted, the gold kept */
+  var RING = null;
+  function ringIcon() {
+    if (RING || !IMG.icons || !IMG.icons.naturalWidth) return RING;
+    var cv0 = document.createElement('canvas'); cv0.width = cv0.height = 128; var q = cv0.getContext('2d');
+    q.drawImage(IMG.icons, 2 * 128, 2 * 128, 128, 128, 0, 0, 128, 128);
+    q.save(); q.beginPath(); q.ellipse(64, 45, 15, 17, 0, 0, 6.283); q.clip(); q.clearRect(0, 0, 128, 128);
+    q.filter = 'hue-rotate(-92deg) saturate(1.9) brightness(1.05)'; q.drawImage(IMG.icons, 2 * 128, 2 * 128, 128, 128, 0, 0, 128, 128); q.restore();
+    return (RING = cv0);
+  }
+  function drawHd() {
+    var c = g, t = simT; c.setTransform(cv.width / VW, 0, 0, cv.height / VH, 0, 0); c.imageSmoothingEnabled = true;
+    Kit.backdrop(c, 'forge-hall', { x: 0, y: 0, w: VW, h: VH, groundY: 448 });
+    Kit.sprite(c, 'brazier', 868, 452, { h: 108, t: t }); Kit.flame(c, 868, 380, 70, t);
+    Kit.sprite(c, 'crates', 760, 450, { h: 92 });
+    Kit.sprite(c, 'anvil', 450, 452, { h: 78 });
+    W.herb.draw(c, 166, 448, { h: 156, facing: 'right' });
+    if (W.ring) emberGround(c, t);
+    W.knight.draw(c, W.kx, 448, { h: 178, facing: W.kx < 450 ? 'right' : 'left' });
+    if (W.ring) embers(c, t);
+    // HUD card
+    c.save(); c.fillStyle = 'rgba(16,10,16,0.78)'; c.beginPath(); c.roundRect(14, 14, 252, 74, 10); c.fill(); c.strokeStyle = 'rgba(200,153,90,0.7)'; c.lineWidth = 1.5; c.stroke();
+    c.font = '700 17px system-ui, sans-serif'; c.fillStyle = '#ffe2a8'; c.fillText('Knight', 28, 38);
+    c.font = '600 15px system-ui, sans-serif'; c.fillStyle = '#f4ead8'; c.fillText('HP ' + W.hp + ' / ' + W.hpMax, 28, 76); c.fillText('ATK ' + W.atk, 176, 76);
+    c.fillStyle = '#2a1a20'; c.fillRect(100, 26, 150, 12); c.fillStyle = '#d84a3a'; c.fillRect(100, 26, 150 * W.hp / W.hpMax, 12); c.fillStyle = 'rgba(255,255,255,0.25)'; c.fillRect(100, 26, 150 * W.hp / W.hpMax, 3);
+    if (W.ring && ringIcon()) c.drawImage(ringIcon(), 226, 44, 30, 30);
+    c.restore();
+    if (HUDBAR) { c.fillStyle = 'rgba(12,8,14,0.82)'; c.fillRect(0, 0, VW, 96); c.fillStyle = 'rgba(200,153,90,0.8)'; c.fillRect(0, 96, VW, 2); }
+    craft.draw(c);
+  }
+  function render() { if (PIX) drawPixel(); else drawHd(); }
+
+  /* ---------- text state for checks and critics ---------- */
+  window.__cssScale = cssScale;
+  window.__demo = { place: function (x, y) { if (PIX) { W.hero.x = x; W.hero.y = y; W.hero.dir = 'down'; W.hero.at = null; } else W.kx = x; }, step: function (n) { for (var i = 0; i < (n || 1); i++) step(); }, runTo: function (ms) { runTo(ms); }, render: function () { render(); }, t: function () { return simT; }, STEP: STEP, END: END };
+  window.__state = function () {
+    var s = craft.state(), h = W.hero, actors;
+    if (PIX) actors = [{ id: 'hero', x: Math.round(h.x), y: Math.round(h.y), facing: h.dir === 'left' || h.dir === 'right' ? h.dir : (h.vx < 0 ? 'left' : 'right'), noFace: h.dir === 'up' || h.dir === 'down' ? 'top-down ' + h.dir + ' frame' : undefined, target: h.at === 'bench' ? 52 : null, vx: h.moving ? h.vx : 0, kitSet: 'pixel-kit-actor:hero' }];
+    else actors = [{ id: 'knight', x: W.kx, y: 448, facing: W.kx < 450 ? 'right' : 'left', target: 450, asset: 'knight' }, { id: 'herbalist', x: 166, y: 448, facing: 'right', target: 'knight', asset: 'herbalist' }];
+    return { t: Math.round(simT), look: LOOK, actors: actors, bag: JSON.parse(JSON.stringify(W.bag)), craft: s, events: craft.events(), log: log.slice(), avoid: avoidRects(), ui: uiRects(), view: { w: VW, h: VH }, css: cssScale(), moments: MOMENTS };
+  };
+
+  /* ---------- page, clock, controls ---------- */
+  function fit() {
+    var avail = Math.min(document.getElementById('stage').clientWidth || 960, PIX ? 1024 : 1146), w;
+    if (PIX) { var k = Math.floor(avail / VW); w = k >= 2 ? k * VW : avail; } else w = avail;
+    var h = Math.round(w * VH / VW), dpr = Math.min(3, window.devicePixelRatio || 1);
+    cv.style.width = w + 'px'; cv.style.height = h + 'px'; cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    if (PIX) { cv.style.imageRendering = 'pixelated'; }
+  }
+  var FROZEN = Q.get('freeze') === '1', T0 = Q.has('t') ? Math.max(0, +Q.get('t') || 0) : null, playing = !FROZEN, acc = 0, last = 0;
+  function runTo(ms) { resetAll(); while (simT + STEP <= ms) step(); }
+  var scrub = document.getElementById('scrub'), timeEl = document.getElementById('time'), playB = document.getElementById('play');
+  function ui() { scrub.value = Math.min(END, simT); timeEl.textContent = (simT / 1000).toFixed(1) + ' s' + (manual ? ' (you)' : ''); playB.textContent = playing ? 'Pause' : 'Play'; }
+  function frameLoop(now) {
+    if (playing) { if (!last) last = now; acc += Math.min(250, now - last); last = now; while (acc >= STEP) { acc -= STEP; step(); if (!manual && simT >= END) { resetAll(); } } } else last = 0;
+    render(); ui(); requestAnimationFrame(frameLoop);
+  }
+  function takeOver() { if (!manual) { manual = true; queue = []; } }
+  window.addEventListener('keydown', function (e) {
+    if (FROZEN) return;
+    if (e.code === 'KeyR') { manual = false; resetAll(); playing = true; return; }
+    if (e.code === 'Space' && !craft.busy()) { playing = !playing; e.preventDefault(); return; }
+    if (e.code === 'KeyE') { takeOver(); playing = true; craft.toggle(DATA.title); e.preventDefault(); return; }
+    if (craft.busy()) { takeOver(); if (craft.key(e.code, true, e.repeat)) e.preventDefault(); }
+  });
+  function canvasPt(e) { var b = cv.getBoundingClientRect(); return { x: (e.clientX - b.left) / b.width * VW, y: (e.clientY - b.top) / b.height * VH }; }
+  cv.addEventListener('pointermove', function (e) { var p = canvasPt(e); craft.pointer('move', p.x, p.y); });
+  cv.addEventListener('pointerup', function (e) { if (FROZEN) return; takeOver(); playing = true; var p = canvasPt(e); if (!craft.busy()) { craft.open(DATA.title); return; } if (!craft.pointer('up', p.x, p.y)) craft.close(); });
+  playB.onclick = function () { playing = !playing; };
+  scrub.oninput = function () { manual = false; runTo(+scrub.value); playing = false; };
+  ['theme', 'slots', 'craftMs', 'toasts', 'keyHints'].forEach(function (id) { var el = document.getElementById(id); el.value = String(params[id]); el.onchange = function () { params[id] = el.value; craft.setParams(params); }; });
+  Array.prototype.forEach.call(document.querySelectorAll('#tabs button'), function (b) { if (b.dataset.look === LOOK) b.classList.add('on'); b.onclick = function () { var q = new URLSearchParams(location.search); q.set('look', b.dataset.look); q.delete('t'); q.delete('freeze'); location.search = q.toString(); }; });
+  window.addEventListener('resize', function () { fit(); });
+
+  function boot() {
+    fit(); if (PIX) buildRoom();
+    if (T0 != null) { runTo(T0); render(); ui(); if (FROZEN) { window.__frozen = true; return; } }
+    else resetAll();
+    requestAnimationFrame(frameLoop);
+  }
+  var pend = 1; function done() { if (--pend === 0) { if (PIX || !Kit) boot(); else Kit.ready(boot); } }
+  Object.keys(IMGSRC).forEach(function (k) { pend++; var im = new Image(); im.onload = im.onerror = done; im.src = IMGSRC[k]; IMG[k] = im; });
+  done();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,196 @@
+{
+  "id": "damage-numbers",
+  "code": "E-01",
+  "name": "Bouncing damage numbers",
+  "family": "combat-feedback",
+  "oneLiner": "On the frame a hit lands, the amount pops above the target, each digit bouncing in turn with a small overshoot, holds, then fades; heals, criticals, misses, MP and status words each get their own look, and simultaneous pops never overlap.",
+  "fits": [
+    "turn-based RPG battle",
+    "action RPG",
+    "tactics / strategy RPG",
+    "roguelike",
+    "beat-'em-up",
+    "idle / clicker",
+    "monster battler"
+  ],
+  "notFor": [
+    "games that hide HP on purpose (horror, realism sims)",
+    "rhythm games (timing words are a different element)",
+    "fast bullet-hell where dozens of hits per second would flood the screen (aggregate first)"
+  ],
+  "interfaces": {
+    "time": "realtime",
+    "coords": "side",
+    "layer": "fx",
+    "needs": [
+      "hit event on the impact frame: {target, amount, kind: damage|crit|heal|miss|mp|status}",
+      "target screen anchor: centre x and top of head y",
+      "frame clock in ms (world time that pauses during hit-stop)",
+      "optional: rectangles to avoid (banner, HUD, other UI)"
+    ],
+    "provides": [
+      "hit-stop request (ms) on the impact frame",
+      "screen shake and flash request for criticals",
+      "list of live pop rectangles (for other overlays to avoid)"
+    ]
+  },
+  "params": [
+    {
+      "key": "bounce",
+      "label": "Bounce height",
+      "type": "range",
+      "min": 2,
+      "max": 24,
+      "step": 1,
+      "default": 10
+    },
+    {
+      "key": "duration",
+      "label": "Duration (ms)",
+      "type": "range",
+      "min": 500,
+      "max": 2000,
+      "step": 50,
+      "default": 1000
+    },
+    {
+      "key": "stagger",
+      "label": "Digit stagger (ms)",
+      "type": "range",
+      "min": 0,
+      "max": 120,
+      "step": 5,
+      "default": 40
+    },
+    {
+      "key": "hitstop",
+      "label": "Hit-stop (ms)",
+      "type": "range",
+      "min": 0,
+      "max": 150,
+      "step": 10,
+      "default": 60
+    },
+    {
+      "key": "scale",
+      "label": "Font scale",
+      "type": "select",
+      "options": [
+        "1",
+        "2"
+      ],
+      "default": "1"
+    },
+    {
+      "key": "scheme",
+      "label": "Color scheme",
+      "type": "select",
+      "options": [
+        "classic",
+        "warm",
+        "contrast"
+      ],
+      "default": "classic"
+    },
+    {
+      "key": "crit",
+      "label": "Critical style",
+      "type": "select",
+      "options": [
+        "burst",
+        "flash",
+        "plain"
+      ],
+      "default": "burst"
+    },
+    {
+      "key": "stack",
+      "label": "Stacking",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "outline",
+      "label": "Outline (px)",
+      "type": "select",
+      "options": [
+        "1",
+        "2"
+      ],
+      "default": "1"
+    },
+    {
+      "key": "dense",
+      "label": "Dense grid",
+      "type": "select",
+      "options": [
+        "auto",
+        "on",
+        "off"
+      ],
+      "default": "auto"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Classic 16-bit",
+      "params": {
+        "bounce": 10,
+        "duration": 1000,
+        "stagger": 40,
+        "hitstop": 60,
+        "scale": "1",
+        "scheme": "classic",
+        "crit": "burst",
+        "stack": "on",
+        "outline": "1"
+      }
+    },
+    {
+      "name": "Big and punchy",
+      "params": {
+        "bounce": 14,
+        "duration": 900,
+        "stagger": 30,
+        "hitstop": 90,
+        "scale": "2",
+        "scheme": "warm",
+        "crit": "burst",
+        "outline": "2"
+      }
+    },
+    {
+      "name": "Calm, readable",
+      "params": {
+        "bounce": 6,
+        "duration": 1400,
+        "stagger": 60,
+        "hitstop": 0,
+        "crit": "flash"
+      }
+    },
+    {
+      "name": "High contrast",
+      "params": {
+        "scheme": "contrast",
+        "scale": "2",
+        "outline": "2"
+      }
+    }
+  ],
+  "assets": [
+    "module/damage-numbers.js: the element as one dependency-free script (global GameDNA_DamageNumbers): 7x10 digit and 5x7 letter bitmaps, motion, kinds, placement, drawing",
+    "no image or audio files"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/damage-numbers.js",
+    "global": "GameDNA_DamageNumbers",
+    "version": "1.0.0",
+    "docs": "module/README.md"
+  }
+}

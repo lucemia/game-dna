@@ -1,0 +1,66 @@
+{
+  "id": "squad-formation",
+  "code": "A-12",
+  "kind": "addon",
+  "name": "Squad formation grid",
+  "family": "formation",
+  "oneLiner": "Each side fights as squads on a 2x3 grid: a front row that faces the enemy and a back row behind it. Melee can only reach the front row while anyone stands there; arrows and spells reach everyone and hit the back row harder; a melee fighter placed in the back strikes at half power. Before a fight a modal formation editor lets the player drag (mouse, touch) or key units between rows and squads, with the consequences spelled out per unit; the game's own battle calls targetsFor / pickTarget / hit for its target lists and damage. On a tactics map every unit token becomes a squad of members.",
+  "fits": [
+    "turn-based party battle (side view or front view)",
+    "tactics / strategy RPG where map units become squads",
+    "squad-based strategy RPG with auto-resolved clashes (A-14 reuses the data model)",
+    "monster or unit collection games with a team-building screen"
+  ],
+  "notFor": [
+    "real-time action games (rows decide targets in a turn or an exchange)",
+    "games with one hero and no party",
+    "games where every attack must be able to reach every enemy (use backGuard: off, then rows only change damage)"
+  ],
+  "interfaces": {
+    "time": "turn",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "a fixed 60 Hz update step (the editor's only clock), also while the world is paused for it",
+      "the unit list per side: a unique id, HP, max HP, the reach of its normal attack (melee, ranged, magic) and a sprite",
+      "every place a target is chosen (player menu, tap hit test, enemy AI, autopilot) and every damage formula",
+      "where a battle (or wave, or map) starts and restarts, to build squads and open the editor",
+      "the direction keys and confirm / cancel routed to the editor while busy(); optional pointer events (attach)",
+      "optional: the game's autoplay flag, so the editor arranges and deploys by itself"
+    ],
+    "provides": [
+      "squads: {id, team, name, slots[6]} with front row = slots 0-2 and back row = 3-5 (the data model A-14 squad-clash builds on)",
+      "row rules: targetsFor(attacker, squad, reach), pickTarget(...) and hit(...) -> {ok, mul, why}; usable(unit, row) for row-locked skills",
+      "a modal formation editor (keyboard, mouse drag, touch, autopilot) with per-unit consequences and DEPLOY; onDone(squads) from update()",
+      "spot(unit, area): where each unit stands in a squad area (front row nearer the enemy)",
+      "in-world row tags, squad pips for map tokens, and guard marks while aiming"
+    ]
+  },
+  "params": [
+    { "key": "backGuard", "label": "Front row shields the back from melee", "type": "select", "options": ["on", "off"], "default": "on" },
+    { "key": "backWeak", "label": "Back row damage from ranged / magic", "type": "range", "min": 1, "max": 2, "step": 0.05, "default": 1.25 },
+    { "key": "backMelee", "label": "Melee power from the back row", "type": "range", "min": 0, "max": 1, "step": 0.05, "default": 0.5 },
+    { "key": "face", "label": "Enemy side (editor and spot)", "type": "select", "options": ["auto", "up", "down", "left", "right"], "default": "auto" },
+    { "key": "autoArrange", "label": "Autopilot fixes wrong rows", "type": "select", "options": ["on", "off"], "default": "on" },
+    { "key": "autoMs", "label": "Autopilot editor time (ms)", "type": "range", "min": 0, "max": 6000, "step": 100, "default": 1800 },
+    { "key": "tags", "label": "Row tags on sprites", "type": "select", "options": ["on", "off"], "default": "on" }
+  ],
+  "variants": [
+    { "name": "Classic rows", "params": { "backGuard": "on", "backWeak": 1.25, "backMelee": 0.5 } },
+    { "name": "Hard wall (no melee from the back)", "params": { "backGuard": "on", "backWeak": 1.5, "backMelee": 0 } },
+    { "name": "Soft rows (damage only)", "params": { "backGuard": "off", "backWeak": 1.15, "backMelee": 0.75 } },
+    { "name": "Side view, party facing left", "params": { "face": "left" } }
+  ],
+  "assets": [
+    "module/squad-formation.js: the element as one dependency-free script (global GameDNA_SquadFormation): squad data model, pure row rules (also static via GameDNA_SquadFormation.rules), formation editor drawn on the game canvas through GameDNA_Skin (built-in pixel16 look), keyboard / pointer / autopilot input, row tags, pips and guard marks",
+    "no image or audio files (unit pictures come from the game)"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/squad-formation.js",
+    "global": "GameDNA_SquadFormation",
+    "version": "1.2.1",
+    "docs": "module/README.md",
+    "skin": "optional: skins/skin-api.js + a skin before it"
+  }
+}

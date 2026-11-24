@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ford Skirmish</title>
+<style>
+:root{--bg:#0d0f1a;--line:#272d48;--ink:#e6e9f5;--mute:#8f97b8;--acc:#f0b838}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;min-height:100vh;background:radial-gradient(1000px 520px at 50% -10%,#1c2244 0,var(--bg) 60%) no-repeat,var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+#stage{max-width:1000px;margin:0 auto;padding:16px;display:flex;flex-direction:column;align-items:center;gap:12px}
+h1{margin:0;font-size:20px;letter-spacing:.02em}
+.sub{color:var(--mute);font-size:13px;text-align:center;max-width:640px}
+.screen{padding:10px;border-radius:12px;background:linear-gradient(#1b2036,#10131f);border:1px solid var(--line);box-shadow:0 20px 50px rgba(0,0,0,.55);max-width:100%}
+canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;background:#000;touch-action:none;max-width:100%}
+.pad{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.btn{appearance:none;border:1px solid var(--line);background:#1d2238;color:var(--ink);border-radius:8px;padding:8px 14px;font:600 13px system-ui;cursor:pointer}
+.btn:hover{border-color:#4a5482}
+kbd{font:600 11px ui-monospace,Menlo,monospace;background:#0f1222;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:1px 5px}
+.keys{color:var(--mute);font-size:12.5px;text-align:center}
+</style></head>
+<body>
+<div id="stage">
+  <h1>Ford Skirmish</h1>
+  <div class="sub">Rout the brigands holding the river crossing. Select one of your units, then choose where it goes. Each unit has a limited number of steps; after moving it strikes an enemy within reach.</div>
+  <div class="screen"><canvas id="screen" width="240" height="160"></canvas></div>
+  <div class="pad"><button class="btn" id="cancel">Cancel</button><button class="btn" id="end">End turn</button><button class="btn" id="restart">Restart</button></div>
+  <div class="keys"><kbd>&larr;</kbd><kbd>&uarr;</kbd><kbd>&rarr;</kbd><kbd>&darr;</kbd> cursor &middot; <kbd>Z</kbd>/<kbd>Enter</kbd> select, move &middot; <kbd>X</kbd> cancel &middot; <kbd>E</kbd> end turn &middot; <kbd>R</kbd> restart &middot; click or tap a tile to do the same</div>
+</div>
+<script>addEventListener("error", e => { document.documentElement.dataset.err = e.message + " @" + e.lineno; });</script>
+<script>
+/* HOST API (keep every one of these; add new functions instead of replacing them)
+   Shared: TS=16, MW=22, MH=16, MAP, TER{n,cost,def,avo} (cost 99 = impassable), inMap(x,y), at(x,y) -> terrain char,
+     baseLayer() cached ground canvas, drawAnim(g,cam,t,W,H) water/banner animation, drawUnit(g,u,X,Y,t,{bounce,walk}),
+     drawText(g,str,x,y,c1,c2,shadow,scale), textW(str,scale), win(g,x,y,w,h,'a'|'b'|'n') window frame, hpBar(g,x,y,w,hp,max),
+     vignette(g,W,H), banner(g,W,H,txt,'a'|'b',p), mk(w,h) canvas, mix(hexA,hexB,t), hh/vn noise.
+   Game: S (state; created in newGame()), newGame(), alive(), unitAt(x,y), passable(x,y),
+     steps(u) -> Map(key -> step count), hidden move limit, ALSO USED BY enemyAct(),
+     dist(a,b), inRange(u,o), strike(u,o), moveUnit(u,x,y,then) 12-frame slide then callback, afterMove(u) strike + acted + checkEnd,
+     checkEnd(), endTurn(), enemyAct(e), moveCursor(dx,dy), confirm() (A / click), cancel() (B / right-click),
+     step() fixed 60 Hz update, unitPos(u), draw() ground -> units -> cursor -> HUD -> banner, fit().
+   Keys: arrows/WASD cursor (one tile per keydown, OS repeat), Z/Enter/Space confirm, X/Esc cancel, E end turn, R restart. */
+/*@COMMON@*/
+/*@MAIN@*/
+</script>
+</body></html>

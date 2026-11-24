@@ -1,0 +1,204 @@
+{
+ "id": "vision-cones",
+ "code": "B-15",
+ "kind": "addon",
+ "name": "Stealth vision cones",
+ "family": "vision-cones",
+ "oneLiner": "Guards see through view cones clipped by walls (a ray-cast visibility polygon, the same rays that decide who is seen), each with a suspicion meter that fills faster when the player is close and in the middle of the cone and drains after the player slips out of sight; a '?' badge whose glyph fills with the meter, then a red '!' on alert, an alerted guard calls the guards within earshot, loses the player and searches. Tall grass hides the player completely, shade halves how far a guard can see them. Patrol routes with waits and look-around turns; guards face where their cone points (dir4 / side / facing for the sprite). Cones are drawn on the floor, soft and readable over any ground, crisp as whole pixels in a pixel game. The game keeps its rules: alerts come back as hooks (onAlert, onState, isAlert) for its own chase, call-for-help or fail rules.",
+ "fits": [
+  "top-down stealth and infiltration games",
+  "top-down action RPGs (enemies that notice you instead of a fixed aggro radius)",
+  "turn-based or real-time tactics with hidden movement (guards, sentries, cameras)",
+  "heist and sneak sections inside any top-down game",
+  "any 2D top-down canvas game, pixel or HD"
+ ],
+ "notFor": [
+  "side-scrolling platformers (cones are top-down floor shapes; a side view needs a different sight model)",
+  "3D or WebGL-rendered scenes (2D canvas drawing)",
+  "line of sight for the player's own fog (use B-03 fog-of-war)",
+  "sound propagation through rooms (noise() is a plain radius)"
+ ],
+ "interfaces": {
+  "time": "realtime",
+  "coords": "side",
+  "layer": "fx",
+  "needs": [
+   "a fixed update step that calls update(dt) once per step after enemies move (also run by ?t= fast-forward and ?auto=1), update(0) while paused or behind a window",
+   "the player's point in world px (player(): {x, y} or null) and the tiles or boxes that block sight (walls)",
+   "per guard an id and a source (world px, or null when dead) or a patrol route; remove(id) on death; clear() on new game",
+   "hiding spots: hidden(x, y) -> 0..1 cover, true for tall grass, 'shadow' for shade (optional)",
+   "the draw pass: drawCones after the ground and before the sprites, drawMarks after the sprites and before the HUD, with the camera",
+   "the game's own reaction to an alert (chase, call help, fail): onAlert / isAlert(id) hooked into its enemy AI"
+  ],
+  "provides": [
+   "view cones clipped by walls (visibility polygons) drawn on the floor, coloured by state (calm, suspicious, alert, search)",
+   "per guard suspicion meter, '?' and '!' badges, states and events (onState, onAlert, onLost, onCall)",
+   "patrols with waits and look-around turns, investigate / chase / search walks for module-driven guards",
+   "facing(id) / dir4(id) / side(id) so the game draws each guard facing its cone",
+   "raise, noise, alertAll, calm; sees(x, y) and seenBy() for AI and autopilots; list(), stats(), hash() for tests and judges"
+  ]
+ },
+ "params": [
+  {
+   "key": "range",
+   "label": "Sight range (px at scale 1)",
+   "type": "range",
+   "min": 60,
+   "max": 300,
+   "step": 5,
+   "default": 150
+  },
+  {
+   "key": "fov",
+   "label": "Cone width (degrees)",
+   "type": "range",
+   "min": 30,
+   "max": 160,
+   "step": 5,
+   "default": 80
+  },
+  {
+   "key": "react",
+   "label": "Reaction (ms to fill the meter)",
+   "type": "range",
+   "min": 250,
+   "max": 2500,
+   "step": 50,
+   "default": 900
+  },
+  {
+   "key": "decay",
+   "label": "Calm down (ms)",
+   "type": "range",
+   "min": 600,
+   "max": 6000,
+   "step": 100,
+   "default": 2600
+  },
+  {
+   "key": "sweep",
+   "label": "Look-around sweep (degrees)",
+   "type": "range",
+   "min": 0,
+   "max": 90,
+   "step": 5,
+   "default": 55
+  },
+  {
+   "key": "callRadius",
+   "label": "Call for help radius (px at scale 1)",
+   "type": "range",
+   "min": 0,
+   "max": 400,
+   "step": 10,
+   "default": 170
+  },
+  {
+   "key": "shadow",
+   "label": "Shade cover (0..1)",
+   "type": "range",
+   "min": 0,
+   "max": 1,
+   "step": 0.05,
+   "default": 0.5
+  },
+  {
+   "key": "opacity",
+   "label": "Cone strength",
+   "type": "range",
+   "min": 0.3,
+   "max": 2,
+   "step": 0.05,
+   "default": 1
+  },
+  {
+   "key": "palette",
+   "label": "Palette",
+   "type": "select",
+   "options": [
+    "lamp",
+    "cool",
+    "mono",
+    "skin"
+   ],
+   "default": "lamp"
+  },
+  {
+   "key": "render",
+   "label": "Render",
+   "type": "select",
+   "options": [
+    "auto",
+    "pixel",
+    "smooth"
+   ],
+   "default": "auto"
+  }
+ ],
+ "variants": [
+  {
+   "name": "Classic sentries (default)",
+   "params": {
+    "range": 150,
+    "fov": 80,
+    "react": 900,
+    "palette": "lamp"
+   }
+  },
+  {
+   "name": "Forgiving (story mode)",
+   "params": {
+    "react": 1600,
+    "decay": 1600,
+    "fov": 70
+   }
+  },
+  {
+   "name": "Hawk-eyed",
+   "params": {
+    "range": 220,
+    "fov": 100,
+    "react": 600,
+    "decay": 4000
+   }
+  },
+  {
+   "name": "Narrow searchlights",
+   "params": {
+    "fov": 40,
+    "range": 260,
+    "palette": "cool"
+   }
+  },
+  {
+   "name": "Lone guards (no calls)",
+   "params": {
+    "callRadius": 0
+   }
+  },
+  {
+   "name": "Pixel host",
+   "params": {
+    "render": "pixel"
+   }
+  },
+  {
+   "name": "Subtle cones",
+   "params": {
+    "opacity": 0.55,
+    "palette": "mono"
+   }
+  }
+ ],
+ "assets": [
+  "module/vision-cones.js: the element as one dependency-free script (global GameDNA_VisionCones): wall ray caster (tile DDA, boxes, point test), visibility polygons with wall-corner rays, per-guard sight test, suspicion meter and state machine, patrols with look-around, call for help, noise, cones drawn smooth (radial gradient, rim) or rasterised as whole pixels (bands, dithered rim, crisp edge), '?' / '!' badges whose glyph fills with the meter",
+  "no image, font or audio files"
+ ],
+ "status": "draft",
+ "module": {
+  "file": "module/vision-cones.js",
+  "global": "GameDNA_VisionCones",
+  "version": "1.1.0",
+  "docs": "module/README.md"
+ }
+}

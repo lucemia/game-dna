@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Harbour Charter</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #2c8fb4; touch-action: none; -webkit-user-select: none; user-select: none; }
+  #stage { position: fixed; inset: 0; }
+  #gl, #hud { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; }
+  #hud { pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="gl"></canvas><canvas id="hud"></canvas></div>
+<script src="three.min.js"></script>
+<script>
+/*@@MODULE@@*/
+</script>
+<script>
+// =====================================================================================================
+// HARBOUR CHARTER: N-06 starter (a cosy town builder on GameDNA_WfcTown3D). Sections:
+//   1. CONFIG        map rows, goals, URL flags
+//   2. EXTENSION POINTS   the GAME object (addons, content, rects, anchors)
+//   3. TOWN          create the module view, edits through act()
+//   4. GOALS & AUTOPLAY   goal checks, the goal-driven builder bot
+//   5. INPUT         keys, mouse, touch, toolbar
+//   6. HUD           goal card, toolbar, palette chips, banners, the charter card
+//   7. UPDATE & DRAW fixed 60 Hz step(), draw()
+//   8. BOOT          GAME.boot() runs after the ADDONS SLOT script below
+// =====================================================================================================
+'use strict';
+
+// ---------- 1. CONFIG ----------
+const STEP_MS = 1000 / 60;
+const Q = new URLSearchParams(location.search);
+const FREEZE = Q.get('freeze') === '1', T_AT = +Q.get('t') || 0, FOCUS = Q.get('focus') || '';
+let AUTO = Q.get('auto') === '1';
+const SEED = (+Q.get('seed') || 1) >>> 0;
+const GRID = 14, MAXH = 7;
+// Starting island: one digit per cell (0 sea, 1 land, 2 = a one-storey house, 3 = two storeys...)
+const MAP = [
+  '00000000000000',
+  '00000000000000',
+  '00000111100000',
+  '00011111110000',
+  '00111111111000',
+  '00111112211000',
+  '00111111111100',
+  '00011111111100',
+  '00011121111000',
+  '00001111110000',
+  '00000111100000',
+  '00000000000000',
+  '00000000000000',
+  '00000000000000'];
+const GOALS = [
+  { id: 'island', label: 'Grow the island', need: 78, count: c => c.land },
+  { id: 'houses', label: 'Raise houses', need: 20, count: c => c.houses },
+  { id: 'doors', label: 'Front doors on the lanes', need: 10, count: c => c.doors },
+  { id: 'tower', label: 'A tower of 4 storeys', need: 4, count: c => c.tallest },
+  { id: 'arch', label: 'A gate arch over a lane', need: 1, count: c => c.arches },
+  { id: 'stairs', label: 'Stairs up to roof terraces', need: 2, count: c => c.stairs }
+];
+
+// ---------- 2. EXTENSION POINTS ----------
+// Addons push one object onto GAME.addons in the ADDONS SLOT (below this script, before boot). Every member is optional:
+//   onEdit(ev, game)        after every grow / shrink / undo / redo: {kind, x, z, from, to, changed: [{x, z}], counts}
+//   onGoal(goal, game)      a goal was completed: {id, label, need, index}
+//   update(game, info)      every 60 Hz step; info = {dt (ms, 0 while frozen), t (game ms)}
+//   draw(ctx, game)         2D overlay, effects layer: after the 3D view, before the HUD (CSS px)
+//   drawUI(ctx, game)       2D overlay, top UI layer: after the HUD, before the charter card
+//   scene3d(THREE, scene, game)   once after the 3D world is built: add your own 3D objects
+//   onKey(e, down, game)    first in the input chain; return true to consume the key
+//   onScene(scene, game)    'play' | 'complete';  onEnd(result, game) once when the charter is granted;  onNewTown(game)
+const GAME = {
+  addons: [], goals: GOALS, scene: 'play', result: null, auto: false, frozen: false, t: 0, mode: 'grow',
+  v: null, town: null, cursor: { x: 7, z: 7 }, done: {}, shipped: null, builtinNotices: true,
+  view: { w: 960, h: 540 }, field: { x: 0, y: 0, w: 960, h: 540 }, uiRectsExtra: {}
+};
+window.GAME = GAME;
+function each(hook, ...args) { for (const a of GAME.addons) { const f = a && a[hook]; if (typeof f === 'function') { try { const r = f.apply(a, args); if (r === true) return true; } catch (e) { console.warn('addon ' + hook + ' threw', e); } } } return false; }
+// Content (call in the ADDONS SLOT, before boot):
+//   GAME.addTile({id, slot: 'land'|'ground'|'storey'|'roof', sides: 'ESWN' sockets, rotate, weight, minH, maxH, up, down, build(api, info)})
+//   GAME.addPair('h', 'g')  two sockets that may touch;  GAME.allowAir('h')  a socket that may face open air
+//   GAME.addGoal({id, label, need, count: counts => number})
+GAME.addTile = def => GameDNA_WfcTown3D.registerTile(def);
+GAME.addPair = (a, b) => GameDNA_WfcTown3D.registerPair(a, b);
+GAME.allowAir = s => GameDNA_WfcTown3D.allowAir(s);
+GAME.addGoal = def => { if (!def || !def.id || typeof def.count !== 'function') { console.warn('GAME.addGoal needs {id, label, need, count}'); return false; } GOALS.push(Object.assign({ need: 1, label: def.id }, def)); return true; };
+GAME.counts = () => GAME.town ? GAME.town.counts() : null;
+// anchors in CSS px: GAME.anchor('x,z') (a cell: its top) or a gull id; GAME.anchorOf(x, z)
+GAME.anchorOf = (x, z) => GAME.v ? GAME.v.anchorOf(x, z) : null;
+GAME.anchor = id => { if (!GAME.v) return null; const m = /^(\d+),(\d+)$/.exec(String(id)); if (m) return GAME.v.anchorOf(+m[1], +m[2]); return null; };
+GAME.uiRects = () => { const r = []; for (const k in HUDR) if (HUDR[k]) r.push(Object.assign({ name: k }, HUDR[k])); for (const k in GAME.uiRectsExtra) if (GAME.uiRectsExtra[k]) r.push(Object.assign({ name: k }, GAME.uiRectsExtra[k])); return r; };
+GAME.setUIRect = (name, rect) => { GAME.uiRectsExtra[name] = rect || null; };
+GAME.notice = (text, sub) => { banners.push({ text, sub: sub || '', t: 0 }); };
+GAME.unitRects = () => [];   // no units: the town has no fighters (gulls are scenery)
+
+// ---------- 3. TOWN ----------
+const glc = document.getElementById('gl'), hud = document.getElementById('hud'), hctx = hud.getContext('2d');
+let VW = 960, VH = 540, DPR = 1;
+const params = { palette: Q.get('palette') || 'harbour', yaw: +(Q.get('yaw') || 40), pitch: +(Q.get('pitch') || 38), zoom: +(Q.get('zoom') || 1.05), shadows: Q.get('shadows') || 'soft', gulls: 3 };
+function makeTown() {
+  if (GAME.v && GAME.v.scene()) { /* a new town re-creates the view: drop the old scene objects */ const s = GAME.v.scene(); while (s.children.length) s.remove(s.children[0]); }
+  GAME.v = GameDNA_WfcTown3D.create({ canvas: glc, overlay: hud, w: GRID, d: GRID, maxH: MAXH, seed: SEED, heights: MAP, params, onEdit: ev => afterEdit(ev) });
+  GAME.town = GAME.v.town; GAME.tg = GAME.v;
+  if (GAME.v.gl) each('scene3d', THREE, GAME.v.scene(), GAME);
+  fit();
+}
+// Every change of the town goes through act(): the player, the toolbar and the bot all use it.
+function act(kind, x, z) {
+  if (kind === 'grow') return GAME.v.grow(x, z);
+  if (kind === 'shrink') return GAME.v.shrink(x, z);
+  if (kind === 'undo') return GAME.v.undo();
+  if (kind === 'redo') return GAME.v.redo();
+  return null;
+}
+GAME.act = act;
+let lastCounts = null;
+function afterEdit(ev) {
+  const counts = GAME.town.counts(); lastCounts = counts;
+  each('onEdit', Object.assign({ counts }, ev), GAME);
+  checkGoals(counts);
+}
+
+// ---------- 4. GOALS & AUTOPLAY ----------
+function goalCount(g) { const c = lastCounts || GAME.town.counts(); try { return Math.max(0, +g.count(c) || 0); } catch (e) { return 0; } }
+function checkGoals(counts) {
+  GOALS.forEach((g, i) => {
+    if (GAME.done[g.id]) return;
+    if (goalCount(g) >= g.need) { GAME.done[g.id] = true; if (GAME.builtinNotices) GAME.notice('Goal complete', g.label); each('onGoal', { id: g.id, label: g.label, need: g.need, index: i }, GAME); }
+  });
+  if (GAME.scene === 'play' && !GAME.result && GOALS.every(g => GAME.done[g.id])) { GAME.result = 'charter'; GAME.endT = GAME.t; setScene('complete'); each('onEnd', GAME.result, GAME); }
+}
+function setScene(s) { GAME.scene = s; each('onScene', s, GAME); }
+
+// The bot: goal-driven, deterministic, acts through act() every BOT_MS like a player clicking.
+const BOT_MS = 560;
+const bot = { wait: 900, queue: [], tries: {}, log: [] };
+function H(x, z) { return GAME.town.H(x, z); }
+function nb4(x, z) { return [[x + 1, z], [x - 1, z], [x, z + 1], [x, z - 1]]; }
+function cellsBy(fn) { const out = []; for (let z = 0; z < GRID; z++) for (let x = 0; x < GRID; x++) if (fn(x, z)) out.push([x, z]); return out; }
+function distC(x, z) { return Math.abs(x - 6.5) + Math.abs(z - 6.5); }
+function botPlan() {
+  const c = GAME.town.counts(); lastCounts = c;
+  const need = id => { const g = GOALS.find(q => q.id === id); return g && !GAME.done[g.id] ? g : null; };
+  if (need('island')) { // grow sea cells next to land, nearest to the middle first
+    const cand = cellsBy((x, z) => H(x, z) === 0 && x > 0 && z > 0 && x < GRID - 1 && z < GRID - 1 && nb4(x, z).some(([a, b]) => H(a, b) >= 1)).sort((a, b) => distC(a[0], a[1]) - distC(b[0], b[1]) || a[1] - b[1] || a[0] - b[0]);
+    if (cand.length) return [['grow', cand[0][0], cand[0][1]]];
+  }
+  if (need('houses') || need('doors')) { // a house on a land cell that keeps a land neighbour (lanes stay open)
+    const cand = cellsBy((x, z) => H(x, z) === 1 && (x + 2 * z) % 3 !== 0 && nb4(x, z).filter(([a, b]) => H(a, b) === 1).length >= 2 && nb4(x, z).every(([a, b]) => H(a, b) >= 1))
+      .sort((a, b) => distC(a[0], a[1]) - distC(b[0], b[1]) || a[1] - b[1] || a[0] - b[0]);
+    if (cand.length) return [['grow', cand[0][0], cand[0][1]]];
+    const more = cellsBy((x, z) => H(x, z) === 0 && x > 0 && z > 0 && x < GRID - 1 && z < GRID - 1 && nb4(x, z).some(([a, b]) => H(a, b) >= 1));
+    if (more.length) return [['grow', more[0][0], more[0][1]]];
+  }
+  if (need('tower')) { const hs = cellsBy((x, z) => H(x, z) >= 2 && (GAME.town.tile(x, 0, z) || {}).id !== 'arch').sort((a, b) => H(b[0], b[1]) - H(a[0], a[1]) || distC(a[0], a[1]) - distC(b[0], b[1])); if (hs.length) return [['grow', hs[0][0], hs[0][1]]]; }
+  if (need('stairs')) { // regrow a one-storey house next to a lane (a new roll of the wave collapse) until a stair appears
+    const k = 'stairs'; bot.tries[k] = (bot.tries[k] || 0) + 1;
+    const hs = cellsBy((x, z) => H(x, z) === 2 && nb4(x, z).some(([a, b]) => H(a, b) === 1)).sort((a, b) => distC(a[0], a[1]) - distC(b[0], b[1]) || a[1] - b[1] || a[0] - b[0]);
+    if (hs.length) { const [x, z] = hs[(bot.tries[k] - 1) % hs.length]; return [['shrink', x, z], ['grow', x, z]]; }
+    const hs3 = cellsBy((x, z) => H(x, z) === 3); if (hs3.length) { const [x, z] = hs3[(bot.tries[k] - 1) % hs3.length]; return [['shrink', x, z]]; }
+  }
+  if (need('arch')) { // two houses with a lane cell between them; the lane cell grows into a bridge house over an arch
+    const k = 'arch'; bot.tries[k] = (bot.tries[k] || 0) + 1;
+    const sites = cellsBy((x, z) => H(x, z) >= 1 && H(x - 1, z) >= 1 && H(x + 1, z) >= 1 && H(x, z - 1) === 1 && H(x, z + 1) === 1 && x > 1 && x < GRID - 2)
+      .sort((a, b) => distC(a[0], a[1]) - distC(b[0], b[1]) || a[1] - b[1] || a[0] - b[0]);
+    const s = sites[Math.floor((bot.tries[k] - 1) / 2) % Math.max(1, sites.length)];
+    if (s) { const [x, z] = s, steps = []; for (const xx of [x - 1, x + 1]) for (let h = H(xx, z); h < 3; h++) steps.push(['grow', xx, z]);
+      if (H(x, z) >= 3) steps.push(['shrink', x, z]); for (let h = Math.min(H(x, z), 2); h < 3; h++) steps.push(['grow', x, z]); return steps; }
+  }
+  return [];
+}
+function botStep(dt) {
+  if (!GAME.auto || GAME.scene !== 'play') return;
+  bot.wait -= dt; if (bot.wait > 0) return;
+  if (!bot.queue.length) bot.queue = botPlan();
+  const a = bot.queue.shift(); bot.wait = BOT_MS;
+  if (!a) return;
+  GAME.cursor = { x: a[1], z: a[2] }; GAME.mode = a[0] === 'shrink' ? 'shrink' : 'grow';
+  act(a[0], a[1], a[2]); bot.log.push(a.join(' ')); window.__botlog = bot.log;
+}
+GAME.setAuto = on => { GAME.auto = !!on; bot.queue = []; bot.wait = 300; };
+
+// ---------- 5. INPUT ----------
+const keysDown = {};
+function onKey(e, down) {
+  if (each('onKey', e, down, GAME)) { e.preventDefault(); return; }
+  if (!down) { keysDown[e.key] = false; return; }
+  const k = e.key, ctrl = e.ctrlKey || e.metaKey;
+  if (k === 'p' || k === 'P') { GAME.setAuto(!GAME.auto); e.preventDefault(); return; }
+  if (GAME.scene === 'complete' && GAME.t - GAME.endT > 2600) { if (k === 'z' || k === 'Z' || k === 'Enter' || k === ' ') { setScene('play'); GAME.setAuto(false); return; } }
+  if (k === 'r' || k === 'R') { newTown(); return; }
+  if (GAME.auto) return;
+  if ((k === 'z' || k === 'Z') && ctrl) { act('undo'); e.preventDefault(); return; }
+  if ((k === 'y' || k === 'Y') && ctrl) { act('redo'); e.preventDefault(); return; }
+  const arrows = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1], a: [-1, 0], d: [1, 0], w: [0, -1], s: [0, 1] };
+  if (arrows[k]) { const g = GAME.v.gridDirFromScreen(arrows[k][0], arrows[k][1]); GAME.cursor = { x: Math.max(0, Math.min(GRID - 1, GAME.cursor.x + g[0])), z: Math.max(0, Math.min(GRID - 1, GAME.cursor.z + g[1])) }; usingKeys = true; e.preventDefault(); return; }
+  if (k === 'z' || k === 'Z' || k === ' ' || k === 'Enter') { act(GAME.mode === 'shrink' ? 'shrink' : 'grow', GAME.cursor.x, GAME.cursor.z); usingKeys = true; e.preventDefault(); return; }
+  if (k === 'x' || k === 'X' || k === 'Backspace' || k === 'Delete') { act('shrink', GAME.cursor.x, GAME.cursor.z); usingKeys = true; e.preventDefault(); return; }
+  if (k === 'u' || k === 'U') { act('undo'); return; }
+  if (k === 'y' || k === 'Y') { act('redo'); return; }
+  if (k === 'Tab' || k === 'm' || k === 'M') { GAME.mode = GAME.mode === 'grow' ? 'shrink' : 'grow'; e.preventDefault(); return; }
+  if (k === 'q' || k === 'Q') { GAME.v.orbit(-45); return; }
+  if (k === 'e' || k === 'E') { GAME.v.orbit(45); return; }
+  if (k === '+' || k === '=') { GAME.v.zoomBy(1.15); return; }
+  if (k === '-' || k === '_') { GAME.v.zoomBy(1 / 1.15); return; }
+  if (k === 'c' || k === 'C') { cyclePalette(1); return; }
+  if (/^[1-4]$/.test(k)) { const p = GAME.v.palettes()[+k - 1]; if (p) setPalette(p.id); return; }
+}
+addEventListener('keydown', e => onKey(e, true)); addEventListener('keyup', e => onKey(e, false));
+let usingKeys = false, drag = null;
+function cssXY(e) { const r = glc.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+function buttonAt(x, y) { for (const b of buttons) if (x >= b.x && y >= b.y && x <= b.x + b.w && y <= b.y + b.h) return b; return null; }
+glc.addEventListener('contextmenu', e => e.preventDefault());
+glc.addEventListener('pointerdown', e => {
+  const [x, y] = cssXY(e); const b = buttonAt(x, y);
+  if (b) { b.fn(); pressed = { id: b.id, t: GAME.t }; e.preventDefault(); return; }
+  drag = { x, y, x0: x, y0: y, moved: false, button: e.button, id: e.pointerId }; try { glc.setPointerCapture(e.pointerId); } catch (er) {}
+});
+glc.addEventListener('pointermove', e => {
+  const [x, y] = cssXY(e);
+  if (drag) { const dx = x - drag.x, dy = y - drag.y; if (Math.abs(x - drag.x0) + Math.abs(y - drag.y0) > 8) drag.moved = true;
+    if (drag.moved) { GAME.v.orbit(-dx * 0.35); GAME.v.setPitch(GAME.v.camera3().pitch + dy * 0.2); } drag.x = x; drag.y = y; }
+  if (!drag || !drag.moved) { const c = buttonAt(x, y) ? null : GAME.v.pick(x, y); if (c) { GAME.cursor = { x: c.x, z: c.z }; usingKeys = false; hoverOn = true; } else hoverOn = false; }
+});
+glc.addEventListener('pointerup', e => {
+  const [x, y] = cssXY(e);
+  if (drag && !drag.moved && !GAME.auto && GAME.scene === 'play') { const c = GAME.v.pick(x, y); if (c) { GAME.cursor = { x: c.x, z: c.z }; act(drag.button === 2 || GAME.mode === 'shrink' ? 'shrink' : 'grow', c.x, c.z); } }
+  if (drag && !drag.moved && GAME.scene === 'complete' && GAME.t - GAME.endT > 2600) { setScene('play'); GAME.setAuto(false); }
+  drag = null;
+});
+glc.addEventListener('pointerleave', () => { hoverOn = false; });
+glc.addEventListener('wheel', e => { GAME.v.zoomBy(e.deltaY < 0 ? 1.1 : 1 / 1.1); e.preventDefault(); }, { passive: false });
+let hoverOn = false, pressed = null;
+function setPalette(id) { params.palette = id; GAME.v.setParams({ palette: id }); }
+function cyclePalette(d) { const ps = GAME.v.palettes(), i = ps.findIndex(p => p.id === params.palette); setPalette(ps[(i + d + ps.length) % ps.length].id); }
+function newTown() { GAME.done = {}; GAME.result = null; GAME.endT = 0; banners.length = 0; bot.tries = {}; bot.queue = []; makeTown(); lastCounts = GAME.town.counts(); setScene('play'); checkGoals(lastCounts); each('onNewTown', GAME); }
+
+// ---------- 6. HUD ----------
+const HUDR = {}; let buttons = []; const banners = [];
+const FONT = '"Trebuchet MS", "Segoe UI", system-ui, sans-serif';
+function rr(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+function panel(g, x, y, w, h, r, fill) {
+  g.save(); g.shadowColor = 'rgba(20,40,60,0.28)'; g.shadowBlur = 14; g.shadowOffsetY = 4; rr(g, x, y, w, h, r); g.fillStyle = fill || 'rgba(255,251,242,0.94)'; g.fill(); g.restore();
+  rr(g, x + 0.5, y + 0.5, w - 1, h - 1, r); g.strokeStyle = 'rgba(120,90,60,0.25)'; g.lineWidth = 1; g.stroke();
+}
+function icon(g, kind, cx, cy, s, col) {
+  g.save(); g.translate(cx, cy); g.scale(s / 24, s / 24); g.strokeStyle = col; g.fillStyle = col; g.lineWidth = 2.4; g.lineCap = 'round'; g.lineJoin = 'round';
+  if (kind === 'grow') { g.beginPath(); g.moveTo(-8, 9); g.lineTo(-8, -2); g.lineTo(0, -9); g.lineTo(8, -2); g.lineTo(8, 9); g.closePath(); g.stroke(); g.beginPath(); g.moveTo(0, -1); g.lineTo(0, 7); g.moveTo(-4, 3); g.lineTo(4, 3); g.stroke(); }
+  else if (kind === 'shrink') { g.beginPath(); g.moveTo(-8, 9); g.lineTo(-8, -2); g.lineTo(0, -9); g.lineTo(8, -2); g.lineTo(8, 9); g.closePath(); g.stroke(); g.beginPath(); g.moveTo(-4, 3); g.lineTo(4, 3); g.stroke(); }
+  else if (kind === 'undo' || kind === 'redo') { if (kind === 'redo') g.scale(-1, 1); g.beginPath(); g.arc(1, 2, 7, -Math.PI * 0.95, Math.PI * 0.55); g.stroke(); g.beginPath(); g.moveTo(-10, -4); g.lineTo(-6, 3); g.lineTo(-1, -3); g.stroke(); }
+  else if (kind === 'left' || kind === 'right') { if (kind === 'right') g.scale(-1, 1); g.beginPath(); g.arc(0, 2, 8, Math.PI * 1.1, Math.PI * 1.95); g.stroke(); g.beginPath(); g.moveTo(-11, -5); g.lineTo(-7, 1); g.lineTo(-2, -4); g.stroke(); g.beginPath(); g.ellipse(0, 6, 7, 2.5, 0, 0, 7); g.stroke(); }
+  else if (kind === 'auto') { g.beginPath(); g.moveTo(-5, -8); g.lineTo(8, 0); g.lineTo(-5, 8); g.closePath(); g.fill(); }
+  else if (kind === 'pause') { g.fillRect(-7, -8, 5, 16); g.fillRect(2, -8, 5, 16); }
+  else if (kind === 'check') { g.lineWidth = 3; g.beginPath(); g.moveTo(-6, 0); g.lineTo(-2, 5); g.lineTo(7, -6); g.stroke(); }
+  g.restore();
+}
+function layout() {
+  const phone = VW < 560, S = phone ? 46 : 54, gap = phone ? 6 : 8;
+  const ids = ['grow', 'shrink', 'undo', 'redo', 'left', 'right', 'auto'];
+  const tw = ids.length * S + (ids.length - 1) * gap + 2 * gap + 2 * (phone ? 4 : 10);
+  const tx = Math.round((VW - tw) / 2), ty = VH - S - (phone ? 16 : 18) - 2 * gap;
+  HUDR.toolbar = { x: tx, y: ty, w: tw, h: S + 2 * gap };
+  const gw = phone ? VW - 24 : 300, gh = phone ? 58 : 46 + GOALS.length * 25;
+  HUDR.goals = { x: 12, y: 12, w: gw, h: gh };
+  const pw = 4 * 34 + 14, ph = 44;
+  HUDR.palette = phone ? { x: VW - pw - 12, y: 12 + gh + 8, w: pw, h: ph } : { x: VW - pw - 14, y: 14, w: pw, h: ph };
+  hctx.font = 'bold 12px ' + FONT; const sw = Math.ceil(hctx.measureText('Houses 00   Storeys 000   Arches 00   Stairs 00').width) + 26;
+  HUDR.stats = phone ? { x: 12, y: 12 + gh + 8, w: Math.min(190, VW - pw - 36), h: ph } : { x: VW - sw - 14, y: 14 + ph + 8, w: sw, h: 34 };
+  buttons = ids.map((id, i) => ({ id, x: tx + gap + (phone ? 4 : 10) + i * (S + gap), y: ty + gap, w: S, h: S, fn: () => toolbar(id) }));
+  const pal = GAME.v ? GAME.v.palettes() : [];
+  pal.forEach((p, i) => buttons.push({ id: 'pal-' + p.id, x: HUDR.palette.x + 9 + i * 34, y: HUDR.palette.y + 7, w: 30, h: 30, fn: () => setPalette(p.id) }));
+}
+function toolbar(id) {
+  if (id === 'auto') { GAME.setAuto(!GAME.auto); return; }
+  if (GAME.auto) return;
+  if (id === 'grow' || id === 'shrink') GAME.mode = id;
+  else if (id === 'undo' || id === 'redo') act(id);
+  else if (id === 'left') GAME.v.orbit(-45); else if (id === 'right') GAME.v.orbit(45);
+}
+function drawHUD(g) {
+  const phone = VW < 560, c = lastCounts || GAME.town.counts();
+  // goal card
+  const R = HUDR.goals; panel(g, R.x, R.y, R.w, R.h, 14);
+  const doneN = GOALS.filter(q => GAME.done[q.id]).length;
+  g.fillStyle = '#7a5a3a'; g.font = 'bold 11px ' + FONT; g.textBaseline = 'middle'; g.fillText('HARBOUR CHARTER', R.x + 14, R.y + 16);
+  g.fillStyle = '#b08a5a'; g.textAlign = 'right'; g.fillText(doneN + ' / ' + GOALS.length, R.x + R.w - 14, R.y + 16); g.textAlign = 'left';
+  const rows = phone ? [GOALS.find(q => !GAME.done[q.id]) || GOALS[GOALS.length - 1]] : GOALS;
+  rows.forEach((q, i) => {
+    const y = R.y + (phone ? 40 : 40 + i * 25), ok = !!GAME.done[q.id], n = Math.min(goalCount(q), q.need);
+    g.beginPath(); g.arc(R.x + 22, y, 8.5, 0, 7); g.fillStyle = ok ? '#5fae6a' : 'rgba(0,0,0,0)'; g.fill(); g.strokeStyle = ok ? '#5fae6a' : '#c9b294'; g.lineWidth = 2; g.stroke();
+    if (ok) icon(g, 'check', R.x + 22, y, 15, '#ffffff');
+    g.fillStyle = ok ? '#9a8a78' : '#3d3026'; g.font = (ok ? '' : 'bold ') + '14px ' + FONT; g.fillText(q.label, R.x + 38, y + 1);
+    if (!ok && q.need > 1) { g.fillStyle = '#b08a5a'; g.font = 'bold 13px ' + FONT; g.textAlign = 'right'; g.fillText(n + '/' + q.need, R.x + R.w - 14, y + 1); g.textAlign = 'left'; }
+  });
+  // palette chips
+  const P = HUDR.palette; panel(g, P.x, P.y, P.w, P.h, 22);
+  GAME.v.palettes().forEach((p, i) => {
+    const cx = P.x + 24 + i * 34, cy = P.y + 22, on = p.id === params.palette;
+    p.swatch.forEach((col, k) => { g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, 12, -Math.PI / 2 + k * 2.094, -Math.PI / 2 + (k + 1) * 2.094); g.closePath(); g.fillStyle = col; g.fill(); });
+    g.beginPath(); g.arc(cx, cy, 12, 0, 7); g.strokeStyle = on ? '#3d3026' : 'rgba(61,48,38,0.25)'; g.lineWidth = on ? 3 : 1.5; g.stroke();
+  });
+  // stats pill
+  const Sx = HUDR.stats; panel(g, Sx.x, Sx.y, Sx.w, Sx.h, 12);
+  g.fillStyle = '#5a4634'; g.font = 'bold 12px ' + FONT;
+  const line = phone ? ['Houses ' + c.houses, 'Arches ' + c.arches + '  Stairs ' + c.stairs] : ['Houses ' + c.houses + '   Storeys ' + c.storeys + '   Arches ' + c.arches + '   Stairs ' + c.stairs];
+  line.forEach((l, i) => g.fillText(l, Sx.x + 12, Sx.y + (line.length > 1 ? 14 + i * 16 : Sx.h / 2 + 1)));
+  // toolbar
+  const T = HUDR.toolbar; panel(g, T.x, T.y, T.w, T.h, 18);
+  const labels = { grow: 'Build', shrink: 'Remove', undo: 'Undo', redo: 'Redo', left: 'Turn', right: 'Turn', auto: GAME.auto ? 'Stop' : 'Auto' };
+  buttons.filter(b => labels[b.id]).forEach(b => {
+    const active = (b.id === GAME.mode && !GAME.auto) || (b.id === 'auto' && GAME.auto), dis = (b.id === 'undo' && !GAME.town.canUndo()) || (b.id === 'redo' && !GAME.town.canRedo());
+    const hot = pressed && pressed.id === b.id && GAME.t - pressed.t < 140;
+    rr(g, b.x, b.y + (hot ? 2 : 0), b.w, b.h, 12); g.fillStyle = active ? (b.id === 'shrink' ? '#e0735f' : '#5fa3d0') : '#f1e6d4'; g.fill();
+    if (!active) { g.strokeStyle = 'rgba(120,90,60,0.22)'; g.lineWidth = 1; g.stroke(); }
+    const col = active ? '#ffffff' : dis ? '#cbb9a2' : '#5a4634';
+    icon(g, b.id === 'auto' && GAME.auto ? 'pause' : b.id, b.x + b.w / 2, b.y + b.h / 2 - 6 + (hot ? 2 : 0), b.w * 0.44, col);
+    g.fillStyle = col; g.font = 'bold ' + (phone ? 10 : 11) + 'px ' + FONT; g.textAlign = 'center'; g.fillText(labels[b.id], b.x + b.w / 2, b.y + b.h - 9 + (hot ? 2 : 0)); g.textAlign = 'left';
+  });
+  // cursor tag above the hovered / key cell
+  if (GAME.scene === 'play' && (hoverOn || usingKeys || GAME.auto)) {
+    const a = GAME.v.anchorOf(GAME.cursor.x, GAME.cursor.z), h = H(GAME.cursor.x, GAME.cursor.z);
+    if (a && a.visible) {
+      const txt = h === 0 ? 'Sea' : h === 1 ? 'Land' : (h - 1) + (h === 2 ? ' storey' : ' storeys');
+      g.font = 'bold 12px ' + FONT; const w = g.measureText(txt).width + 18, x = Math.round(a.x - w / 2), y = Math.round(a.y - 40);
+      const tag = { x, y, w, h: 22 };
+      if (!Object.values(HUDR).some(r => r && r !== HUDR.tag && x < r.x + r.w && x + w > r.x && y < r.y + r.h && y + 22 > r.y)) {
+        HUDR.tag = tag; panel(g, x, y, w, 22, 11, 'rgba(61,48,38,0.82)'); g.fillStyle = '#fff6e6'; g.textAlign = 'center'; g.fillText(txt, a.x, y + 12); g.textAlign = 'left';
+      } else HUDR.tag = null;
+    } else HUDR.tag = null;
+  } else HUDR.tag = null;
+}
+function drawBanners(g) {
+  HUDR.banner = null;
+  const b = banners[0]; if (!b) return;
+  const t = b.t, k = t < 250 ? t / 250 : t > 2200 ? 1 - (t - 2200) / 300 : 1, e = 1 - Math.pow(1 - Math.max(0, Math.min(1, k)), 3);
+  g.font = 'bold 16px ' + FONT; const w = Math.max(220, g.measureText(b.sub).width + 120), x = Math.round((VW - w) / 2);
+  const phone = VW < 560, y0 = phone ? HUDR.stats.y + HUDR.stats.h + 10 : 18, y = Math.round(y0 - (1 - e) * 30);
+  g.globalAlpha = e; panel(g, x, y, w, 52, 26, 'rgba(61,48,38,0.9)');
+  g.beginPath(); g.arc(x + 28, y + 26, 14, 0, 7); g.fillStyle = '#f2b134'; g.fill(); icon(g, 'check', x + 28, y + 26, 18, '#3d3026');
+  g.fillStyle = '#f2d9a8'; g.font = 'bold 11px ' + FONT; g.fillText(b.text.toUpperCase(), x + 52, y + 18);
+  g.fillStyle = '#fff8ec'; g.font = 'bold 16px ' + FONT; g.fillText(b.sub, x + 52, y + 36); g.globalAlpha = 1;
+  HUDR.banner = { x, y, w, h: 52 };
+}
+function drawCharter(g) {
+  HUDR.card = null;
+  if (GAME.scene !== 'complete') return;
+  const t = GAME.t - GAME.endT - 2600, e = Math.min(1, t / 500), c = lastCounts || GAME.town.counts(); if (t < 0) return;   // after the last goal's banner
+  const w = Math.min(420, VW - 32), h = 200, x = Math.round((VW - w) / 2), y = Math.round(HUDR.toolbar.y - h - 18 + (1 - e) * 24);
+  g.globalAlpha = e; panel(g, x, y, w, h, 20);
+  g.fillStyle = '#b08a5a'; g.font = 'bold 12px ' + FONT; g.textAlign = 'center'; g.fillText('EVERY GOAL MET', VW / 2, y + 30);
+  g.fillStyle = '#3d3026'; g.font = 'bold 30px ' + FONT; g.fillText('Charter Granted', VW / 2, y + 66);
+  g.fillStyle = '#6b5440'; g.font = '15px ' + FONT;
+  g.fillText(c.houses + ' houses, ' + c.storeys + ' storeys, ' + c.doors + ' doors', VW / 2, y + 104);
+  g.fillText(c.arches + (c.arches === 1 ? ' arch, ' : ' arches, ') + c.stairs + (c.stairs === 1 ? ' stair, ' : ' stairs, ') + c.turrets + (c.turrets === 1 ? ' turret' : ' turrets'), VW / 2, y + 126);
+  g.fillStyle = '#b08a5a'; g.font = 'bold 13px ' + FONT; g.fillText('Z or tap: keep building     R: new island', VW / 2, y + 168); g.textAlign = 'left';
+  g.globalAlpha = 1; HUDR.card = { x, y, w, h };
+}
+
+// ---------- 7. UPDATE & DRAW ----------
+function step() {
+  const dt = STEP_MS; GAME.t += dt;
+  botStep(dt);
+  if (banners.length) { banners[0].t += dt; if (banners[0].t > 2500) banners.shift(); }
+  if (GAME.scene === 'complete' && GAME.auto) GAME.v.orbit(0.06);
+  if (FOCUS === 'arch') { const a = GAME.town.slots().find(q => q.id === 'arch'); if (a) GAME.v.focus(a.x, a.z, true); }
+  GAME.v.setHover(GAME.scene === 'play' && (hoverOn || usingKeys || GAME.auto) ? GAME.cursor : null, GAME.mode);
+  GAME.v.update(dt);
+  each('update', GAME, { dt, t: GAME.t });
+}
+function draw() {
+  GAME.v.render();
+  const g = GAME.v.overlayContext() || hctx;
+  layout();
+  each('draw', g, GAME);
+  drawHUD(g); drawBanners(g);
+  each('drawUI', g, GAME);
+  drawCharter(g);
+  document.documentElement.dataset.state = GAME.scene + (GAME.result ? ':' + GAME.result : '');
+}
+function fit() {
+  VW = Math.max(1, innerWidth); VH = Math.max(1, innerHeight); DPR = Math.min(3, devicePixelRatio || 1);
+  GAME.view = { w: VW, h: VH }; GAME.field = { x: 0, y: 0, w: VW, h: VH };
+  if (GAME.v) { GAME.v.resize(VW, VH, DPR); if (VW < 560) GAME.v.setZoom(+(Q.get('zoom') || 1.0) * 0.78, true); }
+  layout();
+}
+addEventListener('resize', fit);
+function stateObj() {
+  const s = GAME.v.state();
+  return Object.assign(s, { scene: GAME.scene, result: GAME.result, mode: GAME.mode, auto: GAME.auto, goals: GOALS.map(q => ({ id: q.id, done: !!GAME.done[q.id], n: goalCount(q), need: q.need })), cursor: GAME.cursor, gt: Math.round(GAME.t), endT: GAME.endT || null });
+}
+window.__state = stateObj;
+
+// ---------- 8. BOOT ----------
+GAME.boot = function () {
+  GAME.shipped = GAME.shipped || { tiles: [], goals: GOALS.map(q => q.id) }; // what the starter itself ships (recorded before addons add content)
+  makeTown(); lastCounts = GAME.town.counts(); checkGoals(lastCounts);
+  GAME.setAuto(AUTO);
+  if (FREEZE) {
+    const n = Math.round(T_AT / STEP_MS); for (let i = 0; i < n; i++) step();
+    GAME.frozen = true; draw();
+    window.__advance = (ms, noDraw) => { const k = Math.round(ms / STEP_MS); for (let i = 0; i < k; i++) step(); if (!noDraw) draw(); return stateObj(); };
+    window.__frozen = true; return;
+  }
+  let acc = 0, last = performance.now();
+  function frame(now) { acc += Math.min(250, now - last); last = now; while (acc >= STEP_MS) { step(); acc -= STEP_MS; } draw(); requestAnimationFrame(frame); }
+  requestAnimationFrame(frame);
+};
+GAME.shipped = { tiles: GameDNA_WfcTown3D.rules().tiles.slice(), goals: GOALS.map(q => q.id) };
+</script>
+<script>
+/* ===================================== ADDONS SLOT =====================================
+   Load addon modules with <script src> tags right above this script (or paste them here unchanged),
+   then register each addon as one object, before the game boots:
+     GAME.addons.push({ onEdit(ev, game) {...}, onGoal(goal, game) {...}, update(game, info) {...}, draw(ctx, game) {...} });
+   New tiles, socket pairs and goals also go here: GAME.addTile({...}), GAME.addPair('h', 'g'), GAME.addGoal({...}).
+   Hooks and helpers: see README.md (section "Extension points").
+   ======================================================================================= */
+</script>
+<script>GAME.boot();</script>
+</body>
+</html>

@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Terrace Skirmish</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0c101a; overflow: hidden; touch-action: none; }
+  #stage { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 40px rgba(0,0,0,0.6); }
+  #stage canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; }
+  #gl { background: #9fc3e3; }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="gl"></canvas><canvas id="ui"></canvas></div>
+<!-- three.js 0.149.0 (MIT), the file next to this page. Never a CDN. -->
+<script src="three.min.js"></script>
+<!-- N-03 module, pasted unchanged -->
+<script>
+/*@@MODULE@@*/
+</script>
+<script>
+// =====================================================================================================
+// TERRACE SKIRMISH: the N-03 tactics-grid-3d starter. One file; three.min.js sits next to it.
+//   1. CONFIG & ROSTER     map rows, unit stats, URL flags
+//   2. EXTENSION POINTS    the GAME object: addons, hooks, hit site, anchors, rects, clock helpers
+//   3. RULES               damage, forecast, applyHit (the hit site), combat (attack -> counter)
+//   4. BATTLEFIELD         GameDNA_TacticsGrid3D.create(...), actors, overlays
+//   5. TURNS & AI          phases, plan() (enemy AI and autoplay), execute(), win / lose
+//   6. INPUT               keyboard, mouse, touch, the input chain
+//   7. UPDATE & DRAW       step() at 60 Hz, draw(): 3D, HP bars, numbers, addon draw, HUD, addon drawUI, banner
+//   8. BOOT                GAME.boot() runs after the ADDONS SLOT script below
+// =====================================================================================================
+'use strict';
+
+// ---------- 1. CONFIG & ROSTER ----------
+let VW = 960, VH = 540; const STEP_MS = 1000 / 60;   // logical overlay px: 960x540 landscape, 540 x (taller) in portrait
+const Q = new URLSearchParams(location.search);
+const FREEZE = Q.get('freeze') === '1', T_AT = +Q.get('t') || 0, SCRIPT = Q.get('script') || '';
+let AUTO = Q.get('auto') === '1';
+const SEED = (+Q.get('seed') || 7) >>> 0, MAX_TURNS = 20;
+const MAP = {
+  // height level per tile (0-9), one row per z, one char per x
+  heights: [
+    '332210012455',
+    '433210012455',
+    '432100001355',
+    '432210012344',
+    '332211012344',
+    '322111222334',
+    '321100012334',
+    '321100012233',
+    '221100011223',
+    '211000001122',
+    '111000000112',
+    '110000000011'],
+  // g grass, s stone, d sand, w water
+  terrain: [
+    'ggggdwwdgsss',
+    'ggggdwwdgsss',
+    'gggddddddsss',
+    'ggggdwwdggss',
+    'ggggdwwdgggs',
+    'gggggsssgggg',
+    'ggggdwwdgggg',
+    'ggggdwwdgggg',
+    'gggddwwddggg',
+    'ggddwwwwddgg',
+    'ggdwwwwwwdgg',
+    'ggdwwwwwwddg'],
+  // T broadleaf tree, P pine, r rock, R ruined column (all block movement)
+  props: [
+    'P.........R.',
+    '..T.......P.',
+    '.........R..',
+    '.r.......T..',
+    '..........r.',
+    '...T........',
+    '.........P..',
+    'P......T....',
+    '..........r.',
+    '.r..........',
+    '...........P',
+    '.P..........']
+};
+// side 'a' = player (blue), 'b' = enemy (red). rng = [min, max] Manhattan. magic halves the target's DEF.
+const ROSTER = [
+  { id: 'aldric', name: 'Aldric', cls: 'knight', side: 'a', x: 1, z: 7, hp: 34, atk: 14, def: 7, mv: 4, jump: 2, rng: [1, 1] },
+  { id: 'brenna', name: 'Brenna', cls: 'lancer', side: 'a', x: 2, z: 8, hp: 28, atk: 13, def: 4, mv: 5, jump: 3, rng: [1, 1] },
+  { id: 'corin', name: 'Corin', cls: 'knight', side: 'a', x: 2, z: 6, hp: 34, atk: 13, def: 7, mv: 4, jump: 2, rng: [1, 1] },
+  { id: 'dessa', name: 'Dessa', cls: 'lancer', side: 'a', x: 0, z: 8, hp: 28, atk: 13, def: 4, mv: 5, jump: 3, rng: [1, 1] },
+  { id: 'gorrak', name: 'Gorrak', cls: 'brute', side: 'b', x: 9, z: 4, hp: 30, atk: 13, def: 4, mv: 4, jump: 2, rng: [1, 1] },
+  { id: 'mukka', name: 'Mukka', cls: 'brute', side: 'b', x: 10, z: 2, hp: 30, atk: 12, def: 4, mv: 4, jump: 2, rng: [1, 1] },
+  { id: 'vesh', name: 'Vesh', cls: 'shaman', side: 'b', x: 11, z: 3, hp: 20, atk: 11, def: 2, mv: 4, jump: 2, rng: [1, 2], magic: true },
+  { id: 'ilza', name: 'Ilza', cls: 'shaman', side: 'b', x: 11, z: 0, hp: 20, atk: 10, def: 2, mv: 4, jump: 2, rng: [1, 2], magic: true }
+];
+const CLASS_NAME = { knight: 'Knight', lancer: 'Lancer', archer: 'Archer', brute: 'Brute', shaman: 'Shaman' };
+// class -> {look: built-in model, attack: 'melee' | 'arrow' | 'bolt'}; addons add classes with GAME.addClass
+const CLASS_DEF = { knight: { look: 'knight', attack: 'melee' }, lancer: { look: 'lancer', attack: 'melee' }, archer: { look: 'archer', attack: 'arrow' }, brute: { look: 'brute', attack: 'melee' }, shaman: { look: 'shaman', attack: 'bolt' } };
+const lookOf = cls => (CLASS_DEF[cls] && CLASS_DEF[cls].look) || cls;
+
+// ---------- 2. EXTENSION POINTS ----------
+// Addons push one object onto GAME.addons in the ADDONS SLOT (below this script, before boot). Every member is optional:
+//   onHit(ev, game)        every HP change, on the impact frame, after HP changed (see applyHit)
+//   onMove(ev, game)       every tile step of a walk: {id, from:{x,z}, to:{x,z}, step, steps, hop, dh, dir:[dx,dz]}; and ev.end = true when the walk ends
+//   update(game, info)     every 60 Hz step; info = {dt (ms, 0 while frozen), frozen}
+//   draw(ctx, game)        2D overlay, world-effects layer: after HP bars and built-in numbers, before the HUD (logical 960x540 px)
+//   drawUI(ctx, game)      2D overlay, top UI layer: after the HUD and menus, before banners
+//   scene3d(THREE, scene, game)   once after the 3D world is built (and after restart): add your own 3D objects
+//   onKey(e, down, game)   first in the input chain; return true to consume the key
+//   onTurnStart(turn, side, game), onPhase(phase, game), onEnd(result, game)
+const GAME = {
+  addons: [],
+  builtinNumbers: true,        // false when an addon draws damage numbers
+  units: [], turn: 1, phase: 'player', result: null, auto: false, frozen: false,
+  tg: null,                    // the GameDNA_TacticsGrid3D instance (scene, camera, rules, anchors)
+  overlay: { w: VW, h: VH },   // the 2D overlay canvas size in logical px; ctx is passed to draw / drawUI
+  uiRectsExtra: {},
+  hit: null, anchorOf: null, uiRects: null, unitRects: null, setUIRect: null, hitStop: null, shake: null, flash: null, field: { x: 0, y: 0, w: VW, h: VH }
+};
+window.GAME = GAME;
+function each(hook, ...args) { for (const a of GAME.addons) { const f = a && a[hook]; if (typeof f === 'function') { try { const r = f.apply(a, args); if (r === true) return true; } catch (e) { console.warn('addon ' + hook + ' threw', e); } } } return false; }
+// (10) Content: call these in the ADDONS SLOT (before boot). addClass(id, {name, look, attack}) then addUnit({...ROSTER row}).
+GAME.addClass = (id, def) => { if (!id || !def) return false; CLASS_NAME[id] = def.name || id; CLASS_DEF[id] = { look: GameDNA_TacticsGrid3D.LOOKS.includes(def.look) ? def.look : 'knight', attack: ['melee', 'arrow', 'bolt'].includes(def.attack) ? def.attack : 'melee' }; return true; };
+GAME.addUnit = (def) => {
+  const need = ['id', 'name', 'cls', 'side', 'x', 'z', 'hp', 'atk', 'def', 'mv', 'jump', 'rng'];
+  const miss = need.filter(k => def == null || def[k] == null); if (miss.length) { console.warn('GAME.addUnit: missing ' + miss.join(', ')); return false; }
+  if (ROSTER.some(r => r.id === def.id)) { console.warn('GAME.addUnit: duplicate id ' + def.id); return false; }
+  ROSTER.push(Object.assign({}, def, { rng: Array.isArray(def.rng) ? def.rng.slice() : [def.rng, def.rng] })); return true;   // used from the next newGame()
+};
+GAME.unitById = id => GAME.units.find(u => u.id === id) || null;
+GAME.alive = () => GAME.units.filter(u => u.hp > 0);
+// anchor in overlay px: {x (feet centre), top (head top), w, h, left, footY, cy, dead}; follows walks, hops and lunges
+GAME.anchorOf = (id) => { const a = GAME.tg && GAME.tg.anchorOf(id); if (!a) return null; return Object.assign(a, { top: a.top - 14 }); };  // top includes the HP bar
+GAME.unitRects = () => GAME.units.filter(u => u.hp > 0).map(u => { const a = GAME.tg.anchorOf(u.id); return { id: u.id, x: a.left, y: a.top - 14, w: a.w, h: a.h + 14 }; });
+GAME.setUIRect = (name, r) => { if (r) GAME.uiRectsExtra[name] = r; else delete GAME.uiRectsExtra[name]; };
+GAME.uiRects = () => UI_RECTS.concat(Object.values(GAME.uiRectsExtra));
+GAME.hitStop = (ms) => { hitStopMs = Math.max(hitStopMs, +ms || 0); };
+GAME.shake = (px, ms) => { GAME.tg && GAME.tg.shake(px, ms); };
+GAME.flash = (color, ms) => { flashFx = { color: color || '#ffffff', t: 0, ms: +ms || 160 }; };
+let UI_RECTS = [], hitStopMs = 0, flashFx = null;
+
+// ---------- 3. RULES ----------
+let rng = mulberry(SEED);
+function mulberry(a) { return function () { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+const hAt = (x, z) => { const t = GAME.tg.tile(x, z); return t ? t.h : 0; };
+// damage at a given attacker tile: ATK - DEF (magic: DEF/2), +1 per height level above the target (max +2), -1 per level below (max -2)
+function damage(att, def, from) {
+  const f = from || att, hb = Math.max(-2, Math.min(2, hAt(f.x, f.z) - hAt(def.x, def.z)));
+  const d = att.atk - (att.magic ? Math.floor(def.def / 2) : def.def) + hb;
+  return Math.max(1, d);
+}
+const CRIT = 0.1;
+function canCounter(def, att, attFrom) { return def.hp > 0 && GAME.tg.canHit(def, def.x, def.z, attFrom.x, attFrom.z); }
+GAME.forecastData = (attId, defId) => {
+  const att = typeof attId === 'string' ? GAME.unitById(attId) : attId, def = typeof defId === 'string' ? GAME.unitById(defId) : defId;
+  if (!att || !def) return null;
+  const dmg = damage(att, def), hpAfter = Math.max(0, def.hp - dmg);
+  const counter = hpAfter > 0 && canCounter(def, att, att) ? { dmg: damage(def, att), hpAfter: Math.max(0, att.hp - damage(def, att)) } : null;
+  return { dmg, crit: Math.round(CRIT * 100), hpAfter, counter, height: hAt(att.x, att.z) - hAt(def.x, def.z) };
+};
+// THE HIT SITE: every HP change goes through here (attacks, counters, heals; addons call GAME.hit for poison etc.)
+function applyHit(attacker, target, amount, kind, crit) {
+  if (!target) return;
+  amount = Math.max(0, Math.round(+amount || 0));
+  const before = target.hp;
+  target.hp = kind === 'heal' ? Math.min(target.maxHp, target.hp + amount) : Math.max(0, target.hp - amount);
+  const real = Math.abs(target.hp - before), killed = before > 0 && target.hp <= 0;
+  if (kind !== 'heal' && real > 0) {
+    if (killed) GAME.tg.defeat(target.id); else GAME.tg.hurt(target.id, attacker && attacker.id);
+    GAME.hitStop(crit ? 110 : 60); GAME.shake(crit ? 7 : 3.5, crit ? 260 : 160);
+    if (crit) GAME.flash('#fff6d0', 120);
+  }
+  if (GAME.builtinNumbers) pushNumber(target.id, real, kind, crit);
+  const ev = { attacker: attacker ? attacker.id : null, target: target.id, amount: real, kind, crit: !!crit, killed, hpBefore: before, hpAfter: target.hp, max: target.maxHp, anchor: GAME.anchorOf(target.id) };
+  each('onHit', ev, GAME);
+  return ev;
+}
+GAME.hit = (attId, tgtId, amount, kind) => applyHit(attId ? GAME.unitById(attId) : null, GAME.unitById(tgtId), amount, kind || 'attack', false);
+// one exchange: attack, then the defender's counter if it survives and reaches. done() after everything settled.
+GAME.battleCam = Q.get('battleCam') !== '0';   // turn the camera 90 deg when the attacker would stand behind its target
+function whenIdle(fn) { if (GAME.tg.busy()) after(50, () => whenIdle(fn)); else fn(); }   // wait for falls and projectiles to finish
+function combat(att, def, done) {
+  const f = GAME.tg.camForward(), behind = (att.x - def.x) * f[0] + (att.z - def.z) * f[1] > 0.01;
+  if (GAME.battleCam && behind) { const c = Math.cos(Math.PI / 2), sn = Math.sin(Math.PI / 2), dx = att.x - def.x, dz = att.z - def.z;
+    // the turn (+1 or -1) after which the attacker is nearer the camera than its target
+    const fr = [f[0] * c + f[1] * sn, -f[0] * sn + f[1] * c]; GAME.tg.rotate(dx * fr[0] + dz * fr[1] < 0 ? 1 : -1); return after(420, () => strike(att, def, done)); }
+  strike(att, def, done);
+}
+function strike(att, def, done) {
+  done = (fn => () => whenIdle(fn))(done);
+  const roll = rng(), crit = roll < CRIT, dmg = crit ? Math.floor(damage(att, def) * 1.5) : damage(att, def);
+  GAME.tg.attack(att.id, def.id, {
+    kind: (CLASS_DEF[att.cls] || {}).attack,
+    onImpact: () => applyHit(att, def, dmg, 'attack', crit),
+    onDone: () => {
+      if (canCounter(def, att, att) && att.hp > 0) {
+        const r2 = rng(), c2 = r2 < CRIT, d2 = c2 ? Math.floor(damage(def, att) * 1.5) : damage(def, att);
+        after(160, () => GAME.tg.attack(def.id, att.id, { kind: (CLASS_DEF[def.cls] || {}).attack, onImpact: () => applyHit(def, att, d2, 'counter', c2), onDone: () => after(200, done) }));
+      } else after(200, done);
+    }
+  });
+}
+
+// ---------- 4. BATTLEFIELD ----------
+const glCanvas = document.getElementById('gl'), uiCanvas = document.getElementById('ui'), stage = document.getElementById('stage');
+function makeBattlefield() {
+  if (GAME.tg) return GAME.tg;
+  const tg = GameDNA_TacticsGrid3D.create({
+    canvas: glCanvas, overlay: uiCanvas, view: { w: VW, h: VH }, map: MAP, seed: SEED,
+    params: { zoom: +Q.get('zoom') || 2, camStep: +Q.get('cam') || 0, light: Q.get('light') || 'day' },
+    units: () => GAME.units.filter(u => u.hp > 0),
+    onStep: ev => each('onMove', ev, GAME)
+  });
+  GAME.tg = tg;
+  return tg;
+}
+function placeUnits() {
+  const tg = GAME.tg; tg.clearActors();
+  GAME.units = ROSTER.map(r => Object.assign({}, r, { rng: r.rng.slice(), maxHp: r.hp, acted: false, moved: false }));
+  for (const u of GAME.units) { if (!tg.passable(u.x, u.z)) console.warn('unit ' + u.id + ' stands on a blocked tile'); tg.addActor({ id: u.id, side: u.side, cls: lookOf(u.cls), x: u.x, z: u.z }); }
+  for (const u of GAME.units) { const f = nearestFoe(u); if (f) tg.face(u.id, f.id); }  // everyone starts looking at the nearest foe
+}
+
+// ---------- 5. TURNS & AI ----------
+let timers = [], mode = 'idle', sel = null, reach = null, menu = null, tgt = null, cursor = { x: 1, z: 7 }, threatAll = false, hoverThreat = null, banner = null, numbers = [], undo = null;
+function after(ms, fn) { timers.push({ at: simT + ms, fn }); }
+let simT = 0;
+function setPhase(p) { GAME.phase = p; each('onPhase', p, GAME); }
+function newGame() {
+  rng = mulberry(SEED); timers = []; numbers = []; simT = 0; GAME.turn = 1; GAME.result = null; mode = 'idle'; sel = null; reach = null; menu = null; tgt = null; threatAll = false; hoverThreat = null; undo = null;
+  hitStopMs = 0; flashFx = null; GAME.uiRectsExtra = {};
+  placeUnits(); GAME.tg.clearOverlays(); cursor = { x: 1, z: 7 }; GAME.tg.setCursor(cursor.x, cursor.z);
+  each('scene3d', THREE, GAME.tg.scene, GAME);
+  startTurn('a');
+}
+function startTurn(side) {
+  for (const u of GAME.units) { GAME.tg.setDim(u.id, false); if (u.side === side) { u.acted = false; u.moved = false; } }
+  setPhase(side === 'a' ? 'player' : 'enemy');
+  showBanner(side === 'a' ? 'PLAYER PHASE' : 'ENEMY PHASE', side === 'a' ? '#69b8ff' : '#ff7a66', 'Turn ' + GAME.turn);
+  each('onTurnStart', GAME.turn, side, GAME);
+  mode = 'banner';
+  after(1150, () => {
+    if (GAME.result) return;
+    if (side === 'a') { mode = 'idle'; GAME.tg.setCursor(cursor.x, cursor.z); refreshOverlays(); if (GAME.auto) after(250, autoStep); }
+    else { mode = 'busy'; after(150, () => runSide('b')); }
+  });
+}
+function endTurn() {
+  if (GAME.result) return;
+  GAME.tg.clearOverlays(); sel = null; GAME.tg.setSelected(null); menu = null; tgt = null;
+  if (GAME.phase === 'player') startTurn('b');
+  else { GAME.turn++; if (GAME.turn > MAX_TURNS) return finish('TIME UP'); startTurn('a'); }
+}
+function checkEnd() {
+  const a = GAME.alive().some(u => u.side === 'a'), b = GAME.alive().some(u => u.side === 'b');
+  if (!b) { finish('VICTORY'); return true; } if (!a) { finish('DEFEAT'); return true; } return false;
+}
+function finish(result) {
+  GAME.result = result; GAME.endT = Math.round(simT); mode = 'over'; GAME.tg.clearOverlays(); GAME.tg.setSelected(null); setPhase('over');
+  showBanner(result, result === 'VICTORY' ? '#ffd76a' : result === 'DEFEAT' ? '#ff6a5a' : '#d8d8e8', result === 'VICTORY' ? 'The terraces are held' : result === 'DEFEAT' ? 'The line has broken' : 'Neither side yields', true);
+  each('onEnd', result, GAME);
+}
+// distance field (walking cost to stand next to any foe), ignoring move points; used to approach
+function approachField(u) {
+  const { w, h } = GAME.tg.size, dist = new Array(w * h).fill(Infinity), open = [];
+  for (const f of GAME.alive()) if (f.side !== u.side) { const k = f.z * w + f.x; dist[k] = 0; open.push(k); }
+  while (open.length) {
+    let bi = 0; for (let i = 1; i < open.length; i++) if (dist[open[i]] < dist[open[bi]]) bi = i;
+    const k = open.splice(bi, 1)[0], x = k % w, z = (k / w) | 0;
+    for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = x + dx, nz = z + dz; if (nx < 0 || nz < 0 || nx >= w || nz >= h) continue;
+      const c = dist[k] + GAME.tg.stepCost(nx, nz, x, z, u); const nk = nz * w + nx;
+      if (c < dist[nk]) { if (dist[nk] === Infinity) open.push(nk); dist[nk] = c; }
+    }
+  }
+  return dist;
+}
+// plan(u): the best {to, target} for this unit; shared by the enemy AI and autoplay. Deterministic.
+function plan(u) {
+  const tg = GAME.tg, alive = GAME.alive(), rc = tg.reachOf(u, alive), foes = alive.filter(o => o.side !== u.side);
+  let best = null;
+  for (const s of rc.stops) for (const f of foes) {
+    if (!tg.canHit(u, s.x, s.z, f.x, f.z)) continue;
+    const d = damage(u, f, s), kill = d >= f.hp;
+    const counter = !kill && f.hp > 0 && tg.canHit(f, f.x, f.z, s.x, s.z) ? damage(f, Object.assign({}, u, { x: s.x, z: s.z })) : 0;
+    const score = (kill ? 100 : 0) + 3 * d - 2 * counter + 1.5 * (hAt(s.x, s.z) - hAt(f.x, f.z)) - 0.05 * s.cost + (f.hp < f.maxHp ? 2 : 0);
+    if (!best || score > best.score) best = { score, to: s, target: f };
+  }
+  if (best) return best;
+  const field = approachField(u), w = tg.size.w; let to = null, bd = Infinity;
+  for (const s of rc.stops) { const d = field[s.z * w + s.x] + s.cost * 0.01; if (d < bd) { bd = d; to = s; } }
+  return { to: to || { x: u.x, z: u.z }, target: null };
+}
+function execute(u, p, done) {
+  const tg = GAME.tg, rc = tg.reachOf(u, GAME.alive()), path = tg.pathTo(rc, p.to.x, p.to.z) || [{ x: u.x, z: u.z }];
+  tg.setSelected(u.id); cursor = { x: p.to.x, z: p.to.z }; tg.setCursor(null); GAME.focusId = u.id;
+  const afterMove = () => {
+    u.x = p.to.x; u.z = p.to.z; u.moved = true; each('onMove', { id: u.id, end: true, to: { x: u.x, z: u.z } }, GAME);
+    if (p.target && p.target.hp > 0 && tg.canHit(u, u.x, u.z, p.target.x, p.target.z)) {
+      tg.setOverlay('target', [{ x: p.target.x, z: p.target.z }]);
+      after(260, () => { tg.setOverlay('target', null); combat(u, p.target, () => { finishUnit(u); done(); }); });
+    } else { finishUnit(u); after(120, done); }
+  };
+  if (path.length > 1) { tg.setPath(path); tg.setOverlay('move', rc.stops); after(380, () => { tg.setOverlay('move', null); tg.setPath(null); tg.walk(u.id, path, { onDone: afterMove }); }); }
+  else after(200, afterMove);
+}
+function nearestFoe(u) { let best = null, bd = 1e9; for (const o of GAME.units) if (o.hp > 0 && o.side !== u.side) { const d = Math.abs(o.x - u.x) + Math.abs(o.z - u.z); if (d < bd) { bd = d; best = o; } } return best; }
+function finishUnit(u) {
+  u.acted = true; GAME.tg.setDim(u.id, u.hp > 0); GAME.tg.setSelected(null);
+  // after acting, a unit that did not attack turns to look at its nearest foe (smooth idle turn)
+  const foes = GAME.alive().filter(o => o.side !== u.side);
+  if (u.hp > 0 && foes.length && !GAME.tg.actor(u.id).anim) { foes.sort((a, b) => (Math.abs(a.x - u.x) + Math.abs(a.z - u.z)) - (Math.abs(b.x - u.x) + Math.abs(b.z - u.z))); GAME.tg.face(u.id, foes[0].id, true); }
+}
+function runSide(side) { // enemy phase (and autoplay's player phase): units act in roster order
+  if (GAME.result) return;
+  const next = GAME.units.find(u => u.side === side && u.hp > 0 && !u.acted);
+  if (!next) { after(300, endTurn); return; }
+  GAME.tg.focus(next.x, next.z);
+  execute(next, plan(next), () => { if (!checkEnd()) after(220, () => runSide(side)); });
+}
+function autoStep() { if (GAME.auto && GAME.phase === 'player' && !GAME.result && mode === 'idle') { mode = 'busy'; GAME.tg.clearOverlays(); runSide('a'); } }
+
+// --- player turn state machine: idle -> move (range + path) -> walking -> menu -> target -> busy
+function refreshOverlays() {
+  const tg = GAME.tg; if (mode === 'banner' || mode === 'busy' || mode === 'over') return;
+  if (mode === 'idle') {
+    tg.setOverlay('move', null); tg.setOverlay('attack', null); tg.setPath(null);
+    const hov = GAME.units.find(u => u.hp > 0 && u.x === cursor.x && u.z === cursor.z);
+    const list = threatAll ? GAME.alive().filter(u => u.side === 'b') : (hov && hov.side === 'b' ? [hov] : (hov && hov.side === 'a' && !hov.acted ? null : null));
+    if (hov && hov.side === 'a' && !hov.acted) { const rc = tg.reachOf(hov, GAME.alive()); tg.setOverlay('move', rc.stops); tg.setOverlay('attack', fringe(hov, rc)); }
+    tg.setOverlay('threat', list && list.length ? tg.threatOf(list, GAME.alive()) : null);
+  } else if (mode === 'move') {
+    tg.setOverlay('threat', threatAll ? tg.threatOf(GAME.alive().filter(u => u.side === 'b'), GAME.alive()) : null);
+    tg.setOverlay('move', reach.stops); tg.setOverlay('attack', fringe(sel, reach));
+    const p = reach.stops.some(s => s.x === cursor.x && s.z === cursor.z) ? tg.pathTo(reach, cursor.x, cursor.z) : null; tg.setPath(p);
+  }
+}
+function fringe(u, rc) {
+  const set = new Set(rc.stops.map(s => s.z * 100 + s.x)), out = [], seen = new Set();
+  for (const s of rc.stops) for (const t of GAME.tg.attackTiles(u, s.x, s.z)) { const k = t.z * 100 + t.x; if (!set.has(k) && !seen.has(k) && !GAME.units.some(o => o.hp > 0 && o.side === u.side && o.x === t.x && o.z === t.z)) { seen.add(k); out.push(t); } }
+  return out;
+}
+function targetsFrom(u) { return GAME.alive().filter(o => o.side !== u.side && GAME.tg.canHit(u, u.x, u.z, o.x, o.z)); }
+function selectAt(x, z) {
+  const u = GAME.units.find(o => o.hp > 0 && o.x === x && o.z === z);
+  if (mode === 'idle') {
+    if (u && u.side === 'a' && !u.acted) { sel = u; reach = GAME.tg.reachOf(u, GAME.alive()); mode = 'move'; GAME.tg.setSelected(u.id); refreshOverlays(); return; }
+    if (u && u.side === 'b') { hoverThreat = u.id; refreshOverlays(); }
+    return;
+  }
+  if (mode === 'move') {
+    if (u === sel || reach.stops.some(s => s.x === x && s.z === z)) {
+      const path = GAME.tg.pathTo(reach, x, z) || [{ x: sel.x, z: sel.z }];
+      undo = { x: sel.x, z: sel.z, yaw: GAME.tg.actor(sel.id).yaw }; mode = 'walking'; GAME.tg.setOverlay('move', null); GAME.tg.setOverlay('attack', null); GAME.tg.setOverlay('threat', null);
+      const done = () => { sel.x = x; sel.z = z; each('onMove', { id: sel.id, end: true, to: { x, z } }, GAME); openMenu(); };
+      if (path.length > 1) GAME.tg.walk(sel.id, path, { onDone: done }); else done();
+      GAME.tg.setPath(null);
+    }
+  }
+}
+function openMenu() {
+  const items = []; if (targetsFrom(sel).length) items.push('Attack'); items.push('Wait'); items.push('Back');
+  menu = { items, i: 0 }; mode = 'menu';
+}
+function menuPick(item) {
+  if (item === 'Attack') { const list = targetsFrom(sel); tgt = { list, i: 0 }; mode = 'target'; GAME.tg.setOverlay('attack', GAME.tg.attackTiles(sel, sel.x, sel.z)); GAME.tg.setOverlay('target', [{ x: list[0].x, z: list[0].z }]); GAME.tg.setCursor(list[0].x, list[0].z); GAME.tg.face(sel.id, list[0].id, true); menu = null; }
+  else if (item === 'Wait') { menu = null; finishUnit(sel); afterAct(); }
+  else if (item === 'Back') { menu = null; GAME.tg.setTile(sel.id, undo.x, undo.z); sel.x = undo.x; sel.z = undo.z; GAME.tg.actor(sel.id).yaw = undo.yaw; reach = GAME.tg.reachOf(sel, GAME.alive()); mode = 'move'; refreshOverlays(); }
+}
+function confirmTarget() {
+  const def = tgt.list[tgt.i]; GAME.tg.setOverlay('attack', null); GAME.tg.setOverlay('target', null); GAME.tg.setCursor(null); mode = 'busy'; const u = sel; tgt = null;
+  GAME.focusId = u.id; combat(u, def, () => { finishUnit(u); if (!checkEnd()) afterAct(); });
+}
+function afterAct() {
+  sel = null; mode = 'idle'; GAME.tg.setSelected(null); GAME.tg.setCursor(cursor.x, cursor.z); refreshOverlays();
+  if (!GAME.units.some(u => u.side === 'a' && u.hp > 0 && !u.acted)) after(350, endTurn);
+}
+function back() {
+  if (mode === 'move') { mode = 'idle'; sel = null; GAME.tg.setSelected(null); refreshOverlays(); }
+  else if (mode === 'menu') menuPick('Back');
+  else if (mode === 'target') { GAME.tg.setOverlay('target', null); GAME.tg.setOverlay('attack', null); GAME.tg.setCursor(sel.x, sel.z); openMenu(); }
+  else if (mode === 'idle' && hoverThreat) { hoverThreat = null; refreshOverlays(); }
+}
+function moveCursor(dx, dy) { // dx, dy in SCREEN directions; the module maps them to grid steps for the current camera turn
+  const d = GAME.tg.gridDirFromScreen(dx, dy), { w, h } = GAME.tg.size;
+  if (mode === 'target') { tgt.i = (tgt.i + (dx + dy > 0 ? 1 : tgt.list.length - 1)) % tgt.list.length; const t = tgt.list[tgt.i]; GAME.tg.setOverlay('target', [{ x: t.x, z: t.z }]); GAME.tg.setCursor(t.x, t.z); GAME.tg.face(sel.id, t.id, true); return; }
+  if (mode === 'menu') { menu.i = (menu.i + (dy > 0 ? 1 : menu.items.length - 1)) % menu.items.length; return; }
+  if (mode !== 'idle' && mode !== 'move') return;
+  cursor = { x: Math.max(0, Math.min(w - 1, cursor.x + d[0])), z: Math.max(0, Math.min(h - 1, cursor.z + d[1])) };
+  GAME.tg.setCursor(cursor.x, cursor.z); refreshOverlays();
+}
+
+// ---------- 6. INPUT ----------
+// chain: addons onKey -> game keys. Keys: arrows/WASD cursor, Z/Enter/Space confirm, X/Esc back, Q/E rotate, +/- zoom,
+// T threat (all enemies), F end turn, R restart, P autoplay on/off.
+function confirm() {
+  if (mode === 'idle' || mode === 'move') selectAt(cursor.x, cursor.z);
+  else if (mode === 'menu') menuPick(menu.items[menu.i]);
+  else if (mode === 'target') confirmTarget();
+}
+function enabled() { return !GAME.auto && !GAME.result && !FREEZE_LOCK; }
+let FREEZE_LOCK = false;
+function onKey(e, down) {
+  if (each('onKey', e, down, GAME)) return true;
+  if (!down) return false;
+  const c = e.code;
+  if (c === 'KeyR') { newGame(); return true; }
+  if (c === 'KeyP') { GAME.auto = !GAME.auto; if (GAME.auto) autoStep(); return true; }
+  if (c === 'KeyQ') { GAME.tg.rotate(-1); return true; } if (c === 'KeyE') { GAME.tg.rotate(1); return true; }
+  if (c === 'Equal' || c === 'NumpadAdd') { GAME.tg.zoomBy(1.15); return true; } if (c === 'Minus' || c === 'NumpadSubtract') { GAME.tg.zoomBy(1 / 1.15); return true; }
+  if (!enabled()) return false;
+  if (c === 'ArrowUp' || c === 'KeyW') moveCursor(0, -1); else if (c === 'ArrowDown' || c === 'KeyS') moveCursor(0, 1);
+  else if (c === 'ArrowLeft' || c === 'KeyA') moveCursor(-1, 0); else if (c === 'ArrowRight' || c === 'KeyD') moveCursor(1, 0);
+  else if (c === 'KeyZ' || c === 'Enter' || c === 'Space') confirm();
+  else if (c === 'KeyX' || c === 'Escape' || c === 'Backspace') back();
+  else if (c === 'KeyT') { threatAll = !threatAll; refreshOverlays(); }
+  else if (c === 'KeyF') { if (GAME.phase === 'player' && (mode === 'idle' || mode === 'move')) { mode = 'busy'; for (const u of GAME.units) if (u.side === 'a') u.acted = true; endTurn(); } }
+  else return false;
+  return true;
+}
+addEventListener('keydown', e => { if (onKey(e, true)) e.preventDefault(); });
+addEventListener('keyup', e => { onKey(e, false); });
+function toLogical(ev) { const r = stage.getBoundingClientRect(); return { x: (ev.clientX - r.left) * VW / r.width, y: (ev.clientY - r.top) * VH / r.height }; }
+const inRect = (p, r) => r && p.x >= r.x && p.y >= r.y && p.x <= r.x + r.w && p.y <= r.y + r.h;
+let BUTTONS = {};
+function pointerAt(p, click) {
+  if (click) {
+    if (inRect(p, BUTTONS.rotL)) return GAME.tg.rotate(-1); if (inRect(p, BUTTONS.rotR)) return GAME.tg.rotate(1);
+    if (inRect(p, BUTTONS.zoomIn)) return GAME.tg.zoomBy(1.15); if (inRect(p, BUTTONS.zoomOut)) return GAME.tg.zoomBy(1 / 1.15);
+    if (inRect(p, BUTTONS.threat) && enabled()) { threatAll = !threatAll; return refreshOverlays(); }
+    if (inRect(p, BUTTONS.end) && enabled()) return onKey({ code: 'KeyF' }, true);
+  }
+  if (!enabled()) return;
+  if (mode === 'menu') { const k = (BUTTONS.menu || []).findIndex(r => inRect(p, r)); if (k >= 0) { menu.i = k; if (click) menuPick(menu.items[k]); } return; }
+  if (mode === 'target') { if (click) { const t = GAME.tg.pickTile(p.x, p.y); const k = t ? tgt.list.findIndex(u => u.x === t.x && u.z === t.z) : -1; if (k >= 0) { if (k === tgt.i) confirmTarget(); else { tgt.i = k; GAME.tg.setOverlay('target', [{ x: t.x, z: t.z }]); GAME.tg.face(sel.id, tgt.list[k].id, true); } } } return; }
+  const t = GAME.tg.pickTile(p.x, p.y); if (!t) return;
+  if (t.x !== cursor.x || t.z !== cursor.z) { cursor = { x: t.x, z: t.z }; GAME.tg.setCursor(t.x, t.z); refreshOverlays(); }
+  if (click) confirm();
+}
+stage.addEventListener('mousemove', e => pointerAt(toLogical(e), false));
+stage.addEventListener('mousedown', e => { if (e.button === 2) { if (enabled()) back(); return; } pointerAt(toLogical(e), true); });
+stage.addEventListener('contextmenu', e => e.preventDefault());
+stage.addEventListener('wheel', e => { e.preventDefault(); GAME.tg.zoomBy(e.deltaY < 0 ? 1.08 : 1 / 1.08); }, { passive: false });
+stage.addEventListener('touchstart', e => { const t = e.changedTouches[0]; if (t) { e.preventDefault(); pointerAt(toLogical(t), true); } }, { passive: false });
+
+// ---------- 7. UPDATE & DRAW ----------
+function step() {
+  const frozen = hitStopMs > 0;
+  if (frozen) { hitStopMs = Math.max(0, hitStopMs - STEP_MS); GAME.frozen = true; GAME.tg.update(0); each('update', GAME, { dt: 0, frozen: true }); return; }
+  GAME.frozen = false; simT += STEP_MS;
+  for (let i = 0; i < timers.length; i++) { if (timers[i].at <= simT) { const t = timers.splice(i, 1)[0]; i--; t.fn(); } }
+  GAME.tg.update(STEP_MS);
+  if ((mode === 'move' || mode === 'menu' || mode === 'target') && sel) GAME.tg.focus((sel.x + cursor.x) / 2, (sel.z + cursor.z) / 2);   // keep the unit and its goal in view
+  else if (mode !== 'busy' && mode !== 'banner' && !GAME.result) GAME.tg.focus(cursor.x, cursor.z);
+  else if (GAME.focusId && GAME.tg.actor(GAME.focusId)) { const a = GAME.tg.actor(GAME.focusId); GAME.tg.focus(a.x, a.z); }
+  for (const n of numbers) n.t += STEP_MS; numbers = numbers.filter(n => n.t < 1100);
+  if (banner) banner.t += STEP_MS;
+  if (flashFx) { flashFx.t += STEP_MS; if (flashFx.t > flashFx.ms) flashFx = null; }
+  each('update', GAME, { dt: STEP_MS, frozen: false });
+}
+function pushNumber(id, amount, kind, crit) { numbers.push({ id, amount, kind, crit, t: 0 }); }
+function showBanner(text, color, sub, stay) { banner = { text, color, sub, t: 0, stay: !!stay }; }
+const FONT = '"Trebuchet MS", "Segoe UI", Tahoma, sans-serif', SERIF = 'Georgia, "Times New Roman", serif';
+function rr(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+function panel(g, x, y, w, h, accent) {
+  g.save(); g.shadowColor = 'rgba(0,0,0,0.45)'; g.shadowBlur = 12; g.shadowOffsetY = 3;
+  const gr = g.createLinearGradient(0, y, 0, y + h); gr.addColorStop(0, 'rgba(30,38,60,0.94)'); gr.addColorStop(1, 'rgba(14,18,32,0.94)');
+  g.fillStyle = gr; rr(g, x, y, w, h, 7); g.fill(); g.restore();
+  g.strokeStyle = accent || 'rgba(226,192,120,0.85)'; g.lineWidth = 1.5; rr(g, x + 0.75, y + 0.75, w - 1.5, h - 1.5, 7); g.stroke();
+  g.strokeStyle = 'rgba(255,255,255,0.08)'; g.lineWidth = 1; rr(g, x + 3.5, y + 3.5, w - 7, h - 7, 5); g.stroke();
+  UI_RECTS.push({ x, y, w, h });
+}
+function text(g, s, x, y, size, color, opts) {
+  opts = opts || {}; g.font = (opts.weight || '600') + ' ' + size + 'px ' + (opts.serif ? SERIF : FONT); g.textAlign = opts.align || 'left'; g.textBaseline = 'alphabetic';
+  if (opts.outline) { g.lineJoin = 'round'; g.strokeStyle = opts.outline; g.lineWidth = opts.ow || 4; g.strokeText(s, x, y); }
+  g.fillStyle = color; g.fillText(s, x, y); g.textAlign = 'left';
+}
+function bar(g, x, y, w, h, frac, col, back) {
+  g.fillStyle = back || 'rgba(0,0,0,0.6)'; rr(g, x - 1, y - 1, w + 2, h + 2, (h + 2) / 2); g.fill();
+  if (frac > 0) { const gr = g.createLinearGradient(0, y, 0, y + h); gr.addColorStop(0, col[0]); gr.addColorStop(1, col[1]); g.fillStyle = gr; rr(g, x, y, Math.max(h, w * frac), h, h / 2); g.fill(); g.fillStyle = 'rgba(255,255,255,0.35)'; g.fillRect(x + h / 2, y + 0.5, Math.max(0, w * frac - h), Math.max(1, h * 0.28)); }
+}
+function classIcon(g, cls, cx, cy, s, color) { // small emblem drawn with paths (no font glyphs)
+  g.save(); g.translate(cx, cy); g.strokeStyle = color; g.fillStyle = color; g.lineWidth = 2.2; g.lineCap = 'round';
+  if (cls === 'knight') { g.rotate(-0.78); g.beginPath(); g.moveTo(0, s * 0.75); g.lineTo(0, -s * 0.85); g.stroke(); g.beginPath(); g.moveTo(-s * 0.35, s * 0.4); g.lineTo(s * 0.35, s * 0.4); g.stroke(); }
+  else if (cls === 'lancer') { g.rotate(-0.78); g.beginPath(); g.moveTo(0, s); g.lineTo(0, -s * 0.6); g.stroke(); g.beginPath(); g.moveTo(-s * 0.22, -s * 0.5); g.lineTo(0, -s); g.lineTo(s * 0.22, -s * 0.5); g.closePath(); g.fill(); }
+  else if (cls === 'brute') { g.rotate(-0.6); g.beginPath(); g.moveTo(0, s); g.lineTo(0, -s * 0.8); g.stroke(); g.beginPath(); g.moveTo(0, -s * 0.75); g.quadraticCurveTo(s * 0.8, -s * 0.7, s * 0.7, 0); g.lineTo(0, -s * 0.2); g.closePath(); g.fill(); }
+  else if (cls === 'shaman') { g.beginPath(); g.moveTo(-s * 0.2, s); g.lineTo(s * 0.15, -s * 0.5); g.stroke(); g.beginPath(); g.arc(s * 0.2, -s * 0.68, s * 0.26, 0, 7); g.fill(); }
+  else if (cls === 'archer') { g.beginPath(); g.arc(-s * 0.2, 0, s * 0.8, -1.2, 1.2); g.stroke(); g.lineWidth = 1; g.beginPath(); g.moveTo(-s * 0.2 + Math.cos(1.2) * s * 0.8, Math.sin(1.2) * s * 0.8); g.lineTo(-s * 0.2 + Math.cos(-1.2) * s * 0.8, Math.sin(-1.2) * s * 0.8); g.stroke(); g.lineWidth = 2; g.beginPath(); g.moveTo(-s * 0.4, 0); g.lineTo(s * 0.9, 0); g.stroke(); }
+  else { g.beginPath(); g.arc(0, 0, s * 0.5, 0, 7); g.fill(); }
+  g.restore();
+}
+function rotIcon(g, x, y, dir) { g.save(); g.translate(x, y); g.strokeStyle = '#f2e3bf'; g.fillStyle = '#f2e3bf'; g.lineWidth = 2.2; g.beginPath(); g.arc(0, 0, 7, dir < 0 ? -0.3 : Math.PI + 0.3, dir < 0 ? Math.PI * 1.25 : -Math.PI * 0.25, dir > 0); g.stroke(); const a = dir < 0 ? Math.PI * 1.25 : -Math.PI * 0.25, ex = Math.cos(a) * 7, ey = Math.sin(a) * 7; g.beginPath(); g.moveTo(ex - 4, ey - 1); g.lineTo(ex + 3, ey - 3); g.lineTo(ex + 1, ey + 4); g.closePath(); g.fill(); g.restore(); }
+function button(g, key, x, y, w, h, label, on) {
+  const gr = g.createLinearGradient(0, y, 0, y + h); gr.addColorStop(0, on ? 'rgba(120,70,30,0.95)' : 'rgba(44,54,82,0.95)'); gr.addColorStop(1, on ? 'rgba(80,40,18,0.95)' : 'rgba(22,28,46,0.95)');
+  g.fillStyle = gr; rr(g, x, y, w, h, 6); g.fill(); g.strokeStyle = on ? 'rgba(255,170,90,0.95)' : 'rgba(226,192,120,0.75)'; g.lineWidth = 1.3; rr(g, x + 0.65, y + 0.65, w - 1.3, h - 1.3, 6); g.stroke();
+  if (label) text(g, label, x + w / 2, y + h / 2 + 5, 13, '#f2e3bf', { align: 'center', weight: '700' });
+  BUTTONS[key] = { x, y, w, h }; UI_RECTS.push({ x, y, w, h });
+}
+function drawUnitBars(g) {
+  const placed = [];
+  for (const u of GAME.units) {
+    if (u.hp <= 0) continue; const a = GAME.tg.anchorOf(u.id); if (!a) continue;
+    const w = 40, x = Math.round(a.x - w / 2); let y = Math.round(a.top - 11);
+    while (placed.some(r => Math.abs(r.x - x) < w && Math.abs(r.y - y) < 8)) y -= 8;   // units stacked on screen: bars step up, never on top of each other
+    placed.push({ x, y });
+    bar(g, x, y, w, 5, u.hp / u.maxHp, u.side === 'a' ? ['#8fd0ff', '#2f7ad8'] : ['#ff9a86', '#c8382c']);
+    if (u.acted && GAME.phase === 'player' && u.side === 'a') { g.fillStyle = 'rgba(10,14,24,0.75)'; rr(g, x + w + 3, y - 4, 13, 13, 3); g.fill(); text(g, 'z', x + w + 9.5, y + 6, 11, '#c9d3e8', { align: 'center', weight: '700' }); }
+  }
+}
+function drawNumbers(g) {
+  for (const n of numbers) {
+    const a = GAME.tg.anchorOf(n.id); if (!a) continue; const k = n.t / 1100, rise = Math.min(1, n.t / 260);
+    if (a.dead) a.top = a.cy - 10;   // a killing blow's number stays on the falling body, not where the head was
+    const y = a.top - 14 - 10 * (1 - Math.pow(1 - rise, 3)) - k * 5, s = n.crit ? 30 : 24, pop = n.t < 120 ? 1 + 0.5 * (1 - n.t / 120) : 1;
+    g.save(); g.globalAlpha = k > 0.75 ? 1 - (k - 0.75) / 0.25 : 1; g.translate(a.x, y); g.scale(pop, pop);
+    const col = n.kind === 'heal' ? '#7dffa0' : n.crit ? '#ffd84a' : '#ffffff';
+    text(g, (n.kind === 'heal' ? '+' : '') + n.amount, 0, 0, s, col, { align: 'center', weight: '800', outline: '#2a0f08', ow: 5 });
+    if (n.crit) text(g, 'CRITICAL', 0, -s + 4, 11, '#ffe9a0', { align: 'center', weight: '800', outline: '#2a0f08', ow: 3 });
+    g.restore();
+  }
+}
+function drawHUD(g) {
+  const tg = GAME.tg;
+  // turn plate
+  const side = GAME.phase === 'enemy' ? 'b' : 'a';
+  panel(g, 14, 12, 214, 50); text(g, 'TURN ' + GAME.turn, 30, 43, 22, '#f6e7c4', { serif: true, weight: '700' });
+  g.fillStyle = side === 'a' ? '#4f9dff' : '#ff6a55'; rr(g, 128, 25, 88, 24, 12); g.fill();
+  text(g, GAME.phase === 'over' ? 'BATTLE END' : side === 'a' ? 'PLAYER' : 'ENEMY', 172, 42, 12, '#0d1322', { align: 'center', weight: '800' });
+  if (GAME.auto) text(g, 'AUTOPLAY (P)', 30, 80, 12, '#ffd98a', { weight: '700', outline: 'rgba(0,0,0,0.6)', ow: 3 });
+  // buttons (top right): rotate, zoom, threat; end turn
+  button(g, 'rotL', VW - 210, 14, 34, 30, ''); rotIcon(g, VW - 193, 29, -1);
+  button(g, 'rotR', VW - 170, 14, 34, 30, ''); rotIcon(g, VW - 153, 29, 1);
+  button(g, 'zoomOut', VW - 130, 14, 30, 30, '-'); button(g, 'zoomIn', VW - 96, 14, 30, 30, '+');
+  button(g, 'threat', VW - 60, 14, 46, 30, 'T', threatAll);
+  if (GAME.phase === 'player' && !GAME.result) button(g, 'end', VW - 128, VH - 150, 114, 30, 'END TURN (F)'); else BUTTONS.end = null;
+  // unit panel (selected unit, else the unit under the cursor)
+  const u = sel || GAME.units.find(o => o.hp > 0 && o.x === cursor.x && o.z === cursor.z);
+  if (u && mode !== 'target') {
+    const x = 14, y = VH - 104, ac = u.side === 'a' ? 'rgba(110,180,255,0.9)' : 'rgba(255,120,100,0.9)';
+    panel(g, x, y, 316, 90, ac);
+    const gr = g.createRadialGradient(x + 44, y + 45, 4, x + 44, y + 45, 32); gr.addColorStop(0, u.side === 'a' ? '#3d78d8' : '#c4463a'); gr.addColorStop(1, u.side === 'a' ? '#14264a' : '#3e1410');
+    g.fillStyle = gr; g.beginPath(); g.arc(x + 44, y + 45, 30, 0, 7); g.fill(); g.strokeStyle = ac; g.lineWidth = 2; g.stroke(); classIcon(g, lookOf(u.cls), x + 44, y + 45, 16, '#f6e7c4');
+    text(g, u.name, x + 86, y + 30, 19, '#f6e7c4', { serif: true, weight: '700' }); text(g, CLASS_NAME[u.cls] || u.cls, x + 86 + g.measureText(u.name).width + 10, y + 30, 13, '#b8c3d8');
+    bar(g, x + 88, y + 42, 150, 9, u.hp / u.maxHp, u.side === 'a' ? ['#8fd0ff', '#2f7ad8'] : ['#ff9a86', '#c8382c']);
+    text(g, u.hp + ' / ' + u.maxHp, x + 248, y + 51, 13, '#f6e7c4', { weight: '700' });
+    const st = [['ATK', u.atk], ['DEF', u.def], ['MOV', u.mv], ['JMP', u.jump], ['RNG', u.rng[0] === u.rng[1] ? u.rng[0] : u.rng[0] + '-' + u.rng[1]]];
+    st.forEach((s, i) => { text(g, s[0], x + 88 + i * 44, y + 74, 10, '#8f9bb3', { weight: '700' }); text(g, String(s[1]), x + 88 + i * 44 + 25, y + 74, 13, '#f6e7c4', { weight: '700' }); });
+  }
+  // tile panel (bottom right)
+  const t = tg.tile(cursor.x, cursor.z);
+  if (t && mode !== 'target') {
+    const x = VW - 186, y = VH - 104; panel(g, x, y, 172, 90);
+    text(g, t.prop || t.name, x + 16, y + 30, 18, '#f6e7c4', { serif: true, weight: '700' });
+    text(g, 'Height', x + 16, y + 54, 12, '#8f9bb3', { weight: '700' }); text(g, String(t.h), x + 70, y + 54, 14, '#f6e7c4', { weight: '700' });
+    for (let i = 0; i < 6; i++) { g.fillStyle = i < t.h ? '#e2c078' : 'rgba(255,255,255,0.12)'; g.fillRect(x + 90 + i * 11, y + 45, 8, 9); }
+    text(g, 'Move cost', x + 16, y + 76, 12, '#8f9bb3', { weight: '700' }); text(g, t.passable ? String(t.cost) : 'blocked', x + 90, y + 76, 14, t.passable ? '#f6e7c4' : '#ff9a86', { weight: '700' });
+  }
+  // command menu next to the selected unit
+  BUTTONS.menu = [];
+  if (mode === 'menu' && menu && sel) {
+    const a = tg.anchorOf(sel.id), w = 128, h = 16 + menu.items.length * 30, others = GAME.unitRects().filter(r => r.id !== sel.id);
+    let y = Math.max(70, Math.min(VH - 120 - h, a.top - 10));
+    const cost = x => (x < 14 || x + w > VW - 14 ? 1e6 : 0) + others.reduce((n, r) => n + (r.x < x + w && r.x + r.w > x && r.y < y + h && r.y + r.h > y ? 1 : 0), 0);
+    const right = a.x + 40, left = a.x - 40 - w, x = cost(right) <= cost(left) ? right : left;   // the side that covers fewer units
+    panel(g, x, y, w, h);
+    menu.items.forEach((it, i) => { const ry = y + 8 + i * 30; BUTTONS.menu.push({ x, y: ry, w, h: 30 }); if (i === menu.i) { const gr2 = g.createLinearGradient(x, 0, x + w, 0); gr2.addColorStop(0, 'rgba(226,192,120,0.4)'); gr2.addColorStop(1, 'rgba(226,192,120,0)'); g.fillStyle = gr2; g.fillRect(x + 6, ry + 3, w - 12, 24); g.fillStyle = '#ffe2a0'; g.beginPath(); g.moveTo(x + 12, ry + 9); g.lineTo(x + 19, ry + 15); g.lineTo(x + 12, ry + 21); g.fill(); }
+      text(g, it, x + 28, ry + 21, 16, it === 'Attack' ? '#ffb3a6' : '#f6e7c4', { weight: '700' }); });
+  }
+  // forecast while choosing a target
+  if (mode === 'target' && tgt && sel) {
+    const d = tgt.list[tgt.i], f = GAME.forecastData(sel, d), x = VW / 2 - 200, y = VH - 112, w = 400, h = 98;
+    panel(g, x, y, w, h);
+    const col = (u2, cx, dmgv, hpA, lab) => {
+      text(g, u2.name, cx, y + 26, 16, '#f6e7c4', { serif: true, weight: '700', align: 'center' });
+      text(g, lab, cx, y + 46, 11, '#8f9bb3', { weight: '700', align: 'center' });
+      text(g, dmgv, cx, y + 70, 22, '#ffd98a', { weight: '800', align: 'center' });
+      bar(g, cx - 70, y + 80, 96, 7, hpA / u2.maxHp, u2.side === 'a' ? ['#8fd0ff', '#2f7ad8'] : ['#ff9a86', '#c8382c']);
+      text(g, u2.hp + ' > ' + hpA, cx + 84, y + 88, 11, '#f6e7c4', { weight: '700', align: 'right' });
+    };
+    col(sel, x + 100, String(f.dmg), f.counter ? f.counter.hpAfter : sel.hp, 'DAMAGE  (crit ' + f.crit + '%)');
+    col(d, x + 300, f.counter ? String(f.counter.dmg) : '--', f.hpAfter, f.counter ? 'COUNTER' : 'NO COUNTER');
+    text(g, f.height > 0 ? 'HIGH GROUND +' + Math.min(2, f.height) : f.height < 0 ? 'LOW GROUND ' + Math.max(-2, f.height) : 'LEVEL', x + 200, y + 52, 11, f.height > 0 ? '#a6f08a' : f.height < 0 ? '#ff9a86' : '#b8c3d8', { weight: '800', align: 'center' });
+    g.fillStyle = '#e2c078'; g.beginPath(); g.moveTo(x + 192, y + 64); g.lineTo(x + 208, y + 72); g.lineTo(x + 192, y + 80); g.fill();
+  }
+  // key hints
+  const hint = GAME.phase === 'enemy' ? 'Enemy phase' : GAME.auto && !GAME.result ? 'Autoplay    P take control' : mode === 'move' ? 'Pick a blue tile    Z move    X cancel' : mode === 'menu' ? 'Up/Down choose    Z confirm    X back' : mode === 'target' ? 'Left/Right target    Z attack    X back' : GAME.result ? 'R restart' : 'Arrows / mouse    Z select    Q E rotate    T threat    F end turn';
+  g.font = '600 12px ' + FONT; const hw = g.measureText(hint).width + 24;
+  const hy = VW < 800 ? 70 : 12;   // portrait: below the turn plate and buttons
+  g.fillStyle = 'rgba(10,14,24,0.6)'; rr(g, VW / 2 - hw / 2, hy, hw, 24, 12); g.fill(); text(g, hint, VW / 2, hy + 17, 12, '#d9e1f0', { align: 'center' }); UI_RECTS.push({ x: VW / 2 - hw / 2, y: hy, w: hw, h: 24 });
+}
+function drawBanner(g) {
+  if (!banner) return; const t = banner.t, inn = Math.min(1, t / 260), out = banner.stay ? 0 : Math.max(0, (t - 900) / 260);
+  if (!banner.stay && t > 1160) { banner = null; return; }
+  const a = inn * (1 - out), y = banner.stay ? Math.round(VH * 0.22) : VH / 2 - 44, h = 88;   // the end banner sits high, off the survivors
+  g.save(); g.globalAlpha = a;
+  const gr = g.createLinearGradient(0, y, 0, y + h); gr.addColorStop(0, 'rgba(8,10,20,0)'); gr.addColorStop(0.25, 'rgba(8,10,20,0.78)'); gr.addColorStop(0.75, 'rgba(8,10,20,0.78)'); gr.addColorStop(1, 'rgba(8,10,20,0)');
+  g.fillStyle = gr; g.fillRect(0, y, VW, h); g.fillStyle = banner.color; g.fillRect(VW / 2 - 220 * inn, y + 14, 440 * inn, 2); g.fillRect(VW / 2 - 220 * inn, y + h - 16, 440 * inn, 2);
+  const slide = (1 - inn) * 40 - out * 40;
+  text(g, banner.text, VW / 2 + slide, y + 52, 38, '#fbf1da', { serif: true, weight: '700', align: 'center', outline: 'rgba(0,0,0,0.5)', ow: 5 });
+  text(g, banner.sub, VW / 2 - slide, y + 72, 13, banner.color, { weight: '700', align: 'center' });
+  g.restore(); UI_RECTS.push({ x: 0, y, w: VW, h });
+}
+function draw() {
+  const tg = GAME.tg; UI_RECTS = [];
+  tg.render();
+  const g = tg.overlayContext() || uiCanvas.getContext('2d');
+  if (flashFx) { g.fillStyle = flashFx.color; g.globalAlpha = 0.22 * (1 - flashFx.t / flashFx.ms); g.fillRect(0, 0, VW, VH); g.globalAlpha = 1; }
+  // soft vignette
+  const vg = g.createRadialGradient(VW / 2, VH / 2, VH * 0.45, VW / 2, VH / 2, VH * 0.95); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.32)'); g.fillStyle = vg; g.fillRect(0, 0, VW, VH);
+  drawUnitBars(g);
+  if (GAME.builtinNumbers) drawNumbers(g);
+  each('draw', g, GAME);
+  drawHUD(g);
+  each('drawUI', g, GAME);
+  drawBanner(g);
+}
+function stateObj() {
+  const s = GAME.tg.state(); const byId = {}; GAME.units.forEach(u => byId[u.id] = u);
+  s.actors.forEach(a => { const u = byId[a.id]; if (u) { a.name = u.name; a.hp = u.hp; a.maxHp = u.maxHp; a.acted = u.acted; } });
+  return Object.assign(s, { phase: GAME.phase, turn: GAME.turn, mode, result: GAME.result, endT: GAME.endT || null, auto: GAME.auto, simT: Math.round(simT), webgl: GAME.tg.gl });
+}
+window.__state = stateObj;
+window.__anchor = id => GAME.tg.anchorOf(id);
+
+// ---------- 8. BOOT ----------
+function fit() {
+  // landscape: a 960x540 stage letterboxed; portrait (phones): the whole screen, 540 px wide logical, taller view, zoomed in
+  const portrait = innerHeight > innerWidth * 1.15;
+  VW = portrait ? 540 : 960; VH = portrait ? Math.round(540 * innerHeight / innerWidth) : 540;
+  const s = Math.min(innerWidth / VW, innerHeight / VH), w = Math.floor(VW * s), h = Math.floor(VH * s);
+  stage.style.width = w + 'px'; stage.style.height = h + 'px';
+  GAME.overlay = { w: VW, h: VH }; GAME.field = { x: 0, y: 0, w: VW, h: VH };
+  GAME.tg.setView(VW, VH); GAME.tg.setParams({ frameScale: portrait ? VH / 540 * 0.78 : 1 });
+  GAME.tg.resize(w, h, Math.min(3, window.devicePixelRatio || 1));
+}
+function runScript(name) { // scripted input for screenshots (?script=range|threat|menu|target)
+  if (!name) return;
+  after(1200, () => {
+    if (name === 'range') { cursor = { x: 1, z: 7 }; selectAt(1, 7); cursor = { x: 1, z: 4 }; GAME.tg.setCursor(1, 4); refreshOverlays(); }
+    if (name === 'threat') { cursor = { x: 9, z: 4 }; GAME.tg.setCursor(9, 4); threatAll = true; refreshOverlays(); }
+    if (name === 'menu' || name === 'target') {
+      const g = GAME.unitById('gorrak'); g.x = 4; g.z = 7; GAME.tg.setTile('gorrak', 4, 7); GAME.tg.face('gorrak', 'aldric');
+      cursor = { x: 1, z: 7 }; selectAt(1, 7); cursor = { x: 3, z: 7 }; GAME.tg.setCursor(3, 7); refreshOverlays();
+      after(300, () => selectAt(3, 7));
+      if (name === 'target') after(1400, () => { if (mode === 'menu') menuPick('Attack'); });
+    }
+  });
+}
+GAME.boot = function () {
+  makeBattlefield(); GAME.auto = AUTO; fit(); addEventListener('resize', fit);
+  newGame(); runScript(SCRIPT);
+  if (FREEZE) {
+    FREEZE_LOCK = !Q.get('play');
+    const n = Math.round(T_AT / STEP_MS); for (let i = 0; i < n; i++) step();
+    draw(); document.documentElement.dataset.state = JSON.stringify({ phase: GAME.phase, turn: GAME.turn, result: GAME.result, mode });
+    window.__advance = (ms, noDraw) => { const k = Math.round(ms / STEP_MS); for (let i = 0; i < k; i++) step(); if (!noDraw) draw(); return stateObj(); };
+    window.__frozen = true; return;
+  }
+  let last = performance.now(), acc = 0;
+  (function loop(now) { acc += Math.min(250, now - last); last = now; while (acc >= STEP_MS) { step(); acc -= STEP_MS; } draw(); requestAnimationFrame(loop); })(last);
+};
+</script>
+<script>
+/* ===================================== ADDONS SLOT =====================================
+   Load addon modules with <script src> tags right above this script (or paste them here unchanged),
+   then register each addon as one object, before the game boots:
+     GAME.addons.push({ onHit(ev, game) {...}, update(game, info) {...}, draw(ctx, game) {...} });
+   Hooks and helpers: see README.md (section "Extension points").
+   ======================================================================================= */
+</script>
+<script>GAME.boot();</script>
+</body>
+</html>

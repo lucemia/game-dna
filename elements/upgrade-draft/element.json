@@ -1,0 +1,82 @@
+{
+  "id": "upgrade-draft",
+  "code": "G-07",
+  "kind": "addon",
+  "name": "Upgrade draft (pick 1 of 3)",
+  "family": "upgrade-draft",
+  "oneLiner": "The roguelite level-up choice: at a moment the game chooses (level-up, chest, wave clear) the world pauses and three upgrade cards deal in with a fan, flip face up and glow by rarity (common, rare, epic); the player moves between them and takes one, cards that share a tag with the build show a synergy hint, a reroll and a skip are optional, and the picked card flies into an owned-upgrades strip. Upgrades are a plain table the designer edits (name, rarity, tags with drawn icons, text with {value}, max stacks, a stat delta or a small apply function); hands are seeded by the module, weighted by rarity, never repeat a card and never offer a maxed upgrade. Picks reach the game only through its own applyDelta / apply / onPick, synchronously inside update(). Smooth HD cards or crisp pixel cards (readable at 256x224).",
+  "fits": [
+    "roguelite and survivor-like action games (level-up every few kills)",
+    "action RPG and top-down adventure (chest or shrine boons, level-ups)",
+    "deck-builders and run-based RPGs (card or relic rewards after a fight)",
+    "tower defence and wave shooters (a boon between waves)",
+    "turn-based RPG (a perk choice after each won battle)",
+    "any game where a run grows by choosing from a few random upgrades"
+  ],
+  "notFor": [
+    "fixed stat growth with no choice (G-02 level-up-growth)",
+    "buying items for gold (G-01 shop and inventory)",
+    "skill trees where every node is visible and permanent",
+    "competitive multiplayer where the draw must be computed on a server"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "the one place in update logic where the moment happens (level-up, chest opened, wave cleared): open() there; a fixed bonus it used to give goes",
+      "the stat fields the game really reads, written by applyDelta(stat, amount) (and read by getStat for the card preview and read-back)",
+      "key-down events (or polled left / right / confirm / reroll / skip edges) routed to the draft while busy()",
+      "a fixed 60 Hz update step (the draft's only clock), also while the world is paused for it",
+      "the play field size in native px and ui rects to keep clear (HUD bars)",
+      "optional: the game's autoplay flag; the game's save to store serialize(); a fallback upgrade for a maxed build"
+    ],
+    "provides": [
+      "a seeded, rarity-weighted, duplicate-free draw from a designer-edited upgrade table, with max stacks and requirements",
+      "picks delivered only through the game's applyDelta, the table's own apply(target) and onPick(upgrade, info), synchronously inside update()",
+      "busy flag: pause the world and route input here while the draft is open",
+      "the owned build (owned(), stacks(id), tagCount(tag)) and serialize() / restore() for saves",
+      "the overlay rectangle on screen, for other overlays to avoid"
+    ]
+  },
+  "params": [
+    {
+      "key": "when",
+      "label": "When the draft opens (required; the designer's words)",
+      "type": "text",
+      "default": "at every level-up, instead of the fixed stat bonus"
+    },
+    { "key": "seed", "label": "Draw seed", "type": "range", "min": 1, "max": 999, "step": 1, "default": 1 },
+    { "key": "choices", "label": "Cards per draft", "type": "range", "min": 2, "max": 4, "step": 1, "default": 3 },
+    { "key": "rerolls", "label": "Rerolls per draft", "type": "range", "min": 0, "max": 3, "step": 1, "default": 1 },
+    { "key": "skip", "label": "Skip allowed", "type": "select", "options": ["on", "off"], "default": "on" },
+    { "key": "wCommon", "label": "Common weight", "type": "range", "min": 0, "max": 100, "step": 1, "default": 60 },
+    { "key": "wRare", "label": "Rare weight", "type": "range", "min": 0, "max": 100, "step": 1, "default": 30 },
+    { "key": "wEpic", "label": "Epic weight", "type": "range", "min": 0, "max": 100, "step": 1, "default": 10 },
+    { "key": "maxStacks", "label": "Default max stacks per upgrade", "type": "range", "min": 1, "max": 9, "step": 1, "default": 5 },
+    { "key": "look", "label": "Look (auto = pixel below 300 px tall)", "type": "select", "options": ["auto", "hd", "pixel"], "default": "auto" },
+    { "key": "autoPick", "label": "Autoplay pick (skip = keep the original ?auto=1 ending)", "type": "select", "options": ["rarest", "synergy", "first", "skip"], "default": "rarest" },
+    { "key": "strip", "label": "Owned strip", "type": "select", "options": ["draft", "always", "off"], "default": "draft" },
+    { "key": "dim", "label": "Dim behind", "type": "range", "min": 0, "max": 0.85, "step": 0.05, "default": 0.55 }
+  ],
+  "variants": [
+    { "name": "Classic roguelite", "params": { "choices": 3, "rerolls": 1, "skip": "on", "wCommon": 60, "wRare": 30, "wEpic": 10 } },
+    { "name": "Generous chest", "params": { "choices": 4, "rerolls": 2, "wCommon": 40, "wRare": 40, "wEpic": 20 } },
+    { "name": "Hard run (no reroll, no skip)", "params": { "rerolls": 0, "skip": "off", "wEpic": 5 } },
+    { "name": "Build-focused autoplay", "params": { "autoPick": "synergy" } },
+    { "name": "Pixel console", "params": { "look": "pixel", "strip": "always" } },
+    { "name": "Autoplay keeps its ending", "params": { "autoPick": "skip" } }
+  ],
+  "assets": [
+    "module/upgrade-draft.js: the element as one dependency-free script (global GameDNA_UpgradeDraft): table normalisation, seeded rarity-weighted draw without duplicates or maxed entries (also as the pure GameDNA_UpgradeDraft.deal), card deal / flip / hover / pick / fly animation on its own clock, HD vector cards and crisp pixel cards (6x8 bitmap font, thresholded 1-bit icons), 15 tag icons drawn in code, synergy hints, reroll and skip, owned strip, autoplay, queueing, serialize / restore",
+    "no image or audio files (sound cues are a callback; the upgrade table is plain data in the game)"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/upgrade-draft.js",
+    "global": "GameDNA_UpgradeDraft",
+    "version": "1.0.0",
+    "docs": "module/README.md",
+    "skin": "optional: skins/skin-api.js + a skin before it (dim colour from ink; a smooth skin's UI font family in HD)"
+  }
+}

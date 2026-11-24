@@ -1,0 +1,64 @@
+{
+  "id": "toon-outlines-3d",
+  "code": "N-04",
+  "kind": "addon",
+  "name": "Toon outlines and cel shading for a three.js scene",
+  "family": "toon-shading-3d",
+  "requires": [],
+  "worksWith": [
+    "third-person-3d (N-01 starter)",
+    "tactics-grid-3d (N-03 starter)",
+    "billboard-sprites-3d (N-02): sprites use their own unlit material and stay untouched; 3D props and terrain around them get the toon look",
+    "any three.js 0.149.0 scene with lit materials (Lambert, Phong, Standard)"
+  ],
+  "oneLiner": "One call turns an existing three.js scene cel-shaded: every lit material becomes a toon copy with 2-4 light bands, a cool shadow tint, rim light and hard glints, and every solid mesh gets an inverted-hull ink outline that shares its buffers, keeps a steady screen width and thins out on small or far objects; the game's scene graph, rules and material changes keep working and remove() restores the original materials exactly.",
+  "fits": [
+    "low-poly 3D adventures and tactics games that want a cel-shaded, hand-inked look",
+    "an options switch between the game's normal look and a toon look",
+    "3D scenes with procedural primitives (boxes, cylinders, icosahedra) whose hard corners need gap-free outlines"
+  ],
+  "notFor": [
+    "skinned or morph-target characters that need outlines (they get toon shading only)",
+    "instanced grass or crowds that need outlines (toon shading only)",
+    "scenes built from ShaderMaterial / unlit Basic materials (left unchanged)",
+    "2D canvas games (no three.js scene)"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "3d",
+    "layer": "post-material",
+    "needs": [
+      "three.js scene, camera and renderer (window.THREE, 0.149.0)",
+      "one call to toon.update(dtMs) right before every renderer.render (play, pause, title / end, frozen stills)",
+      "optional: fade(mesh) when the game fades occluding props with its own shader uniform"
+    ],
+    "provides": [
+      "GameDNA_Toon3D.create / apply; toon.update / set / setEnabled / remove / optOut",
+      "toon.state(), toon.list() (why a mesh has no outline), toon.original(mesh), toon.shellOf(mesh)",
+      "checks/toon-checks.py (exact restore, outline per eligible mesh, ring pixels; 4 mutants), checks/host-facing.py (the hosts' facing + feet checks with the addon on)"
+    ]
+  },
+  "params": [
+    { "key": "preset", "label": "Preset", "type": "select", "options": ["soft3", "crisp2", "painted4", "ink"], "default": "soft3" },
+    { "key": "width", "label": "Line width (px per 720 px)", "type": "range", "min": 0, "max": 5, "step": 0.1, "default": 2.2 },
+    { "key": "color", "label": "Line colour", "type": "select", "options": ["tint", "ink"], "default": "tint" },
+    { "key": "rim", "label": "Rim light", "type": "range", "min": 0, "max": 1, "step": 0.02, "default": 0.32 }
+  ],
+  "variants": [
+    { "name": "Soft 3-band (default)", "params": { "preset": "soft3", "width": 2.2, "color": "tint", "rim": 0.32 } },
+    { "name": "Crisp 2-band", "params": { "preset": "crisp2", "width": 2.6, "color": "ink", "rim": 0 } },
+    { "name": "Painted 4-band", "params": { "preset": "painted4", "width": 1.8, "color": "tint", "rim": 0.22 } },
+    { "name": "Ink outline only", "params": { "preset": "ink", "width": 2.4, "color": "ink", "rim": 0 } }
+  ],
+  "assets": "none: the gradient map is generated in code",
+  "status": "built",
+  "module": {
+    "file": "module/toon-outlines-3d.js",
+    "global": "GameDNA_Toon3D",
+    "version": "1.1.0",
+    "readme": "module/README.md",
+    "needsThree": "0.149.0"
+  },
+  "hostRequires": "a three.js scene: three.js 0.149.0 as window.THREE (scene, camera, renderer)",
+  "basketFiles": [{"from": "vendor/three@0.149.0/three.min.js", "to": "three.min.js"}]
+}

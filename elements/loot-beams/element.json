@@ -1,0 +1,57 @@
+{
+ "id": "loot-beams",
+ "code": "E-19",
+ "kind": "addon",
+ "name": "Loot drops with rarity beams",
+ "family": "loot-drops",
+ "oneLiner": "Defeated foes and opened chests pop loot that arcs out with a ground shadow, lands with a bounce on free ground (landing spot and whole flight path tested against the game's walls, never off the map), then shows a light beam and glowing outline in its rarity colour and a small name tag; items in reach fly to the player on a clear line and are picked up exactly once with a flash. Rarities, items and drop tables are plain data; name tags never overlap each other, the HUD or open windows and glide or crossfade instead of jumping. Crisp pixel icons and a bitmap font on pixel canvases, shaded icons and soft beams on HD canvases (or a painted icon atlas).",
+ "fits": [
+  "top-down action RPGs and dungeon crawlers",
+  "twin-stick and arena games with drops",
+  "top-down adventure games with chests and foes",
+  "horde survival games (gold and gems that magnet to the hero)"
+ ],
+ "notFor": [
+  "side-view platformers (the throw uses a fake height over a ground plane; side view is not covered by the checks)",
+  "menu-only battles with no map to drop on (drop on the map after the fight instead)",
+  "games where loot must stay a secret until chosen (reward screens: use an upgrade or shop element)"
+ ],
+ "interfaces": {
+  "time": "realtime",
+  "coords": "side",
+  "layer": "fx",
+  "needs": [
+   "the game's wall / water test in world px (and its tile size), the map bounds",
+   "where foes die and chests open (a drop call, once each), and what the game already drops",
+   "the player's feet in world px, the camera, the view rect and every HUD box / open window (uiRects)",
+   "a fixed update step (also run by the ?t= replay), update(0) while the world is stopped",
+   "a ground pass between floor and sprites, a pass after sprites, a tag pass before the HUD"
+  ],
+  "provides": [
+   "onPickup(drop) once per item (the game decides what it gives), onLand",
+   "rects() of the name tags for other overlays",
+   "list(), audit() (items in walls, must be 0), stats(), hash() for checks"
+  ]
+ },
+ "params": [
+  {"key": "magnet", "label": "Magnet radius (px at scale 1)", "type": "range", "min": 0, "max": 160, "step": 2, "default": 56},
+  {"key": "beams", "label": "Beams from rarity", "type": "select", "options": ["uncommon", "rare", "epic", "all", "off"], "default": "uncommon"},
+  {"key": "tags", "label": "Name tags", "type": "select", "options": ["all", "uncommon", "rare", "off"], "default": "all"},
+  {"key": "distance", "label": "Throw distance", "type": "range", "min": 0.4, "max": 2, "step": 0.05, "default": 1},
+  {"key": "bounce", "label": "Bounce", "type": "range", "min": 0, "max": 1.6, "step": 0.05, "default": 1},
+  {"key": "beamHeight", "label": "Beam height", "type": "range", "min": 0, "max": 2, "step": 0.05, "default": 1},
+  {"key": "render", "label": "Render", "type": "select", "options": ["auto", "pixel", "smooth"], "default": "auto"}
+ ],
+ "variants": [
+  {"name": "Action RPG (default)", "params": {"magnet": 56, "beams": "uncommon", "tags": "all"}},
+  {"name": "Rare-only spotlight", "params": {"beams": "rare", "tags": "uncommon"}},
+  {"name": "Vacuum (horde)", "params": {"magnet": 120, "beams": "epic", "tags": "rare", "distance": 0.6}},
+  {"name": "Manual pickup", "params": {"magnet": 0, "beams": "uncommon", "tags": "all"}}
+ ],
+ "assets": [
+  "module/loot-beams.js: the element as one dependency-free script (global GameDNA_LootBeams): drop tables and rarity rolls, wall-safe throw planning, flight with bounce, magnet and pickup, beam / outline / flash drawing, built-in icons shaded per pixel (10 keys), a 5-row bitmap font, the name-tag layout",
+  "optional: a painted icon atlas of the game's own (the demo reuses elements/painted-ui/assets/kit/icons.webp)"
+ ],
+ "status": "draft",
+ "module": {"file": "module/loot-beams.js", "global": "GameDNA_LootBeams", "version": "1.0.3", "docs": "module/README.md"}
+}

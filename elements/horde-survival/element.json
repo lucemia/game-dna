@@ -1,0 +1,182 @@
+{
+  "id": "horde-survival",
+  "code": "A-11",
+  "kind": "system",
+  "name": "Horde survival auto-attacker",
+  "family": "Horde survival",
+  "oneLiner": "The hero only walks (keys, WASD or a touch stick); weapons fire by themselves on timers: orbiting blades, a bolt at the nearest foe, a burning area pulse that throws foes back, a bow shaft of light that pierces a line where the hero faces. Foes spawn just outside the view in rising waves (rings, packs, elites) and swarm in (hopping, flying, drifting, gliding: no legged walkers; the boss stomps); kills drop XP gems that fly to the hero inside a pickup reach; each level pauses the world and offers 1 of 3 upgrades (new weapon, weapon level, passive). A timer and a kill count run; a boss arrives at the end; kill it, or hold out until dawn, to win; win and lose screens. Seeded and frame-stepped, fast with 300-900 foes (pooled typed arrays, a spatial hash rebuilt each step, cached sprite bitmaps), with a bot that plays through the same input as a player. Weapons, foes, upgrades and waves are plain data.",
+  "fits": [
+    "survival roguelites where the player only moves and builds a weapon set",
+    "arena modes and bonus stages with endless waves",
+    "action RPG events (a night siege, a horde night)",
+    "short-session mobile games with a one-thumb stick",
+    "any top-down game that wants a 'hold out for N minutes' mode"
+  ],
+  "notFor": [
+    "aimed shooters where the player controls every shot (use A-08 patterns with your own firing)",
+    "melee combat with timing and combos (use A-05 sword combat)",
+    "turn-based or tactical fights (A-01, B-01)",
+    "side-view platformers (the swarm needs free 2D movement)"
+  ],
+  "interfaces": {
+    "time": "realtime",
+    "coords": "pseudo3d",
+    "layer": "scene",
+    "needs": [
+      "a fixed 60 Hz update step and a seed per run",
+      "a move vector from keys or a stick (the module also reads pointer drags as a touch stick)",
+      "a canvas 2D context (the module draws the field, cast, shots, gems, HUD, level-up window and banners into a logical view)",
+      "optional: paintActor(ctx, look, x, footY, {h, facing}) to paint each look ONCE (the module caches and animates it), drawGround, its own weapons / foes / upgrades / waves tables",
+      "a place to go when the run ends (onEnd win / lose)"
+    ],
+    "provides": [
+      "the rules: hero movement, weapon timers and hits, wave spawner off-screen, swarm steering with separation, contact and arrow damage with i-frames, XP gems with magnet, level-ups with a seeded pick-1-of-N, timer, kill count, boss with a telegraphed slam and summons, win / lose",
+      "the screen: painted meadow ground (or the host's), y-sorted cast with waddle / hop / hover, flash on hit, fading corpses, blades, bolts, lances, pulse rings, arrows, gems, potions, built-in hit numbers, XP bar, level medallion, timer, kills, weapon / passive slots, boss bar, wave alerts, level-up cards, end banner, touch stick",
+      "hit site onHit per HP change (read-only), onKill, onPick, onEvent (start, wave, boss, slam, fire, level, offer, pick, death, pickup, won, lost), onEnd(result, info) once",
+      "a bot (look-ahead steering + upgrade scoring) through the same input path",
+      "anchor(id), unitRects(), uiRects(), cardRects(), enemies(fn), worldToScreen, stats() (counts and step ms)"
+    ]
+  },
+  "params": [
+    {
+      "key": "enemyCap",
+      "label": "Enemy cap",
+      "type": "range",
+      "min": 100,
+      "max": 900,
+      "step": 50,
+      "default": 400
+    },
+    {
+      "key": "spawnRate",
+      "label": "Spawn rate x",
+      "type": "range",
+      "min": 0.5,
+      "max": 2.5,
+      "step": 0.25,
+      "default": 1
+    },
+    {
+      "key": "duration",
+      "label": "Boss arrives at (s)",
+      "type": "range",
+      "min": 60,
+      "max": 600,
+      "step": 20,
+      "default": 200
+    },
+    {
+      "key": "dawn",
+      "label": "Dawn after the boss (s)",
+      "type": "range",
+      "min": 30,
+      "max": 300,
+      "step": 10,
+      "default": 90
+    },
+    {
+      "key": "heroSpeed",
+      "label": "Hero speed (px/s)",
+      "type": "range",
+      "min": 60,
+      "max": 160,
+      "step": 10,
+      "default": 100
+    },
+    {
+      "key": "magnet",
+      "label": "Gem pull reach (px)",
+      "type": "range",
+      "min": 30,
+      "max": 200,
+      "step": 10,
+      "default": 70
+    },
+    {
+      "key": "startWeapon",
+      "label": "Start weapon",
+      "type": "select",
+      "options": [
+        "bolt",
+        "blades",
+        "pulse",
+        "lance"
+      ],
+      "default": "bolt"
+    },
+    {
+      "key": "choices",
+      "label": "Upgrade choices",
+      "type": "range",
+      "min": 2,
+      "max": 4,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "key": "hpScale",
+      "label": "Foe toughness x",
+      "type": "range",
+      "min": 0.5,
+      "max": 2,
+      "step": 0.25,
+      "default": 1
+    },
+    {
+      "key": "numbers",
+      "label": "Built-in hit numbers",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Standard vigil (default)",
+      "params": {}
+    },
+    {
+      "name": "Quick night (90 s)",
+      "params": {
+        "duration": 90,
+        "spawnRate": 1.5
+      }
+    },
+    {
+      "name": "Swarm",
+      "params": {
+        "enemyCap": 700,
+        "spawnRate": 2,
+        "hpScale": 0.75
+      }
+    },
+    {
+      "name": "Blade dancer",
+      "params": {
+        "startWeapon": "blades",
+        "heroSpeed": 120
+      }
+    },
+    {
+      "name": "Gentle (wide pull, soft foes)",
+      "params": {
+        "magnet": 140,
+        "hpScale": 0.5
+      }
+    }
+  ],
+  "assets": "module/horde-survival.js (global GameDNA_HordeSurvival, no dependencies; API in module/README.md). Built-in: a painted meadow ground (cached tile + hashed decals), a plain code-drawn creature and hero painter and code icons (the fallbacks), every weapon, shot, gem, potion, ring and HUD drawn in code. The starter and the demo paint the hero with the H-05 keeper walk sheet (idle + 4 walk poses, elements/bark-bubbles/demo/assets/art/walk-keeper.webp), the foes with demo-kit sprites (slime, imp, wisp, harpy, cultist, golem; painted left / right variants) and the icons with the L-06 painted-ui atlas: starter/art/kit.js, cast-art.js, vigil-art.js.",
+  "status": "v1-module",
+  "module": {
+    "file": "module/horde-survival.js",
+    "global": "GameDNA_HordeSurvival",
+    "version": "1.2.0"
+  },
+  "starter": "starter/index.html",
+  "starterFiles": [
+    "art"
+  ]
+}

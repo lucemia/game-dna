@@ -1,0 +1,1030 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modern Particle System</title>
+<style>
+:root { --bg: #090a14; --panel: #131425; --line: #272a46; --text: #ecebf7; --dim: #9696b8; --accent: #ffb54a; --accent2: #8fd0ff; --arc: #b98cff; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1000px 520px at 20% -12%, #2a1f48 0%, var(--bg) 62%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 16px 20px 10px; max-width: 1280px; margin: 0 auto; }
+.code { white-space: nowrap; font: 800 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #1a1206; background: linear-gradient(#ffd98a, var(--accent)); padding: 6px 8px; border-radius: 5px; box-shadow: 0 2px 12px #ffb54a50; }
+h1 { font-size: 19px; margin: 0; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; max-width: 900px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; padding: 0 20px 24px; max-width: 1280px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.frame { padding: 6px; background: linear-gradient(#272a48, #12131f); border-radius: 12px; box-shadow: 0 0 0 1px #34375a, 0 24px 60px #000b; }
+#game { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; background: #000; cursor: crosshair; touch-action: none; }
+.caption { display: flex; justify-content: space-between; gap: 12px; color: var(--dim); font-size: 12px; padding: 0 4px; }
+.caption b { color: var(--text); font-weight: 600; }
+.stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.stats div { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; min-width: 0; }
+.stats span { display: block; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+.stats b { font: 700 17px/1.2 ui-monospace, Menlo, monospace; color: var(--text); }
+.stats b.ok { color: #7ff0b0; }
+.cmp { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px 14px; }
+.cmp p { margin: 0 0 10px; color: var(--dim); font-size: 12.5px; }
+#native { display: block; width: 100%; aspect-ratio: 16 / 9; image-rendering: pixelated; image-rendering: crisp-edges; border-radius: 6px; box-shadow: 0 0 0 1px #34375a; background: #000; }
+aside { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+h2 { margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.presets button { --c: var(--accent); appearance: none; border: 1px solid #00000060; border-radius: 8px; padding: 8px 4px 7px; cursor: pointer; color: var(--text); font: 600 12px/1.1 inherit;
+  background: linear-gradient(#262844, #1a1b2e); box-shadow: inset 0 1px 0 #ffffff14, inset 0 -2px 0 var(--c); transition: transform .06s, background .15s; }
+.presets button i { display: block; width: 10px; height: 10px; margin: 0 auto 5px; border-radius: 50%; background: var(--c); box-shadow: 0 0 10px var(--c), 0 0 3px #fff; }
+.presets button:hover { background: linear-gradient(#30335a, #20223a); }
+.presets button[aria-pressed=true] { background: linear-gradient(#3a3566, #24223e); box-shadow: inset 0 0 0 1px var(--c), inset 0 -2px 0 var(--c), 0 0 14px #0006; }
+.presets button:active { transform: translateY(1px) scale(.98); }
+.row { margin-bottom: 10px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 5px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--fill), #2c2e4a var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #fff3d6; border: 2px solid #1a1206; box-shadow: 0 1px 6px #000a; cursor: pointer; }
+input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: #fff3d6; border: 2px solid #1a1206; }
+.seg { display: flex; background: #0d0e1a; border: 1px solid var(--line); border-radius: 7px; padding: 2px; gap: 2px; margin-bottom: 10px; }
+.seg button { flex: 1; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 4px; border-radius: 5px; cursor: pointer; text-transform: capitalize; }
+.seg button[aria-checked=true] { background: #2c2a4a; color: var(--text); box-shadow: inset 0 0 0 1px #48447a, inset 0 -2px 0 var(--accent); }
+.tog { display: flex; gap: 6px; }
+.tog button { flex: 1; appearance: none; background: #0d0e1a; border: 1px solid var(--line); color: var(--text); border-radius: 7px; padding: 8px 8px; font: 600 12px inherit; cursor: pointer; }
+.tog button[aria-pressed=true] { box-shadow: inset 0 -2px 0 #7ff0b0, inset 0 0 0 1px #3d6a58; }
+.foot { color: var(--dim); font-size: 11.5px; border-top: 1px solid var(--line); padding-top: 10px; }
+.foot code { color: var(--text); }
+@media (max-width: 1000px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 680px; width: 100%; margin: 0 auto; } }
+@media (max-width: 560px) { header { padding: 12px 16px 8px; } main { padding: 0 16px 16px; gap: 12px; } .frame { padding: 3px; } .caption { flex-direction: column; gap: 2px; }
+  .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } .stats div:nth-child(n+4) { display: none; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">E-11</span>
+  <div><h1>Modern particle system</h1><p>One pooled, seeded engine for thousands of smooth particles: emitter shapes (point, line, circle, rect, sprite outline), size, alpha and colour curves over each particle's life, additive glow, gravity, drag, wind and ground bounce. Presets for bursts, fountains, smoke, magic swirls and bouncing sparks; deterministic from a seed and game time.</p></div>
+</header>
+<main>
+  <section id="stage">
+    <div class="frame"><canvas id="game" width="640" height="360" aria-label="Forge hall at night with a hearth, a brazier, a mage, a magic swirl, an anvil and a fountain, all emitting particles"></canvas></div>
+    <div class="caption"><span><b>Click or tap</b> the hall to fire the selected preset there. Sparks bounce off the anvil and the floor; the fountain lands in its basin; the mage's aura follows the outline of the sprite.</span><span>Keys 1–9 pick a preset</span></div>
+    <div class="stats">
+      <div><span>Live</span><b id="sLive">0</b></div>
+      <div><span>Budget</span><b id="sBudget">2000</b></div>
+      <div><span>Emitters</span><b id="sEm">0</b></div>
+      <div><span>Update</span><b id="sUp">–</b></div>
+      <div><span>Draw</span><b id="sDraw">–</b></div>
+    </div>
+    <div class="cmp">
+      <h2>Same engine on a native pixel canvas</h2>
+      <p>320 × 180 native pixels, scaled up nearest-neighbour. On a 1:1 canvas this small the module switches to its crisp mode by itself: whole-pixel particles, four alpha steps, pixel trails behind sparks. Same seed, same calls, half the coordinates.</p>
+      <canvas id="native" width="320" height="180"></canvas>
+    </div>
+  </section>
+  <aside>
+    <div><h2>Preset</h2><div class="presets" id="presets"></div></div>
+    <div>
+      <h2>Engine</h2>
+      <div class="row"><label for="budget">Budget (pool size) <output id="budgetO"></output></label><input id="budget" type="range" min="200" max="8000" step="100"></div>
+      <div class="row"><label for="density">Density <output id="densityO"></output></label><input id="density" type="range" min="0.25" max="2" step="0.05"></div>
+      <div class="row"><label for="scale">Scale (0 = auto) <output id="scaleO"></output></label><input id="scale" type="range" min="0" max="4" step="0.25"></div>
+      <div class="row"><label for="gravity">Gravity <output id="gravityO"></output></label><input id="gravity" type="range" min="0" max="2" step="0.05"></div>
+      <div class="row"><label for="wind">Wind (px/s) <output id="windO"></output></label><input id="wind" type="range" min="-120" max="120" step="5"></div>
+      <div class="row"><label for="bounce">Bounce <output id="bounceO"></output></label><input id="bounce" type="range" min="0" max="1.5" step="0.05"></div>
+      <h2>Render</h2>
+      <div class="seg" role="radiogroup" data-key="render"><button data-v="auto">auto</button><button data-v="smooth">smooth</button><button data-v="crisp">crisp</button></div>
+      <div class="seg" role="radiogroup" data-key="glow"><button data-v="auto">glow auto</button><button data-v="on">on</button><button data-v="off">off</button></div>
+    </div>
+    <div>
+      <h2>Scene</h2>
+      <div class="tog"><button id="showcase" aria-pressed="true">Showcase</button><button id="stress" aria-pressed="false">Stress 2000</button><button id="clearBtn">Clear</button></div>
+    </div>
+    <div class="foot">One script, <code>GameDNA_Particles</code>. <code>?t=ms&amp;freeze=1</code> renders a deterministic still; <code>?stress=1</code>, <code>?preset=</code> and every parameter (<code>?budget=</code>, <code>?render=</code> …) can be set in the URL.</div>
+  </aside>
+</main>
+<script>/* GameDNA E-11 · Modern particle system · module v1 (plain script, no dependencies, one global: GameDNA_Particles)
+ *
+ *   const fx = GameDNA_Particles.create({
+ *     view: { x: 0, y: 0, w: 640, h: 360 },   // screen rect (logical canvas px) particles may cover; also used to cull
+ *     seed: 1,                                 // same seed + same calls in the same steps = same pixels (?t=&freeze=1 stable)
+ *     params: { budget: 2000, density: 1, scale: 0, render: 'auto', glow: 'auto', gravity: 1, wind: 0, bounce: 1 },
+ *     ground: (x, y) => groundTopAtOrBelow(x, y),   // optional, WORLD px: top y of the first solid surface at/below (x, y), or null
+ *     uiRects: () => [{ x, y, w, h }]               // optional, SCREEN px: HUD, windows, banners - particles are clipped out
+ *   });
+ *   fx.emit('burst' | 'sparks' | 'fountain' | 'smoke' | 'swirl' | 'dust' | 'pickup' | 'embers' | 'aura', x, y, opts)   // one-shot
+ *   const h = fx.start('smoke', x, y, { rate, follow: () => ({ x, y }), duration });  h.move(x, y); h.stop();   // continuous
+ *   fx.update(dtMs)                  // game time from your fixed step; 0 (or skip) while paused / hit-stopped
+ *   fx.draw(ctx, offsetX, offsetY)   // screen space, after sprites, before the HUD; offset = -camera
+ *
+ * Particles live in one preallocated pool (typed arrays, swap-remove), so update/draw make no per-particle garbage.
+ * Positions depend only on the seed, the order of emit/start calls and the update() clock: never on wall-clock time,
+ * frame rate or Math.random. The module never reads input and never touches game state.
+ */
+(function (root) {
+  'use strict';
+  var VERSION = '1.0.0';
+  var DEFAULTS = { budget: 2000, density: 1, scale: 0, render: 'auto', glow: 'auto', gravity: 1, wind: 0, bounce: 1 };
+  var LUT = 32, CB = 16, MAX_EMITTERS = 64, LID = 0;
+
+  /* ---------- palettes: colour over lifetime, birth -> death ---------- */
+  var PALETTES = {
+    fire: ['#fffbe8', '#ffe08a', '#ffa23a', '#f0582a', '#a8261c', '#4a1414'],
+    gold: ['#ffffff', '#fff3b0', '#ffd04a', '#f09a28', '#b8561a', '#5a2a10'],
+    ice: ['#ffffff', '#e2f8ff', '#9ce2ff', '#4aa8f0', '#2a5cc0', '#16245a'],
+    arcane: ['#ffffff', '#f6d6ff', '#c890ff', '#8a5cff', '#4a34c8', '#1e1450'],
+    poison: ['#f8ffe0', '#d8f878', '#86dc46', '#3ea64a', '#1e6a3a', '#0e2a1c'],
+    heal: ['#ffffff', '#eaffef', '#aef8c8', '#4ade96', '#1e9a72', '#0e3e3a'],
+    shock: ['#ffffff', '#f2f8ff', '#b4dcff', '#6aa2ff', '#3a4ae0', '#1a1660'],
+    water: ['#ffffff', '#d8f4ff', '#86d2f8', '#3c9ae0', '#1e5ca8', '#10284a'],
+    spring: ['#d8f8ff', '#9ee4ff', '#5cbcf4', '#3488e0', '#2256b0', '#142c60'],
+    smoke: ['#ffffff', '#ebe7ee', '#cfc9d4', '#b0aab6', '#918b98', '#77727e'],
+    soot: ['#8a8088', '#5e565e', '#403a42', '#2c282e', '#1c1a1e', '#121014'],
+    dust: ['#fbf0d8', '#e6d0a8', '#c8ac80', '#a08460', '#76604a', '#4a3c30'],
+    blood: ['#ffd6d0', '#ff8a7a', '#e8463c', '#b01e28', '#6a0e1a', '#300810'],
+    leaf: ['#f0ffc8', '#bfe86a', '#7cc244', '#4a9036', '#2e5e2a', '#1a3418']
+  };
+
+  /* ---------- presets: each is a list of layers (sub-emitters). Units: px and px/s at scale 1 (a 320x180 field) ---------- */
+  var PRESETS = {
+    burst: [
+      { name: 'flash', count: 1, shape: 'glow', blend: 'add', life: [150, 150], speed: [0, 0], size: [10, 10], sizeCurve: [0.6, 1.2, 1.4], alphaCurve: [0.85, 0.4, 0], color: ['#ffffff', '#fff0b0', '#ffb040'] },
+      { name: 'ring', count: 1, shape: 'ring', blend: 'add', life: [260, 260], speed: [0, 0], size: [6, 6], sizeCurve: [0.3, 2.6, 3.4], alphaCurve: [0.9, 0.5, 0], color: 'fire' },
+      { name: 'sparks', count: 28, shape: 'streak', blend: 'add', life: [260, 620], speed: [110, 280], spread: 360, drag: 3.4, gravity: 160, size: [1.1, 1.9], sizeCurve: [1, 0.8, 0.3], alphaCurve: [1, 1, 0.7, 0], stretch: 0.055, color: 'fire' },
+      { name: 'embers', count: 22, shape: 'glow', blend: 'add', life: [500, 1150], speed: [30, 150], spread: 360, drag: 2.4, gravity: -24, size: [1.4, 3], sizeCurve: [1, 0.8, 0.2], alphaCurve: [1, 1, 0.6, 0], twinkle: 0.5, color: 'fire' },
+      { name: 'smoke', count: 6, shape: 'puff', blend: 'normal', layer: 'back', life: [500, 950], speed: [10, 46], spread: 360, drag: 1.6, gravity: -26, size: [4, 8], sizeCurve: [0.5, 1, 1.5], alphaCurve: [0, 0.3, 0.14, 0], spin: [-0.8, 0.8], wind: 1, color: 'smoke', keepColor: true }
+    ],
+    sparks: [
+      { name: 'sparks', count: 30, rate: 60, shape: 'streak', blend: 'add', life: [600, 1250], speed: [110, 300], angle: -90, spread: 150, drag: 0.6, gravity: 520, bounce: 0.5, friction: 0.62, size: [0.9, 1.5], sizeCurve: [1, 1, 0.6], alphaCurve: [1, 1, 0.85, 0], stretch: 0.05, color: 'gold' },
+      { name: 'hot', count: 6, rate: 10, shape: 'glow', blend: 'add', life: [120, 220], speed: [0, 30], spread: 360, size: [5, 8], sizeCurve: [1, 0.6, 0], alphaCurve: [0.9, 0.4, 0], color: 'gold' }
+    ],
+    fountain: [
+      { name: 'drops', count: 48, rate: 110, shape: 'glow', blend: 'add', life: [900, 1500], speed: [190, 270], angle: -90, spread: 20, drag: 0.15, gravity: 430, bounce: 0.32, friction: 0.55, size: [1.2, 2.2], sizeCurve: [1, 1, 0.5], alphaCurve: [0.7, 0.9, 0.75, 0], color: 'spring' },
+      { name: 'mist', count: 6, rate: 12, shape: 'puff', blend: 'add', life: [800, 1400], speed: [10, 30], angle: -90, spread: 90, drag: 1, gravity: -10, size: [5, 9], sizeCurve: [0.6, 1, 1.4], alphaCurve: [0, 0.15, 0], color: 'ice' }
+    ],
+    smoke: [
+      { name: 'puffs', count: 10, rate: 16, shape: 'puff', blend: 'normal', layer: 'back', life: [1500, 2600], speed: [14, 36], angle: -90, spread: 34, drag: 0.8, gravity: -20, wind: 1, size: [4, 8], sizeCurve: [0.35, 1, 1.9], alphaCurve: [0, 0.55, 0.35, 0], spin: [-0.6, 0.6], color: 'smoke' }
+    ],
+    swirl: [
+      { name: 'motes', count: 44, rate: 80, shape: 'glow', blend: 'add', life: [700, 1300], orbit: { radius: [9, 20], speed: [3, 5.2], climb: 26, shrink: -5, squash: 0.42 }, size: [1.1, 2.3], sizeCurve: [0.6, 1, 0.4], alphaCurve: [0, 1, 1, 0], twinkle: 0.6, color: 'arcane' },
+      { name: 'stars', count: 6, rate: 9, shape: 'star', blend: 'add', life: [600, 1000], orbit: { radius: [4, 11], speed: [2, 3.4], climb: 18, shrink: 0, squash: 0.42 }, size: [2.4, 4], sizeCurve: [0.3, 1, 0], alphaCurve: [0, 1, 0], spin: [-3, 3], color: 'arcane' }
+    ],
+    dust: [
+      { name: 'dust', count: 14, rate: 30, shape: 'puff', blend: 'normal', life: [340, 680], speed: [24, 80], angle: -90, spread: 170, drag: 4.2, gravity: 50, size: [2.4, 5], sizeCurve: [0.6, 1.1, 1.3], alphaCurve: [0.6, 0.38, 0], spin: [-1, 1], color: 'dust' }
+    ],
+    pickup: [
+      { name: 'stars', count: 10, shape: 'star', blend: 'add', life: [380, 700], speed: [40, 90], spread: 360, out: true, drag: 4, gravity: -30, size: [2.2, 3.6], sizeCurve: [1.2, 1, 0], alphaCurve: [1, 1, 0], spin: [-5, 5], color: 'gold' },
+      { name: 'motes', count: 14, shape: 'glow', blend: 'add', life: [500, 900], speed: [10, 40], angle: -90, spread: 70, drag: 1.5, gravity: -50, size: [1, 2], sizeCurve: [1, 0.8, 0], alphaCurve: [1, 1, 0], twinkle: 0.7, color: 'gold' }
+    ],
+    embers: [
+      { name: 'embers', count: 12, rate: 22, shape: 'glow', blend: 'add', life: [1100, 2200], speed: [12, 34], angle: -90, spread: 40, drag: 0.6, gravity: -22, wind: 1.4, size: [0.9, 1.8], sizeCurve: [1, 0.9, 0], alphaCurve: [0, 1, 0.8, 0], twinkle: 0.8, color: 'fire' }
+    ],
+    aura: [
+      { name: 'wisps', count: 30, rate: 60, shape: 'glow', blend: 'add', life: [400, 800], speed: [8, 26], out: true, spread: 40, drag: 1, gravity: -36, size: [1, 2], sizeCurve: [1, 0.8, 0], alphaCurve: [0, 1, 0], twinkle: 0.4, color: 'heal' }
+    ]
+  };
+  var SHAPES = { glow: 1, dot: 1, streak: 1, puff: 1, star: 1, ring: 1, square: 1 };
+
+  /* ---------- helpers ---------- */
+  // null, undefined and '' are 'missing' (+null would be 0: emit(name, x, y) without opts must use the defaults)
+  function num(v, d) { if (v == null || v === '') return d; v = +v; return isFinite(v) ? v : d; }
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function hash(a, b) { var h = (Math.imul(a | 0, 374761393) + Math.imul(b | 0, 668265263) + 1013904223) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return (h ^ (h >>> 16)) >>> 0; }
+  function Rng(s) { this.s = s >>> 0 || 1; }
+  Rng.prototype.next = function () { var s = this.s = (this.s + 0x6D2B79F5) | 0; var t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  Rng.prototype.range = function (r, d) { if (r == null) return d; if (typeof r === 'number') return r; return r[0] + (r[1] - r[0]) * this.next(); };
+  function rgb(c) {
+    c = String(c || '#ffffff').trim();
+    if (c[0] === '#') { if (c.length === 4) c = '#' + c[1] + c[1] + c[2] + c[2] + c[3] + c[3]; var v = parseInt(c.slice(1, 7), 16); return isFinite(v) ? [v >> 16 & 255, v >> 8 & 255, v & 255] : [255, 255, 255]; }
+    var m = c.match(/(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/); return m ? [+m[1], +m[2], +m[3]] : [255, 255, 255];
+  }
+  function hex3(r, g, b) { return '#' + ((1 << 24) | (clamp(Math.round(r), 0, 255) << 16) | (clamp(Math.round(g), 0, 255) << 8) | clamp(Math.round(b), 0, 255)).toString(16).slice(1); }
+  function rectOf(o) {
+    if (!o) return null;
+    var x = num(o.x, NaN), y = num(o.y, NaN), w = num(o.w != null ? o.w : o.width, NaN), h = num(o.h != null ? o.h : o.height, NaN);
+    return isFinite(x) && isFinite(y) && w > 0 && h > 0 ? { x: x, y: y, w: w, h: h } : null;
+  }
+  // a curve is [v0, v1, ...] (evenly spaced over life) or [[t, v], ...]; sampled into a Float32Array LUT
+  function curveLUT(c, def) {
+    var out = new Float32Array(LUT), pts = [], i;
+    if (!Array.isArray(c) || !c.length) c = def;
+    if (Array.isArray(c[0])) pts = c.map(function (p) { return [num(p[0], 0), num(p[1], 0)]; });
+    else if (c.length === 1) pts = [[0, num(c[0], 1)], [1, num(c[0], 1)]];
+    else for (i = 0; i < c.length; i++) pts.push([i / (c.length - 1), num(c[i], 0)]);
+    for (i = 0; i < LUT; i++) {
+      var t = i / (LUT - 1), k = 0;
+      while (k < pts.length - 2 && t > pts[k + 1][0]) k++;
+      var a = pts[k], b = pts[Math.min(k + 1, pts.length - 1)], f = b[0] > a[0] ? clamp((t - a[0]) / (b[0] - a[0]), 0, 1) : 0;
+      f = f * f * (3 - 2 * f);   // smooth between keys
+      out[i] = a[1] + (b[1] - a[1]) * f;
+    }
+    return out;
+  }
+  function colorStops(c) {
+    if (typeof c === 'string' && PALETTES[c]) return PALETTES[c];
+    if (typeof c === 'string') { var w = rgb(c); return [hex3(255, 255, 255), c, hex3(w[0] * 0.6, w[1] * 0.6, w[2] * 0.6), hex3(w[0] * 0.3, w[1] * 0.3, w[2] * 0.3)]; }
+    if (Array.isArray(c) && c.length) return c;
+    return PALETTES.fire;
+  }
+  function mkCanvas(w, h) {
+    if (typeof document === 'undefined') return null;
+    var c = document.createElement('canvas'); c.width = Math.max(1, w | 0); c.height = Math.max(1, h | 0); return c;
+  }
+
+  /* ---------- white base sprites (64 px), tinted per colour bucket on demand ---------- */
+  var BASE = {};
+  function baseSprite(shape) {
+    if (BASE[shape] !== undefined) return BASE[shape];
+    var S = 64, c = mkCanvas(shape === 'streak' ? 128 : S, S), g = c && c.getContext('2d'), gr, i;
+    if (!g) return (BASE[shape] = null);
+    var cx = c.width / 2, cy = S / 2;
+    if (shape === 'glow') {
+      gr = g.createRadialGradient(cx, cy, 0, cx, cy, 32);
+      gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.18, 'rgba(255,255,255,0.9)'); gr.addColorStop(0.42, 'rgba(255,255,255,0.38)');
+      gr.addColorStop(0.7, 'rgba(255,255,255,0.1)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = gr; g.fillRect(0, 0, S, S);
+    } else if (shape === 'dot' || shape === 'square') {
+      gr = g.createRadialGradient(cx, cy, 0, cx, cy, 32);
+      gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.6, 'rgba(255,255,255,1)'); gr.addColorStop(0.8, 'rgba(255,255,255,0.5)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = gr; g.fillRect(0, 0, S, S);
+    } else if (shape === 'streak') {   // 128x64: a long soft capsule, head at the right
+      g.save(); g.translate(cx, cy); g.scale(2, 1);
+      gr = g.createRadialGradient(0, 0, 0, 0, 0, 32);
+      gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.25, 'rgba(255,255,255,0.85)'); gr.addColorStop(0.55, 'rgba(255,255,255,0.25)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = gr; g.fillRect(-32, -32, 64, 64); g.restore();
+    } else if (shape === 'puff') {   // soft, slightly lumpy cloud (deterministic lumps)
+      for (i = 0; i < 7; i++) {
+        var a = i / 7 * Math.PI * 2 + 0.4, d = i ? 9 + (hash(i, 3) % 5) : 0, r = i ? 15 + (hash(i, 5) % 6) : 20;
+        var px = cx + Math.cos(a) * d, py = cy + Math.sin(a) * d * 0.8;
+        gr = g.createRadialGradient(px, py, 0, px, py, r);
+        gr.addColorStop(0, 'rgba(255,255,255,0.55)'); gr.addColorStop(0.55, 'rgba(255,255,255,0.3)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+        g.fillStyle = gr; g.fillRect(0, 0, S, S);
+      }
+    } else if (shape === 'star') {   // four-point twinkle with a soft core
+      gr = g.createRadialGradient(cx, cy, 0, cx, cy, 14);
+      gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = gr; g.fillRect(0, 0, S, S);
+      g.fillStyle = '#fff'; g.beginPath();
+      for (i = 0; i < 8; i++) { var rr = i % 2 ? 5 : 31, aa = i * Math.PI / 4 - Math.PI / 2; g.lineTo(cx + Math.cos(aa) * rr, cy + Math.sin(aa) * rr); }
+      g.closePath(); g.fill();
+    } else if (shape === 'ring') {
+      g.lineWidth = 5; g.strokeStyle = 'rgba(255,255,255,1)'; g.beginPath(); g.arc(cx, cy, 26, 0, Math.PI * 2); g.stroke();
+      g.lineWidth = 11; g.strokeStyle = 'rgba(255,255,255,0.25)'; g.beginPath(); g.arc(cx, cy, 25, 0, Math.PI * 2); g.stroke();
+    }
+    return (BASE[shape] = c);
+  }
+
+  /* ---------- sprite outline sampling (emitter shape 'outline') ---------- */
+  var OUTLINES = typeof WeakMap === 'function' ? new WeakMap() : null;
+  function outlineOf(img) {
+    if (!img || !OUTLINES) return null;
+    var hit = OUTLINES.get(img); if (hit !== undefined) return hit;
+    var res = null;
+    try {
+      var w = img.naturalWidth || img.width | 0, h = img.naturalHeight || img.height | 0;
+      if (w > 0 && h > 0) {
+        var sc = Math.min(1, 160 / Math.max(w, h)), cw = Math.max(1, Math.round(w * sc)), ch = Math.max(1, Math.round(h * sc));
+        var c = mkCanvas(cw, ch), g = c.getContext('2d'); g.drawImage(img, 0, 0, cw, ch);
+        var d = g.getImageData(0, 0, cw, ch).data, pts = [];
+        var A = function (x, y) { return x < 0 || y < 0 || x >= cw || y >= ch ? 0 : d[(y * cw + x) * 4 + 3]; };
+        for (var y = 0; y < ch; y++) for (var x = 0; x < cw; x++) {
+          if (A(x, y) < 40) continue;
+          var nx = (A(x - 1, y) < 40 ? -1 : 0) + (A(x + 1, y) < 40 ? 1 : 0), ny = (A(x, y - 1) < 40 ? -1 : 0) + (A(x, y + 1) < 40 ? 1 : 0);
+          if (nx || ny || A(x - 1, y) < 40 || A(x + 1, y) < 40) pts.push((x + 0.5) / cw, (y + 0.5) / ch, Math.atan2(ny, nx || (ny ? 0 : 1)));
+        }
+        if (pts.length) {   // keep at most 400 points, evenly
+          var n = pts.length / 3, step = Math.max(1, n / 400), out = [];
+          for (var k = 0; k < n; k += step) { var j = Math.floor(k) * 3; out.push(pts[j], pts[j + 1], pts[j + 2]); }
+          res = new Float32Array(out);
+        }
+      }
+    } catch (e) { res = null; }   // tainted or not drawable: callers fall back to an ellipse
+    OUTLINES.set(img, res);
+    return res;
+  }
+
+  /* ---------- the instance ---------- */
+  function create(opt) {
+    opt = opt || {};
+    var P = {}, k; for (k in DEFAULTS) P[k] = DEFAULTS[k];
+    var warned = {}, view = null, U = 1, locked = false, crisp = false, glowOn = true, seed = (num(opt.seed, 1) >>> 0) || 1;
+    var SK = null;
+    try { SK = root.GameDNA_Skin && opt.skin != null && opt.skin !== false ? root.GameDNA_Skin.resolve(opt.skin) : null; } catch (e) { SK = null; }
+
+    // pool (struct of arrays). n = live count; dense 0..n-1, swap-remove on death.
+    var N = 0, n = 0, PX, PY, VX, VY, AGE, LIFE, SIZE, ROT, SPIN, OX, OY, OA, OR, OS, FLOOR, PHASE, DEF, EMI, REST;
+    var defs = [], defIndex = {}, presets = {}, emitters = [], emitSerial = 0, stealCursor = 0, clock = 0, updates = 0;
+    var st = { emits: 0, starts: 0, spawned: 0, stolen: 0, emitterSteals: 0, peak: 0, badPos: 0, unknown: 0, errors: 0, updateMs: 0, drawMs: 0, drawn: 0, clipped: 0, culled: 0, lastEmitsPerUpdate: 0, maxEmitsPerUpdate: 0 };
+    var emitsThisUpdate = 0, lastOff = [0, 0], lastView = null, lastUi = 0;
+    var gKey = new Int32Array(256), gStamp = new Int32Array(256), gVal = new Float64Array(256);
+    for (k in PRESETS) presets[k] = PRESETS[k];
+
+    function warn(key, msg) { if (warned[key]) return; warned[key] = 1; if (root.console) console.warn('GameDNA_Particles: ' + msg); }
+
+    function alloc(size) {
+      N = size; n = 0;
+      PX = new Float32Array(N); PY = new Float32Array(N); VX = new Float32Array(N); VY = new Float32Array(N);
+      AGE = new Float32Array(N); LIFE = new Float32Array(N); SIZE = new Float32Array(N); ROT = new Float32Array(N); SPIN = new Float32Array(N);
+      OX = new Float32Array(N); OY = new Float32Array(N); OA = new Float32Array(N); OR = new Float32Array(N); OS = new Float32Array(N);
+      FLOOR = new Float32Array(N); PHASE = new Float32Array(N); DEF = new Uint16Array(N); EMI = new Int16Array(N); REST = new Uint8Array(N);
+    }
+    function setParams(o) {
+      o = o || {};
+      for (var key in DEFAULTS) if (o[key] != null) { var d = DEFAULTS[key]; P[key] = typeof d === 'number' ? num(o[key], d) : String(o[key]); }
+      P.budget = clamp(Math.round(P.budget), 64, 16000); P.density = clamp(P.density, 0, 4); P.scale = clamp(P.scale, 0, 8);
+      P.gravity = clamp(P.gravity, 0, 4); P.wind = clamp(P.wind, -400, 400); P.bounce = clamp(P.bounce, 0, 2);
+      if (P.render !== 'smooth' && P.render !== 'crisp') P.render = 'auto';
+      if (P.glow !== 'on' && P.glow !== 'off') P.glow = 'auto';
+      glowOn = P.glow !== 'off';
+      if (P.budget !== N) {   // keep the newest particles that fit
+        var old = N ? { PX: PX, PY: PY, VX: VX, VY: VY, AGE: AGE, LIFE: LIFE, SIZE: SIZE, ROT: ROT, SPIN: SPIN, OX: OX, OY: OY, OA: OA, OR: OR, OS: OS, FLOOR: FLOOR, PHASE: PHASE, DEF: DEF, EMI: EMI, REST: REST } : null, on = n;
+        alloc(P.budget);
+        if (old) { var keep = Math.min(on, N), from = on - keep; n = keep; for (var nm in old) { var arr = { PX: PX, PY: PY, VX: VX, VY: VY, AGE: AGE, LIFE: LIFE, SIZE: SIZE, ROT: ROT, SPIN: SPIN, OX: OX, OY: OY, OA: OA, OR: OR, OS: OS, FLOOR: FLOOR, PHASE: PHASE, DEF: DEF, EMI: EMI, REST: REST }[nm]; arr.set(old[nm].subarray(from, from + keep)); } }
+      }
+      resolveView();
+    }
+    function resolveView() {
+      var v = null;
+      try { v = rectOf(typeof opt.view === 'function' ? opt.view() : opt.view); } catch (e) { v = null; }
+      if (v) view = v;
+      // the size unit is fixed once particles exist, so a view found later (first draw) never changes motion: determinism
+      if (!locked) U = P.scale > 0 ? P.scale : view ? clamp(view.h / 180, 0.6, 6) : 1;
+    }
+
+    /* compiled layer definitions (cached per preset + colour key) */
+    function compile(L, colorOverride) {
+      var stops = colorStops(colorOverride != null ? colorOverride : L.color), rgbs = stops.map(rgb), cols = [], rgbArr = [];
+      for (var i = 0; i < CB; i++) {
+        var t = i / (CB - 1) * (rgbs.length - 1), a = Math.floor(t), b = Math.min(a + 1, rgbs.length - 1), f = t - a;
+        var r = rgbs[a][0] + (rgbs[b][0] - rgbs[a][0]) * f, g = rgbs[a][1] + (rgbs[b][1] - rgbs[a][1]) * f, bl = rgbs[a][2] + (rgbs[b][2] - rgbs[a][2]) * f;
+        rgbArr.push([r, g, bl]); cols.push(hex3(r, g, bl));
+      }
+      var shape = SHAPES[L.shape] ? L.shape : 'glow';
+      return {
+        L: L, shape: shape, add: L.blend !== 'normal', back: L.layer === 'back', cols: cols, rgb: rgbArr, sprites: new Array(CB),
+        sizeL: curveLUT(L.sizeCurve, [1, 1]), alphaL: curveLUT(L.alphaCurve, [1, 1, 0]),
+        drag: Math.max(0, num(L.drag, 0)), gravity: num(L.gravity, 0), wind: num(L.wind, 0), bounce: Math.max(0, num(L.bounce, 0)), friction: clamp(num(L.friction, 0.7), 0, 1),
+        twinkle: clamp(num(L.twinkle, 0), 0, 1), stretch: Math.max(0, num(L.stretch, 0)), orbit: L.orbit || null, out: !!L.out,
+        dragF: 1, dragDt: -1
+      };
+    }
+    function defFor(L, colorOverride) {
+      var key = (L.__id || (L.__id = 'L' + (++LID) + ':' + (L.name || ''))) + '|' + (colorOverride == null ? '' : JSON.stringify(colorOverride));
+      var idx = defIndex[key];
+      if (idx === undefined) { if (defs.length >= 65000) { warn('defs', 'too many colour variants; reusing'); return 0; } idx = defIndex[key] = defs.length; defs.push(compile(L, colorOverride)); }
+      return idx;
+    }
+    function layersOf(name) {
+      var p = typeof name === 'string' ? presets[name] : name;
+      if (p && !Array.isArray(p)) p = p.layers || [p];
+      if (!p || !p.length) { st.unknown++; warn('preset-' + name, 'unknown preset "' + name + '"; using "burst"'); p = presets.burst; }
+      return p;
+    }
+
+    /* spawn position on an emitter shape: writes into tmp [x, y, normalAngle | NaN] */
+    var tmp = [0, 0, NaN];
+    function shapePoint(sh, x, y, r) {
+      tmp[0] = x; tmp[1] = y; tmp[2] = NaN;
+      if (!sh || typeof sh !== 'object') return;
+      var t = sh.type || 'point', a;
+      if (t === 'line') {
+        var x2 = num(sh.x2, x + num(sh.dx, 0)), y2 = num(sh.y2, y + num(sh.dy, 0)), f = r.next();
+        tmp[0] = x + (x2 - x) * f; tmp[1] = y + (y2 - y) * f; tmp[2] = Math.atan2(x2 - x, -(y2 - y)) ;
+        if (r.next() < 0.5) tmp[2] += Math.PI;
+      } else if (t === 'circle') {
+        var R = Math.max(0, num(sh.r, 8)); a = r.next() * Math.PI * 2;
+        var d = sh.edge === false ? Math.sqrt(r.next()) * R : R;
+        tmp[0] = x + Math.cos(a) * d; tmp[1] = y + Math.sin(a) * d * num(sh.squash, 1); tmp[2] = a;
+      } else if (t === 'rect') {
+        var w = Math.max(0, num(sh.w, 16)), h = Math.max(0, num(sh.h, 16)), cx0 = num(sh.x, x - w / 2), cy0 = num(sh.y, y - h / 2);
+        if (sh.edge) {
+          var per = 2 * (w + h), p = r.next() * per;
+          if (p < w) { tmp[0] = cx0 + p; tmp[1] = cy0; tmp[2] = -Math.PI / 2; }
+          else if (p < w + h) { tmp[0] = cx0 + w; tmp[1] = cy0 + p - w; tmp[2] = 0; }
+          else if (p < 2 * w + h) { tmp[0] = cx0 + (p - w - h); tmp[1] = cy0 + h; tmp[2] = Math.PI / 2; }
+          else { tmp[0] = cx0; tmp[1] = cy0 + (p - 2 * w - h); tmp[2] = Math.PI; }
+        } else { tmp[0] = cx0 + r.next() * w; tmp[1] = cy0 + r.next() * h; tmp[2] = Math.atan2(tmp[1] - (cy0 + h / 2), tmp[0] - (cx0 + w / 2)); }
+      } else if (t === 'outline') {
+        var ow = Math.max(1, num(sh.w, 16)), oh = Math.max(1, num(sh.h, 16)), ox0 = num(sh.x, x - ow / 2), oy0 = num(sh.y, y - oh / 2);
+        var pts = sh.image ? outlineOf(sh.image) : null;
+        if (pts && pts.length >= 3) {
+          var j = Math.floor(r.next() * (pts.length / 3)) * 3, u = pts[j], v = pts[j + 1], na = pts[j + 2];
+          if (sh.flipX) { u = 1 - u; na = Math.PI - na; }
+          tmp[0] = ox0 + u * ow; tmp[1] = oy0 + v * oh; tmp[2] = na;
+        } else {   // no readable image: the ellipse inside the rect
+          a = r.next() * Math.PI * 2; tmp[0] = ox0 + ow / 2 + Math.cos(a) * ow / 2; tmp[1] = oy0 + oh / 2 + Math.sin(a) * oh / 2; tmp[2] = a;
+        }
+      }
+    }
+
+    function slot() {
+      if (n < N) return n++;
+      st.stolen++;   // pool full: recycle in a fixed rotation (deterministic, never grows)
+      stealCursor = (stealCursor + 1) % N; return stealCursor;
+    }
+    function spawnOne(di, x, y, o, r, emi) {
+      var D = defs[di], L = D.L, i = slot();
+      var sh = o && o.shape; shapePoint(sh, x, y, r);
+      var sx = tmp[0], sy = tmp[1], normal = tmp[2];
+      var ang = num(o && o.angle, num(L.angle, 0)) * Math.PI / 180, spread = num(o && o.spread, num(L.spread, 360)) * Math.PI / 180;
+      if ((D.out || (o && o.dir === 'out')) && normal === normal) ang = normal;
+      var a = ang + (r.next() - 0.5) * spread;
+      var facing = o && o.facing === -1 ? -1 : 1;
+      var sp = r.range(L.speed, 0) * U * num(o && o.speed, 1);
+      var vx = Math.cos(a) * sp * facing, vy = Math.sin(a) * sp;
+      if (o && o.vx) vx += num(o.vx, 0) * num(L.inherit, 1); if (o && o.vy) vy += num(o.vy, 0) * num(L.inherit, 1);
+      PX[i] = sx; PY[i] = sy; VX[i] = vx; VY[i] = vy; AGE[i] = 0;
+      LIFE[i] = Math.max(16, r.range(L.life, 600) * num(o && o.life, 1));
+      SIZE[i] = r.range(L.size, 2) * num(o && o.size, 1);
+      ROT[i] = r.next() * Math.PI * 2; SPIN[i] = r.range(L.spin, 0); PHASE[i] = r.next() * 6.283;
+      DEF[i] = di; EMI[i] = emi; REST[i] = 0;
+      FLOOR[i] = o && o.floor != null && isFinite(+o.floor) ? +o.floor : NaN;
+      if (D.orbit) {
+        var Ob = D.orbit; OX[i] = sx; OY[i] = sy; OA[i] = r.next() * Math.PI * 2;
+        OR[i] = r.range(Ob.radius, 10) * U * num(o && o.radius, 1); OS[i] = r.range(Ob.speed, 3) * (num(o && o.turn, 1) < 0 ? -1 : 1);
+        PX[i] = sx + Math.cos(OA[i]) * OR[i]; PY[i] = sy + Math.sin(OA[i]) * OR[i] * num(Ob.squash, 0.45);
+      }
+      st.spawned++;
+    }
+
+    function emitLayers(name, x, y, o, r, countKey, emi) {
+      var layers = layersOf(name), total = 0;
+      var colorOv = o && o.color != null ? o.color : null, amount = Math.max(0, num(o && o.amount, 1));
+      for (var li = 0; li < layers.length; li++) {
+        var L = layers[li]; if (!L) continue;
+        var di = defFor(L, L.keepColor ? null : colorOv);
+        var want = countKey === 'count' ? num(L.count, 0) * amount * P.density : 0;
+        if (countKey === 'count') {
+          var cnt = Math.floor(want) + (r.next() < want - Math.floor(want) ? 1 : 0);
+          if (L.count === 1 && want > 0) cnt = 1;   // single flashes and rings never multiply
+          for (var c = 0; c < cnt; c++) spawnOne(di, x, y, o, r, emi);
+          total += cnt;
+        }
+      }
+      return total;
+    }
+
+    /* ---------- public: one-shot ---------- */
+    function emit(name, x, y, o) {
+      x = +x; y = +y;
+      if (!isFinite(x) || !isFinite(y)) { st.badPos++; warn('pos', 'emit() got a non-finite position; skipped'); return 0; }
+      if (!N) alloc(P.budget);
+      st.emits++; emitsThisUpdate++; locked = true;
+      var r = new Rng(hash(seed, st.emits * 7919 + 13));
+      try { return emitLayers(name, x, y, o || null, r, 'count', -1); } catch (e) { st.errors++; warn('emit', 'emit failed: ' + (e && e.message)); return 0; }
+    }
+
+    /* ---------- public: continuous emitters ---------- */
+    function Handle(slotIdx, serial) { this._s = slotIdx; this._n = serial; this.id = serial; }
+    Handle.prototype.em = function () { var e = emitters[this._s]; return e && e.serial === this._n ? e : null; };
+    Handle.prototype.move = function (x, y) { var e = this.em(); if (e && isFinite(+x) && isFinite(+y)) { e.x = +x; e.y = +y; } return this; };
+    Handle.prototype.set = function (o) { var e = this.em(); if (e && o) for (var q in o) e.o[q] = o[q]; return this; };
+    Handle.prototype.stop = function () { var e = this.em(); if (e) e.on = false; return this; };
+    Handle.prototype.kill = function () { var e = this.em(); if (e) { e.on = false; emitters[this._s] = null; } return this; };
+    Handle.prototype.alive = function () { var e = this.em(); return !!(e && e.on); };
+
+    function start(name, x, y, o) {
+      o = o || {};
+      if (!N) alloc(P.budget);
+      x = num(x, NaN); y = num(y, NaN);
+      if ((!isFinite(x) || !isFinite(y)) && typeof o.follow !== 'function') { st.badPos++; warn('pos', 'start() needs a position or follow(); skipped'); return new Handle(-1, -1); }
+      st.starts++; locked = true;
+      var s = -1, i;
+      for (i = 0; i < MAX_EMITTERS; i++) if (!emitters[i]) { s = i; break; }
+      if (s < 0) {   // all busy: replace the oldest (a start() inside a per-frame loop would end up here)
+        var oldest = 0; for (i = 1; i < MAX_EMITTERS; i++) if (emitters[i].serial < emitters[oldest].serial) oldest = i;
+        s = oldest; st.emitterSteals++; warn('emitters', 'more than ' + MAX_EMITTERS + ' running emitters: is start() called every frame? Use one handle and move() it.');
+      }
+      var layers = layersOf(name), rates = [];
+      for (i = 0; i < layers.length; i++) rates.push(num(layers[i].rate, num(layers[i].count, 10)));
+      for (i = 0; i < n; i++) if (EMI[i] === s) EMI[i] = -1;   // particles of a replaced emitter stop following it
+      var e = emitters[s] = { serial: ++emitSerial, name: name, layers: layers, rates: rates, acc: new Float64Array(layers.length), x: x, y: y, o: o, on: true,
+        age: 0, dur: num(o.duration, 0), r: new Rng(hash(seed, 0x5bd1e995 ^ (st.starts * 31 + 7))), lastX: x, lastY: y, vx: 0, vy: 0 };
+      if (typeof o.follow === 'function') follow(e);
+      return new Handle(s, e.serial);
+    }
+    function follow(e) {
+      var f = e.o.follow; if (typeof f !== 'function') return true;
+      var p = null; try { p = f(); } catch (err) { st.errors++; warn('follow', 'follow() threw: ' + (err && err.message)); }
+      if (!p || !isFinite(+p.x) || !isFinite(+p.y)) return false;
+      e.x = +p.x; e.y = +p.y; return true;
+    }
+
+    function groundAt(x, y) {
+      var fn = opt.ground; if (typeof fn !== 'function') return NaN;
+      var kx = Math.floor(x / (2 * U)), ky = Math.floor(y / (8 * U)), key = (kx * 73856093) ^ (ky * 19349663), h = (key ^ (key >>> 8)) & 255;
+      if (gStamp[h] === updates && gKey[h] === key) return gVal[h];
+      var v = NaN; try { var g = fn(x, y); v = g == null || !isFinite(+g) ? NaN : +g; } catch (err) { st.errors++; warn('ground', 'ground() threw: ' + (err && err.message)); }
+      gStamp[h] = updates; gKey[h] = key; gVal[h] = v; return v;
+    }
+
+    /* ---------- update: the only place state moves ---------- */
+    function update(dtMs) {
+      var t0 = root.performance ? performance.now() : 0;
+      dtMs = num(dtMs, 0);
+      st.lastEmitsPerUpdate = emitsThisUpdate; if (emitsThisUpdate > st.maxEmitsPerUpdate) st.maxEmitsPerUpdate = emitsThisUpdate; emitsThisUpdate = 0;
+      if (!(dtMs > 0)) return;
+      if (!N) alloc(P.budget);
+      dtMs = Math.min(dtMs, 100); updates++;
+      var dt = dtMs / 1000, i, e, li;
+      clock += dtMs;
+      resolveView();
+      // emitters
+      for (var s = 0; s < MAX_EMITTERS; s++) {
+        e = emitters[s]; if (!e) continue;
+        if (e.on) {
+          var px = e.x, py = e.y;
+          if (!follow(e)) { e.on = false; }
+          e.vx = (e.x - px) / dt; e.vy = (e.y - py) / dt;
+          e.age += dtMs;
+          if (e.dur > 0 && e.age >= e.dur) e.on = false;
+        }
+        if (e.on) {
+          for (li = 0; li < e.layers.length; li++) {
+            var rate = e.rates[li] * P.density * Math.max(0, num(e.o.amount, 1));
+            e.acc[li] += rate * dt;
+            var di = defFor(e.layers[li], e.o.color != null && !e.layers[li].keepColor ? e.o.color : null);
+            while (e.acc[li] >= 1) { e.acc[li] -= 1; spawnOne(di, e.x, e.y, e.o, e.r, s); }
+          }
+        } else {   // stopped: keep the slot until its particles are gone, so orbiting motes do not jump
+          var any = false; for (i = 0; i < n; i++) if (EMI[i] === s) { any = true; break; }
+          if (!any) emitters[s] = null;
+        }
+      }
+      // particles
+      var gMul = P.gravity, wind = P.wind * U, bMul = P.bounce;
+      for (i = 0; i < n; i++) {
+        AGE[i] += dtMs;
+        if (AGE[i] >= LIFE[i]) { kill(i); i--; continue; }
+        var D = defs[DEF[i]];
+        if (D.dragDt !== dt) { D.dragF = Math.exp(-D.drag * dt); D.dragDt = dt; }
+        if (D.orbit) {
+          var Ob = D.orbit, em = EMI[i] >= 0 ? emitters[EMI[i]] : null;
+          if (em) { OX[i] += em.x - (em.lastX); OY[i] += em.y - (em.lastY); }
+          OA[i] += OS[i] * dt; OR[i] = Math.max(0, OR[i] + num(Ob.shrink, 0) * U * dt);
+          OY[i] -= num(Ob.climb, 0) * U * dt;
+          PX[i] = OX[i] + Math.cos(OA[i]) * OR[i]; PY[i] = OY[i] + Math.sin(OA[i]) * OR[i] * num(Ob.squash, 0.45);
+        } else {
+          if (REST[i]) { VX[i] *= Math.pow(D.friction, dt * 6); PX[i] += VX[i] * dt; ROT[i] += SPIN[i] * dt * 0.2; continue; }
+          VX[i] = VX[i] * D.dragF + D.wind * wind * dt; VY[i] = VY[i] * D.dragF + D.gravity * gMul * U * dt;
+          var oy = PY[i];
+          PX[i] += VX[i] * dt; PY[i] += VY[i] * dt;
+          if (D.bounce > 0 && bMul > 0 && VY[i] > 0) {
+            var fy = FLOOR[i]; if (fy !== fy) fy = groundAt(PX[i], oy);
+            if (fy === fy && PY[i] >= fy && oy <= fy + 2 * U) {
+              PY[i] = fy; VY[i] = -VY[i] * Math.min(0.95, D.bounce * bMul); VX[i] *= D.friction;
+              if (VY[i] > -26 * U) { VY[i] = 0; REST[i] = 1; }
+            }
+          }
+        }
+        ROT[i] += SPIN[i] * dt;
+      }
+      for (s = 0; s < MAX_EMITTERS; s++) { e = emitters[s]; if (e) { e.lastX = e.x; e.lastY = e.y; } }
+      if (n > st.peak) st.peak = n;
+      if (root.performance) st.updateMs = performance.now() - t0;
+    }
+    function kill(i) {
+      var j = --n; if (i === j) return;
+      PX[i] = PX[j]; PY[i] = PY[j]; VX[i] = VX[j]; VY[i] = VY[j]; AGE[i] = AGE[j]; LIFE[i] = LIFE[j]; SIZE[i] = SIZE[j]; ROT[i] = ROT[j]; SPIN[i] = SPIN[j];
+      OX[i] = OX[j]; OY[i] = OY[j]; OA[i] = OA[j]; OR[i] = OR[j]; OS[i] = OS[j]; FLOOR[i] = FLOOR[j]; PHASE[i] = PHASE[j]; DEF[i] = DEF[j]; EMI[i] = EMI[j]; REST[i] = REST[j];
+    }
+
+    /* ---------- draw: pure function of the state ---------- */
+    function tinted(D, ci) {
+      var s = D.sprites[ci]; if (s !== undefined) return s;
+      var base = baseSprite(D.shape); if (!base) return (D.sprites[ci] = null);
+      var c = mkCanvas(base.width, base.height), g = c.getContext('2d'), col = D.rgb[ci];
+      g.drawImage(base, 0, 0); g.globalCompositeOperation = 'source-in'; g.fillStyle = hex3(col[0], col[1], col[2]); g.fillRect(0, 0, c.width, c.height);
+      if (D.add && (D.shape === 'glow' || D.shape === 'streak' || D.shape === 'star')) {   // white-hot core for additive light
+        g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.55 * (1 - ci / CB);
+        var cx = c.width / 2, cy = c.height / 2, gr = g.createRadialGradient(cx, cy, 0, cx, cy, c.height * 0.16);
+        gr.addColorStop(0, '#fff'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, c.width, c.height);
+      }
+      return (D.sprites[ci] = c);
+    }
+    // glow 'auto': additive light washes out to white on a bright frame, so over a bright picture (mean luma > 0.55)
+    // light-like layers draw with normal blending. Sampled from the frame under the particles at the first draw and every
+    // 30th draw; it only picks the blend mode, never motion. Returns 1 bright, 0 dark (or unreadable).
+    var probeC = null, probeG = null, draws = 0, bright = -1;
+    function sampleBright(ctx) {
+      try {
+        if (!probeC) { probeC = mkCanvas(16, 9); probeG = probeC.getContext('2d', { willReadFrequently: true }); }
+        var cw = ctx.canvas.width, ch = ctx.canvas.height;
+        probeG.clearRect(0, 0, 16, 9); probeG.drawImage(ctx.canvas, 0, 0, cw, ch, 0, 0, 16, 9);
+        var d = probeG.getImageData(0, 0, 16, 9).data, sum = 0;
+        for (var q = 0; q < d.length; q += 4) sum += 0.2126 * d[q] + 0.7152 * d[q + 1] + 0.0722 * d[q + 2];
+        return sum / (d.length / 4) / 255 > 0.55 ? 1 : 0;
+      } catch (e) { return 0; }
+    }
+    function isCrisp(ctx) {
+      if (P.render === 'crisp') return true;
+      if (P.render === 'smooth') return false;
+      if (SK && SK.pixel) return true;
+      var m = ctx.getTransform ? ctx.getTransform() : null, sc = m ? Math.sqrt(m.a * m.a + m.b * m.b) : 1;
+      return sc <= 1.01 && ctx.canvas && ctx.canvas.width <= 512;
+    }
+
+    function draw(ctx, offX, offY, layer) {
+      if (!ctx || !n) { st.drawn = 0; return; }
+      var t0 = root.performance ? performance.now() : 0;
+      offX = num(offX, 0); offY = num(offY, 0); lastOff[0] = offX; lastOff[1] = offY;
+      if (!view) {
+        var m0 = ctx.getTransform ? ctx.getTransform() : null, s0 = m0 ? Math.sqrt(m0.a * m0.a + m0.b * m0.b) || 1 : 1;
+        if (ctx.canvas) { view = { x: 0, y: 0, w: ctx.canvas.width / s0, h: ctx.canvas.height / s0 }; resolveView(); }
+      }
+      var V = view || { x: -1e9, y: -1e9, w: 2e9, h: 2e9 };
+      lastView = V;
+      var only = layer === 'back' ? 1 : layer === 'front' ? 2 : 0;
+      var ui = null; if (typeof opt.uiRects === 'function') { try { ui = opt.uiRects(); } catch (e) { st.errors++; warn('ui', 'uiRects() threw: ' + (e && e.message)); ui = null; } }
+      ctx.save();
+      try {
+        // clip: the view minus every UI rect (evenodd), so particles never cover the HUD
+        ctx.beginPath(); ctx.rect(V.x, V.y, V.w, V.h);
+        lastUi = 0;
+        if (ui && ui.length) for (var u = 0; u < ui.length; u++) { var R = rectOf(ui[u]); if (R) { ctx.rect(R.x, R.y, R.w, R.h); lastUi++; } }
+        ctx.clip('evenodd');
+        crisp = isCrisp(ctx);
+        if (P.glow === 'auto') { if (draws % 30 === 0 || bright < 0) bright = sampleBright(ctx); glowOn = bright !== 1; }
+        draws++;
+        var drawn = 0, culled = 0;
+        // many overlapping additive particles saturate to flat white: past 700 live, light layers fade a little per particle
+        var addK = glowOn && n > 700 ? Math.max(0.55, 1 - (n - 700) / 2600) : 1;
+        var m = ctx.getTransform ? ctx.getTransform() : null;
+        var ma = m ? m.a : 1, mb = m ? m.b : 0, mc = m ? m.c : 0, md = m ? m.d : 1, me = m ? m.e : 0, mf = m ? m.f : 0;
+        if (crisp) ctx.imageSmoothingEnabled = false;
+        for (var pass = 0; pass < 2; pass++) {
+          var add = pass === 1;
+          if (add && !glowOn) { /* glow off: additive layers draw normally in pass 0 */ break; }
+          ctx.globalCompositeOperation = add ? 'lighter' : 'source-over';
+          for (var i = 0; i < n; i++) {
+            var D = defs[DEF[i]];
+            if ((D.add && glowOn) !== add) continue;
+            if (only === 1 && !D.back) continue; if (only === 2 && D.back) continue;
+            var t = AGE[i] / LIFE[i]; if (t >= 1) continue;
+            var li = (t * (LUT - 1)) | 0;
+            var al = D.alphaL[li]; if (D.twinkle) al *= 1 - D.twinkle * 0.5 * (1 + Math.sin(AGE[i] * 0.018 + PHASE[i]));
+            if (al <= 0.01) continue;
+            var sz = SIZE[i] * D.sizeL[li] * U; if (sz <= 0.05) continue;
+            var x = PX[i] + offX, y = PY[i] + offY;
+            var reach = D.shape === 'streak' ? sz * 3 + (Math.abs(VX[i]) + Math.abs(VY[i])) * D.stretch : D.shape === 'ring' ? sz * 1.3 : sz * 2;
+            if (x + reach < V.x || x - reach > V.x + V.w || y + reach < V.y || y - reach > V.y + V.h) { culled++; continue; }
+            var ci = (t * (CB - 1) + 0.5) | 0;
+            if (crisp) { drawCrisp(ctx, D, i, x, y, sz, al, ci); drawn++; continue; }
+            var spr = D.sprites[ci]; if (spr === undefined) spr = tinted(D, ci);
+            if (!spr) continue;
+            if (D.add) al *= addK;
+            ctx.globalAlpha = al > 1 ? 1 : al;
+            if (D.add && !glowOn && D.shape !== 'ring') {   // bright frame: a darker, wider underlay gives light layers an edge
+              var ui2 = Math.min(CB - 1, ci + 7), und = D.sprites[ui2]; if (und === undefined) und = tinted(D, ui2);
+              if (und) {
+                ctx.globalAlpha = Math.min(1, al * 0.6);
+                if (D.shape === 'streak') {
+                  var uvx = VX[i], uvy = VY[i], usp = Math.sqrt(uvx * uvx + uvy * uvy), ulen = Math.max(sz * 2.2, usp * D.stretch + sz * 1.6), ucs = usp > 1e-3 ? uvx / usp : 1, usn = usp > 1e-3 ? uvy / usp : 0;
+                  ctx.setTransform(ma * ucs + mc * usn, mb * ucs + md * usn, -ma * usn + mc * ucs, -mb * usn + md * ucs, ma * x + mc * y + me, mb * x + md * y + mf);
+                  ctx.drawImage(und, -ulen * 1.65, -sz * 2.1, ulen * 2.1, sz * 4.2);
+                  ctx.setTransform(ma, mb, mc, md, me, mf);
+                } else { var ud = sz * 2.5; ctx.drawImage(und, x - ud, y - ud, ud * 2, ud * 2); }
+                ctx.globalAlpha = al > 1 ? 1 : al;
+              }
+            }
+            if (D.shape === 'streak') {
+              var vx = VX[i], vy = VY[i], sp = Math.sqrt(vx * vx + vy * vy), len = Math.max(sz * 2.2, sp * D.stretch * 1.0 + sz * 1.6);
+              var cs = sp > 1e-3 ? vx / sp : 1, sn = sp > 1e-3 ? vy / sp : 0;
+              // matrix = base * translate(x, y) * rotate(dir); the capsule's head sits on the particle
+              ctx.setTransform(ma * cs + mc * sn, mb * cs + md * sn, -ma * sn + mc * cs, -mb * sn + md * cs, ma * x + mc * y + me, mb * x + md * y + mf);
+              ctx.drawImage(spr, -len * 1.6, -sz * 1.4, len * 2, sz * 2.8);
+              ctx.setTransform(ma, mb, mc, md, me, mf);
+            } else if (D.shape === 'star' || (D.shape === 'puff' && SPIN[i])) {
+              var c2 = Math.cos(ROT[i]), s2 = Math.sin(ROT[i]);
+              ctx.setTransform(ma * c2 + mc * s2, mb * c2 + md * s2, -ma * s2 + mc * c2, -mb * s2 + md * c2, ma * x + mc * y + me, mb * x + md * y + mf);
+              ctx.drawImage(spr, -sz * 2, -sz * 2, sz * 4, sz * 4);
+              ctx.setTransform(ma, mb, mc, md, me, mf);
+            } else {
+              var d2 = D.shape === 'ring' ? sz * 1.3 : sz * 2;
+              ctx.drawImage(spr, x - d2, y - d2, d2 * 2, d2 * 2);
+            }
+            drawn++;
+          }
+        }
+        st.drawn = drawn; st.culled = culled;
+      } catch (e) { st.errors++; warn('draw', 'draw failed: ' + (e && e.message)); }
+      ctx.restore();
+      if (root.performance) st.drawMs = performance.now() - t0;
+    }
+    // native pixel canvases: whole-pixel squares, 4 alpha steps, streaks as short pixel trails, puffs as rounded blocks
+    function drawCrisp(ctx, D, i, x, y, sz, al, ci) {
+      var a = al >= 0.875 ? 1 : al >= 0.625 ? 0.75 : al >= 0.375 ? 0.5 : 0.25;
+      ctx.globalAlpha = a; ctx.fillStyle = D.cols[ci];
+      var s, px, py;
+      if (D.shape === 'streak') {
+        var vx = VX[i], vy = VY[i], sp = Math.sqrt(vx * vx + vy * vy), len = Math.min(8 * U, Math.round(sp * D.stretch * 0.6));
+        s = Math.max(1, Math.round(sz));
+        px = Math.round(x - s / 2); py = Math.round(y - s / 2); ctx.fillRect(px, py, s, s);
+        if (sp > 1e-3 && len >= 1) {
+          var ux = vx / sp, uy = vy / sp;
+          ctx.globalAlpha = a * 0.6; ctx.fillStyle = D.cols[Math.min(CB - 1, ci + 3)];
+          for (var k = 1; k <= len; k++) ctx.fillRect(Math.round(x - ux * k - 0.5), Math.round(y - uy * k - 0.5), 1, 1);
+        }
+        return;
+      }
+      if (D.shape === 'ring') {
+        var r = Math.round(sz * 1.1), steps = Math.max(8, Math.round(r * 3));
+        for (var q = 0; q < steps; q++) { var an = q / steps * 6.2832; ctx.fillRect(Math.round(x + Math.cos(an) * r), Math.round(y + Math.sin(an) * r), 1, 1); }
+        return;
+      }
+      s = D.shape === 'puff' ? Math.max(2, Math.round(sz * 1.05)) : D.shape === 'glow' ? Math.max(1, Math.round(sz)) : Math.max(1, Math.round(sz * 1.2));
+      px = Math.round(x - s / 2); py = Math.round(y - s / 2);
+      if (D.shape === 'star' && s >= 3) {   // plus sign
+        var h = Math.round(s * 0.9);
+        ctx.fillRect(Math.round(x) - h, Math.round(y), h * 2 + 1, 1); ctx.fillRect(Math.round(x), Math.round(y) - h, 1, h * 2 + 1); return;
+      }
+      if (s >= 6) { var e2 = Math.max(1, Math.round(s * 0.3)); ctx.fillRect(px + e2, py, s - 2 * e2, s); ctx.fillRect(px, py + e2, s, s - 2 * e2); ctx.fillRect(px + 1, py + 1, s - 2, s - 2); }
+      else if (s >= 4) { ctx.fillRect(px + 1, py, s - 2, s); ctx.fillRect(px, py + 1, s, s - 2); }
+      else ctx.fillRect(px, py, s, s);
+      if (D.add && s >= 3 && a >= 0.75) { ctx.fillStyle = D.cols[0]; ctx.fillRect(px + (s >> 1) - 0, py + (s >> 1) - 0, 1, 1); }   // hot pixel core
+    }
+
+    /* ---------- misc public ---------- */
+    function clear() { n = 0; for (var s = 0; s < MAX_EMITTERS; s++) emitters[s] = null; }
+    function stopAll() { for (var s = 0; s < MAX_EMITTERS; s++) if (emitters[s]) emitters[s].on = false; }
+    function define(name, preset) {
+      if (!name || !preset) return false;
+      var layers = Array.isArray(preset) ? preset : preset.layers || [preset];
+      presets[name] = layers.map(function (L) { var c = {}; for (var q in L) c[q] = L[q]; return c; });
+      return true;
+    }
+    function stats() {
+      var em = 0; for (var s = 0; s < MAX_EMITTERS; s++) if (emitters[s] && emitters[s].on) em++;
+      return { live: n, budget: N || P.budget, peak: st.peak, emitters: em, emits: st.emits, starts: st.starts, spawned: st.spawned, stolen: st.stolen,
+        emitterSteals: st.emitterSteals, badPos: st.badPos, unknown: st.unknown, errors: st.errors, drawn: st.drawn, culled: st.culled, uiRects: lastUi,
+        crisp: crisp, glow: glowOn, scale: U, clock: clock, updates: updates, updateMs: st.updateMs, drawMs: st.drawMs, maxEmitsPerUpdate: st.maxEmitsPerUpdate };
+    }
+    // a cheap fingerprint of the live state (tests compare it across runs / with WebGL on and off)
+    function signature() { var h = n | 0; for (var i = 0; i < n; i++) h = (Math.imul(h, 31) + ((PX[i] * 16) | 0) + Math.imul((PY[i] * 16) | 0, 7) + DEF[i]) | 0; return (h >>> 0).toString(16) + ':' + n; }
+    // emitter positions and the bounding box of each emitter's live particles in SCREEN px at the last draw offset (probes)
+    function boxes() {
+      var out = [];
+      for (var s = 0; s < MAX_EMITTERS; s++) { var e = emitters[s]; if (e && e.on) out.push({ kind: 'emitter', name: String(e.name), x: e.x + lastOff[0], y: e.y + lastOff[1] }); }
+      return out;
+    }
+
+    setParams(opt.params);
+    return {
+      version: VERSION, emit: emit, start: start, update: update, draw: draw, clear: clear, stopAll: stopAll, define: define,
+      setParams: setParams, params: function () { var o = {}; for (var q in P) o[q] = P[q]; return o; },
+      presets: function () { return Object.keys(presets); }, stats: stats, signature: signature, boxes: boxes,
+      view: function () { return view ? { x: view.x, y: view.y, w: view.w, h: view.h } : null; }, lastOffset: function () { return [lastOff[0], lastOff[1]]; },
+      count: function () { return n; }, time: function () { return clock; }
+    };
+  }
+
+  root.GameDNA_Particles = { version: VERSION, create: create, PRESETS: Object.keys(PRESETS), PALETTES: Object.keys(PALETTES), DEFAULTS: DEFAULTS };
+})(typeof window !== 'undefined' ? window : this);
+</script>
+<script src="../../../demo-kit/kit-art.js"></script>
+<script src="../../cutout-characters/module/cutout-characters.js"></script>
+<script src="../../cutout-characters/assets/pack.js"></script>
+<script src="../../../demo-kit/kit.js"></script>
+<script>'use strict';
+// E-11 demo: a forge hall at night (shared demo kit cast and backdrop) driven by GameDNA_Particles on a fixed 60 Hz step. Everything that moves is a pure function of
+// the step count, so ?t=<ms>&freeze=1 gives the same picture every time.
+(() => {
+  const qs = new URLSearchParams(location.search);
+  const W = 640, H = 360, STEP = 1000 / 60;
+  const FREEZE = qs.has('t') && qs.get('freeze') === '1', T0 = qs.has('t') ? Math.max(0, +qs.get('t') || 0) : 0;
+  const cv = document.getElementById('game'), ctx = cv.getContext('2d');
+  const nv = document.getElementById('native'), nctx = nv.getContext('2d');
+
+  // ---------------------------------------------------------------- scene geometry (logical px)
+  // The cast and the scene come from the shared demo kit (demo-kit/): painted forge hall, rigged mage and sword hero, painted props.
+  const KIT = GameDNA_DemoKit, SCENE = 'forge-hall';
+  const FLOOR = 300, HERO_H = 96, HERO_X = 318, SMITH_X = 452, SMITH_H = 92;
+  const ANVIL = { x: 512, foot: 299, h: 48, x0: 493, x1: 530, y: 268 }, BASIN = { x0: 541, x1: 606, y: 217 };
+  const BRAZIER = { x: 176, foot: 297, h: 58, y: 250 }, PORTAL = { x: 392, y: 150 }, FOUNT = { x: 572, y: 215 }, HEARTH = { x: 62, y: 190 }, GEM_X = 244;
+  const SURF = [{ x0: ANVIL.x0, x1: ANVIL.x1, y: ANVIL.y }, { x0: BASIN.x0, x1: BASIN.x1, y: BASIN.y }, { x0: 529, x1: 620, y: 224 },
+    { x0: BRAZIER.x - 14, x1: BRAZIER.x + 14, y: BRAZIER.y + 4 }, { x0: -1e4, x1: 1e4, y: FLOOR }];
+  function ground(x, y) {   // top of the first surface at or below y
+    let best = null;
+    for (const s of SURF) if (x >= s.x0 && x <= s.x1 && s.y >= y - 1 && (best === null || s.y < best)) best = s.y;
+    return best;
+  }
+  const hash = (a, b) => { let h = Math.imul(a * 374761393 + b * 668265263, 3266489917); h ^= h >>> 13; h = Math.imul(h, 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; };
+
+  // ---------------------------------------------------------------- cast + sprites
+  function mk(w, h, f) { const c = document.createElement('canvas'); c.width = w; c.height = h; f(c.getContext('2d')); return c; }
+  const HERO_F = 1, SMITH_F = 1;   // the one facing every draw / update call of the mage and the smith reads; __state reports it
+  const hero = KIT.actor('mage', { h: HERO_H }), smith = KIT.actor('sword', { h: SMITH_H });
+  // the mage's silhouette for the 'outline' emitter shape (aura): the idle pose drawn once, feet at the bottom centre
+  const OUT = { w: 84, h: 112 };
+  let HERO = null;
+  function heroOutline() { return HERO || (HERO = mk(OUT.w * 2, OUT.h * 2, g => { g.scale(2, 2); hero.draw(g, OUT.w / 2, OUT.h - 4, { h: HERO_H, facing: HERO_F, shadow: false }); })); }
+  const GEM = mk(64, 80, g => {   // a cut crystal: inked outline, lit facets (drawn 4x, shown at 16 x 20)
+    g.lineJoin = 'round';
+    const P = [[32, 4], [56, 30], [32, 76], [8, 30]], M = [32, 32];
+    const F = (a, b, c, col) => { g.fillStyle = col; g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.lineTo(c[0], c[1]); g.closePath(); g.fill(); };
+    F(P[0], P[1], M, '#ffd766'); F(P[0], P[3], M, '#fff3bf'); F(P[3], P[2], M, '#f0a030'); F(P[1], P[2], M, '#b96218');
+    g.strokeStyle = 'rgba(255,250,220,0.75)'; g.lineWidth = 2; g.beginPath(); g.moveTo(P[3][0], P[3][1]); g.lineTo(M[0], M[1]); g.lineTo(P[1][0], P[1][1]); g.moveTo(P[0][0], P[0][1]); g.lineTo(M[0], M[1]); g.lineTo(P[2][0], P[2][1]); g.stroke();
+    g.strokeStyle = '#3a1c10'; g.lineWidth = 5; g.beginPath(); g.moveTo(P[0][0], P[0][1]); for (const q of P.slice(1)) g.lineTo(q[0], q[1]); g.closePath(); g.stroke();
+    g.fillStyle = 'rgba(255,255,255,0.85)'; g.beginPath(); g.moveTo(22, 20); g.lineTo(30, 12); g.lineTo(28, 26); g.closePath(); g.fill();
+  });
+
+  // ---------------------------------------------------------------- particle instances
+  const PARAMS = { budget: 2000, density: 1, scale: 0, render: 'auto', glow: 'auto', gravity: 1, wind: 0, bounce: 1 };
+  for (const k in PARAMS) if (qs.has(k)) PARAMS[k] = typeof PARAMS[k] === 'number' ? +qs.get(k) : qs.get(k);
+  const HUD = { x: 10, y: 10, w: 168, h: 42 };
+  const fx = GameDNA_Particles.create({ seed: 7, view: { x: 0, y: 0, w: W, h: H }, params: PARAMS, ground, uiRects: () => [HUD] });
+  const fxN = GameDNA_Particles.create({ seed: 7, view: { x: 0, y: 0, w: W / 2, h: H / 2 }, params: Object.assign({}, PARAMS, { budget: Math.round(PARAMS.budget / 2) }),
+    ground: (x, y) => { const g = ground(x * 2, y * 2); return g == null ? null : g / 2; }, uiRects: () => [{ x: 5, y: 5, w: 84, h: 16 }] });
+  // a custom preset, through define(): the brazier flame
+  const FLAME = [
+    { name: 'tongues', count: 20, rate: 70, shape: 'glow', blend: 'add', life: [320, 640], speed: [18, 46], angle: -90, spread: 50, drag: 1.2, gravity: -70, wind: 0.6,
+      size: [3, 5.5], sizeCurve: [0.7, 1, 0.15], alphaCurve: [0, 1, 0.7, 0], color: ['#fffbe6', '#ffd56a', '#ff8a2a', '#e0401c', '#6a1a14'] },
+    { name: 'core', count: 4, rate: 18, shape: 'glow', blend: 'add', life: [200, 300], speed: [4, 12], angle: -90, spread: 30, gravity: -20, size: [6, 8], sizeCurve: [1, 0.7], alphaCurve: [0.6, 0.4, 0], color: 'fire' }];
+  fx.define('flame', FLAME); fxN.define('flame', FLAME);
+  const PRESETS = [['burst', '#ff9a3a'], ['sparks', '#ffd04a'], ['fountain', '#8fd8ff'], ['smoke', '#a8a0b0'], ['swirl', '#b98cff'], ['dust', '#d8bc90'], ['pickup', '#ffe070'], ['embers', '#ff6a2a'], ['aura', '#7ff0b0']];
+  const CONTINUOUS = { fountain: 1, smoke: 1, swirl: 1, embers: 1, aura: 1 };
+
+  // every call goes to both instances (the native one at half the coordinates)
+  function half(o) {
+    if (!o) return o;
+    const c = Object.assign({}, o);
+    if (c.floor != null) c.floor /= 2;
+    if (c.shape) { c.shape = Object.assign({}, c.shape); for (const k of ['x', 'y', 'w', 'h', 'r', 'x2', 'y2', 'dx', 'dy']) if (c.shape[k] != null) c.shape[k] /= 2; }
+    if (c.follow) { const f = c.follow; c.follow = () => { const p = f(); return p && { x: p.x / 2, y: p.y / 2 }; }; }
+    return c;
+  }
+  const emit = (name, x, y, o) => { fx.emit(name, x, y, o); fxN.emit(name, x / 2, y / 2, half(o)); };
+  const start = (name, x, y, o) => { const a = fx.start(name, x, y, o), b = fxN.start(name, x / 2, y / 2, half(o)); return { stop() { a.stop(); b.stop(); } }; };
+
+  // ---------------------------------------------------------------- simulation (fixed step)
+  const S = { f: 0, showcase: qs.get('showcase') !== '0', stress: qs.get('stress') === '1', ambient: [], stressEm: [], gemHidden: 0, heroY: 0, selected: Math.max(0, PRESETS.findIndex(p => p[0] === qs.get('preset'))) };
+  const heroHop = f => { const p = f % 168; if (p >= 36) return 0; const u = p / 36; return -34 * 4 * u * (1 - u); };   // a hop every 2.8 s
+  const heroMid = () => ({ x: HERO_X, y: FLOOR + 4 + S.heroY - OUT.h / 2 });
+  const auraShape = () => ({ type: 'outline', image: heroOutline(), w: OUT.w, h: OUT.h });
+  function startAmbient() {
+    S.ambient.forEach(h => h.stop());
+    S.ambient = [
+      start('flame', BRAZIER.x - 8, BRAZIER.y - 2, { shape: { type: 'line', dx: 16 } }),
+      start('embers', BRAZIER.x, BRAZIER.y - 10), start('smoke', BRAZIER.x, BRAZIER.y - 28, { amount: 0.8 }),
+      start('fountain', FOUNT.x, FOUNT.y, { shape: { type: 'circle', r: 3 } }),
+      start('swirl', PORTAL.x, PORTAL.y),
+      start('aura', 0, 0, { follow: heroMid, shape: auraShape(), amount: 1.6 })
+    ];
+  }
+  function setStress(on) {
+    S.stress = on; S.stressEm.forEach(h => h.stop()); S.stressEm = [];
+    if (on) S.stressEm = [start('fountain', 140, 296, { amount: 6, speed: 1.15 }), start('swirl', 540, 200, { amount: 7, radius: 2.2 }), start('embers', 320, 300, { amount: 16, shape: { type: 'rect', w: 600, h: 8 } })];
+    document.getElementById('stress').setAttribute('aria-pressed', on);
+  }
+  const BURSTS = [[170, 112, 'fire'], [330, 92, 'arcane'], [462, 108, 'ice'], [250, 150, 'gold']];
+  function step() {
+    const f = S.f++;
+    if (f === 0) { if (S.showcase) startAmbient(); if (S.stress) setStress(true); }
+    S.heroY = heroHop(f);
+    const hp = f % 168;
+    if (hp < 36) hero.pose('jump', hp / 36); else if (hp === 36) hero.pose(null);
+    if (S.showcase) {
+      if (hp === 62) hero.play('cast', { dur: 760 });                                                // the mage feeds the swirl in the archway
+      if (f % 54 === 13) smith.play('slash', { dur: 560 });                                          // the blade lands on the anvil at f % 54 === 20
+    }
+    hero.update(STEP, { facing: HERO_F }); smith.update(STEP, { facing: SMITH_F });
+    if (S.showcase) {
+      if (f % 168 === 36) emit('dust', HERO_X, FLOOR, { floor: FLOOR });                        // hero lands
+      if (f % 54 === 20) { emit('sparks', ANVIL.x - 6, ANVIL.y - 2, { amount: 0.8 }); }                       // hammer on the anvil
+      if (f % 150 === 60) { const b = BURSTS[((f - 60) / 150) % BURSTS.length]; emit('burst', b[0], b[1], { color: b[2] }); }
+      if (f % 210 === 140) { emit('pickup', GEM_X, gemY(f), { shape: { type: 'circle', r: 8 } }); S.gemHidden = 70; }
+    }
+    if (S.stress && f % 6 === 0) emit('burst', 60 + hash(f, 1) * 520, 60 + hash(f, 2) * 140, { color: ['fire', 'arcane', 'ice', 'gold', 'poison'][(f / 6) % 5 | 0] });
+    if (S.gemHidden > 0) S.gemHidden--;
+    fx.update(STEP); fxN.update(STEP);
+  }
+  const gemY = f => 214 + Math.sin(f * 0.06) * 5;
+
+  // ---------------------------------------------------------------- drawing
+  let bg = null, bgKey = '';
+  function paintBackground(g) {   // logical coordinates; g already has the backing transform
+    KIT.backdrop(g, SCENE, { x: 0, y: 0, w: W, h: H, groundY: FLOOR });
+    // demo host only: the hall at night, so additive particles read as light (the fires put their own light pools back on top)
+    g.fillStyle = 'rgba(12,8,34,0.56)'; g.fillRect(0, 0, W, H);
+    const vg = g.createRadialGradient(W / 2, H * 0.55, H * 0.4, W / 2, H * 0.55, W * 0.68); vg.addColorStop(0, 'rgba(4,2,14,0)'); vg.addColorStop(1, 'rgba(4,2,14,0.5)'); g.fillStyle = vg; g.fillRect(0, 0, W, H);
+  }
+  function backgroundFor(g, scale) {
+    const key = g.canvas.width + 'x' + g.canvas.height;
+    if (bg && bg[key]) return bg[key];
+    bg = bg || {};
+    const c = document.createElement('canvas'); c.width = g.canvas.width; c.height = g.canvas.height;
+    const b = c.getContext('2d'); b.setTransform(scale, 0, 0, scale, 0, 0); paintBackground(b);
+    return (bg[key] = c);
+  }
+  function lights(g, f) {   // soft additive light pools (flicker from the step count)
+    g.save(); g.globalCompositeOperation = 'lighter';
+    const L = (x, y, r, col, a) => { const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, col.replace('A', a)); gr.addColorStop(1, col.replace('A', 0)); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); };
+    const fl = 0.85 + 0.1 * Math.sin(f * 0.31) + 0.05 * Math.sin(f * 0.83);
+    L(HEARTH.x, HEARTH.y, 170, 'rgba(255,130,50,A)', 0.34 * fl);
+    L(BRAZIER.x, BRAZIER.y - 10, 120, 'rgba(255,140,60,A)', 0.24 * fl);
+    L(PORTAL.x, PORTAL.y, 110, 'rgba(160,110,255,A)', 0.2 + 0.05 * Math.sin(f * 0.05));
+    L(FOUNT.x, FOUNT.y + 6, 80, 'rgba(110,200,255,A)', 0.16);
+    g.restore();
+  }
+  function props(g, f) {
+    const t = f * STEP;
+    KIT.flame(g, HEARTH.x, HEARTH.y, 40, t);
+    KIT.sprite(g, 'brazier', BRAZIER.x, BRAZIER.foot, { h: BRAZIER.h }); KIT.flame(g, BRAZIER.x, BRAZIER.y - 6, 30, t + 400);
+    // gem
+    if (S.gemHidden === 0) { const gy = gemY(f), gg = g.createRadialGradient(GEM_X, gy, 0, GEM_X, gy, 22); gg.addColorStop(0, 'rgba(255,200,90,0.34)'); gg.addColorStop(1, 'rgba(255,170,60,0)'); g.fillStyle = gg; g.fillRect(GEM_X - 22, gy - 22, 44, 44); }
+    if (S.gemHidden === 0) g.drawImage(GEM, GEM_X - 8, gemY(f) - 10, 16, 20);
+    KIT.sprite(g, 'anvil', ANVIL.x, ANVIL.foot, { h: ANVIL.h });
+    smith.draw(g, SMITH_X, FLOOR, { h: SMITH_H, facing: SMITH_F });
+    KIT.shadow(g, HERO_X, FLOOR + 1, 22 + S.heroY * 0.2, 5, 0.62 + S.heroY * 0.006);
+    hero.draw(g, HERO_X, FLOOR + S.heroY, { h: HERO_H, facing: HERO_F, shadow: false });
+  }
+  function hud(g, live, budget, sc) {
+    g.save(); g.fillStyle = 'rgba(10,10,24,0.82)'; g.beginPath(); g.roundRect(HUD.x * sc, HUD.y * sc, HUD.w * sc, HUD.h * sc, 7 * sc); g.fill();
+    g.strokeStyle = 'rgba(255,255,255,0.14)'; g.lineWidth = sc; g.stroke();
+    g.fillStyle = '#9696b8'; g.font = `600 ${9 * sc}px ui-sans-serif, system-ui, sans-serif`; g.textBaseline = 'top'; g.fillText('PARTICLES', (HUD.x + 10) * sc, (HUD.y + 8) * sc);
+    g.fillStyle = '#fff'; g.font = `700 ${15 * sc}px ui-monospace, Menlo, monospace`; g.fillText(live + ' / ' + budget, (HUD.x + 10) * sc, (HUD.y + 20) * sc);
+    g.restore();
+  }
+  function fit() {
+    const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1, w = Math.max(W, Math.round((r.width || W) * dpr)), h = Math.round(w * H / W);
+    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+  }
+  function render() {
+    fit();
+    const s = cv.width / W, f = S.f;
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(backgroundFor(ctx, s), 0, 0);
+    ctx.setTransform(s, 0, 0, s, 0, 0);
+    lights(ctx, f);
+    fx.draw(ctx, 0, 0, 'back');
+    props(ctx, f);
+    fx.draw(ctx, 0, 0, 'front');
+    const st = fx.stats(); if (qs.get('hud') !== '0') hud(ctx, st.live, st.budget, 1);   // ?hud=0: no particle count (site captures)
+    // native 320 x 180
+    nctx.setTransform(1, 0, 0, 1, 0, 0); nctx.imageSmoothingEnabled = false; nctx.drawImage(backgroundFor(nctx, 0.5), 0, 0);
+    nctx.setTransform(0.5, 0, 0, 0.5, 0, 0); lights(nctx, f); props(nctx, f);
+    nctx.setTransform(1, 0, 0, 1, 0, 0);
+    fxN.draw(nctx, 0, 0);
+    const sn = fxN.stats();   // native HUD: just the count, 8 px, on whole pixels
+    nctx.fillStyle = 'rgba(10,10,24,0.82)'; nctx.fillRect(5, 5, 84, 16);
+    nctx.fillStyle = '#fff'; nctx.font = 'bold 8px ui-monospace, Menlo, monospace'; nctx.textBaseline = 'top'; nctx.fillText(sn.live + ' / ' + sn.budget, 9, 9);
+  }
+
+  // ---------------------------------------------------------------- controls
+  const $ = id => document.getElementById(id);
+  const box = $('presets');
+  PRESETS.forEach(([name, col], i) => { const b = document.createElement('button'); b.style.setProperty('--c', col); b.innerHTML = '<i></i>' + name; b.onclick = () => { select(i); fireAt(defaultSpot(name)); }; box.appendChild(b); });
+  function select(i) { S.selected = i; [...box.children].forEach((b, k) => b.setAttribute('aria-pressed', k === i)); }
+  function defaultSpot(name) { return name === 'dust' ? [HERO_X, FLOOR] : name === 'sparks' ? [ANVIL.x - 6, ANVIL.y - 2] : name === 'aura' ? [HERO_X, heroMid().y] : name === 'fountain' ? [140, FLOOR - 2] : [320, 150]; }
+  function fireAt([x, y]) {
+    const name = PRESETS[S.selected][0];
+    if (CONTINUOUS[name]) start(name, x, y, name === 'aura' ? { duration: 2500, follow: heroMid, shape: auraShape() } : { duration: 2500 });
+    else emit(name, x, y, name === 'dust' ? { floor: ground(x, y - 2) } : {});
+  }
+  cv.addEventListener('pointerdown', e => { const r = cv.getBoundingClientRect(); fireAt([(e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H]); });
+  addEventListener('keydown', e => { const k = +e.key; if (k >= 1 && k <= PRESETS.length) { select(k - 1); fireAt(defaultSpot(PRESETS[k - 1][0])); } });
+  const fmt = { budget: v => v, density: v => (+v).toFixed(2), scale: v => +v ? (+v).toFixed(2) : 'auto', gravity: v => (+v).toFixed(2), wind: v => v, bounce: v => (+v).toFixed(2) };
+  for (const k in fmt) {
+    const el = $(k), out = $(k + 'O'); el.value = PARAMS[k];
+    const paint = () => { out.textContent = fmt[k](el.value); el.style.setProperty('--fill', ((el.value - el.min) / (el.max - el.min) * 100) + '%'); };
+    el.oninput = () => { PARAMS[k] = +el.value; fx.setParams({ [k]: PARAMS[k] }); fxN.setParams({ [k]: k === 'budget' ? Math.round(PARAMS[k] / 2) : PARAMS[k] }); paint(); };
+    paint();
+  }
+  document.querySelectorAll('.seg').forEach(seg => {
+    const key = seg.dataset.key;
+    const paint = () => seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', b.dataset.v === PARAMS[key]));
+    seg.querySelectorAll('button').forEach(b => b.onclick = () => { PARAMS[key] = b.dataset.v; fx.setParams({ [key]: b.dataset.v }); if (key !== 'render') fxN.setParams({ [key]: b.dataset.v }); paint(); });
+    paint();
+  });
+  $('showcase').setAttribute('aria-pressed', S.showcase);
+  $('showcase').onclick = () => { S.showcase = !S.showcase; $('showcase').setAttribute('aria-pressed', S.showcase); if (S.showcase) startAmbient(); else { S.ambient.forEach(h => h.stop()); S.ambient = []; } };
+  $('stress').onclick = () => setStress(!S.stress);
+  $('clearBtn').onclick = () => { fx.clear(); fxN.clear(); S.ambient = []; S.stressEm = []; if (S.showcase) startAmbient(); if (S.stress) setStress(true); };
+  select(S.selected);
+  let upAvg = 0, drAvg = 0;
+  function readouts(live) {
+    const st = fx.stats();
+    $('sLive').textContent = st.live; $('sBudget').textContent = st.budget; $('sEm').textContent = st.emitters;
+    if (live) { upAvg = upAvg * 0.9 + st.updateMs * 0.1; drAvg = drAvg * 0.9 + st.drawMs * 0.1; $('sUp').textContent = upAvg.toFixed(2) + ' ms'; $('sDraw').textContent = drAvg.toFixed(2) + ' ms'; }
+  }
+  /* text state for critics and tools/sprites/statecheck.py (640x360 stage px): the mage feeds the swirl in the archway to its right, the smith
+     hammers the anvil to its right; targets are those x positions (props, not actors) */
+  window.__state = () => ({ t: Math.round(S.f * STEP), actors: [
+    { id: 'mage', x: HERO_X, y: FLOOR + S.heroY, facing: HERO_F > 0 ? 'right' : 'left', target: PORTAL.x, asset: 'mage' },
+    { id: 'smith', x: SMITH_X, y: FLOOR, facing: SMITH_F > 0 ? 'right' : 'left', target: ANVIL.x, asset: 'sword' }] });
+  window.__demo = { fx, fxN, S, hero, smith, stats: () => fx.stats(), sig: () => fx.signature() + '/' + fxN.signature() };
+
+  // ---------------------------------------------------------------- loop
+  KIT.ready(() => {
+  if (qs.has('t')) { for (let n = Math.floor(T0 / STEP); n > 0; n--) step(); }
+  render(); readouts(false);
+  if (FREEZE) { window.__frozen = true; document.documentElement.dataset.frozen = '1'; return; }
+  let acc = 0, prev = null, k = 0;
+  function frame(now) {
+    if (prev === null) prev = now;
+    acc += Math.min(250, now - prev); prev = now;
+    while (acc >= STEP) { step(); acc -= STEP; }
+    render();
+    if (++k % 10 === 0) readouts(true);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+  });
+})();
+</script>
+</body>
+</html>

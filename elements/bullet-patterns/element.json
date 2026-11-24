@@ -1,0 +1,210 @@
+{
+  "id": "bullet-patterns",
+  "code": "A-08",
+  "kind": "addon",
+  "name": "Bullet-pattern emitter",
+  "family": "bullet-patterns",
+  "oneLiner": "Enemies cast bullet patterns described as data: fans and aimed bursts, rings, spirals, flowers whose speed dips between petals, weaving waves, curtain walls with a moving gap, big orbs that burst into rings, curving and falling shots, each with speed, acceleration and turn curves. Every bullet comes from a fixed pool (no garbage per frame), is drawn in code with a bright white core, a coloured body and rim, a dark outline and a soft halo, readable on light and dark floors, crisp at any dpr or as whole game pixels, and hits with a circle far smaller than it looks (swept, so fast bullets never tunnel). Grazes are reported, walls stop bullets, a dying caster's bullets fade into sparks. The game keeps its rules: it gives the player's hit circle and applies damage in onHit. A safeGap() analysis sweeps the band the player can reach and reports whether a gap at least the player's hit circle stays open and reachable at every step.",
+  "fits": [
+    "top-down action RPG (enemies and bosses that cast)",
+    "twin-stick and vertical / horizontal shooters",
+    "side-scrolling action and platformers (turrets, casters, falling rain)",
+    "boss fights in any real-time 2D game",
+    "arena survival games",
+    "any 2D canvas game, pixel or HD"
+  ],
+  "notFor": [
+    "turn-based battles with no real-time movement (nothing to dodge)",
+    "3D or WebGL-rendered scenes (2D canvas drawing)",
+    "physics projectiles that bounce, stick or collide with each other (bullets only fly, split and stop at walls)",
+    "player weapons with ammo, reload and spread logic (this is the enemy side; the same module can fire player shots but has no weapon rules)"
+  ],
+  "interfaces": {
+    "time": "realtime",
+    "coords": "side",
+    "layer": "fx",
+    "needs": [
+      "a fixed update step that calls update(dt) once per step after movement (also run by ?t= fast-forward and ?auto=1), update(0) while paused, in hit-stop or behind a window",
+      "the player's small hit circle in world px (player(): {x, y, r} or null), and canHit() for invulnerability",
+      "the game's own damage function, called from onHit(hit)",
+      "per caster an id and a source (world px, or null when dead / off-scene); enemy death to cancel and stop it",
+      "the draw pass: one call after the sprites, before the HUD, with the camera offset; clear() on new game, restart and every scene switch"
+    ],
+    "provides": [
+      "bullet patterns as data: fan, ring, spiral, aimed, flower, wave, line, layers, split into sub-patterns, speed / accel / turn curves, gravity",
+      "pooled bullets, swept hit tests with a hit circle smaller than the drawn bullet, grazes, walls, bullet cancel into sparks",
+      "drawing: core, body, rim, outline, halo; muzzle flash, hit pop, graze sparks; smooth (device px) or pixel render",
+      "safeGap(pattern, opts): passable / reachable verdict with the narrowest gap",
+      "danger(x, y, r, aheadMs) for autopilots; stats(), list(), hash() for tests and judges"
+    ]
+  },
+  "params": [
+    {
+      "key": "speed",
+      "label": "Speed (multiplier)",
+      "type": "range",
+      "min": 0.4,
+      "max": 2,
+      "step": 0.05,
+      "default": 1
+    },
+    {
+      "key": "density",
+      "label": "Density (bullet count multiplier)",
+      "type": "range",
+      "min": 0.4,
+      "max": 2,
+      "step": 0.05,
+      "default": 1
+    },
+    {
+      "key": "size",
+      "label": "Bullet size (multiplier)",
+      "type": "range",
+      "min": 0.6,
+      "max": 1.8,
+      "step": 0.05,
+      "default": 1
+    },
+    {
+      "key": "hitbox",
+      "label": "Hit circle (of drawn radius)",
+      "type": "range",
+      "min": 0.2,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.4
+    },
+    {
+      "key": "halo",
+      "label": "Halo",
+      "type": "range",
+      "min": 0,
+      "max": 1.2,
+      "step": 0.05,
+      "default": 0.6
+    },
+    {
+      "key": "graze",
+      "label": "Grazing",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "palette",
+      "label": "Palette",
+      "type": "select",
+      "options": [
+        "arcane",
+        "ember",
+        "frost",
+        "venom",
+        "royal",
+        "blood",
+        "mono",
+        "skin"
+      ],
+      "default": "arcane"
+    },
+    {
+      "key": "render",
+      "label": "Render",
+      "type": "select",
+      "options": [
+        "auto",
+        "pixel",
+        "smooth"
+      ],
+      "default": "auto"
+    },
+    {
+      "key": "damage",
+      "label": "Damage per hit",
+      "type": "range",
+      "min": 1,
+      "max": 10,
+      "step": 1,
+      "default": 2
+    },
+    {
+      "key": "clearRadius",
+      "label": "Clear radius on hit (px)",
+      "type": "range",
+      "min": 0,
+      "max": 80,
+      "step": 2,
+      "default": 0
+    }
+  ],
+  "variants": [
+    {
+      "name": "Arcane caster (default)",
+      "params": {
+        "palette": "arcane",
+        "speed": 1,
+        "density": 1,
+        "hitbox": 0.4
+      }
+    },
+    {
+      "name": "Gentle (story mode)",
+      "params": {
+        "speed": 0.75,
+        "density": 0.7,
+        "hitbox": 0.3
+      }
+    },
+    {
+      "name": "Dense curtain",
+      "params": {
+        "density": 1.6,
+        "speed": 0.9,
+        "size": 0.85
+      }
+    },
+    {
+      "name": "Fast and sparse",
+      "params": {
+        "speed": 1.6,
+        "density": 0.6,
+        "palette": "ember"
+      }
+    },
+    {
+      "name": "Frost turrets",
+      "params": {
+        "palette": "frost",
+        "halo": 0.9
+      }
+    },
+    {
+      "name": "Pixel host",
+      "params": {
+        "render": "pixel",
+        "halo": 0.5
+      }
+    },
+    {
+      "name": "Calm (no halo)",
+      "params": {
+        "halo": 0,
+        "palette": "mono"
+      }
+    }
+  ],
+  "assets": [
+    "module/bullet-patterns.js: the element as one dependency-free script (global GameDNA_Bullets): pattern normaliser and presets, fixed bullet / effect / burst pools, casters, integration with speed / accel / turn curves, gravity and sine weave, sub-pattern splits, swept hit and graze tests, walls, cancel, code-drawn sprites cached per colour, size and angle at device resolution (or game pixels), safeGap() analysis, danger() query",
+    "no image, font or audio files"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/bullet-patterns.js",
+    "global": "GameDNA_Bullets",
+    "version": "1.1.0",
+    "docs": "module/README.md"
+  }
+}

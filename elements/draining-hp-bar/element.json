@@ -1,0 +1,71 @@
+{
+  "id": "draining-hp-bar",
+  "code": "C-08",
+  "kind": "addon",
+  "name": "Draining HP bar",
+  "family": "health-bars",
+  "oneLiner": "A hit drops the fill at once while a pale loss segment holds where the health was, then drains down; quick hits extend the hold and merge into one segment, a heal shows a mint gain segment before the fill rises, and low health pulses. One module draws the framed boss bar, the party HUD bars and the small over-head bars in world space, smooth on HD canvases and crisp whole-pixel bars on native pixel canvases. It watches the HP the game already has: set(id, hp, max) every step, the curves are parameters and readable from state().",
+  "fits": [
+    "turn-based RPG battle",
+    "action RPG",
+    "boss fights in any genre",
+    "fighting and brawler",
+    "tactics / strategy RPG",
+    "roguelite / ARPG",
+    "platformer and metroidvania (boss and player bars)"
+  ],
+  "notFor": [
+    "damage numbers over units (use C-11 / E-01)",
+    "resource bars that refill constantly (stamina, mana regen): use a plain gauge, the loss segment would never settle",
+    "games that show health as hearts or pips (no continuous bar)"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "each unit's current HP and max HP, read every fixed step (no hook into the damage code)",
+      "a stable id per unit for its whole life",
+      "the places that create or refill units (new game, battle, wave, respawn) to snap without animation",
+      "the rects where the game draws its HP bars now (HUD in screen space, over-head bars inside the camera transform)"
+    ],
+    "provides": [
+      "drawn boss, party and over-head HP bars with loss / gain segments, hit flash, shake and low-HP pulse",
+      "state(id) and curve(id): hp, fill, gain top, loss top and phase per step, for tests and judges",
+      "shown(id): a rolling HP number that agrees with the bar",
+      "debug events (track, damage, merge, drain, drained, heal, fill, filled, reset)"
+    ]
+  },
+  "params": [
+    { "key": "hold", "label": "Hold before drain (ms)", "type": "range", "min": 0, "max": 1500, "step": 25, "default": 450 },
+    { "key": "holdCap", "label": "Hold cap for merged hits (ms)", "type": "range", "min": 0, "max": 4000, "step": 100, "default": 1600 },
+    { "key": "drain", "label": "Drain speed (bars / s)", "type": "range", "min": 0.1, "max": 3, "step": 0.05, "default": 0.7 },
+    { "key": "ease", "label": "Drain easing", "type": "select", "options": ["smooth", "out", "linear"], "default": "smooth" },
+    { "key": "gainHold", "label": "Gain preview hold (ms)", "type": "range", "min": 0, "max": 1000, "step": 20, "default": 240 },
+    { "key": "fill", "label": "Fill speed on heal (bars / s)", "type": "range", "min": 0.1, "max": 3, "step": 0.05, "default": 0.9 },
+    { "key": "low", "label": "Low-HP threshold", "type": "range", "min": 0, "max": 0.5, "step": 0.05, "default": 0.25 },
+    { "key": "pulse", "label": "Low-HP pulse", "type": "select", "options": ["on", "off"], "default": "on" },
+    { "key": "flash", "label": "Hit flash", "type": "select", "options": ["on", "off"], "default": "on" },
+    { "key": "shake", "label": "Shake (px)", "type": "range", "min": 0, "max": 4, "step": 0.5, "default": 2 },
+    { "key": "theme", "label": "Theme", "type": "select", "options": ["auto", "crimson", "verdant", "azure", "amber", "skin"], "default": "auto" },
+    { "key": "ticks", "label": "Ticks (0 = auto)", "type": "range", "min": 0, "max": 10, "step": 1, "default": 0 },
+    { "key": "render", "label": "Render", "type": "select", "options": ["auto", "smooth", "crisp"], "default": "auto" }
+  ],
+  "variants": [
+    { "name": "Modern action RPG", "params": { "hold": 450, "drain": 0.7, "ease": "smooth", "theme": "auto" } },
+    { "name": "Fighting game (long hold, fast drain)", "params": { "hold": 900, "holdCap": 2600, "drain": 1.6, "ease": "out", "shake": 3, "theme": "amber" } },
+    { "name": "Calm JRPG", "params": { "hold": 250, "drain": 0.4, "ease": "linear", "shake": 0, "theme": "azure" } },
+    { "name": "Pixel host", "params": { "render": "crisp", "shake": 1 } }
+  ],
+  "assets": [
+    "module/draining-hp-bar.js: the element as one dependency-free script (global GameDNA_DrainingHpBar): the HP model (fill, gain top, loss top, hold, merge, cap, drain and fill tweens), boss / party / unit bar drawing in smooth and crisp modes, a built-in 3x5 bitmap font for crisp labels and numbers",
+    "no image, font or audio files (system sans stack, never loaded from the network)"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/draining-hp-bar.js",
+    "global": "GameDNA_DrainingHpBar",
+    "version": "1.0.1",
+    "docs": "module/README.md"
+  }
+}

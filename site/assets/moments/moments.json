@@ -1,0 +1,4137 @@
+{
+ "active-time-battle": [
+  {
+   "t": 4000,
+   "params": [],
+   "state": "A hero picks a command while an enemy strikes; gauges in three states.",
+   "query": "t=4000&freeze=1",
+   "img": "active-time-battle-A.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 6500,
+   "params": [
+    "mode=wait"
+   ],
+   "state": "Wait mode: the command window is open and every gauge has stopped.",
+   "query": "t=6500&freeze=1&mode=wait",
+   "img": "active-time-battle-B.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 5200,
+   "params": [
+    "status=haste"
+   ],
+   "state": "Haste on every hero: green gauges with rising arrows.",
+   "query": "t=5200&freeze=1&status=haste",
+   "img": "active-time-battle-C.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 5200,
+   "params": [
+    "status=slow",
+    "speed=2"
+   ],
+   "state": "Slow at speed \u00d72.0: violet gauges with falling arrows.",
+   "query": "t=5200&freeze=1&status=slow&speed=2",
+   "img": "active-time-battle-D.webp",
+   "w": 457,
+   "h": 400
+  }
+ ],
+ "adaptive-music": [
+  {
+   "t": 7700,
+   "params": [],
+   "state": "Combat held 0.5 s is confirmed: the drums land on the next bar line, 0.3 s away, with an Alarm stinger.",
+   "query": "t=7700&freeze=1",
+   "img": "adaptive-music-A.webp",
+   "w": 640,
+   "h": 390
+  },
+  {
+   "t": 12600,
+   "params": [],
+   "state": "Low HP: the lead fades out while the danger line fades in.",
+   "query": "t=12600&freeze=1",
+   "img": "adaptive-music-B.webp",
+   "w": 640,
+   "h": 390
+  },
+  {
+   "t": 28400,
+   "params": [],
+   "state": "Boss: The Warden Rises stinger plays one bar over the loop, then the boss fight mix.",
+   "query": "t=28400&freeze=1",
+   "img": "adaptive-music-C.webp",
+   "w": 640,
+   "h": 390
+  },
+  {
+   "t": 38000,
+   "params": [],
+   "state": "After the victory jingle (every channel open), explore lands on the next bar line.",
+   "query": "t=38000&freeze=1",
+   "img": "adaptive-music-D.webp",
+   "w": 640,
+   "h": 390
+  }
+ ],
+ "art-direction-lock": [
+  {
+   "t": 4200,
+   "params": [],
+   "state": "The village in one locked style: seamless ground, warm lamp light, no fringes.",
+   "query": "t=4200&freeze=1",
+   "img": "art-direction-lock-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 2600,
+   "params": [
+    "hour=night",
+    "anchors=1"
+   ],
+   "state": "Night, anchors on: every foot cross sits on its sprite's ground line.",
+   "query": "t=2600&freeze=1&hour=night&anchors=1",
+   "img": "art-direction-lock-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 4200,
+   "params": [
+    "set=without"
+   ],
+   "state": "Paragraph only: four of eight images made without the reference sheet.",
+   "query": "t=4200&freeze=1&set=without",
+   "img": "art-direction-lock-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 4200,
+   "params": [
+    "set=words"
+   ],
+   "state": "Words only: all eight images from one-line prompts, and the set breaks.",
+   "query": "t=4200&freeze=1&set=words",
+   "img": "art-direction-lock-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "bark-bubbles": [
+  {
+   "t": 1500,
+   "params": [],
+   "state": "The merchant calls out while a villager's line types above her as she walks.",
+   "query": "t=1500&freeze=1",
+   "img": "bark-bubbles-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 3700,
+   "params": [],
+   "state": "A guard off the right edge shouts in an alarm bubble pinned to the edge.",
+   "query": "t=3700&freeze=1",
+   "img": "bark-bubbles-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 7000,
+   "params": [],
+   "state": "Alarms above the slimes, the hero's red Oof and a guard's line, apart.",
+   "query": "t=7000&freeze=1",
+   "img": "bark-bubbles-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 10000,
+   "params": [],
+   "state": "Speakers off the left edge: a whisper and a call with pointers.",
+   "query": "t=10000&freeze=1",
+   "img": "bark-bubbles-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "battle-transition": [
+  {
+   "t": 1560,
+   "params": [],
+   "state": "The white flash fades as the first cracks spread from the hero.",
+   "query": "t=1560&freeze=1",
+   "img": "battle-transition-A.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 1700,
+   "params": [],
+   "state": "Full crack network: shards begin to separate around the hero.",
+   "query": "t=1700&freeze=1",
+   "img": "battle-transition-B.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 1850,
+   "params": [],
+   "state": "Shards spin and fall over the dark backdrop in a dust of glass.",
+   "query": "t=1850&freeze=1",
+   "img": "battle-transition-C.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 2600,
+   "params": [],
+   "state": "The battle revealed: MONSTERS APPEAR over the new scene.",
+   "query": "t=2600&freeze=1",
+   "img": "battle-transition-D.webp",
+   "w": 457,
+   "h": 400
+  }
+ ],
+ "beat-judge": [
+  {
+   "t": 3110,
+   "params": [],
+   "state": "Good, late: the strike lands for 12 as the marker passes the ring.",
+   "query": "t=3110&freeze=1",
+   "img": "beat-judge-A.webp",
+   "w": 512,
+   "h": 400
+  },
+  {
+   "t": 5320,
+   "params": [],
+   "state": "Miss: the press falls outside the window and the brute counters for 8.",
+   "query": "t=5320&freeze=1",
+   "img": "beat-judge-B.webp",
+   "w": 512,
+   "h": 400
+  },
+  {
+   "t": 11000,
+   "params": [],
+   "state": "Calibration: tap on each beat; every dot is one tap, early or late.",
+   "query": "t=11000&freeze=1",
+   "img": "beat-judge-C.webp",
+   "w": 512,
+   "h": 400
+  },
+  {
+   "t": 13910,
+   "params": [],
+   "state": "Offset +67 ms kept: the next press is Perfect, double damage (24).",
+   "query": "t=13910&freeze=1",
+   "img": "beat-judge-D.webp",
+   "w": 512,
+   "h": 400
+  }
+ ],
+ "belt-depth": [
+  {
+   "t": 1990,
+   "params": [],
+   "state": "Whiff: Wren swings from a nearer lane; MISS over the raider, the blade passes in front.",
+   "query": "t=1990&freeze=1",
+   "img": "belt-depth-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 2920,
+   "params": [],
+   "state": "Lined up in the raider's lane, the blow lands: recoil, spark and 12.",
+   "query": "t=2920&freeze=1",
+   "img": "belt-depth-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 4200,
+   "params": [],
+   "state": "The brute walks past on the front lane and is drawn in front of Wren.",
+   "query": "t=4200&freeze=1",
+   "img": "belt-depth-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 6100,
+   "params": [],
+   "state": "Dodge-jump: Wren is high over the brute's swing, the shadow left on the cobbles.",
+   "query": "t=6100&freeze=1",
+   "img": "belt-depth-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "big-banner": [
+  {
+   "t": 1000,
+   "params": [],
+   "state": "PLAYER PHASE in large blue letters with TURN 1 below, across the field.",
+   "query": "t=1000&freeze=1",
+   "img": "big-banner-A.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 330,
+   "params": [],
+   "state": "Slide-in: the band is open and the text arrives from the right.",
+   "query": "t=330&freeze=1",
+   "img": "big-banner-B.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 1520,
+   "params": [],
+   "state": "Wipe-out: the band is cut away from the left behind a light edge.",
+   "query": "t=1520&freeze=1",
+   "img": "big-banner-C.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 500,
+   "params": [
+    "enter=drop"
+   ],
+   "state": "Drop entrance: the letters fall in one after another.",
+   "query": "t=500&freeze=1&enter=drop",
+   "img": "big-banner-D.webp",
+   "w": 457,
+   "h": 400
+  }
+ ],
+ "billboard-sprites-3d": [
+  {
+   "t": 9450,
+   "params": [],
+   "state": "The swordswoman slashes a slime; everyone faces their foe.",
+   "query": "t=9450&freeze=1",
+   "img": "billboard-sprites-3d-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 17700,
+   "params": [],
+   "state": "After the golem's blow the hit fighter shouts: Oof! Hits like a wall.",
+   "query": "t=17700&freeze=1",
+   "img": "billboard-sprites-3d-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 21800,
+   "params": [],
+   "state": "The golem topples, murmuring The stones... sleep...; the party faces it.",
+   "query": "t=21800&freeze=1",
+   "img": "billboard-sprites-3d-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 28200,
+   "params": [],
+   "state": "Back at camp by the fire: Tea first. Then stories.",
+   "query": "t=28200&freeze=1",
+   "img": "billboard-sprites-3d-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "bloom-glow": [
+  {
+   "t": 1100,
+   "params": [
+    "split=0.5"
+   ],
+   "state": "Left without bloom, right with it; the HUD is identical on both sides.",
+   "query": "t=1100&freeze=1&split=0.5",
+   "img": "bloom-glow-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 900,
+   "params": [],
+   "state": "Soft preset: moon halo, glowing lanterns and fireball, crisp HUD text.",
+   "query": "t=900&freeze=1",
+   "img": "bloom-glow-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 6340,
+   "params": [],
+   "state": "Nova impact: the flare at full and a burst of light on the golem.",
+   "query": "t=6340&freeze=1",
+   "img": "bloom-glow-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 900,
+   "params": [
+    "ui=0",
+    "threshold=0.5"
+   ],
+   "state": "HUD unprotected: HP bars and panel borders bloom without uiRects.",
+   "query": "t=900&freeze=1&ui=0&threshold=0.5",
+   "img": "bloom-glow-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "bullet-patterns": [
+  {
+   "t": 9000,
+   "params": [],
+   "state": "Spiral: arms in two alternating colours curl out over the plaza.",
+   "query": "t=9000&freeze=1",
+   "img": "bullet-patterns-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 20300,
+   "params": [],
+   "state": "Bloom: big orbs, braked away from the warden, burst into rice bullets.",
+   "query": "t=20300&freeze=1",
+   "img": "bullet-patterns-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 2600,
+   "params": [
+    "view=side"
+   ],
+   "state": "Side-on rain: a falling curtain with gaps over the knight.",
+   "query": "t=2600&freeze=1&view=side",
+   "img": "bullet-patterns-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 1250,
+   "params": [
+    "auto=0"
+   ],
+   "state": "Hit: the hero flashes white and nearby bullets fade into sparks.",
+   "query": "t=1250&freeze=1&auto=0",
+   "img": "bullet-patterns-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "camera-director": [
+  {
+   "t": 6300,
+   "params": [
+    "pip=1",
+    "debug=0"
+   ],
+   "state": "Mid-jump: hard follow (inset) stays on the hero, the director holds the last ledge.",
+   "query": "t=6300&freeze=1&pip=1&debug=0",
+   "img": "camera-director-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 18200,
+   "params": [
+    "pip=1",
+    "debug=0"
+   ],
+   "state": "The hero backs off a slam: the director zooms out to keep the golem in view.",
+   "query": "t=18200&freeze=1&pip=1&debug=0",
+   "img": "camera-director-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 27600,
+   "params": [
+    "debug=0"
+   ],
+   "state": "Level end: the view stops at the edge while the hero walks to the portal.",
+   "query": "t=27600&freeze=1&debug=0",
+   "img": "camera-director-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 23250,
+   "params": [
+    "pip=1",
+    "debug=0"
+   ],
+   "state": "Finisher: the director punches in toward the hit; hard follow does not.",
+   "query": "t=23250&freeze=1&pip=1&debug=0",
+   "img": "camera-director-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "card-art": [
+  {
+   "t": 900,
+   "params": [],
+   "state": "The draft deals: a card flips over with its painting.",
+   "query": "t=900&freeze=1",
+   "img": "card-art-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 3000,
+   "params": [],
+   "state": "Choose: three paintings under each card's chip, name, rules and preview.",
+   "query": "t=3000&freeze=1",
+   "img": "card-art-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 10600,
+   "params": [],
+   "state": "A later draft: the epic card glows over its art; a rare one selected.",
+   "query": "t=10600&freeze=1",
+   "img": "card-art-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 3000,
+   "params": [
+    "lift=4"
+   ],
+   "state": "The frame renderer: a hand of painted cards, the lifted one glowing.",
+   "query": "t=3000&freeze=1&lift=4",
+   "img": "card-art-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "card-battle": [
+  {
+   "t": 4500,
+   "params": [
+    "group=swarm"
+   ],
+   "state": "Four foes, each with an intent tag; a card lifted from the fanned hand.",
+   "query": "t=4500&freeze=1&group=swarm",
+   "img": "card-battle-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 4000,
+   "params": [
+    "group=orchard"
+   ],
+   "state": "Imps and a thief: attack and status intents above each foe.",
+   "query": "t=4000&freeze=1&group=orchard",
+   "img": "card-battle-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 6000,
+   "params": [],
+   "state": "FOES ACT: the toad deals exactly the 7 its tag promised.",
+   "query": "t=6000&freeze=1",
+   "img": "card-battle-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 9000,
+   "params": [
+    "group=golem"
+   ],
+   "state": "The boss turn: a 9-damage intent, ward and five statuses on its plate.",
+   "query": "t=9000&freeze=1&group=golem",
+   "img": "card-battle-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "chip-music": [
+  {
+   "t": 6500,
+   "params": [],
+   "state": "Meadow Road loops in the piano roll: two pulse leads, a triangle bass and noise drums.",
+   "query": "t=6500&freeze=1",
+   "img": "chip-music-A.webp",
+   "w": 640,
+   "h": 382
+  },
+  {
+   "t": 10300,
+   "params": [],
+   "state": "A fight starts: Clash at the Pass takes over on a beat, at 150 BPM.",
+   "query": "t=10300&freeze=1",
+   "img": "chip-music-B.webp",
+   "w": 640,
+   "h": 382
+  },
+  {
+   "t": 14500,
+   "params": [],
+   "state": "Slime defeated: the VICTORY! banner shows while the victory jingle plays.",
+   "query": "t=14500&freeze=1",
+   "img": "chip-music-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 20600,
+   "params": [],
+   "state": "The Item Get jingle: Meadow Road paused, resuming on bar 2 beat 4.",
+   "query": "t=20600&freeze=1",
+   "img": "chip-music-D.webp",
+   "w": 640,
+   "h": 382
+  }
+ ],
+ "clash-cutin": [
+  {
+   "t": 3050,
+   "params": [],
+   "state": "Aldric leaps in over the plains; both panels show HIT, DMG and CRT.",
+   "query": "t=3050&freeze=1",
+   "img": "clash-cutin-A.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 3700,
+   "params": [],
+   "state": "The 9 rises over the brigand while his bar drains a pale loss segment.",
+   "query": "t=3700&freeze=1",
+   "img": "clash-cutin-B.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 10700,
+   "params": [],
+   "state": "Forest at dusk: CRITICAL!, a gleam on the archer before the shot.",
+   "query": "t=10700&freeze=1",
+   "img": "clash-cutin-C.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 19300,
+   "params": [],
+   "state": "Ruins: the critical counter lands in a gold arc of the blade.",
+   "query": "t=19300&freeze=1",
+   "img": "clash-cutin-D.webp",
+   "w": 457,
+   "h": 400
+  }
+ ],
+ "color-grade-lut": [
+  {
+   "t": 7800,
+   "params": [],
+   "state": "Mid-blend between two grades: a smooth in-between with no banding.",
+   "query": "t=7800&freeze=1",
+   "img": "color-grade-lut-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 5000,
+   "params": [],
+   "state": "Dusk preset: warm light with violet shadows.",
+   "query": "t=5000&freeze=1",
+   "img": "color-grade-lut-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 8600,
+   "params": [],
+   "state": "Night preset: dark and blue, while fire, lantern and windows stay orange.",
+   "query": "t=8600&freeze=1",
+   "img": "color-grade-lut-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 2000,
+   "params": [
+    "preset=night",
+    "split=0.5"
+   ],
+   "state": "Before and after: the plain frame on the left, night on the right.",
+   "query": "t=2000&freeze=1&preset=night&split=0.5",
+   "img": "color-grade-lut-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "combat-forecast": [
+  {
+   "t": 1500,
+   "params": [],
+   "state": "Kestrel vs Pikeman: damage, hit, crit and counter, with weapon arrows.",
+   "query": "t=1500&freeze=1",
+   "img": "combat-forecast-A.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 3000,
+   "params": [],
+   "state": "Target moved to the Marauder: new numbers and the arrows reversed.",
+   "query": "t=3000&freeze=1",
+   "img": "combat-forecast-B.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 4600,
+   "params": [],
+   "state": "Weapon switched to the Ash Lance: numbers change, arrows flip again.",
+   "query": "t=4600&freeze=1",
+   "img": "combat-forecast-C.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 8400,
+   "params": [],
+   "state": "Wren vs Hexer at range 2: the window moves to keep both units clear.",
+   "query": "t=8400&freeze=1",
+   "img": "combat-forecast-D.webp",
+   "w": 457,
+   "h": 400
+  }
+ ],
+ "crafting-recipes": [
+  {
+   "t": 3800,
+   "params": [],
+   "state": "The bench opens beside the knight; a NEW RECIPE toast at the top.",
+   "query": "t=3800&freeze=1",
+   "img": "crafting-recipes-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 5100,
+   "params": [],
+   "state": "Crafted: the draught pops out with sparks, +1 Healing Draught.",
+   "query": "t=5100&freeze=1",
+   "img": "crafting-recipes-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 8850,
+   "params": [],
+   "state": "Missing an input: the slot tints red, Need 1 Storm Tonic.",
+   "query": "t=8850&freeze=1",
+   "img": "crafting-recipes-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 16300,
+   "params": [],
+   "state": "An own mix discovers Ember Ring: a DISCOVERED toast, embers at the knight.",
+   "query": "t=16300&freeze=1",
+   "img": "crafting-recipes-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "cutout-characters": [
+  {
+   "t": 400,
+   "params": [
+    "stats=0"
+   ],
+   "state": "Idle line-up: mage, swordswoman and spear fighter breathe in their stances.",
+   "query": "t=400&freeze=1&stats=0",
+   "img": "cutout-characters-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 700,
+   "params": [
+    "stats=0"
+   ],
+   "state": "Close-up, sword slash: the blade sweeps forward under a tapered swoosh.",
+   "query": "t=700&freeze=1&stats=0",
+   "img": "cutout-characters-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 3330,
+   "params": [
+    "stats=0"
+   ],
+   "state": "Close-up, spear thrust: the tip lands and the swordswoman flashes white.",
+   "query": "t=3330&freeze=1&stats=0",
+   "img": "cutout-characters-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 5500,
+   "params": [
+    "stats=0"
+   ],
+   "state": "Close-up, mage cast: arms pushed forward, a bolt leaves the staff.",
+   "query": "t=5500&freeze=1&stats=0",
+   "img": "cutout-characters-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "damage-numbers": [
+  {
+   "t": 2500,
+   "params": [],
+   "state": "Mid-flurry: a gold critical, a 200 and a bouncing MISS, none overlapping.",
+   "query": "t=2500&freeze=1",
+   "img": "damage-numbers-A.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 2500,
+   "params": [
+    "stack=off"
+   ],
+   "state": "Stacking off: the same moment with the numbers piled on each other.",
+   "query": "t=2500&freeze=1&stack=off",
+   "img": "damage-numbers-B.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 2500,
+   "params": [
+    "scale=2"
+   ],
+   "state": "Double-size glyphs with outlines, still clear of every sprite.",
+   "query": "t=2500&freeze=1&scale=2",
+   "img": "damage-numbers-C.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 2500,
+   "params": [
+    "bounce=24"
+   ],
+   "state": "High bounce: every number still lands above its own target.",
+   "query": "t=2500&freeze=1&bounce=24",
+   "img": "damage-numbers-D.webp",
+   "w": 457,
+   "h": 400
+  }
+ ],
+ "damage-pop": [
+  {
+   "t": 1500,
+   "params": [],
+   "state": "The Arcane Barrage total rolls up on the imp; 34 above the golem.",
+   "query": "t=1500&freeze=1",
+   "img": "damage-pop-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 1960,
+   "params": [],
+   "state": "The final total, 127, holds above the imp as the spear flies.",
+   "query": "t=1960&freeze=1",
+   "img": "damage-pop-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 2300,
+   "params": [],
+   "state": "A 412 crit pops gold and larger over the wisp, with a ray burst.",
+   "query": "t=2300&freeze=1",
+   "img": "damage-pop-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 5400,
+   "params": [],
+   "state": "Damage types together: a fading heal, a poison total and shock hits.",
+   "query": "t=5400&freeze=1",
+   "img": "damage-pop-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "dialogue-box": [
+  {
+   "t": 3000,
+   "params": [],
+   "state": "Mira's first line half typed, her name plate on the box's top edge.",
+   "query": "t=3000&freeze=1",
+   "img": "dialogue-box-A.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 6500,
+   "params": [],
+   "state": "Page complete: three full rows and the next-page arrow.",
+   "query": "t=6500&freeze=1",
+   "img": "dialogue-box-B.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 21600,
+   "params": [],
+   "state": "The speaker is low on screen, so the box moves to the top.",
+   "query": "t=21600&freeze=1",
+   "img": "dialogue-box-C.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 18300,
+   "params": [],
+   "state": "Narration: a sign's text in two rows, with no name plate.",
+   "query": "t=18300&freeze=1",
+   "img": "dialogue-box-D.webp",
+   "w": 457,
+   "h": 400
+  }
+ ],
+ "dialogue-choices": [
+  {
+   "t": 6300,
+   "params": [],
+   "state": "A greyed answer with its reason: Need 10 gold, shown under the menu.",
+   "query": "t=6300&freeze=1",
+   "img": "dialogue-choices-A.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 7300,
+   "params": [],
+   "state": "Three answers, the hand on the one that can be asked only once.",
+   "query": "t=7300&freeze=1",
+   "img": "dialogue-choices-B.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 11500,
+   "params": [],
+   "state": "Back at the same question, the once-only answer is gone.",
+   "query": "t=11500&freeze=1",
+   "img": "dialogue-choices-C.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 15200,
+   "params": [],
+   "state": "A flag in the text: the line now says how much gold you carry.",
+   "query": "t=15200&freeze=1",
+   "img": "dialogue-choices-D.webp",
+   "w": 457,
+   "h": 400
+  }
+ ],
+ "dissolve-defeat": [
+  {
+   "t": 1250,
+   "params": [],
+   "state": "All four variants at once: crumble, dither, slide and fade.",
+   "query": "t=1250&freeze=1",
+   "img": "dissolve-defeat-A.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 1000,
+   "params": [],
+   "state": "The golem crumbles from the head down past its intact legs.",
+   "query": "t=1000&freeze=1",
+   "img": "dissolve-defeat-B.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 1450,
+   "params": [
+    "variant=crumble",
+    "chunk=2"
+   ],
+   "state": "Coarse rubble: wisp and slime fall into 2 px chunks at their feet.",
+   "query": "t=1450&freeze=1&variant=crumble&chunk=2",
+   "img": "dissolve-defeat-C.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 1250,
+   "params": [
+    "end=await"
+   ],
+   "state": "Await mode: VICTORY waits until every effect has finished.",
+   "query": "t=1250&freeze=1&end=await",
+   "img": "dissolve-defeat-D.webp",
+   "w": 457,
+   "h": 400
+  }
+ ],
+ "draining-hp-bar": [
+  {
+   "t": 1400,
+   "params": [],
+   "state": "Three quick hits on the colossus merge into one pale loss segment.",
+   "query": "t=1400&freeze=1",
+   "img": "draining-hp-bar-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 4060,
+   "params": [],
+   "state": "Heal preview: a mint gain segment shows before the fill rises.",
+   "query": "t=4060&freeze=1",
+   "img": "draining-hp-bar-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 5400,
+   "params": [],
+   "state": "The felled imp's small bar: no fill left, the loss still draining.",
+   "query": "t=5400&freeze=1",
+   "img": "draining-hp-bar-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 7100,
+   "params": [],
+   "state": "Boss under 25 %: the fill pulses hot red while the loss drains.",
+   "query": "t=7100&freeze=1",
+   "img": "draining-hp-bar-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "dungeon-floors": [
+  {
+   "t": 4300,
+   "params": [],
+   "state": "A door opens and a cave bat lunges at the hero in the torchlight.",
+   "query": "t=4300&freeze=1",
+   "img": "dungeon-floors-A.webp",
+   "w": 640,
+   "h": 397
+  },
+  {
+   "t": 24800,
+   "params": [],
+   "state": "A chest bumped open: gold and a tonic, and the hero levels up.",
+   "query": "t=24800&freeze=1",
+   "img": "dungeon-floors-B.webp",
+   "w": 640,
+   "h": 397
+  },
+  {
+   "t": 3000,
+   "params": [
+    "view=graph"
+   ],
+   "state": "The whole first floor as a graph: tree corridors gold, loops blue.",
+   "query": "t=3000&freeze=1&view=graph",
+   "img": "dungeon-floors-C.webp",
+   "w": 640,
+   "h": 397
+  },
+  {
+   "t": 193200,
+   "params": [],
+   "state": "Floor 5: the hero lands a critical on the Hollow Crown, its boss bar below.",
+   "query": "t=193200&freeze=1",
+   "img": "dungeon-floors-D.webp",
+   "w": 640,
+   "h": 397
+  }
+ ],
+ "dynamic-lights": [
+  {
+   "t": 4200,
+   "params": [],
+   "state": "The Ember Vault by torch and brazier light, with soft shadows and a crisp HUD.",
+   "query": "t=4200&freeze=1",
+   "img": "dynamic-lights-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 4200,
+   "params": [
+    "preset=dusk"
+   ],
+   "state": "Dusk ambient: the room readable everywhere, lights as warm and cool pools.",
+   "query": "t=4200&freeze=1&preset=dusk",
+   "img": "dynamic-lights-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 4200,
+   "params": [
+    "split=0.5"
+   ],
+   "state": "Left half unlit, right half lit.",
+   "query": "t=4200&freeze=1&split=0.5",
+   "img": "dynamic-lights-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 4200,
+   "params": [
+    "shadows=off"
+   ],
+   "state": "The same lights without shadows, showing what the occluders add.",
+   "query": "t=4200&freeze=1&shadows=off",
+   "img": "dynamic-lights-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "expressive-portraits": [
+  {
+   "t": 1000,
+   "params": [
+    "view=sheet"
+   ],
+   "state": "One character's sheet: seven expressions, blinks and talk frames.",
+   "query": "t=1000&freeze=1&view=sheet",
+   "img": "expressive-portraits-A.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 1000,
+   "params": [
+    "view=sheet",
+    "seed=21"
+   ],
+   "state": "A deep-skinned character with readable features, plus the 64 px set.",
+   "query": "t=1000&freeze=1&view=sheet&seed=21",
+   "img": "expressive-portraits-B.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 2500,
+   "params": [
+    "view=dialog"
+   ],
+   "state": "Rook talks beside the box, mouth open as the line types out.",
+   "query": "t=2500&freeze=1&view=dialog",
+   "img": "expressive-portraits-C.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 9000,
+   "params": [
+    "view=dialog",
+    "layout=two"
+   ],
+   "state": "Two speakers: Mira happy on the left, Rook dimmed on the right.",
+   "query": "t=9000&freeze=1&view=dialog&layout=two",
+   "img": "expressive-portraits-D.webp",
+   "w": 457,
+   "h": 400
+  }
+ ],
+ "farming-plots": [
+  {
+   "t": 10830,
+   "params": [],
+   "state": "Tilling: the hoe strikes the tile in front of the farmer, a fresh plot.",
+   "query": "t=10830&freeze=1",
+   "img": "farming-plots-A.webp",
+   "page": "starter",
+   "w": 605,
+   "h": 400
+  },
+  {
+   "t": 23400,
+   "params": [],
+   "state": "Dusk at 7 pm: lamp glow while the last plot is watered.",
+   "query": "t=23400&freeze=1",
+   "img": "farming-plots-B.webp",
+   "page": "starter",
+   "w": 605,
+   "h": 400
+  },
+  {
+   "t": 45900,
+   "params": [],
+   "state": "A rainy Spring 3: the farmer lifts a turnip, +1 Turnip.",
+   "query": "t=45900&freeze=1",
+   "img": "farming-plots-C.webp",
+   "page": "starter",
+   "w": 605,
+   "h": 400
+  },
+  {
+   "t": 161400,
+   "params": [],
+   "state": "FALL HAS COME over the golden farm: one crop out of season withered.",
+   "query": "t=161400&freeze=1",
+   "img": "farming-plots-D.webp",
+   "page": "starter",
+   "w": 605,
+   "h": 400
+  }
+ ],
+ "fog-of-war": [
+  {
+   "t": 500,
+   "params": [],
+   "state": "Three heroes see a diamond of the west bank; the rest is fogged.",
+   "query": "t=500&freeze=1",
+   "img": "fog-of-war-A.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 2800,
+   "params": [],
+   "state": "The scout spots a raider across the river; a passed one leaves a silhouette.",
+   "query": "t=2800&freeze=1",
+   "img": "fog-of-war-B.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 7200,
+   "params": [],
+   "state": "The archer on the hill clears a wide area; two silhouettes stay in fog.",
+   "query": "t=7200&freeze=1",
+   "img": "fog-of-war-C.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 9700,
+   "params": [],
+   "state": "A raider steps out of the forest and is revealed with a \"!\".",
+   "query": "t=9700&freeze=1",
+   "img": "fog-of-war-D.webp",
+   "w": 457,
+   "h": 400
+  }
+ ],
+ "four-move-battle": [
+  {
+   "t": 6500,
+   "params": [
+    "auto=0"
+   ],
+   "state": "Battle screen: foe top right, your creature bottom left, the command menu.",
+   "query": "t=6500&freeze=1&auto=0",
+   "img": "four-move-battle-A.webp",
+   "w": 600,
+   "h": 400
+  },
+  {
+   "t": 7600,
+   "params": [],
+   "state": "A hit: the foe's HP bar drains in orange-red as the move is named.",
+   "query": "t=7600&freeze=1",
+   "img": "four-move-battle-B.webp",
+   "w": 600,
+   "h": 400
+  },
+  {
+   "t": 6500,
+   "params": [
+    "auto=0",
+    "press=ok"
+   ],
+   "state": "Move menu: four moves with type pips, uses left and strong or weak hints.",
+   "query": "t=6500&freeze=1&auto=0&press=ok",
+   "img": "four-move-battle-C.webp",
+   "w": 600,
+   "h": 400
+  },
+  {
+   "t": 8000,
+   "params": [
+    "format=double"
+   ],
+   "state": "Two on two: compact boxes per side, the pointer over the chosen foe.",
+   "query": "t=8000&freeze=1&format=double",
+   "img": "four-move-battle-D.webp",
+   "w": 600,
+   "h": 400
+  }
+ ],
+ "grapple-swing": [
+  {
+   "t": 1270,
+   "params": [],
+   "state": "The hook flies toward the ring on a wavy rope.",
+   "query": "t=1270&freeze=1",
+   "img": "grapple-swing-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 1600,
+   "params": [],
+   "state": "Hanging from the ring, arms up, swinging out over the sea.",
+   "query": "t=1600&freeze=1",
+   "img": "grapple-swing-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 5450,
+   "params": [],
+   "state": "Hooked into the overhang, the hero swings toward the next ledge.",
+   "query": "t=5450&freeze=1",
+   "img": "grapple-swing-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 8170,
+   "params": [],
+   "state": "The rope bends over the floating rock's corner as the hero swings up.",
+   "query": "t=8170&freeze=1",
+   "img": "grapple-swing-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "grid-range-path": [
+  {
+   "t": 3000,
+   "params": [],
+   "state": "Blue move area shaped by forest and river, a red attack fringe and a path.",
+   "query": "t=3000&freeze=1",
+   "img": "grid-range-path-A.webp",
+   "w": 600,
+   "h": 400
+  },
+  {
+   "t": 3000,
+   "params": [
+    "res=256x224",
+    "move=7",
+    "range=1-2",
+    "overlay=checker"
+   ],
+   "state": "A 2-tile attack fringe and checker tint in a 256\u00d7224 frame.",
+   "query": "t=3000&freeze=1&res=256x224&move=7&range=1-2&overlay=checker",
+   "img": "grid-range-path-B.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 2600,
+   "params": [
+    "script=cut"
+   ],
+   "state": "The arrow keeps the drawn loop instead of the shortest route.",
+   "query": "t=2600&freeze=1&script=cut",
+   "img": "grid-range-path-C.webp",
+   "w": 600,
+   "h": 400
+  },
+  {
+   "t": 2350,
+   "params": [
+    "script=walk"
+   ],
+   "state": "The unit walks the road as the arrow is used up behind it.",
+   "query": "t=2350&freeze=1&script=walk",
+   "img": "grid-range-path-D.webp",
+   "w": 600,
+   "h": 400
+  }
+ ],
+ "hit-sparks": [
+  {
+   "t": 380,
+   "params": [],
+   "state": "Rowan's slash on the golem: a curved warm streak with sparks.",
+   "query": "t=380&freeze=1",
+   "img": "hit-sparks-A.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 1250,
+   "params": [],
+   "state": "A ring shockwave around Rowan that stops short of Mira.",
+   "query": "t=1250&freeze=1",
+   "img": "hit-sparks-B.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 2200,
+   "params": [],
+   "state": "A fire burst on the golem: flame tongues in turning bands, with embers.",
+   "query": "t=2200&freeze=1",
+   "img": "hit-sparks-C.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 3380,
+   "params": [],
+   "state": "A critical on the wisp: a white flash, a star and a ring.",
+   "query": "t=3380&freeze=1",
+   "img": "hit-sparks-D.webp",
+   "w": 457,
+   "h": 400
+  }
+ ],
+ "hit-stop-shake": [
+  {
+   "t": 351,
+   "params": [],
+   "state": "Light jab: the golem flashes white for a frame, the field shifts 1 px.",
+   "query": "t=351&freeze=1",
+   "img": "hit-stop-shake-A.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 1318,
+   "params": [],
+   "state": "Heavy hit: a white silhouette, frozen sparks and a 2 px shake.",
+   "query": "t=1318&freeze=1",
+   "img": "hit-stop-shake-B.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 4151,
+   "params": [],
+   "state": "Finisher: the field washes white and shakes, HUD and banner held still.",
+   "query": "t=4151&freeze=1",
+   "img": "hit-stop-shake-C.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 4168,
+   "params": [],
+   "state": "The next finisher frame: the wash fades and the shake swings back.",
+   "query": "t=4168&freeze=1",
+   "img": "hit-stop-shake-D.webp",
+   "w": 457,
+   "h": 400
+  }
+ ],
+ "horde-survival": [
+  {
+   "t": 3000,
+   "params": [],
+   "state": "A swarm at 2:32: six kinds of foes, all four weapons firing, gems.",
+   "query": "t=3000&freeze=1",
+   "img": "horde-survival-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 2500,
+   "params": [
+    "scene=stress"
+   ],
+   "state": "Stress scene: about 570 foes; the hero still visible on its ring.",
+   "query": "t=2500&freeze=1&scene=stress",
+   "img": "horde-survival-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 2500,
+   "params": [
+    "scene=boss"
+   ],
+   "state": "The Moss Colossus faces the hero, its slam zone filling red.",
+   "query": "t=2500&freeze=1&scene=boss",
+   "img": "horde-survival-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 600,
+   "params": [
+    "scene=levelup"
+   ],
+   "state": "Level up: three cards with icons, effects and pips, the middle picked.",
+   "query": "t=600&freeze=1&scene=levelup",
+   "img": "horde-survival-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "ik-creatures": [
+  {
+   "t": 1700,
+   "params": [],
+   "state": "The spider straddles the boulder, feet planted at different heights.",
+   "query": "t=1700&freeze=1",
+   "img": "ik-creatures-A.webp",
+   "w": 640,
+   "h": 359
+  },
+  {
+   "t": 3300,
+   "params": [],
+   "state": "The crab faces the camera, a big and a small pincer on their own sides.",
+   "query": "t=3300&freeze=1",
+   "img": "ik-creatures-B.webp",
+   "w": 640,
+   "h": 359
+  },
+  {
+   "t": 10000,
+   "params": [],
+   "state": "The centipede climbs the slope, its legs planted along it.",
+   "query": "t=10000&freeze=1",
+   "img": "ik-creatures-C.webp",
+   "w": 640,
+   "h": 359
+  },
+  {
+   "t": 4000,
+   "params": [],
+   "state": "The spider steps up the ledge: front feet on top, back feet on the ground below.",
+   "query": "t=4000&freeze=1",
+   "img": "ik-creatures-D.webp",
+   "w": 640,
+   "h": 359
+  }
+ ],
+ "iso-height-map": [
+  {
+   "t": 1500,
+   "params": [],
+   "state": "The move area stops at the cliff and climbs the stairs to height 6.",
+   "query": "t=1500&freeze=1",
+   "img": "iso-height-map-A.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 4200,
+   "params": [],
+   "state": "After a hop up the stairs: the Brute targeted, a back attack at \u00d71.5.",
+   "query": "t=4200&freeze=1",
+   "img": "iso-height-map-B.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 6900,
+   "params": [],
+   "state": "Four facing arrows around the knight.",
+   "query": "t=6900&freeze=1",
+   "img": "iso-height-map-C.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 8800,
+   "params": [],
+   "state": "The Hexer hidden behind the tower is drawn as an outline.",
+   "query": "t=8800&freeze=1",
+   "img": "iso-height-map-D.webp",
+   "w": 457,
+   "h": 400
+  }
+ ],
+ "kart-racer-3d": [
+  {
+   "t": 6100,
+   "params": [],
+   "state": "GO! A rocket start: boost flames behind the player and a ROCKET START! toast.",
+   "query": "t=6100&freeze=1",
+   "img": "kart-racer-3d-A.webp",
+   "page": "starter",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 11000,
+   "params": [],
+   "state": "Drifting into the turn with orange sparks; the drift meter fills.",
+   "query": "t=11000&freeze=1",
+   "img": "kart-racer-3d-B.webp",
+   "page": "starter",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 16950,
+   "params": [],
+   "state": "Lap 2: the kart in the air past the ramp, its shadow on the road below.",
+   "query": "t=16950&freeze=1",
+   "img": "kart-racer-3d-C.webp",
+   "page": "starter",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 54500,
+   "params": [],
+   "state": "Race 2 in the canyon: the player drifts after the pack.",
+   "query": "t=54500&freeze=1",
+   "img": "kart-racer-3d-D.webp",
+   "page": "starter",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "keyword-tooltips": [
+  {
+   "t": 3300,
+   "params": [],
+   "state": "Burn clicked and pinned above the card, with a pin icon.",
+   "query": "t=3300&freeze=1",
+   "img": "keyword-tooltips-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 6800,
+   "params": [],
+   "state": "Poison opens nested inside the Turn start tooltip.",
+   "query": "t=6800&freeze=1",
+   "img": "keyword-tooltips-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 12800,
+   "params": [],
+   "state": "Thorns in the combat log: placed below and kept on screen.",
+   "query": "t=12800&freeze=1",
+   "img": "keyword-tooltips-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 15700,
+   "params": [],
+   "state": "Keyboard: the relic tooltip pinned, Strength focused inside it.",
+   "query": "t=15700&freeze=1",
+   "img": "keyword-tooltips-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "level-select-map": [
+  {
+   "t": 300,
+   "params": [],
+   "state": "The start: the hero, open stones to Gull Steps and a locked node.",
+   "query": "t=300&freeze=1",
+   "img": "level-select-map-A.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 4400,
+   "params": [],
+   "state": "The path to Tide Caves draws itself one stone at a time.",
+   "query": "t=4400&freeze=1",
+   "img": "level-select-map-B.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 10000,
+   "params": [],
+   "state": "A secret path to Seal Cove draws itself, flagged SECRET PATH.",
+   "query": "t=10000&freeze=1",
+   "img": "level-select-map-C.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 2000,
+   "params": [],
+   "state": "The iris closes on the hero at a level node.",
+   "query": "t=2000&freeze=1",
+   "img": "level-select-map-D.webp",
+   "w": 457,
+   "h": 400
+  }
+ ],
+ "level-up-growth": [
+  {
+   "t": 2900,
+   "params": [],
+   "state": "Victory tally: EXP counts up and two gauges wrap to level 2.",
+   "query": "t=2900&freeze=1",
+   "img": "level-up-growth-A.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 4000,
+   "params": [],
+   "state": "Tally done: two LV UP! rows, Corin 12 EXP from the next level.",
+   "query": "t=4000&freeze=1",
+   "img": "level-up-growth-B.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 4900,
+   "params": [],
+   "state": "Brenna's gains revealed one row at a time: HP +3, STR +1.",
+   "query": "t=4900&freeze=1",
+   "img": "level-up-growth-C.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 15000,
+   "params": [],
+   "state": "Guaranteed minimum: Tamsin still gains MAG +1 on a poor level-up.",
+   "query": "t=15000&freeze=1",
+   "img": "level-up-growth-D.webp",
+   "w": 457,
+   "h": 400
+  }
+ ],
+ "loot-beams": [
+  {
+   "t": 1850,
+   "params": [],
+   "state": "Close-up: the struck slime flashes as gold and a blade burst out of it.",
+   "query": "t=1850&freeze=1",
+   "img": "loot-beams-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 6400,
+   "params": [],
+   "state": "A cache spills out: rarity beams and name tags that keep clear of each other.",
+   "query": "t=6400&freeze=1",
+   "img": "loot-beams-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 9700,
+   "params": [],
+   "state": "The loot flies to the knight with +N lines; the HUD counts rise.",
+   "query": "t=9700&freeze=1",
+   "img": "loot-beams-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 8600,
+   "params": [
+    "look=pixel"
+   ],
+   "state": "Pixel look: beams and bitmap tags around the opened chest.",
+   "query": "t=8600&freeze=1&look=pixel",
+   "img": "loot-beams-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "match3-battle": [
+  {
+   "t": 7900,
+   "params": [],
+   "state": "The Knight lunges into the slime and his 62 rises as the blow lands.",
+   "query": "t=7900&freeze=1",
+   "img": "match3-battle-A.webp",
+   "page": "starter",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 14700,
+   "params": [],
+   "state": "COMBO x6: gems pop and fall while the Knight's skill gets ready.",
+   "query": "t=14700&freeze=1",
+   "img": "match3-battle-B.webp",
+   "page": "starter",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 165150,
+   "params": [],
+   "state": "Stage 3: the Barrow Colossus rises to wind up its slam at the party.",
+   "query": "t=165150&freeze=1",
+   "img": "match3-battle-C.webp",
+   "page": "starter",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 165470,
+   "params": [],
+   "state": "Just after the slam: dust, a contact flash and the number over the Knight.",
+   "query": "t=165470&freeze=1",
+   "img": "match3-battle-D.webp",
+   "page": "starter",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "minimap": [
+  {
+   "t": 2000,
+   "params": [],
+   "state": "Village start: explored cells, the hero's arrow, a rim arrow to the goal.",
+   "query": "t=2000&freeze=1",
+   "img": "minimap-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 12500,
+   "params": [],
+   "state": "Near the ruins at the closest zoom: walls, foes and an item.",
+   "query": "t=12500&freeze=1",
+   "img": "minimap-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 18500,
+   "params": [],
+   "state": "Full map: 64 % explored, legend, houses in their roof colours.",
+   "query": "t=18500&freeze=1",
+   "img": "minimap-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 12000,
+   "params": [
+    "scene=side"
+   ],
+   "state": "Side-on caverns: ledges as bright lines and a rim arrow to the relic.",
+   "query": "t=12000&freeze=1&scene=side",
+   "img": "minimap-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "modern-particles": [
+  {
+   "t": 6200,
+   "params": [
+    "hud=0"
+   ],
+   "state": "A magic burst in the forge hall: blue streaks and gold stars.",
+   "query": "t=6200&freeze=1&hud=0",
+   "img": "modern-particles-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 5000,
+   "params": [
+    "hud=0"
+   ],
+   "state": "Anvil sparks fly out, fall and skid on the floor; brazier smoke rises.",
+   "query": "t=5000&freeze=1&hud=0",
+   "img": "modern-particles-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 8600,
+   "params": [
+    "hud=0"
+   ],
+   "state": "A golden flash and ring burst in mid-air while blue motes swirl.",
+   "query": "t=8600&freeze=1&hud=0",
+   "img": "modern-particles-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 6000,
+   "params": [
+    "stress=1",
+    "hud=0"
+   ],
+   "state": "Stress test: about 2,000 live particles from every emitter at once.",
+   "query": "t=6000&freeze=1&stress=1&hud=0",
+   "img": "modern-particles-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "motion-inputs": [
+  {
+   "t": 2200,
+   "params": [],
+   "state": "Down, down-forward, forward + B: EMBER WAVE, the fireball in flight.",
+   "query": "t=2200&freeze=1",
+   "img": "motion-inputs-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 5750,
+   "params": [],
+   "state": "RISING FANG: the hero rises with the blade and a crescent of light.",
+   "query": "t=5750&freeze=1",
+   "img": "motion-inputs-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 9750,
+   "params": [],
+   "state": "Back held, then forward + A: GALE RUSH dashes with afterimages.",
+   "query": "t=9750&freeze=1",
+   "img": "motion-inputs-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 16700,
+   "params": [],
+   "state": "A full circle + A: EARTHBREAKER sends a shock wave of rock slabs.",
+   "query": "t=16700&freeze=1",
+   "img": "motion-inputs-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "normal-lighting": [
+  {
+   "t": 3000,
+   "params": [],
+   "state": "Dusk: the wisp lights the oak and the keeper from one side.",
+   "query": "t=3000&freeze=1",
+   "img": "normal-lighting-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 6000,
+   "params": [
+    "preset=daylight"
+   ],
+   "state": "Daylight, sun only: lit warm from up-left, cool toward down-right.",
+   "query": "t=6000&freeze=1&preset=daylight",
+   "img": "normal-lighting-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 3000,
+   "params": [
+    "split=0.74"
+   ],
+   "state": "Split through the well: flat sprites left, normal lighting right.",
+   "query": "t=3000&freeze=1&split=0.74",
+   "img": "normal-lighting-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 3000,
+   "params": [
+    "preset=night"
+   ],
+   "state": "Night: lanterns and the wisp light the sprites; their far sides stay dark.",
+   "query": "t=3000&freeze=1&preset=night",
+   "img": "normal-lighting-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "normal-maps": [
+  {
+   "t": 5200,
+   "params": [
+    "view=split",
+    "extra=off",
+    "key=off",
+    "height=14",
+    "strength=2.5",
+    "ambient=0.12"
+   ],
+   "state": "Close-up, split: each sprite flat on the left, normal-mapped on the right.",
+   "query": "t=5200&freeze=1&view=split&extra=off&key=off&height=14&strength=2.5&ambient=0.12",
+   "img": "normal-maps-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 5200,
+   "params": [
+    "extra=off",
+    "key=off",
+    "height=14",
+    "strength=2.5",
+    "ambient=0.12"
+   ],
+   "state": "Close-up, the keeper's lantern low and strong: roof, stones and folds in relief.",
+   "query": "t=5200&freeze=1&extra=off&key=off&height=14&strength=2.5&ambient=0.12",
+   "img": "normal-maps-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 5200,
+   "params": [
+    "extra=off",
+    "key=off",
+    "height=8",
+    "strength=2.5",
+    "ambient=0.2"
+   ],
+   "state": "The same lantern almost at ground height: only the rims catch the light.",
+   "query": "t=5200&freeze=1&extra=off&key=off&height=8&strength=2.5&ambient=0.2",
+   "img": "normal-maps-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 5200,
+   "params": [
+    "view=flat",
+    "extra=off",
+    "key=off",
+    "height=14",
+    "strength=2.5",
+    "ambient=0.12"
+   ],
+   "state": "Flat cards under the same lantern, for comparison: no relief.",
+   "query": "t=5200&freeze=1&view=flat&extra=off&key=off&height=14&strength=2.5&ambient=0.12",
+   "img": "normal-maps-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "painted-parallax": [
+  {
+   "t": 4200,
+   "params": [],
+   "state": "Painted layers behind the stone platforms, with a painted strip in the pit.",
+   "query": "t=4200&freeze=1",
+   "img": "painted-parallax-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 12000,
+   "params": [
+    "speed=300"
+   ],
+   "state": "Scrolling fast, far along the level: the layers repeat with no visible join.",
+   "query": "t=12000&freeze=1&speed=300",
+   "img": "painted-parallax-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 4200,
+   "params": [
+    "mode=split"
+   ],
+   "state": "Left half the old flat layers, right half painted, same camera.",
+   "query": "t=4200&freeze=1&mode=split",
+   "img": "painted-parallax-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 4200,
+   "params": [
+    "set=night"
+   ],
+   "state": "The same shapes in the moonlit set.",
+   "query": "t=4200&freeze=1&set=night",
+   "img": "painted-parallax-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "painted-portraits": [
+  {
+   "t": 1150,
+   "params": [],
+   "state": "First line: Tobin's bust slides in on the box's top edge.",
+   "query": "t=1150&freeze=1",
+   "img": "painted-portraits-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 7800,
+   "params": [],
+   "state": "Two speakers: the listener dimmed and lower, the speaker in front.",
+   "query": "t=7800&freeze=1",
+   "img": "painted-portraits-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 15400,
+   "params": [],
+   "state": "Hesper speaks with her sad face while Maren listens, angry and dimmed.",
+   "query": "t=15400&freeze=1",
+   "img": "painted-portraits-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 7800,
+   "params": [
+    "place=beside"
+   ],
+   "state": "Busts placed beside the box instead of standing on it.",
+   "query": "t=7800&freeze=1&place=beside",
+   "img": "painted-portraits-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "painted-ui": [
+  {
+   "t": 4300,
+   "params": [],
+   "state": "Painted menu, status strip, shop grid with tooltip and dialogue box.",
+   "query": "t=4300&freeze=1",
+   "img": "painted-ui-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 4300,
+   "params": [
+    "kit=split"
+   ],
+   "state": "Left half plain, right half painted, with the text in the same place.",
+   "query": "t=4300&freeze=1&kit=split",
+   "img": "painted-ui-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 4300,
+   "params": [
+    "scale=1.25",
+    "panel=slate"
+   ],
+   "state": "Scale 1.25 with slate panels: the corners keep their size.",
+   "query": "t=4300&freeze=1&scale=1.25&panel=slate",
+   "img": "painted-ui-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 4300,
+   "params": [
+    "kit=off"
+   ],
+   "state": "Kit off: the game's own plain panels.",
+   "query": "t=4300&freeze=1&kit=off",
+   "img": "painted-ui-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "palette-swap": [
+  {
+   "t": 1000,
+   "params": [
+    "skin=none"
+   ],
+   "state": "Built-in drawing: small pixel-font labels and the colour inspector.",
+   "query": "t=1000&freeze=1&skin=none",
+   "img": "palette-swap-A.webp",
+   "w": 500,
+   "h": 400
+  },
+  {
+   "t": 2000,
+   "params": [],
+   "state": "Six sprites in twelve looks, each team column reading as one team.",
+   "query": "t=2000&freeze=1",
+   "img": "palette-swap-B.webp",
+   "w": 500,
+   "h": 400
+  },
+  {
+   "t": 11250,
+   "params": [],
+   "state": "The tour on the sage: red column, the low-HP column pulsing red.",
+   "query": "t=11250&freeze=1",
+   "img": "palette-swap-C.webp",
+   "w": 500,
+   "h": 400
+  },
+  {
+   "t": 1000,
+   "params": [
+    "sprite=5",
+    "variant=elite"
+   ],
+   "state": "Drake elite: a violet body with the tan belly kept.",
+   "query": "t=1000&freeze=1&sprite=5&variant=elite",
+   "img": "palette-swap-D.webp",
+   "w": 500,
+   "h": 400
+  }
+ ],
+ "paper-doll": [
+  {
+   "t": 7100,
+   "params": [],
+   "state": "The wardrobe: the top switched to plate armour, the change sparkling on the preview.",
+   "query": "t=7100&freeze=1",
+   "img": "paper-doll-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 12000,
+   "params": [],
+   "state": "A kite shield on the preview's left arm completes the kit.",
+   "query": "t=12000&freeze=1",
+   "img": "paper-doll-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 18140,
+   "params": [],
+   "state": "On the plaza, facing right: the strike frame, the sword in the near hand.",
+   "query": "t=18140&freeze=1",
+   "img": "paper-doll-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 29500,
+   "params": [],
+   "state": "The closing line-up: five outfits from the same layers, side by side.",
+   "query": "t=29500&freeze=1",
+   "img": "paper-doll-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "parallax-layers": [
+  {
+   "t": 6000,
+   "params": [],
+   "state": "Sky, far range, a tree line and dark foliage scroll behind the tiles.",
+   "query": "t=6000&freeze=1",
+   "img": "parallax-layers-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 6000,
+   "params": [
+    "theme=cliffs",
+    "time=dusk"
+   ],
+   "state": "Cliffs at dusk: far layers paler, the near layer darkest.",
+   "query": "t=6000&freeze=1&theme=cliffs&time=dusk",
+   "img": "parallax-layers-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 6000,
+   "params": [
+    "theme=city",
+    "time=night"
+   ],
+   "state": "City at night: lit windows in the far and mid layers.",
+   "query": "t=6000&freeze=1&theme=city&time=night",
+   "img": "parallax-layers-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 6000,
+   "params": [
+    "theme=cave",
+    "time=night"
+   ],
+   "state": "Cave theme: stalactite layers behind the tiles.",
+   "query": "t=6000&freeze=1&theme=cave&time=night",
+   "img": "parallax-layers-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "physics-debris": [
+  {
+   "t": 860,
+   "params": [],
+   "state": "The knight's blow: crate, barrel and sack pieces fly, dust at the base.",
+   "query": "t=860&freeze=1",
+   "img": "physics-debris-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 3150,
+   "params": [],
+   "state": "The knocked-back imp hits the anvil after bursting through crates.",
+   "query": "t=3150&freeze=1",
+   "img": "physics-debris-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 6640,
+   "params": [],
+   "state": "The sword wave shatters the crystal into glassy splinters.",
+   "query": "t=6640&freeze=1",
+   "img": "physics-debris-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 3817,
+   "params": [
+    "view=top"
+   ],
+   "state": "Top-down: the slime, knocked through crates, bumps the boulder ring.",
+   "query": "t=3817&freeze=1&view=top",
+   "img": "physics-debris-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "pixel-font": [
+  {
+   "t": 3500,
+   "params": [],
+   "state": "Night river scene: a 2\u00d7 title, the HUD and a finished line in hard pixels.",
+   "query": "t=3500&freeze=1",
+   "img": "pixel-font-A.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 1500,
+   "params": [],
+   "state": "The same line half typed, left-anchored in its window.",
+   "query": "t=1500&freeze=1",
+   "img": "pixel-font-B.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 6500,
+   "params": [
+    "scale=2",
+    "shadow=outline"
+   ],
+   "state": "Double-size outlined text split into two pages in the same window.",
+   "query": "t=6500&freeze=1&scale=2&shadow=outline",
+   "img": "pixel-font-C.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 9500,
+   "params": [
+    "font=small",
+    "cps=20"
+   ],
+   "state": "Small font mid-reveal, with key words in cyan and red.",
+   "query": "t=9500&freeze=1&font=small&cps=20",
+   "img": "pixel-font-D.webp",
+   "w": 457,
+   "h": 400
+  }
+ ],
+ "pixel-scaler": [
+  {
+   "t": 3000,
+   "params": [],
+   "state": "Close-up at integer scale: every game pixel is a sharp square.",
+   "query": "t=3000&freeze=1",
+   "img": "pixel-scaler-A.webp",
+   "w": 528,
+   "h": 374
+  },
+  {
+   "t": 3000,
+   "params": [
+    "before=1"
+   ],
+   "state": "Close-up before: the stretched, smoothed canvas blurs every edge.",
+   "query": "t=3000&freeze=1&before=1",
+   "img": "pixel-scaler-B.webp",
+   "w": 528,
+   "h": 374
+  },
+  {
+   "t": 3000,
+   "params": [
+    "crt=crt"
+   ],
+   "state": "Close-up with the CRT look: scanlines over the square pixels.",
+   "query": "t=3000&freeze=1&crt=crt",
+   "img": "pixel-scaler-C.webp",
+   "w": 528,
+   "h": 374
+  },
+  {
+   "t": 3000,
+   "params": [
+    "border=dither"
+   ],
+   "state": "Close-up of the left edge: the dithered border beside the game.",
+   "query": "t=3000&freeze=1&border=dither",
+   "img": "pixel-scaler-D.webp",
+   "w": 528,
+   "h": 374
+  }
+ ],
+ "platformer-feel": [
+  {
+   "t": 3300,
+   "params": [],
+   "state": "Lip jump: the hold chosen to just clear the ledge lip.",
+   "query": "t=3300&freeze=1",
+   "img": "platformer-feel-A.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 5450,
+   "params": [],
+   "state": "Coyote jump: it starts after the feet left the ledge, flagged COYOTE JUMP.",
+   "query": "t=5450&freeze=1",
+   "img": "platformer-feel-B.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 7100,
+   "params": [],
+   "state": "Buffered jump: pressed before landing, it fires on touch-down.",
+   "query": "t=7100&freeze=1",
+   "img": "platformer-feel-C.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 10000,
+   "params": [],
+   "state": "Wall jump: the hero kicks off the shaft wall, flagged WALL JUMP.",
+   "query": "t=10000&freeze=1",
+   "img": "platformer-feel-D.webp",
+   "w": 457,
+   "h": 400
+  }
+ ],
+ "procedural-sfx": [
+  {
+   "t": 2400,
+   "params": [],
+   "state": "A critical hit on the slime: burst and slash arc, the crit sound plays.",
+   "query": "t=2400&freeze=1",
+   "img": "procedural-sfx-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 4150,
+   "params": [],
+   "state": "Hero on the ledge at the star gem: the power-up arpeggio.",
+   "query": "t=4150&freeze=1",
+   "img": "procedural-sfx-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 8150,
+   "params": [],
+   "state": "The barrel explodes: fire, smoke and debris fly as the explosion sound plays.",
+   "query": "t=8150&freeze=1",
+   "img": "procedural-sfx-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 12650,
+   "params": [],
+   "state": "Pause menu: the cursor moved to RESTART with menu move ticks.",
+   "query": "t=12650&freeze=1",
+   "img": "procedural-sfx-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "pseudo3d-flight": [
+  {
+   "t": 500,
+   "params": [],
+   "state": "On foot on the map, with the X TAKE OFF prompt.",
+   "query": "t=500&freeze=1",
+   "img": "pseudo3d-flight-A.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 1300,
+   "params": [],
+   "state": "Take-off: the map rotates and tilts as the mount rises.",
+   "query": "t=1300&freeze=1",
+   "img": "pseudo3d-flight-B.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 2500,
+   "params": [],
+   "state": "Banking left: the horizon tilts and the mount leans.",
+   "query": "t=2500&freeze=1",
+   "img": "pseudo3d-flight-C.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 4500,
+   "params": [],
+   "state": "Boost: wind streaks, a full speed gauge and islands to the horizon.",
+   "query": "t=4500&freeze=1",
+   "img": "pseudo3d-flight-D.webp",
+   "w": 457,
+   "h": 400
+  }
+ ],
+ "quest-log": [
+  {
+   "t": 3400,
+   "params": [],
+   "state": "NEW QUEST banner; the tracker card slides in and marks the herbs.",
+   "query": "t=3400&freeze=1",
+   "img": "quest-log-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 15000,
+   "params": [],
+   "state": "A step ticked and struck through, the next one added; a side quest below.",
+   "query": "t=15000&freeze=1",
+   "img": "quest-log-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 23600,
+   "params": [],
+   "state": "The quest log: Active and Done tabs, steps and the reward.",
+   "query": "t=23600&freeze=1",
+   "img": "quest-log-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 35700,
+   "params": [],
+   "state": "QUEST COMPLETE with its reward; the coins rise to 52.",
+   "query": "t=35700&freeze=1",
+   "img": "quest-log-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "raycast-dungeon": [
+  {
+   "t": 20645,
+   "params": [],
+   "state": "The Gloom Slime lunges at the hero: -4 by the HP numbers.",
+   "query": "t=20645&freeze=1",
+   "img": "raycast-dungeon-A.webp",
+   "page": "starter",
+   "w": 640,
+   "h": 384
+  },
+  {
+   "t": 27575,
+   "params": [],
+   "state": "The stair arch up close: a lit doorway, the treads stepping down and away.",
+   "query": "t=27575&freeze=1",
+   "img": "raycast-dungeon-B.webp",
+   "page": "starter",
+   "w": 640,
+   "h": 384
+  },
+  {
+   "t": 107540,
+   "params": [],
+   "state": "A critical hit on a Grave Knight: it flinches, 12! beside it.",
+   "query": "t=107540&freeze=1",
+   "img": "raycast-dungeon-C.webp",
+   "page": "starter",
+   "w": 640,
+   "h": 384
+  },
+  {
+   "t": 118090,
+   "params": [],
+   "state": "A hit on the Mire King: the crown above its eyes, 10 above it.",
+   "query": "t=118090&freeze=1",
+   "img": "raycast-dungeon-D.webp",
+   "page": "starter",
+   "w": 640,
+   "h": 384
+  }
+ ],
+ "ribbon-trails": [
+  {
+   "t": 2300,
+   "params": [],
+   "state": "Mid-swing: a crescent from hilt to tip, brightest at the blade.",
+   "query": "t=2300&freeze=1",
+   "img": "ribbon-trails-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 3700,
+   "params": [],
+   "state": "Dash: a soft ribbon from the old position to the hero.",
+   "query": "t=3700&freeze=1",
+   "img": "ribbon-trails-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 6700,
+   "params": [],
+   "state": "Homing bolts: thin curved trails with a bright core.",
+   "query": "t=6700&freeze=1",
+   "img": "ribbon-trails-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 8400,
+   "params": [],
+   "state": "Paused mid-swing: the crescent holds still under PAUSED.",
+   "query": "t=8400&freeze=1",
+   "img": "ribbon-trails-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "run-map": [
+  {
+   "t": 400,
+   "params": [],
+   "state": "A new run: the map fades in and the token waits under the first choices.",
+   "query": "t=400&freeze=1",
+   "img": "run-map-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 4500,
+   "params": [],
+   "state": "The game's own fight for the node, the floor badge in a free corner.",
+   "query": "t=4500&freeze=1",
+   "img": "run-map-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 6600,
+   "params": [],
+   "state": "Floor 2: the shop selected, the travelled route drawn in gold.",
+   "query": "t=6600&freeze=1",
+   "img": "run-map-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 8400,
+   "params": [],
+   "state": "The shop panel: the game's own items and prices, picked with the keys.",
+   "query": "t=8400&freeze=1",
+   "img": "run-map-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "save-slots": [
+  {
+   "t": 1700,
+   "params": [],
+   "state": "The save screen opens: an autosave and three slots, the hand on slot 1.",
+   "query": "t=1700&freeze=1",
+   "img": "save-slots-A.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 3900,
+   "params": [],
+   "state": "OVERWRITE SLOT 2? asks, with NO preselected.",
+   "query": "t=3900&freeze=1",
+   "img": "save-slots-B.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 4700,
+   "params": [],
+   "state": "Just saved: the new picture develops and SAVED TO SLOT 2 shows in green.",
+   "query": "t=4700&freeze=1",
+   "img": "save-slots-C.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 9500,
+   "params": [],
+   "state": "A hand-edited slot reads DAMAGED DATA.",
+   "query": "t=9500&freeze=1",
+   "img": "save-slots-D.webp",
+   "w": 457,
+   "h": 400
+  }
+ ],
+ "screen-distortion": [
+  {
+   "t": 2000,
+   "params": [],
+   "state": "Heat haze over the brazier, a wobbling pool and a swirling portal.",
+   "query": "t=2000&freeze=1",
+   "img": "screen-distortion-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 6800,
+   "params": [],
+   "state": "A shockwave ring bends the scene around the hit; the windows stay still.",
+   "query": "t=6800&freeze=1",
+   "img": "screen-distortion-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 2000,
+   "params": [
+    "underwater=0.6"
+   ],
+   "state": "Underwater: the field wobbles while the HUD text stays sharp.",
+   "query": "t=2000&freeze=1&underwater=0.6",
+   "img": "screen-distortion-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 1080,
+   "params": [
+    "split=0.5"
+   ],
+   "state": "Split at the slam: 2D only on the left, distortion on the right.",
+   "query": "t=1080&freeze=1&split=0.5",
+   "img": "screen-distortion-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "scripted-cutscenes": [
+  {
+   "t": 8500,
+   "params": [],
+   "state": "The captain halts the traveller: bars in, his line typing out, the two face to face.",
+   "query": "t=8500&freeze=1",
+   "img": "scripted-cutscenes-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 16500,
+   "params": [],
+   "state": "The elder has walked over; the traveller and the captain turn to face her as she speaks.",
+   "query": "t=16500&freeze=1",
+   "img": "scripted-cutscenes-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 29300,
+   "params": [],
+   "state": "A fade cut to a 2x close-up: an idea bubble pops over the traveller.",
+   "query": "t=29300&freeze=1",
+   "img": "scripted-cutscenes-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 39580,
+   "params": [
+    "look=pixel"
+   ],
+   "state": "Pixel look: X held, the bar under the skip hint fills toward a skip.",
+   "query": "t=39580&freeze=1&look=pixel",
+   "img": "scripted-cutscenes-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "seeded-replay": [
+  {
+   "t": 18005,
+   "params": [],
+   "state": "Take 2 races the BEST ghost of take 1; the split shows in the panel.",
+   "query": "t=18005&freeze=1",
+   "img": "seeded-replay-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 28505,
+   "params": [],
+   "state": "NEW BEST with the time saved, and a hint to watch the replay.",
+   "query": "t=28505&freeze=1",
+   "img": "seeded-replay-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 32838,
+   "params": [],
+   "state": "The best run replays at x2 with a scrubber and a SYNC badge.",
+   "query": "t=32838&freeze=1",
+   "img": "seeded-replay-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 39171,
+   "params": [],
+   "state": "END STATE MATCH: the replay ends on the same hash, 13 checks OK.",
+   "query": "t=39171&freeze=1",
+   "img": "seeded-replay-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "shaped-inventory": [
+  {
+   "t": 3600,
+   "params": [],
+   "state": "The helm held over two items: they glow red and the cells turn red.",
+   "query": "t=3600&freeze=1",
+   "img": "shaped-inventory-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 6400,
+   "params": [],
+   "state": "R turned the bow a quarter turn: its footprint fits a free gap in green.",
+   "query": "t=6400&freeze=1",
+   "img": "shaped-inventory-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 8600,
+   "params": [],
+   "state": "The axe held over the jerkin alone: an amber outline and You get: Leather Jerkin.",
+   "query": "t=8600&freeze=1",
+   "img": "shaped-inventory-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 21000,
+   "params": [],
+   "state": "Keyboard carry: the T-shaped ration pack turned and moved into free rows.",
+   "query": "t=21000&freeze=1",
+   "img": "shaped-inventory-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "shop-inventory": [
+  {
+   "t": 4600,
+   "params": [],
+   "state": "Buying the Bronze Sword: each hero's ATK change shown beside them.",
+   "query": "t=4600&freeze=1",
+   "img": "shop-inventory-A.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 6000,
+   "params": [],
+   "state": "Equip now? Arden is selected and the +3 gain is shown.",
+   "query": "t=6000&freeze=1",
+   "img": "shop-inventory-B.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 8300,
+   "params": [],
+   "state": "Not enough gold: the Iron Sword's price in red and gold unchanged.",
+   "query": "t=8300&freeze=1",
+   "img": "shop-inventory-C.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 11700,
+   "params": [],
+   "state": "Selling: a short sword sold, the old key greyed out because it can't be sold.",
+   "query": "t=11700&freeze=1",
+   "img": "shop-inventory-D.webp",
+   "w": 457,
+   "h": 400
+  }
+ ],
+ "springy-ui": [
+  {
+   "t": 620,
+   "params": [],
+   "state": "The camp menu mid-open: rows still sliding in and fading up.",
+   "query": "t=620&freeze=1",
+   "img": "springy-ui-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 1330,
+   "params": [],
+   "state": "The stall window pops out of its menu row as the backdrop dims.",
+   "query": "t=1330&freeze=1",
+   "img": "springy-ui-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 1450,
+   "params": [],
+   "state": "The stall window at its overshoot, all five rows in and one lifted.",
+   "query": "t=1450&freeze=1",
+   "img": "springy-ui-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 1330,
+   "params": [
+    "reduced=1"
+   ],
+   "state": "Reduced motion: the window only fades in at its final place.",
+   "query": "t=1330&freeze=1&reduced=1",
+   "img": "springy-ui-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "sprite-stacking": [
+  {
+   "t": 600,
+   "params": [],
+   "state": "Camera at 29\u00b0: the hero in front of the well, every prop a stack of voxel slices.",
+   "query": "t=600&freeze=1",
+   "img": "sprite-stacking-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 4500,
+   "params": [],
+   "state": "Turned to 88\u00b0: the hero is now on the far side of the well, partly hidden.",
+   "query": "t=4500&freeze=1",
+   "img": "sprite-stacking-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 8800,
+   "params": [],
+   "state": "At 152\u00b0 the elder at the same spot is hidden behind the cottage; only his hair shows over the roof.",
+   "query": "t=8800&freeze=1",
+   "img": "sprite-stacking-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 20100,
+   "params": [],
+   "state": "At 322\u00b0 the well hides the hero: depth is right at every angle.",
+   "query": "t=20100&freeze=1",
+   "img": "sprite-stacking-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "squad-clash": [
+  {
+   "t": 1500,
+   "params": [],
+   "state": "Before the clash: both squads in formation and a forecast of VICTORY.",
+   "query": "t=1500&freeze=1",
+   "img": "squad-clash-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 4500,
+   "params": [],
+   "state": "The clash plays itself: the turn-order strip and why each unit acts.",
+   "query": "t=4500&freeze=1",
+   "img": "squad-clash-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 6000,
+   "params": [],
+   "state": "A follow-up: a second attacker joins in, tagged FOLLOW-UP.",
+   "query": "t=6000&freeze=1",
+   "img": "squad-clash-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 6650,
+   "params": [],
+   "state": "Guard: an ally steps in front of the target and takes the hit.",
+   "query": "t=6650&freeze=1",
+   "img": "squad-clash-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "squad-formation": [
+  {
+   "t": 2000,
+   "params": [],
+   "state": "The formation editor: two 2\u00d73 grids, VS and the archer's row rule.",
+   "query": "t=2000&freeze=1",
+   "img": "squad-formation-A.webp",
+   "w": 571,
+   "h": 400
+  },
+  {
+   "t": 5650,
+   "params": [],
+   "state": "A melee charge: shields over the back row; only the front row is struck.",
+   "query": "t=5650&freeze=1",
+   "img": "squad-formation-B.webp",
+   "w": 571,
+   "h": 400
+  },
+  {
+   "t": 8100,
+   "params": [],
+   "state": "Arrows reach the back row and land with \u00d71.25.",
+   "query": "t=8100&freeze=1",
+   "img": "squad-formation-C.webp",
+   "w": 571,
+   "h": 400
+  },
+  {
+   "t": 15300,
+   "params": [],
+   "state": "Their front row has fallen, so melee now reaches the back row.",
+   "query": "t=15300&freeze=1",
+   "img": "squad-formation-D.webp",
+   "w": 571,
+   "h": 400
+  }
+ ],
+ "squash-stretch": [
+  {
+   "t": 1150,
+   "params": [],
+   "state": "Jump: the knight stretches tall mid-air on the right; the left stays rigid.",
+   "query": "t=1150&freeze=1",
+   "img": "squash-stretch-A.webp",
+   "w": 640,
+   "h": 280
+  },
+  {
+   "t": 2550,
+   "params": [],
+   "state": "Attack wind-up: the knight crouches and leans back.",
+   "query": "t=2550&freeze=1",
+   "img": "squash-stretch-B.webp",
+   "w": 640,
+   "h": 280
+  },
+  {
+   "t": 2620,
+   "params": [
+    "boxes=1"
+   ],
+   "state": "Hit: the slime squashes wide while the hit boxes stay identical.",
+   "query": "t=2620&freeze=1&boxes=1",
+   "img": "squash-stretch-C.webp",
+   "w": 640,
+   "h": 280
+  },
+  {
+   "t": 4400,
+   "params": [],
+   "state": "The mage crouches to charge, then the slime flattens under a heavy hit.",
+   "query": "t=4400&freeze=1",
+   "img": "squash-stretch-D.webp",
+   "w": 640,
+   "h": 280
+  }
+ ],
+ "stamina-rest": [
+  {
+   "t": 11000,
+   "params": [],
+   "state": "A march and an attack drain the blue squad's stamina pips.",
+   "query": "t=11000&freeze=1",
+   "img": "stamina-rest-A.webp",
+   "w": 557,
+   "h": 313
+  },
+  {
+   "t": 22100,
+   "params": [],
+   "state": "At zero the strip blinks red, a sweat drop bobs and TIRED rises.",
+   "query": "t=22100&freeze=1",
+   "img": "stamina-rest-B.webp",
+   "w": 557,
+   "h": 313
+  },
+  {
+   "t": 26000,
+   "params": [],
+   "state": "The tired squad's attack is refused with TOO TIRED; play moves on.",
+   "query": "t=26000&freeze=1",
+   "img": "stamina-rest-C.webp",
+   "w": 557,
+   "h": 313
+  },
+  {
+   "t": 34700,
+   "params": [],
+   "state": "Resting in the owned camp: the fire flares and READY +4 pops.",
+   "query": "t=34700&freeze=1",
+   "img": "stamina-rest-D.webp",
+   "w": 557,
+   "h": 313
+  }
+ ],
+ "sword-combat": [
+  {
+   "t": 6000,
+   "params": [],
+   "state": "The second swing in its active frames, with a cyan arc trail.",
+   "query": "t=6000&freeze=1",
+   "img": "sword-combat-A.webp",
+   "w": 427,
+   "h": 400
+  },
+  {
+   "t": 6250,
+   "params": [],
+   "state": "Finisher: a gold, wider arc and FINISHER in the HUD.",
+   "query": "t=6250&freeze=1",
+   "img": "sword-combat-B.webp",
+   "w": 427,
+   "h": 400
+  },
+  {
+   "t": 5500,
+   "params": [],
+   "state": "Charge telegraph: a boar shakes under a red mark, its lane outlined.",
+   "query": "t=5500&freeze=1",
+   "img": "sword-combat-C.webp",
+   "w": 427,
+   "h": 400
+  },
+  {
+   "t": 8750,
+   "params": [],
+   "state": "Aim telegraph: an archer's aim line ends in a reticle on the hero.",
+   "query": "t=8750&freeze=1",
+   "img": "sword-combat-D.webp",
+   "w": 427,
+   "h": 400
+  }
+ ],
+ "tactic-rules": [
+  {
+   "t": 4000,
+   "params": [],
+   "state": "An enemy with no matching rule: its ELSE plate and the target marks.",
+   "query": "t=4000&freeze=1",
+   "img": "tactic-rules-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 11900,
+   "params": [],
+   "state": "The rule editor: rule 3 being edited, its value lowered to 2+ foes.",
+   "query": "t=11900&freeze=1",
+   "img": "tactic-rules-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 13700,
+   "params": [],
+   "state": "The same rule moved to the top; the Now line says why it fires.",
+   "query": "t=13700&freeze=1",
+   "img": "tactic-rules-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 20900,
+   "params": [],
+   "state": "After the edit: plate R1, 2+ foes \u2192 Volley on all foes.",
+   "query": "t=20900&freeze=1",
+   "img": "tactic-rules-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "tactics-grid-3d": [
+  {
+   "t": 1900,
+   "params": [
+    "script=range"
+   ],
+   "state": "Aldric selected: blue range over two terraces and a gold path to the cursor.",
+   "query": "t=1900&freeze=1&script=range",
+   "img": "tactics-grid-3d-A.webp",
+   "page": "starter",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 3300,
+   "params": [
+    "script=target"
+   ],
+   "state": "Targeting Gorrak from the high ground: the forecast shows HIGH GROUND +1.",
+   "query": "t=3300&freeze=1&script=target",
+   "img": "tactics-grid-3d-B.webp",
+   "page": "starter",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 1500,
+   "params": [
+    "script=threat"
+   ],
+   "state": "Threat view: every enemy's reach in orange stripes.",
+   "query": "t=1500&freeze=1&script=threat",
+   "img": "tactics-grid-3d-C.webp",
+   "page": "starter",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 42700,
+   "params": [
+    "auto=1"
+   ],
+   "state": "Autoplay: a blow lands and the damage number rises over the struck enemy.",
+   "query": "t=42700&freeze=1&auto=1",
+   "img": "tactics-grid-3d-D.webp",
+   "page": "starter",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "talking-portraits": [
+  {
+   "t": 1650,
+   "params": [],
+   "state": "The elder's first line types out: the mouth opens on letters, shuts on spaces.",
+   "query": "t=1650&freeze=1",
+   "img": "talking-portraits-A.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 6133,
+   "params": [],
+   "state": "A [sad] tag inside Mira's line: the face changes mid-line, eyes shut.",
+   "query": "t=6133&freeze=1",
+   "img": "talking-portraits-B.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 12600,
+   "params": [],
+   "state": "The elder turns angry on \"The mine?\", mouth still moving with the text.",
+   "query": "t=12600&freeze=1",
+   "img": "talking-portraits-C.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 3250,
+   "params": [
+    "view=lab"
+   ],
+   "state": "The face lab: each typed letter underlined with its mouth shape, plus the tracks.",
+   "query": "t=3250&freeze=1&view=lab",
+   "img": "talking-portraits-D.webp",
+   "w": 457,
+   "h": 400
+  }
+ ],
+ "third-person-3d": [
+  {
+   "t": 1500,
+   "params": [],
+   "state": "The hero runs past the walls; the shard slots are empty and the first toast is up.",
+   "query": "t=1500&freeze=1",
+   "img": "third-person-3d-A.webp",
+   "page": "starter",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 6000,
+   "params": [],
+   "state": "First shard found: trees between the camera and the hero dither out.",
+   "query": "t=6000&freeze=1",
+   "img": "third-person-3d-B.webp",
+   "page": "starter",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 16300,
+   "params": [],
+   "state": "The Keeper turns to the hero and waves: Over here, traveller!",
+   "query": "t=16300&freeze=1",
+   "img": "third-person-3d-C.webp",
+   "page": "starter",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 26000,
+   "params": [],
+   "state": "THE BEACON BURNS: hero and Keeper cheer under the lit beacon.",
+   "query": "t=26000&freeze=1",
+   "img": "third-person-3d-D.webp",
+   "page": "starter",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "threat-range": [
+  {
+   "t": 500,
+   "params": [],
+   "state": "The map with no zone shown and the THREAT lamp off.",
+   "query": "t=500&freeze=1",
+   "img": "threat-range-A.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 2000,
+   "params": [],
+   "state": "Every enemy's reach in red, with marching dashes along the border.",
+   "query": "t=2000&freeze=1",
+   "img": "threat-range-B.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 3600,
+   "params": [],
+   "state": "The Rider has crossed the bridge and the zone grew west with it.",
+   "query": "t=3600&freeze=1",
+   "img": "threat-range-C.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 5200,
+   "params": [],
+   "state": "The Knight selected: its range in blue, the danger zone as an outline.",
+   "query": "t=5200&freeze=1",
+   "img": "threat-range-D.webp",
+   "w": 457,
+   "h": 400
+  }
+ ],
+ "time-rewind": [
+  {
+   "t": 4020,
+   "params": [],
+   "state": "Take 1: the imp's bolt is about to hit the swordsman.",
+   "query": "t=4020&freeze=1",
+   "img": "time-rewind-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 6400,
+   "params": [],
+   "state": "Rewinding at x2: cool, desaturated, a scrubber over the undone future.",
+   "query": "t=6400&freeze=1",
+   "img": "time-rewind-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 8520,
+   "params": [],
+   "state": "Take 2 after the release: the swordsman raises his shield in time.",
+   "query": "t=8520&freeze=1",
+   "img": "time-rewind-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 7125,
+   "params": [
+    "touch=on",
+    "energy=charges",
+    "tint=sepia"
+   ],
+   "state": "Sepia variant with charges and the touch button, clear of the actors.",
+   "query": "t=7125&freeze=1&touch=on&energy=charges&tint=sepia",
+   "img": "time-rewind-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "timing-bar": [
+  {
+   "t": 600,
+   "params": [],
+   "state": "Lockpick check over the chest: a narrow bar and the needle on its way.",
+   "query": "t=600&freeze=1",
+   "img": "timing-bar-A.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 1000,
+   "params": [],
+   "state": "PERFECT! as the needle stops on the perfect band.",
+   "query": "t=1000&freeze=1",
+   "img": "timing-bar-B.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 3400,
+   "params": [],
+   "state": "A timed strike with narrower zones, scored GREAT! in gold.",
+   "query": "t=3400&freeze=1",
+   "img": "timing-bar-C.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 6500,
+   "params": [],
+   "state": "Forge: three pips, the needle sweeping again over new zones.",
+   "query": "t=6500&freeze=1",
+   "img": "timing-bar-D.webp",
+   "w": 457,
+   "h": 400
+  }
+ ],
+ "title-menu": [
+  {
+   "t": 1700,
+   "params": [],
+   "state": "The title over the dusk village: logo, tagline and PRESS Z OR ENTER.",
+   "query": "t=1700&freeze=1",
+   "img": "title-menu-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 3200,
+   "params": [],
+   "state": "The title menu: NEW GAME selected under the raised logo, hints below.",
+   "query": "t=3200&freeze=1",
+   "img": "title-menu-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 8100,
+   "params": [],
+   "state": "NEW GAME: the diamond wipe covers the title.",
+   "query": "t=8100&freeze=1",
+   "img": "title-menu-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 12500,
+   "params": [],
+   "state": "PAUSED: RESUME, OPTIONS, RESTART and QUIT TO TITLE over the dimmed game.",
+   "query": "t=12500&freeze=1",
+   "img": "title-menu-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "toasts": [
+  {
+   "t": 1700,
+   "params": [],
+   "state": "Three toasts under the minimap: a new area, an item and a quest update.",
+   "query": "t=1700&freeze=1",
+   "img": "toasts-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 2900,
+   "params": [],
+   "state": "Duplicates merge into Moonherb \u00d73; the quest card reads 3 / 5 collected.",
+   "query": "t=2900&freeze=1",
+   "img": "toasts-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 3950,
+   "params": [],
+   "state": "Achievement: a gold-rimmed card with a sheen and sparkles.",
+   "query": "t=3950&freeze=1",
+   "img": "toasts-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 6900,
+   "params": [],
+   "state": "A queue: three item cards and +2 more, clear of the minimap and hotbar.",
+   "query": "t=6900&freeze=1",
+   "img": "toasts-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "toon-outlines-3d": [
+  {
+   "t": 7000,
+   "params": [],
+   "state": "Left the original island, right soft 3-band toon with ink outlines.",
+   "query": "t=7000&freeze=1",
+   "img": "toon-outlines-3d-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 15000,
+   "params": [
+    "preset=crisp2"
+   ],
+   "state": "Crisp 2-band: ink lines across the plaza, pillars and lantern.",
+   "query": "t=15000&freeze=1&preset=crisp2",
+   "img": "toon-outlines-3d-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 16000,
+   "params": [
+    "preset=painted4",
+    "view=toon"
+   ],
+   "state": "Painted 4-band over the whole frame.",
+   "query": "t=16000&freeze=1&preset=painted4&view=toon",
+   "img": "toon-outlines-3d-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 3300,
+   "params": [
+    "scene=terrace"
+   ],
+   "state": "Terraces: the knight strikes the brute; cliffs and units outlined.",
+   "query": "t=3300&freeze=1&scene=terrace",
+   "img": "toon-outlines-3d-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "touch-controls": [
+  {
+   "t": 1150,
+   "params": [],
+   "state": "Portrait phone: game on top, controls below, walking and A pressed.",
+   "query": "t=1150&freeze=1",
+   "img": "touch-controls-A.webp",
+   "w": 608,
+   "h": 800
+  },
+  {
+   "t": 1950,
+   "params": [],
+   "state": "The knight slashes the dummy with B pressed: HITS 1.",
+   "query": "t=1950&freeze=1",
+   "img": "touch-controls-B.webp",
+   "w": 608,
+   "h": 800
+  },
+  {
+   "t": 3000,
+   "params": [],
+   "state": "Up and left pressed together for a diagonal.",
+   "query": "t=3000&freeze=1",
+   "img": "touch-controls-C.webp",
+   "w": 608,
+   "h": 800
+  },
+  {
+   "t": 4100,
+   "params": [],
+   "state": "START pressed: the PAUSED box.",
+   "query": "t=4100&freeze=1",
+   "img": "touch-controls-D.webp",
+   "w": 608,
+   "h": 800
+  }
+ ],
+ "tower-defense": [
+  {
+   "t": 20000,
+   "params": [],
+   "state": "Wave 1: mites on the road, three towers firing at them.",
+   "query": "t=20000&freeze=1",
+   "img": "tower-defense-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 60000,
+   "params": [
+    "map=twinford"
+   ],
+   "state": "Twin Fords: two roads, moths and spiders, towers by the pond.",
+   "query": "t=60000&freeze=1&map=twinford",
+   "img": "tower-defense-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 70000,
+   "params": [
+    "map=switchback"
+   ],
+   "state": "Switchback: foes face where they walk; chain lightning arcs.",
+   "query": "t=70000&freeze=1&map=switchback",
+   "img": "tower-defense-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 34000,
+   "params": [
+    "place=mortar",
+    "cell=9,1",
+    "gold=600"
+   ],
+   "state": "Placing a mortar: the range ring and ghost on a free grass cell.",
+   "query": "t=34000&freeze=1&place=mortar&cell=9,1&gold=600",
+   "img": "tower-defense-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "turn-order-bar": [
+  {
+   "t": 3000,
+   "params": [],
+   "state": "Top strip: Arden first in gold, then eight slots in turn order.",
+   "query": "t=3000&freeze=1",
+   "img": "turn-order-bar-A.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 3850,
+   "params": [],
+   "state": "Mid-advance: the front portrait slides out and the rest move up.",
+   "query": "t=3850&freeze=1",
+   "img": "turn-order-bar-B.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 5600,
+   "params": [
+    "hover=bat"
+   ],
+   "state": "Wren heals Corin; Corin's and both bats' slots are highlighted.",
+   "query": "t=5600&freeze=1&hover=bat",
+   "img": "turn-order-bar-C.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 3000,
+   "params": [
+    "layout=left",
+    "label=NEXT",
+    "slots=7"
+   ],
+   "state": "A left column with the label on top, ending above the HUD.",
+   "query": "t=3000&freeze=1&layout=left&label=NEXT&slots=7",
+   "img": "turn-order-bar-D.webp",
+   "w": 457,
+   "h": 400
+  }
+ ],
+ "upgrade-draft": [
+  {
+   "t": 620,
+   "params": [],
+   "state": "Deal: card backs fan in over the dimmed field.",
+   "query": "t=620&freeze=1",
+   "img": "upgrade-draft-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 2000,
+   "params": [],
+   "state": "Choose: three faces up, the middle one lifted with the pointer under it.",
+   "query": "t=2000&freeze=1",
+   "img": "upgrade-draft-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 3250,
+   "params": [],
+   "state": "Pick: the chosen medallion flies on an arc into the strip.",
+   "query": "t=3250&freeze=1",
+   "img": "upgrade-draft-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 6000,
+   "params": [],
+   "state": "Synergy: the SYNERGY ribbon, and an epic card glowing violet.",
+   "query": "t=6000&freeze=1",
+   "img": "upgrade-draft-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "verlet-cloth": [
+  {
+   "t": 1000,
+   "params": [],
+   "state": "Standing in the breeze: the cape stirs and both banners fly open.",
+   "query": "t=1000&freeze=1",
+   "img": "verlet-cloth-A.webp",
+   "w": 640,
+   "h": 280
+  },
+  {
+   "t": 9100,
+   "params": [
+    "wind=0",
+    "gust=0"
+   ],
+   "state": "Still air: the banners hang limp against their poles.",
+   "query": "t=9100&freeze=1&wind=0&gust=0",
+   "img": "verlet-cloth-B.webp",
+   "w": 640,
+   "h": 280
+  },
+  {
+   "t": 2200,
+   "params": [],
+   "state": "Running: the cape trails clear of the legs and the scarf streams back.",
+   "query": "t=2200&freeze=1",
+   "img": "verlet-cloth-C.webp",
+   "w": 640,
+   "h": 280
+  },
+  {
+   "t": 3100,
+   "params": [
+    "split=50"
+   ],
+   "state": "Off and on: rigid baked cloth on the left, the live solver on the right.",
+   "query": "t=3100&freeze=1&split=50",
+   "img": "verlet-cloth-D.webp",
+   "w": 640,
+   "h": 280
+  }
+ ],
+ "vision-cones": [
+  {
+   "t": 1000,
+   "params": [],
+   "state": "Hidden in the tall grass inside a calm cone; cones stop at the walls.",
+   "query": "t=1000&freeze=1",
+   "img": "vision-cones-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 8600,
+   "params": [],
+   "state": "Suspicious: the yard guard turns to the hero, amber cone and a ?.",
+   "query": "t=8600&freeze=1",
+   "img": "vision-cones-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 24600,
+   "params": [],
+   "state": "SPOTTED!: a red cone and !, a second guard called to look.",
+   "query": "t=24600&freeze=1",
+   "img": "vision-cones-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 29000,
+   "params": [],
+   "state": "LOST YOU: the guard searches the last seen spot beside the hidden hero.",
+   "query": "t=29000&freeze=1",
+   "img": "vision-cones-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "water-surface": [
+  {
+   "t": 2050,
+   "params": [],
+   "state": "A fish leaps out of the lake beside the waterfall.",
+   "query": "t=2050&freeze=1",
+   "img": "water-surface-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 5300,
+   "params": [],
+   "state": "The guard dives in: a crown splash and a wave running out.",
+   "query": "t=5300&freeze=1",
+   "img": "water-surface-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 1680,
+   "params": [
+    "view=hd"
+   ],
+   "state": "HD view: the slime hops off the dock into a crown of droplets.",
+   "query": "t=1680&freeze=1&view=hd",
+   "img": "water-surface-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 6220,
+   "params": [
+    "view=hd"
+   ],
+   "state": "HD view: the diver plunges in, crown sheets on both sides.",
+   "query": "t=6220&freeze=1&view=hd",
+   "img": "water-surface-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "weather-particles": [
+  {
+   "t": 3000,
+   "params": [],
+   "state": "Rain in three depths slanting with the wind, splashing on the grass.",
+   "query": "t=3000&freeze=1",
+   "img": "weather-particles-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 7700,
+   "params": [
+    "tour=1"
+   ],
+   "state": "Cross-fade from rain to snow, labelled RAIN TO SNOW.",
+   "query": "t=7700&freeze=1&tour=1",
+   "img": "weather-particles-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 5000,
+   "params": [
+    "weather=snow"
+   ],
+   "state": "Snow: flakes in three sizes drifting with the wind.",
+   "query": "t=5000&freeze=1&weather=snow",
+   "img": "weather-particles-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 5000,
+   "params": [
+    "weather=fireflies",
+    "tod=night"
+   ],
+   "state": "Fireflies with halos at night.",
+   "query": "t=5000&freeze=1&weather=fireflies&tod=night",
+   "img": "weather-particles-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "webgl-post": [
+  {
+   "t": 600,
+   "params": [],
+   "state": "Dusk glade with warm highlights, cool shadows and soft dark corners.",
+   "query": "t=600&freeze=1",
+   "img": "webgl-post-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 600,
+   "params": [
+    "split=0.5"
+   ],
+   "state": "Left half 2D only, right half post: clearly different, not garish.",
+   "query": "t=600&freeze=1&split=0.5",
+   "img": "webgl-post-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 6480,
+   "params": [],
+   "state": "With the mask, the finisher's colour split leaves the HUD panels clean.",
+   "query": "t=6480&freeze=1",
+   "img": "webgl-post-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 1300,
+   "params": [],
+   "state": "Heavy strike: colour fringes spread from the impact, with a small zoom.",
+   "query": "t=1300&freeze=1",
+   "img": "webgl-post-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "wfc-town-3d": [
+  {
+   "t": 6900,
+   "params": [
+    "auto=1"
+   ],
+   "state": "The island has grown from the sea: Grow the island is done.",
+   "query": "t=6900&freeze=1&auto=1",
+   "img": "wfc-town-3d-A.webp",
+   "page": "starter",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 16500,
+   "params": [
+    "auto=1"
+   ],
+   "state": "Twenty houses joined into blocks: Raise houses is done.",
+   "query": "t=16500&freeze=1&auto=1",
+   "img": "wfc-town-3d-B.webp",
+   "page": "starter",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 28300,
+   "params": [
+    "auto=1"
+   ],
+   "state": "A gate arch over a lane completes the town charter.",
+   "query": "t=28300&freeze=1&auto=1",
+   "img": "wfc-town-3d-C.webp",
+   "page": "starter",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 27700,
+   "params": [
+    "auto=1",
+    "zoom=3",
+    "yaw=165",
+    "pitch=28",
+    "focus=arch"
+   ],
+   "state": "Close view of the town by the gate arch.",
+   "query": "t=27700&freeze=1&auto=1&zoom=3&yaw=165&pitch=28&focus=arch",
+   "img": "wfc-town-3d-D.webp",
+   "page": "starter",
+   "w": 640,
+   "h": 360
+  }
+ ],
+ "window-cursor": [
+  {
+   "t": 1000,
+   "params": [],
+   "state": "The intro message at the top, clear of the HUD, two lines and a \u25bc.",
+   "query": "t=1000&freeze=1",
+   "img": "window-cursor-A.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 1700,
+   "params": [],
+   "state": "The message shrinks to a bar while the command window grows open.",
+   "query": "t=1700&freeze=1",
+   "img": "window-cursor-B.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 6400,
+   "params": [],
+   "state": "The magic window over the party, the glove on a greyed spell.",
+   "query": "t=6400&freeze=1",
+   "img": "window-cursor-C.webp",
+   "w": 457,
+   "h": 400
+  },
+  {
+   "t": 8600,
+   "params": [],
+   "state": "The target pointer on the upper golem, both menus inactive.",
+   "query": "t=8600&freeze=1",
+   "img": "window-cursor-D.webp",
+   "w": 457,
+   "h": 400
+  }
+ ],
+ "world-hud": [
+  {
+   "t": 1800,
+   "params": [],
+   "state": "Village start: rings under the party, name plates and an arrow to the shrine.",
+   "query": "t=1800&freeze=1",
+   "img": "world-hud-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 9500,
+   "params": [],
+   "state": "A crowded fight: plates kept apart with leader lines, HP rings on the slimes.",
+   "query": "t=9500&freeze=1",
+   "img": "world-hud-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 14000,
+   "params": [],
+   "state": "A notice panel opens; the goal arrow and the boss arrow keep their bearings.",
+   "query": "t=14000&freeze=1",
+   "img": "world-hud-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 22000,
+   "params": [],
+   "state": "The shrine on screen: a gold marker with its distance; the boss arrow below.",
+   "query": "t=22000&freeze=1",
+   "img": "world-hud-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ]
+}

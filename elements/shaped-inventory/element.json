@@ -1,0 +1,178 @@
+{
+  "id": "shaped-inventory",
+  "code": "G-11",
+  "kind": "addon",
+  "name": "Shaped inventory packing",
+  "family": "shaped-inventory",
+  "oneLiner": "A grid bag where every item takes its real shape (1x1 potions, 1x3 staves, a 5-cell axe, L, T, S and plus pieces). The player drags items with mouse or touch, or carries them with keys, and turns them a quarter turn (a real rotation; squares and plus shapes never turn). Where an item would land shows green (free), blue (stacks), amber (swaps: the item you get stays visible, outlined and labelled) or red (blocked, with the blockers glowing). Auto-sort packs largest first and never loses an item. Stacks show counts, a tooltip sits where it covers the fewest items, and a ground tray holds loot and drops. Use and Drop go through the game's callbacks; quest items refuse to drop. Phones get one grid at a time with tabs and the tooltip as a strip. Every item is a panel that follows its footprint exactly with its icon upright on the largest block (the game's own icons or sprites, else a bold glyph), in a 16-bit pixel look or an HD look.",
+  "fits": [
+    "action RPGs and dungeon crawlers with loot",
+    "survival and extraction games where space is the limit",
+    "roguelites with a backpack of relics",
+    "top-down adventures with a bag screen",
+    "trading and crafting games"
+  ],
+  "notFor": [
+    "games with a plain list or slot inventory where shape and space do not matter (use G-01 shop & inventory grid)",
+    "real-time games that cannot pause while the bag is open",
+    "inventories of hundreds of item kinds that are browsed rather than packed"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "an item table: id -> name, shape, stack size, kind, description (optional own image)",
+      "the moment the bag opens (a key, a loot chest, a full pickup) in update logic, and loot to show on the ground",
+      "keys while open (arrows / WASD, Z, X, R, T, U, G, F) and pointer events in native canvas px",
+      "a fixed update step while open; the game pauses its world while busy()",
+      "callbacks: onUse (apply the effect or refuse), onDrop (refuse quest items), onClose (what stays on the ground)"
+    ],
+    "provides": [
+      "the bag: count, add, remove, canAdd, sync, serialize / restore, onChange per count change",
+      "a modal bag window drawn last: two grids, ghost feedback, tooltip, stack counts, buttons, footer message",
+      "auto-sort and take-all that never lose an item",
+      "state(), entries(), events(), lastDrawn() and rect() for judges and other overlays"
+    ]
+  },
+  "params": [
+    {
+      "key": "cols",
+      "label": "Bag columns",
+      "type": "range",
+      "min": 4,
+      "max": 14,
+      "step": 1,
+      "default": 8
+    },
+    {
+      "key": "rows",
+      "label": "Bag rows",
+      "type": "range",
+      "min": 3,
+      "max": 10,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "key": "ground",
+      "label": "Ground tray (loot and drops)",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "swap",
+      "label": "Dropping onto one item",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "sortBy",
+      "label": "Sort order",
+      "type": "select",
+      "options": [
+        "size",
+        "type"
+      ],
+      "default": "size"
+    },
+    {
+      "key": "stack",
+      "label": "Default stack cap",
+      "type": "range",
+      "min": 1,
+      "max": 99,
+      "step": 1,
+      "default": 1
+    },
+    {
+      "key": "theme",
+      "label": "Look",
+      "type": "select",
+      "options": [
+        "auto",
+        "pixel",
+        "hd"
+      ],
+      "default": "auto"
+    },
+    {
+      "key": "dim",
+      "label": "Darken the world behind",
+      "type": "range",
+      "min": 0,
+      "max": 0.8,
+      "step": 0.05,
+      "default": 0.45
+    },
+    {
+      "key": "tabs",
+      "label": "Phone layout (one grid at a time)",
+      "type": "select",
+      "options": [
+        "auto",
+        "on",
+        "off"
+      ],
+      "default": "auto"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Action RPG backpack",
+      "params": {
+        "cols": 8,
+        "rows": 5,
+        "ground": "on",
+        "swap": "on",
+        "sortBy": "size"
+      }
+    },
+    {
+      "name": "Survival pack (small, no swap)",
+      "params": {
+        "cols": 6,
+        "rows": 4,
+        "ground": "on",
+        "swap": "off",
+        "sortBy": "type"
+      }
+    },
+    {
+      "name": "Big chest",
+      "params": {
+        "cols": 10,
+        "rows": 6,
+        "ground": "off",
+        "sortBy": "type"
+      }
+    },
+    {
+      "name": "16-bit bag",
+      "params": {
+        "theme": "pixel",
+        "cols": 8,
+        "rows": 4
+      }
+    }
+  ],
+  "assets": [
+    "module/shaped-inventory.js: the element as one dependency-free script (global GameDNA_ShapedInventory): shapes and rotation, packing, drag / key / touch input, ghost feedback, swap preview, sort, take-all, use / drop, footprint panels by material, upright icons (image, the game's icon drawer, or bold glyphs), phone tab layout, a built-in 6x8 bitmap font",
+    "demo only: the painted-ui (L-06) icon atlas and a demo-kit backdrop; the module itself ships no image"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/shaped-inventory.js",
+    "global": "GameDNA_ShapedInventory",
+    "version": "1.4.1",
+    "docs": "module/README.md"
+  }
+}

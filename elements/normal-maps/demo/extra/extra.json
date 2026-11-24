@@ -1,0 +1,31 @@
+{
+ "note": "Set dressing for the L-05 demo scene only (not part of the element's pack). No new image generation: crops, copies and derived maps of art already in the repo.",
+ "files": [
+  {
+   "file": "road.webp",
+   "from": "demo-kit/assets/scenes/meadow-dusk.webp",
+   "fromSha256": "af6e7e874d172f2506c6c55519c58e70d0ef21c7e1b5474f9659f498a06a833c",
+   "post": "crop rows 516..810, webp q88",
+   "sha256": "cf3ae9f250cbe92230cf21228935db15c6bb187707d533d6a9c8fac304663459"
+  },
+  {
+   "file": "crates.webp",
+   "from": "demo-kit/assets/sprites/crates.webp",
+   "post": "byte copy",
+   "sha256": "26b872f599e71af7223cfd5fb9039855a3dd5f9c64fefb8d921a54e998b49149"
+  },
+  {
+   "file": "crates.nh.webp",
+   "derivedFrom": "crates.webp",
+   "tool": "tools/assets/normalmap.py derive (defaults)",
+   "sha256": "5e8943edb658b98586308792f2cfae6a5be56ffc12317841cb02c0a181329b2b"
+  },
+  {
+   "file": "oak.nh.webp",
+   "derivedFrom": "elements/art-direction-lock/assets/with/oak.webp",
+   "albedoSha256": "47cfc49a40fee11ae1934930397120750e230873f288ea012e714d467e238794",
+   "tool": "tools/assets/normalmap.py derive (defaults)",
+   "sha256": "8436b95b3c0d725305f7a22134e953311edb0aec0e19402509c2b819bd5a86c0"
+  }
+ ]
+}

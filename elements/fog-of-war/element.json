@@ -1,0 +1,192 @@
+{
+  "id": "fog-of-war",
+  "code": "B-03",
+  "kind": "addon",
+  "name": "Fog of war",
+  "family": "map-visibility",
+  "oneLiner": "On a tile map, everything outside your units' sight sinks under a slowly drifting, dithered fog with a soft one-tile edge; terrain stays faintly readable, hidden enemies are not drawn, the tile where you last saw one keeps a faint silhouette, a \"!\" pops when one comes into view, forests block sight and hills extend it, and tiles clear or fog over smoothly as units move.",
+  "fits": [
+    "tactics / strategy RPG",
+    "turn-based wargame",
+    "top-down tile adventure or dungeon crawler",
+    "roguelike (grid)",
+    "real-time tile strategy"
+  ],
+  "notFor": [
+    "side-view games without a tile map",
+    "games where hidden information would be unfair to a human opponent on the same screen (hot-seat) without a handover screen",
+    "huge maps with thousands of units (recomputes every step; fine up to ~100 units)"
+  ],
+  "interfaces": {
+    "time": "turn",
+    "coords": "grid",
+    "layer": "post",
+    "needs": [
+      "tile grid size and tile size in px",
+      "unit list with each unit's drawn tile and side",
+      "optional: terrain callbacks (blocks sight, vision bonus)",
+      "camera offset (map scroll in px)",
+      "a fixed-step update (60 Hz) and a draw pass between ground and units",
+      "optional: rectangles to avoid (HUD, banners, windows)"
+    ],
+    "provides": [
+      "data isVisible(x, y) and isUnitVisible(unit) for drawing (and, if the game chooses, rules)",
+      "event reveal {unit, x, y} when an enemy comes into sight",
+      "data last-seen ghosts [{x, y, unit}] and explored tiles"
+    ]
+  },
+  "params": [
+    {
+      "key": "radius",
+      "label": "Base vision (tiles)",
+      "type": "range",
+      "min": 1,
+      "max": 8,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "key": "shape",
+      "label": "Vision shape",
+      "type": "select",
+      "options": [
+        "diamond",
+        "circle",
+        "square"
+      ],
+      "default": "diamond"
+    },
+    {
+      "key": "density",
+      "label": "Fog density",
+      "type": "range",
+      "min": 0.3,
+      "max": 0.85,
+      "step": 0.05,
+      "default": 0.6
+    },
+    {
+      "key": "edge",
+      "label": "Soft edge (tiles)",
+      "type": "range",
+      "min": 0,
+      "max": 1.5,
+      "step": 0.25,
+      "default": 1
+    },
+    {
+      "key": "drift",
+      "label": "Mist drift (px/s)",
+      "type": "range",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "default": 6
+    },
+    {
+      "key": "fade",
+      "label": "Reveal fade (ms)",
+      "type": "range",
+      "min": 0,
+      "max": 600,
+      "step": 20,
+      "default": 240
+    },
+    {
+      "key": "ghosts",
+      "label": "Last-seen silhouettes",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "pop",
+      "label": "\"!\" on reveal",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "shroud",
+      "label": "Unexplored darker",
+      "type": "select",
+      "options": [
+        "off",
+        "on"
+      ],
+      "default": "off"
+    },
+    {
+      "key": "scheme",
+      "label": "Fog colour",
+      "type": "select",
+      "options": [
+        "night",
+        "mist",
+        "ash"
+      ],
+      "default": "night"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Classic 16-bit",
+      "params": {
+        "density": 0.6,
+        "edge": 1,
+        "drift": 6,
+        "fade": 240,
+        "scheme": "night",
+        "shroud": "off"
+      }
+    },
+    {
+      "name": "Unexplored shroud",
+      "params": {
+        "density": 0.75,
+        "edge": 0.5,
+        "drift": 3,
+        "fade": 160,
+        "scheme": "night",
+        "shroud": "on"
+      }
+    },
+    {
+      "name": "Morning mist",
+      "params": {
+        "density": 0.5,
+        "edge": 1.5,
+        "drift": 12,
+        "fade": 400,
+        "scheme": "mist"
+      }
+    },
+    {
+      "name": "Battle smoke",
+      "params": {
+        "density": 0.7,
+        "edge": 0.75,
+        "drift": 8,
+        "fade": 240,
+        "scheme": "ash"
+      }
+    }
+  ],
+  "assets": [
+    "module/fog-of-war.js: the element as one dependency-free script (global GameDNA_FogOfWar): line-of-sight vision, fog raster (Bayer dither, value-noise mist, desaturation pass), silhouettes, \"!\" bubble",
+    "no image or audio files"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/fog-of-war.js",
+    "global": "GameDNA_FogOfWar",
+    "version": "1.0.0",
+    "docs": "module/README.md"
+  }
+}

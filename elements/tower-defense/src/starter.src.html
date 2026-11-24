@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Thornwall Watch</title>
+<style>
+:root { --bg: #120e0b; --ink: #f4ead8; --dim: #b4a488; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font: 13px/1.45 "Trebuchet MS", "Segoe UI", system-ui, -apple-system, sans-serif; }
+#wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 12px; min-height: 100vh; }
+#stage { width: 100%; max-width: 1600px; display: flex; align-items: center; justify-content: center; }
+#screen { display: block; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); touch-action: none; background: #000; }
+#bar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: center; color: var(--dim); font-size: 12px; max-width: 100%; }
+#bar b { color: var(--ink); }
+.pad { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
+.pad button { background: #2e241c; color: var(--ink); border: 1px solid #5a4632; border-radius: 6px; padding: 6px 10px; font: inherit; touch-action: manipulation; }
+#info { display: none; width: 100%; max-width: 640px; background: #1e1712; border: 1px solid #4a3a2a; border-radius: 8px; padding: 8px 10px; font-size: 13px; line-height: 1.45; color: var(--ink); }
+#info b { color: #ffe7b0; } #info .dim { color: var(--dim); }
+@media (max-width: 760px) { #wrap { padding: 8px 4px; } #info { display: block; } }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage"><canvas id="screen" width="640" height="360"></canvas></div>
+  <div id="tdpanel" style="display:none;width:100%;max-width:640px"></div>
+  <div id="info" aria-live="polite"></div>
+  <div id="bar">
+    <span><b>The Thornwall Watch</b>: pick a tower, tap a grass cell beside the road. Tap a tower to upgrade, sell or change its target.</span>
+    <span><b>1-4</b> tower, arrows move, <b>Z</b> build / select, <b>U</b> upgrade, <b>S</b> sell, <b>T</b> target, <b>N</b> next wave, <b>F</b> speed, <b>Q</b> pause, <b>P</b> auto play. <b>?auto=1</b> to watch.</span>
+    <span class="pad"><button data-key="1">1</button><button data-key="2">2</button><button data-key="3">3</button><button data-key="4">4</button><button data-key="left" aria-label="Left">&#9664;</button><button data-key="up" aria-label="Up">&#9650;</button><button data-key="down" aria-label="Down">&#9660;</button><button data-key="right" aria-label="Right">&#9654;</button><button data-key="ok">Z</button><button data-key="back">X</button><button data-key="wave">Next wave</button><button data-key="auto">Auto</button></span>
+  </div>
+</div>
+<script>
+/*@@MODULE@@*/
+</script>
+<script>
+/*@@GAME@@*/
+</script>
+<script>
+/* ================================ ADDONS SLOT ================================
+   Paste addon modules here (or add <script src> tags right above this block) and register each one with
+   GAME.addons.push({...}). New content goes here too: GAME.addTower(id, def), GAME.addEnemy(id, def, {field, wave, count}),
+   GAME.addWave(field, wave), GAME.addField(field). This block runs after window.GAME exists and BEFORE the game boots, so
+   addons and content see the first field and every ?t=&freeze=1 fast-forwarded frame. Hooks: see README.md "Extension points". */
+</script>
+</body>
+</html>

@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pseudo-3D Flight Ground</title>
+<style>
+  :root { --bg: #0b0d1c; --panel: #151a33; --edge: #2c3462; --text: #d4d8ec; --dim: #8a90b0; --accent: #ffd86a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font: 13px/1.45 system-ui, -apple-system, sans-serif; }
+  header { padding: 14px 16px 6px; max-width: 1180px; margin: 0 auto; }
+  header h1 { margin: 0; font-size: 18px; letter-spacing: .02em; }
+  header p { margin: 4px 0 0; color: var(--dim); max-width: 820px; }
+  main { display: flex; gap: 16px; padding: 10px 16px 24px; max-width: 1180px; margin: 0 auto; flex-wrap: wrap; align-items: flex-start; }
+  #stage { flex: 0 0 auto; max-width: 100%; }
+  #screen { display: block; image-rendering: pixelated; background: #000; border-radius: 4px; box-shadow: 0 0 0 1px var(--edge), 0 10px 40px #0008; max-width: 100%; touch-action: none; }
+  #status { margin-top: 8px; color: var(--dim); font: 12px ui-monospace, monospace; height: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 768px; }
+  #stage { width: min(768px, 100%); }
+  #status b { color: var(--accent); font-weight: 600; }
+  aside { flex: 1 1 280px; min-width: 260px; max-width: 420px; background: var(--panel); border: 1px solid var(--edge); border-radius: 8px; padding: 12px 14px; }
+  aside h2 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); }
+  .row { display: grid; grid-template-columns: 112px 1fr 46px; align-items: center; gap: 8px; margin: 6px 0; }
+  .row label { color: var(--text); }
+  .row output { text-align: right; color: var(--accent); font: 12px ui-monospace, monospace; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  select { width: 100%; background: #0e1228; color: var(--text); border: 1px solid var(--edge); border-radius: 4px; padding: 3px 4px; }
+  .btns { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; }
+  button { font: 600 12px system-ui; padding: 7px 10px; min-height: 34px; border-radius: 6px; border: 1px solid var(--edge); background: #1e2448; color: var(--text); cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  .keys { color: var(--dim); font-size: 12px; margin-top: 10px; }
+  .keys kbd { background: #0e1228; border: 1px solid var(--edge); border-radius: 3px; padding: 0 4px; font: 11px ui-monospace, monospace; color: var(--text); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Pseudo-3D flight ground <span style="color:var(--dim);font-weight:400">(B-06)</span></h1>
+  <p>The top-down tile map below the hero becomes a perspective, scanline-scaled ground with a horizon sky band. Take off and the view zooms and tilts into flight; turn to bank (the horizon tilts slightly), speed up, slow down; land only on flat ground. Billboards scale with distance; the mount casts a shadow; the world wraps.</p>
+</header>
+<main>
+  <div id="stage">
+    <canvas id="screen" width="256" height="224"></canvas>
+    <div id="status"></div>
+  </div>
+  <aside>
+    <h2>Parameters</h2>
+    <div id="ctl"></div>
+    <div class="btns">
+      <button id="bTake">Take off (X)</button><button id="bLand">Land (Z)</button><button id="bReplay">Replay script</button><button id="bAuto">Autopilot home</button>
+    </div>
+    <div class="keys">Walking: <kbd>arrows</kbd> move, <kbd>X</kbd> take off. Flying: <kbd>&larr;</kbd><kbd>&rarr;</kbd> turn and bank, <kbd>&uarr;</kbd> faster, <kbd>&darr;</kbd> slower, <kbd>Z</kbd> land (green corners = flat ground). Any key stops the scripted tour. URL: <kbd>?t=ms&amp;freeze=1</kbd> for a deterministic frame, <kbd>?speed=</kbd> <kbd>?sky=dusk</kbd> &hellip; for any parameter.</div>
+  </aside>
+</main>
+
+<script src="../../../skins/skin-api.js"></script>
+<script src="../../../skins/pixel16.js"></script>
+<script src="../../../pixel-kit/pixel-scene.js"></script>
+<script src="../module/pseudo3d-flight.js"></script>
+<script>
+'use strict';
+const W = 256, H = 224, T = 16, N = 64, WPX = N * T;
+const cv = document.getElementById('screen'), g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
+const Q = new URLSearchParams(location.search);
+const FREEZE = Q.get('freeze') === '1', T_AT = Q.has('t') ? Math.max(0, +Q.get('t') || 0) : null;
+/* ---------- world + art (same as the starter) ---------- */
+const ISLANDS = [ { x: 14, y: 14, r: 11, name: 'HOLLOWAY' }, { x: 46, y: 13, r: 9, name: 'SALTMERE' }, { x: 18, y: 46, r: 10, name: 'BRIGHTFOLD' },
+  { x: 47, y: 45, r: 11, name: 'ASHGROVE' }, { x: 32, y: 30, r: 5, name: '' } ];
+// tile ids: deep sea, shallows, sand, grass, flowers, road, forest, rock, town
+const DEEP = 0, SHALLOW = 1, SAND = 2, GRASS = 3, FLOWERS = 4, ROAD = 5, FOREST = 6, ROCK = 7, TOWN = 8;
+const WALKABLE = new Set([SAND, GRASS, FLOWERS, ROAD]);
+const LANDABLE = new Set([SAND, GRASS, FLOWERS, ROAD]);        // flat ground only: never water, forest, rock or a town
+const wrapT = v => ((v % N) + N) % N, wrapP = v => ((v % WPX) + WPX) % WPX;
+function hashN(x, y, k) { let h = Math.imul(x + 374761 * k, 668265263) ^ Math.imul(y + 9173, 2246822519); h ^= h >>> 13; h = Math.imul(h, 3266489917); h ^= h >>> 16; return (h >>> 0) / 4294967296; }
+function rngOf(seed) { let s = seed >>> 0 || 1; return () => { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; }; }
+function vnoise(x, y, cell, k) {   // periodic value noise (period N)
+  const n = N / cell, gx = x / cell, gy = y / cell, x0 = Math.floor(gx), y0 = Math.floor(gy), fx = gx - x0, fy = gy - y0;
+  const v = (a, b) => hashN(((a % n) + n) % n, ((b % n) + n) % n, k), s = t => t * t * (3 - 2 * t);
+  const a = v(x0, y0) + (v(x0 + 1, y0) - v(x0, y0)) * s(fx), b = v(x0, y0 + 1) + (v(x0 + 1, y0 + 1) - v(x0, y0 + 1)) * s(fx);
+  return a + (b - a) * s(fy);
+}
+const MAP = new Uint8Array(N * N), at = (x, y) => MAP[wrapT(y) * N + wrapT(x)];
+const set = (x, y, v) => { MAP[wrapT(y) * N + wrapT(x)] = v; };
+const TOWNS = [];
+function buildWorld() {
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    let h = -0.35;
+    for (const I of ISLANDS) { let dx = Math.abs(x - I.x), dy = Math.abs(y - I.y); dx = Math.min(dx, N - dx); dy = Math.min(dy, N - dy); h = Math.max(h, 1 - Math.hypot(dx, dy * 1.1) / I.r); }
+    h += (vnoise(x, y, 8, 1) - 0.5) * 0.5 + (vnoise(x, y, 4, 2) - 0.5) * 0.22;
+    let t = h < -0.06 ? DEEP : h < 0.04 ? SHALLOW : h < 0.13 ? SAND : h < 0.55 ? GRASS : h < 0.7 ? FOREST : ROCK;
+    if (t === GRASS && vnoise(x, y, 4, 3) > 0.7) t = FOREST;
+    if (t === GRASS && hashN(x, y, 4) < 0.08) t = FLOWERS;
+    set(x, y, t);
+  }
+  TOWNS.length = 0;
+  ISLANDS.forEach((I, i) => {
+    if (!I.name) { for (let y = -2; y <= 2; y++) for (let x = -2; x <= 2; x++) if (at(I.x + x, I.y + y) > SAND) set(I.x + x, I.y + y, GRASS); return; }
+    const tx = I.x - 1, ty = I.y - 2;                               // a 2x2 town, a clearing round it, a road south
+    for (let y = -3; y <= 5; y++) for (let x = -3; x <= 4; x++) { const v = at(tx + x, ty + y); if (v !== DEEP && v !== SHALLOW && Math.hypot(x - 0.5, y - 1) < 4.6) set(tx + x, ty + y, hashN(tx + x, ty + y, 6) < 0.1 ? FLOWERS : GRASS); }
+    for (let y = 0; y < 2; y++) for (let x = 0; x < 2; x++) set(tx + x, ty + y, TOWN);
+    for (let y = 2; y < 5; y++) set(tx, ty + y, ROAD), set(tx + 1, ty + y, ROAD);
+    TOWNS.push({ id: 'town-' + i, i, name: I.name, tx, ty, gate: { x: tx, y: ty + 2 }, cx: (tx + 1) * T, cy: (ty + 1) * T });
+  });
+}
+buildWorld();
+const HOME = TOWNS[0];
+// billboards: mountains on rock, a few trees on forest, a town on each town block, a lighthouse on the islet
+const STATIC_BB = [];
+for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+  const v = at(x, y);
+  if (v === ROCK && (x + y) % 2 === 0 && hashN(x, y, 11) < 0.7) STATIC_BB.push({ x: x * T + 8, y: y * T + 10, kind: hashN(x, y, 12) < 0.4 ? 'peak' : 'mountain', size: 30 + Math.round(hashN(x, y, 13) * 16) });
+  else if (v === FOREST && hashN(x, y, 14) < 0.22) STATIC_BB.push({ x: x * T + 4 + hashN(x, y, 15) * 8, y: y * T + 8 + hashN(x, y, 16) * 6, kind: hashN(x, y, 17) < 0.5 ? 'pine' : 'tree', size: 18 + Math.round(hashN(x, y, 18) * 8) });
+}
+TOWNS.forEach(t => STATIC_BB.push({ x: t.cx, y: t.cy + 12, kind: 'town', size: 30, id: t.id }));
+STATIC_BB.push({ x: ISLANDS[4].x * T + 8, y: ISLANDS[4].y * T + 8, kind: 'tower', size: 42, id: 'lighthouse' });
+
+/* =================================== 2. ART =================================== */
+const INK = '#1a1428';
+function paint(w, h, fn, outline) {
+  const c = document.createElement('canvas'); c.width = w + (outline ? 2 : 0); c.height = h + (outline ? 2 : 0);
+  const q = c.getContext('2d'), o = outline ? 1 : 0;
+  fn((x, y, ww, hh, col) => { q.fillStyle = col; q.fillRect(x + o, y + o, ww, hh); });
+  if (outline) {
+    const id = q.getImageData(0, 0, c.width, c.height), d = id.data, cw = c.width, mark = [];
+    for (let i = 0; i < cw * c.height; i++) { if (d[i * 4 + 3]) continue; const x = i % cw, y = (i / cw) | 0;
+      if ((x > 0 && d[(i - 1) * 4 + 3]) || (x < cw - 1 && d[(i + 1) * 4 + 3]) || (y > 0 && d[(i - cw) * 4 + 3]) || (y < c.height - 1 && d[(i + cw) * 4 + 3])) mark.push(i); }
+    for (const i of mark) { d[i * 4] = 26; d[i * 4 + 1] = 20; d[i * 4 + 2] = 40; d[i * 4 + 3] = 255; }
+    q.putImageData(id, 0, 0);
+  }
+  return c;
+}
+const TILE_CACHE = new Map();
+function grassBase(R, x0, y0, base, dark, light) {
+  R(0, 0, 16, 16, base);
+  for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) { const n = hashN(x0 * 16 + x, y0 * 16 + y, 21); if (n < 0.08) R(x, y, 1, 2, dark); else if (n > 0.95) R(x, y, 1, 1, light); }
+}
+function tileArt(id, tx, ty) {
+  tx = wrapT(tx); ty = wrapT(ty);
+  const isW = v => v === DEEP || v === SHALLOW, nb = [at(tx, ty - 1), at(tx + 1, ty), at(tx, ty + 1), at(tx - 1, ty)];
+  const edge = isW(id) ? nb.map(v => isW(v) ? (v === id ? 0 : 1) : 2).join('') : id === ROAD || id === TOWN ? nb.map(v => v === ROAD || v === TOWN ? 1 : 0).join('') : '';
+  const variant = id === GRASS || id === DEEP || id === FOREST || id === ROCK ? Math.floor(hashN(tx, ty, 3) * 3) : 0;
+  const key = id + '|' + edge + '|' + variant + (id === TOWN ? '|' + ((tx & 1) + (ty & 1) * 2) : '');
+  if (TILE_CACHE.has(key)) return TILE_CACHE.get(key);
+  const c = paint(16, 16, R => {
+    if (id === DEEP || id === SHALLOW) {
+      const deep = id === DEEP; R(0, 0, 16, 16, deep ? '#2a58b0' : '#3c86cc');
+      for (let y = 1; y < 16; y += 4) { const o = (y * 5 + variant * 3) % 16; R(o, y, 4, 1, deep ? '#3a6cc4' : '#5aa2e0'); R((o + 8) % 16, y + 2, 3, 1, deep ? '#224a98' : '#3474b8'); }
+      edge.split('').forEach((e, i) => {   // foam where water meets land, a lighter band where deep meets shallow
+        if (e === '0') return; const col = e === '2' ? '#e8f4ff' : '#5096d8', col2 = e === '2' ? '#9ccaf0' : '#4a8cd0';
+        if (i === 0) { R(0, 0, 16, 1, col); R(0, 1, 16, 1, col2); } if (i === 2) { R(0, 15, 16, 1, col); R(0, 14, 16, 1, col2); }
+        if (i === 3) { R(0, 0, 1, 16, col); R(1, 0, 1, 16, col2); } if (i === 1) { R(15, 0, 1, 16, col); R(14, 0, 1, 16, col2); }
+      });
+    } else if (id === SAND) {
+      R(0, 0, 16, 16, '#e6d29a'); for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) { const n = hashN(tx * 16 + x, ty * 16 + y, 22); if (n < 0.07) R(x, y, 1, 1, '#c8b078'); else if (n > 0.95) R(x, y, 1, 1, '#f8ecc4'); }
+    } else if (id === GRASS || id === FLOWERS) {
+      grassBase(R, tx, ty, ['#6ab84a', '#64b046', '#70bc50'][variant], '#4c9636', '#94d86a');
+      if (id === FLOWERS) for (let i = 0; i < 5; i++) { const x = 1 + Math.floor(hashN(tx * 7 + i, ty, 23) * 13), y = 1 + Math.floor(hashN(tx, ty * 7 + i, 24) * 13), cc = ['#f05a6a', '#f6d84a', '#ffffff', '#c47ae8'][i % 4]; R(x, y, 3, 1, cc); R(x + 1, y - 1, 1, 3, cc); R(x + 1, y, 1, 1, '#f4c430'); }
+    } else if (id === ROAD) {
+      grassBase(R, tx, ty, '#6ab84a', '#4c9636', '#94d86a');   // dirt road; edges only where the neighbour is not road
+      const [nU, nR, nD, nL] = edge.split('').map(Number), x0 = nL ? 0 : 3, x1 = nR ? 16 : 13, y0 = nU ? 0 : 3, y1 = nD ? 16 : 13;
+      R(x0, y0, x1 - x0, y1 - y0, '#c8a46a'); if (!nL) R(x0, y0, 1, y1 - y0, '#a88654'); if (!nR) R(x1 - 1, y0, 1, y1 - y0, '#a88654'); if (!nU) R(x0, y0, x1 - x0, 1, '#a88654'); if (!nD) R(x0, y1 - 1, x1 - x0, 1, '#a88654');
+      for (let i = 0; i < 6; i++) R(x0 + 1 + Math.floor(hashN(tx, ty * 9 + i, 25) * (x1 - x0 - 2)), y0 + 1 + Math.floor(hashN(tx * 9 + i, ty, 26) * (y1 - y0 - 2)), 1, 1, '#e0c288');
+    } else if (id === FOREST) {
+      R(0, 0, 16, 16, '#2c6a34');
+      const blob = (cx, cy, r, c1, c2, c3) => { for (let y = -r; y <= r; y++) for (let x = -r; x <= r; x++) if (x * x + y * y <= r * r + 1) R(cx + x, cy + y, 1, 1, (x + y < -r * 0.6) ? c3 : (x + y > r * 0.7) ? c2 : c1); };
+      blob(4 + variant, 5, 4, '#3a8a40', '#24592c', '#5cae52'); blob(11, 4 + variant, 4, '#3a8a40', '#24592c', '#5cae52'); blob(8, 11, 5, '#358038', '#1e4e26', '#56a64c');
+    } else if (id === ROCK) {
+      R(0, 0, 16, 16, '#8a8a8e'); for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) { const n = hashN(tx * 16 + x, ty * 16 + y, 27); if (n < 0.12) R(x, y, 1, 1, '#6a6a74'); else if (n > 0.9) R(x, y, 1, 1, '#a8a8b0'); }
+      R(2 + variant * 3, 4, 6, 4, '#a4a2ac'); R(2 + variant * 3, 7, 6, 1, '#5e5c68'); R(9, 10 - variant, 5, 3, '#9c9aa4'); R(9, 12 - variant, 5, 1, '#5e5c68');
+    } else if (id === TOWN) {
+      const q = (tx & 1) + (ty & 1) * 2, roof = ['#c84a3a', '#3a6ac8', '#d88a3a', '#8a5ac0'][q];
+      R(0, 0, 16, 16, '#d8c4a0'); R(0, 7, 16, 2, '#b8a07a');
+      R(1, 1, 9, 6, roof); R(1, 1, 9, 1, '#ffffff33'); R(1, 6, 9, 1, '#00000040'); R(5, 1, 1, 6, '#00000030');
+      R(11, 9, 4, 6, '#3a6ac8'); R(2, 10, 7, 5, '#c84a3a'); R(2, 14, 7, 1, '#00000040'); R(11, 2, 3, 3, '#6a9a48');
+    }
+  }, false);
+  TILE_CACHE.set(key, c); return c;
+}
+// hero (top-down, 12x16, two walk frames per direction)
+const HERO = (() => {
+  const HAIR = '#7a4a22', SKIN = '#f2c08f', CLOAK = '#3a8a58', CLOAK_D = '#2a6a44', SCARF = '#d04848', BAG = '#b8864a', BOOT = '#3a2a1e';
+  const body = (R, f, back) => {
+    R(2, 7, 8, 6, CLOAK); R(2, 7, 1, 6, CLOAK_D); R(9, 7, 1, 6, CLOAK_D); R(2, 6, 8, 2, SCARF);
+    if (!back) { R(8, 8, 3, 4, BAG); R(8, 8, 3, 1, '#d8a868'); } else R(3, 8, 6, 4, BAG);
+    if (f === 0) { R(3, 13, 2, 3, BOOT); R(7, 13, 2, 3, BOOT); } else { R(3, 13, 2, 2, BOOT); R(7, 13, 2, 3, BOOT); }
+  };
+  const down = f => R => { R(3, 0, 6, 2, HAIR); R(2, 1, 8, 3, HAIR); R(3, 2, 6, 4, SKIN); R(3, 2, 6, 1, HAIR); R(4, 3, 1, 1, INK); R(7, 3, 1, 1, INK); body(R, f, false); };
+  const up = f => R => { R(3, 0, 6, 2, HAIR); R(2, 1, 8, 5, HAIR); body(R, f, true); };
+  const side = f => R => { R(3, 0, 6, 2, HAIR); R(2, 1, 7, 3, HAIR); R(5, 2, 5, 4, SKIN); R(5, 2, 4, 1, HAIR); R(8, 3, 1, 1, INK); body(R, f, false); };
+  const flip = src => { const c = document.createElement('canvas'); c.width = src.width; c.height = src.height; const q = c.getContext('2d'); q.scale(-1, 1); q.drawImage(src, -src.width, 0); return c; };
+  const s = { down: [0, 1].map(f => paint(12, 16, down(f), true)), up: [0, 1].map(f => paint(12, 16, up(f), true)), right: [0, 1].map(f => paint(12, 16, side(f), true)) };
+  s.left = s.right.map(flip); return s;
+})();
+const WISP = [0, 1, 2].map(f => paint(16, 14, R => {   // storm wisp: a dark knot of cloud with a static spark
+  const b = (cx, cy, r, c) => { for (let y = -r; y <= r; y++) for (let x = -r; x <= r; x++) if (x * x + y * y <= r * r) R(cx + x, cy + y, 1, 1, c); };
+  b(8, 8, 5, '#4a3a78'); b(5, 6, 3, '#5e4c92'); b(11, 6, 3, '#5e4c92'); b(7, 5, 2, '#7a68b0'); R(5, 8, 2, 2, '#ffe070'); R(10, 8, 2, 2, '#ffe070');
+  const z = [[8, 13, 3, 1], [10, 12, 1, 2], [3, 11, 2, 1]][f]; R(z[0], z[1], z[2], z[3], '#fff6a0'); R(z[0] - 1, z[1] - 1, 1, 1, '#ffffff');
+}, true));
+const FEATHER = paint(8, 12, R => { R(3, 0, 2, 12, '#f6f0e0'); R(1, 2, 2, 7, '#ffe070'); R(5, 2, 2, 7, '#f4c430'); R(2, 1, 4, 1, '#ffffff'); R(3, 10, 2, 2, '#c8a050'); }, true);
+// 5x7 UI font (original)
+const GLYPH = {
+  A: '01110100011000111111100011000110001', B: '11110100011000111110100011000111110', C: '01110100011000010000100001000101110', D: '11110100011000110001100011000111110',
+  E: '11111100001000011110100001000011111', F: '11111100001000011110100001000010000', G: '01110100011000010111100011000101111', H: '10001100011000111111100011000110001',
+  I: '01110001000010000100001000010001110', J: '00111000100001000010000101001001100', K: '10001100101010011000101001001010001', L: '10000100001000010000100001000011111',
+  M: '10001110111010110101100011000110001', N: '10001100011100110101100111000110001', O: '01110100011000110001100011000101110', P: '11110100011000111110100001000010000',
+  Q: '01110100011000110001101011001001101', R: '11110100011000111110101001001010001', S: '01111100001000001110000010000111110', T: '11111001000010000100001000010000100',
+  U: '10001100011000110001100011000101110', V: '10001100011000110001100010101000100', W: '10001100011000110101101011010101010', X: '10001100010101000100010101000110001',
+  Y: '10001100010101000100001000010000100', Z: '11111000010001000100010001000011111', 0: '01110100011001110101110011000101110', 1: '00100011000010000100001000010001110',
+  2: '01110100010000100010001000100011111', 3: '11111000100010000010000011000101110', 4: '00010001100101010010111110001000010', 5: '11111100001111000001000011000101110',
+  6: '00110010001000011110100011000101110', 7: '11111000010001000100010000100001000', 8: '01110100011000101110100011000101110', 9: '01110100011000101111000010001001100',
+  '-': '00000000000000001110000000000000000', '+': '00000001000010011111001000010000000', '.': '00000000000000000000000000110001100', '!': '00100001000010000100001000000000100',
+  ':': '00000011000110000000011000110000000', '/': '00001000100010000100010001000010000', '?': '01110100010000100010001000000000100', ' ': '00000000000000000000000000000000000'
+};
+function textW(s) { return Math.max(0, String(s).length * 6 - 1); }
+function text(s, x, y, c1 = '#ffffff', c2 = '#c8d4ff', align = 'left', ctx = g) {
+  s = String(s).toUpperCase(); const w = textW(s); if (align === 'center') x -= Math.floor(w / 2); else if (align === 'right') x -= w;
+  for (let pass = 0; pass < 2; pass++) { let cx = x; for (const ch of s) { const b = GLYPH[ch] || GLYPH['?'];
+    for (let k = 0; k < 35; k++) if (b[k] === '1') { const gy = (k / 5) | 0; ctx.fillStyle = pass ? (gy < 4 ? c1 : c2) : '#0a0c24'; ctx.fillRect(cx + (k % 5) + (pass ? 0 : 1), y + gy + (pass ? 0 : 1), 1, 1); }
+    cx += 6; } }
+  return w;
+}
+const WIN = ['#3a64d8', '#2c50b8', '#223e96', '#1a2e74', '#a8c8ff', '#0a1238'];
+function win(x, y, w, h, alpha = 0.95) {
+  g.globalAlpha = alpha; for (let i = 0; i < h - 2; i++) { g.fillStyle = WIN[Math.min(3, Math.floor(i / (h - 2) * 4))]; g.fillRect(x + 1, y + 1 + i, w - 2, 1); }
+  g.globalAlpha = 1; g.fillStyle = '#06061a'; g.fillRect(x + 2, y, w - 4, 1); g.fillRect(x + 2, y + h - 1, w - 4, 1); g.fillRect(x, y + 2, 1, h - 4); g.fillRect(x + w - 1, y + 2, 1, h - 4);
+  g.fillRect(x + 1, y + 1, 1, 1); g.fillRect(x + w - 2, y + 1, 1, 1); g.fillRect(x + 1, y + h - 2, 1, 1); g.fillRect(x + w - 2, y + h - 2, 1, 1);
+  g.fillStyle = WIN[4]; g.fillRect(x + 2, y + 1, w - 4, 1); g.fillRect(x + 1, y + 2, 1, h - 5); g.fillStyle = WIN[5]; g.fillRect(x + 2, y + h - 2, w - 4, 1); g.fillRect(x + w - 2, y + 2, 1, h - 4);
+  [[x + 2, y + 2], [x + w - 4, y + 2], [x + 2, y + h - 4], [x + w - 4, y + h - 4]].forEach(([px, py]) => { g.fillStyle = '#7a5410'; g.fillRect(px, py, 2, 2); g.fillStyle = '#ffe070'; g.fillRect(px, py, 1, 1); });
+}
+function envelope(x, y, filled) { g.fillStyle = INK; g.fillRect(x - 1, y - 1, 11, 9); g.fillStyle = filled ? '#f6ecd0' : '#4a5488'; g.fillRect(x, y, 9, 7);
+  g.fillStyle = filled ? '#c8a878' : '#3a4270'; for (let i = 0; i < 4; i++) { g.fillRect(x + i, y + i, 1, 1); g.fillRect(x + 8 - i, y + i, 1, 1); } if (filled) { g.fillStyle = '#d04848'; g.fillRect(x + 4, y + 4, 1, 1); } }
+
+/* ---------- demo-only ground art: the same MAP drawn by the shared pixel scene kit (pixel-kit/pixel-scene.js) ----------
+   The tile ids, walkability and billboards above are untouched; only the pictures change. The whole 64x64 world is baked once:
+   KIT.tex (ground with canopy tops on forest cells) feeds the flight floor, KIT.scene draws the walking view with
+   depth-sorted trees. */
+const KIT = (() => {
+  const PXS = window.GameDNA_PixelScene; if (!PXS) return null;
+  const CH = { [DEEP]: 'w', [SHALLOW]: 'w', [SAND]: 's', [GRASS]: '.', [FLOWERS]: 'F', [ROAD]: 'p', [TOWN]: 'c' };
+  const rows = [];
+  for (let y = 0; y < N; y++) { let r = ''; for (let x = 0; x < N; x++) { const v = at(x, y);
+    r += v === FOREST ? (hashN(x, y, 31) < 0.72 ? 'T' : hashN(x, y, 32) < 0.5 ? 'P' : ',') : v === ROCK ? ((x + y) % 2 === 0 ? 'M' : hashN(x, y, 33) < 0.35 ? 'R' : '^') : CH[v]; } rows.push(r); }
+  // rock cells stand on raised ground: swap the prop chars' ground by listing the props instead
+  const props = [];
+  for (let y = 0; y < N; y++) { let r = ''; for (let x = 0; x < N; x++) { const c = rows[y][x]; if (at(x, y) === ROCK && c !== '^') { props.push({ k: c === 'M' ? 'peak' : 'boulder', x: x * T + 8, y: y * T + 14, o: { v: (x * 3 + y) % 4 } }); r += '^'; } else r += c; } rows[y] = r; }
+  TOWNS.forEach((t, i) => { const roofs = ['red', 'blue', 'thatch', 'slate'];
+    props.push({ k: 'house', x: t.cx - 1, y: t.cy + 12, o: { w: 30, wallH: 15, roofH: 15, roof: roofs[i % 4], windows: [5], door: 16, boxes: false } });
+    props.push({ k: 'smalltree', x: t.cx - 20, y: t.cy + 14, o: { v: i } }); props.push({ k: 'barrel', x: t.cx + 19, y: t.cy + 13 }); props.push({ k: 'sign', x: t.cx + 24, y: t.cy + 30 }); });
+  props.push({ k: 'tower', x: ISLANDS[4].x * T + 8, y: ISLANDS[4].y * T + 14, o: { roof: 'red', lit: true } });
+  const scene = PXS.scene({ seed: 9, pines: true, map: rows, props });
+  const tex = document.createElement('canvas'); tex.width = WPX; tex.height = WPX; const q = tex.getContext('2d');
+  // flight floor: ground only (upright props would smear on the tilted plane; the module's billboards stand there instead),
+  // with canopy tops seen from above on forest cells
+  scene.drawGround(q, 0);
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (at(x, y) === FOREST) { const n = 2 + (hashN(x, y, 35) < 0.5 ? 1 : 0);
+    for (let i = 0; i < n; i++) PXS.drawProp(q, 'bush', x * T + 3 + Math.floor(hashN(x * 5 + i, y, 36) * 11), y * T + 8 + Math.floor(hashN(x, y * 5 + i, 37) * 9), { v: (x + y + i) % 2 === 0 ? 0 : 2 }); }
+  // towns on the flight floor: roofs in plan view (lit north slope, shaded south slope, ridge), so the block is not bare under the billboard
+  const roofPlan = (x, y, w, h, R) => { q.fillStyle = '#1a1024'; q.fillRect(x - 1, y - 1, w + 2, h + 3); const hh = h >> 1;
+    for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { const top = j < hh, jr = (i + (j % 2) * 2) % 4 === 0; q.fillStyle = j === hh - 1 || j === hh ? R[4] : top ? (jr ? R[2] : R[3]) : (jr ? R[0] : j === h - 1 ? R[0] : R[1]); if (i === 0 && top) q.fillStyle = R[4]; q.fillRect(x + i, y + j, 1, 1); }
+    q.fillStyle = 'rgba(16,10,30,0.3)'; q.fillRect(x + 1, y + h + 2, w, 2); };
+  TOWNS.forEach((t, i) => { const RF = PXS.PAL.roof, names = ['red', 'blue', 'thatch', 'slate'], x0 = t.tx * T, y0 = t.ty * T;
+    roofPlan(x0 + 2, y0 + 3, 17, 12, RF[names[i % 4]]); roofPlan(x0 + 18, y0 + 17, 12, 10, RF[names[(i + 1) % 4]]);
+    PXS.drawProp(q, 'bush', x0 + 25, y0 + 12, { v: 0 }); PXS.drawProp(q, 'bush', x0 + 8, y0 + 29, { v: 2 }); });
+  const cache = new Map();
+  const tile = (x, y) => { x = wrapT(x); y = wrapT(y); const k = y * N + x; let c = cache.get(k); if (!c) { c = document.createElement('canvas'); c.width = c.height = T; c.getContext('2d').drawImage(tex, -x * T, -y * T); cache.set(k, c); } return c; };
+  return { scene, tex, tile };
+})();
+const kitTile = (id, x, y) => KIT ? KIT.tile(x, y) : tileArt(id, x, y);
+
+/* ---------- parameters (element.json defaults; ?key= overrides) ---------- */
+const PARAMS = [
+  ['speed', 'Cruise speed', 40, 140, 2, 72], ['turn', 'Turn rate (deg/s)', 60, 180, 5, 100], ['bank', 'Bank / tilt (deg)', 0, 10, 1, 5],
+  ['height', 'Camera height', 32, 96, 2, 56], ['horizon', 'Horizon', 0.2, 0.45, 0.01, 0.3], ['transition', 'Transition (ms)', 300, 1200, 50, 600],
+  ['fog', 'Distance fog', 0, 1, 0.05, 0.6], ['sky', 'Sky', ['day', 'dusk'], 'day'], ['mount', 'Mount', ['bird', 'glider'], 'bird'], ['minimap', 'Mini-map', ['on', 'off'], 'on']
+];
+const P = {};
+const ctl = document.getElementById('ctl');
+PARAMS.forEach(d => {
+  const key = d[0], isSel = Array.isArray(d[2]), def = isSel ? d[3] : d[5];
+  let v = Q.has(key) ? Q.get(key) : def; if (!isSel) v = Math.min(d[3], Math.max(d[2], +v || def)); else if (!d[2].includes(v)) v = def;
+  P[key] = v;
+  const row = document.createElement('div'); row.className = 'row';
+  row.innerHTML = `<label for="p-${key}">${d[1]}</label>` + (isSel ? `<select id="p-${key}">${d[2].map(o => `<option${o === v ? ' selected' : ''}>${o}</option>`).join('')}</select><output></output>`
+    : `<input type="range" id="p-${key}" min="${d[2]}" max="${d[3]}" step="${d[4]}" value="${v}"><output>${v}</output>`);
+  ctl.appendChild(row);
+  const inp = row.querySelector('input,select'), out = row.querySelector('output');
+  inp.addEventListener('input', () => { P[key] = isSel ? inp.value : +inp.value; if (!isSel) out.textContent = inp.value; fl.setParams({ [key]: P[key] }); });
+});
+
+/* ---------- the element ---------- */
+const fl = GameDNA_Flight.create({
+  cols: N, rows: N, tile: T, wrap: true, skin: 'pixel16', params: P,
+  tileAt: (x, y) => at(x, y), tileImage: (id, x, y) => kitTile(id, x, y), canLand: (x, y) => LANDABLE.has(at(x, y)),
+  billboards: STATIC_BB, markers: () => TOWNS.map((t, i) => ({ x: t.cx, y: t.cy, color: i ? '#ffffff' : '#ffe070', blink: !i })),
+  topdown: () => camera(),
+  onLand: L => { hero.x = L.x - 5; hero.y = L.y - 4; hero.face = 'down'; },
+  onLandDenied: () => { log('landing refused: not flat ground'); }
+});
+
+/* ---------- a minimal walking host for the transitions ---------- */
+
+const START = { x: HOME.gate.x * T + 3, y: (HOME.gate.y + 2) * T + 4 };
+let hero, frame, script, keys = new Set(), taps = new Set(), lastLog = '';
+function reset(scripted) { hero = { x: START.x, y: START.y, w: 10, h: 8, face: 'right', walk: 0, moving: false }; frame = 0; script = scripted; fl.reset(); keys.clear(); taps.clear(); }
+function log(s) { lastLog = s; }
+function camera() { return { x: Math.round(hero.x + 5 - W / 2), y: Math.round(hero.y + 4 - H / 2) }; }
+const blocked = (x, y, w, h) => [[x, y], [x + w - 0.01, y], [x, y + h - 0.01], [x + w - 0.01, y + h - 0.01]].some(([px, py]) => !WALKABLE.has(at(Math.floor(px / T), Math.floor(py / T))));
+// the scripted tour (deterministic, 60 Hz frames): walk, take off, bank left, boost, try to land over water, fly home, land, loop
+function scripted(f) {
+  const i = { left: false, right: false, up: false, down: false, land: false, mount: false };
+  if (f < 54) i.right = true;
+  else if (f === 66) i.mount = true;
+  else if (f >= 120 && f < 196) i.left = true;
+  else if (f >= 196 && f < 300) i.up = true;
+  else if (f >= 300 && f < 340) i.right = true;
+  else if (f === 360) i.land = true;
+  else if (f === 380) fl.autopilot({ x: HOME.gate.x * T + 16, y: (HOME.gate.y + 2) * T + 8, radius: 26 });
+  return i;
+}
+function step() {
+  frame++;
+  const human = { left: keys.has('left'), right: keys.has('right'), up: keys.has('up'), down: keys.has('down'), land: taps.has('land'), mount: taps.has('mount') }; taps.clear();
+  const inp = script ? scripted(frame) : human;
+  if (script && frame > 60 * 15 && !fl.busy()) reset(true);
+  fl.setInput(fl.phase === 'flying' && !fl.autopiloting ? inp : null);
+  fl.update();
+  if (!fl.busy()) {
+    const mx = (inp.right ? 1 : 0) - (inp.left ? 1 : 0), my = (inp.down ? 1 : 0) - (inp.up ? 1 : 0);
+    if (mx || my) { hero.face = mx ? (mx > 0 ? 'right' : 'left') : (my > 0 ? 'down' : 'up'); let m = false;
+      if (mx && !blocked(hero.x + mx * 1.25, hero.y, 10, 8)) { hero.x = wrapP(hero.x + mx * 1.25); m = true; }
+      if (my && !blocked(hero.x, hero.y + my * 1.25, 10, 8)) { hero.y = wrapP(hero.y + my * 1.25); m = true; } hero.moving = m; if (m) hero.walk++; } else hero.moving = false;
+    if (inp.mount) fl.takeOff({ x: hero.x + 5, y: hero.y + 4, facing: hero.face });
+  }
+}
+function draw() {
+  g.imageSmoothingEnabled = false;
+  if (!fl.draw(g)) {
+    const c = camera(), c0 = Math.floor(c.x / T), r0 = Math.floor(c.y / T);
+    const hx = Math.round(wrapD(hero.x - c.x)), hy = Math.round(wrapD(hero.y - c.y));
+    if (KIT) {   // ground from the baked kit scene (wrapped), then the props in view depth-sorted with the hero
+      for (let r = r0; r <= r0 + 14; r++) for (let q = c0; q <= c0 + 16; q++) g.drawImage(KIT.scene.ground(frame * 1000 / 60), wrapT(q) * T, wrapT(r) * T, T, T, q * T - c.x, r * T - c.y, T, T);
+      const list = [{ y: hy + 9, d: () => GameDNA_PixelScene.actor(g, hx + 5, hy + 9, { pal: 'green', dir: hero.face, frame: hero.moving ? (hero.walk >> 3) & 1 : 0 }) }];
+      KIT.scene.items.forEach(it => { const dx = wrapD(it.x - c.x - W / 2) + W / 2, dy = wrapD(it.y - c.y - H / 2) + H / 2; if (dx < -40 || dx > W + 40 || dy < -8 || dy > H + 60) return; list.push({ y: it.flat ? -1e6 : dy, d: () => it.draw(g, frame * 1000 / 60, dx - it.x, dy - it.y) }); });
+      list.sort((a, b) => a.y - b.y).forEach(o => o.d());
+    } else {
+      for (let r = r0; r <= r0 + 14; r++) for (let q = c0; q <= c0 + 16; q++) g.drawImage(tileArt(at(q, r), q, r), q * T - c.x, r * T - c.y);
+      g.fillStyle = 'rgba(16,18,40,0.3)'; g.fillRect(hx - 1, hy + 9, 12, 2); g.drawImage(HERO[hero.face][hero.moving ? (hero.walk >> 3) & 1 : 0], hx - 2, hy - 9);
+    }
+    const sk = GameDNA_Skin.resolve('pixel16'), lab = 'X TAKE OFF', w = sk.measure(lab, { font: 'ui' }) + 14;
+    sk.frame(g, { x: W - 4 - w, y: H - 21, w, h: 17 }, { role: 'window', team: 'n' }); sk.text(g, lab, W - 4 - w + 7, H - 16, { font: 'ui', color: '#d8ffb8', color2: '#88e070' });
+  }
+}
+/* text state for critics and tools/sprites/statecheck.py (canvas px, feet): one character. On foot it is the pixel kit's 4-way actor drawn with
+   hero.face (noFace on its up / down frames). In the flight view the module draws the rider on its mount from behind (no side). */
+window.__state = () => { const t = Math.round(frame * 1000 / 60);
+  if (fl.busy()) { const A = fl.anchor() || { x: W / 2, footY: Math.round(H * 0.75) }; return { t, phase: fl.phase, actors: [{ id: 'hero', x: Math.round(A.x), y: A.footY, facing: null, target: null, noFace: 'flying: seen from behind, drawn by the module (' + fl.phase + ')' }] }; }
+  const c = camera(), side = hero.face === 'left' || hero.face === 'right', mx = hero.moving && side ? (hero.face === 'right' ? 1.25 : -1.25) : 0;
+  return { t, phase: fl.phase, actors: [{ id: 'hero', x: Math.round(wrapD(hero.x - c.x)) + 5, y: Math.round(wrapD(hero.y - c.y)) + 9, facing: side ? hero.face : null, target: null, vx: mx, noFace: side ? undefined : hero.face + ' frame' }] }; };
+function wrapD(d) { d %= WPX; if (d > WPX / 2) d -= WPX; if (d < -WPX / 2) d += WPX; return d; }
+const status = document.getElementById('status');
+function showStatus() {
+  const st = fl.stats;
+  status.innerHTML = `phase <b>${fl.phase}</b>${fl.busy() ? ` &middot; heading <b>${Math.round(fl.heading * 180 / Math.PI)}&deg;</b> &middot; speed <b>${Math.round(fl.speed)}</b> &middot; tile <b>${fl.tile.x},${fl.tile.y}</b> ${fl.canLandHere() ? '(flat)' : ''}` : ''} &middot; draw <b>${st.avgMs.toFixed(2)} ms</b> (max ${st.maxMs.toFixed(1)})${script ? ' &middot; scripted tour' : ''}${lastLog ? ' &middot; ' + lastLog : ''}`;
+}
+
+/* ---------- input & boot ---------- */
+const BIND = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', KeyA: 'left', KeyD: 'right', KeyW: 'up', KeyS: 'down', KeyZ: 'land', Space: 'land', Enter: 'land', KeyX: 'mount', KeyC: 'mount' };
+addEventListener('keydown', e => { const b = BIND[e.code]; if (!b || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return; e.preventDefault(); if (script) { script = false; fl.autopilot(null); } if (!keys.has(b)) taps.add(b); keys.add(b); });
+addEventListener('keyup', e => { const b = BIND[e.code]; if (b) keys.delete(b); });
+document.getElementById('bTake').onclick = () => { script = false; taps.add('mount'); };
+document.getElementById('bLand').onclick = () => { script = false; fl.land(); };
+document.getElementById('bReplay').onclick = () => reset(true);
+document.getElementById('bAuto').onclick = () => { script = false; if (!fl.busy()) fl.takeOff({ x: hero.x + 5, y: hero.y + 4, facing: hero.face }); fl.autopilot({ x: HOME.gate.x * T + 16, y: (HOME.gate.y + 2) * T + 8, radius: 26 }); };
+function fit() { const s = Math.max(1, Math.min(3, Math.floor((Math.min(innerWidth, 1180) - 32 - (innerWidth > 900 ? 300 : 0)) / W))); cv.style.width = W * s + 'px'; cv.style.height = H * s + 'px'; }
+fit(); addEventListener('resize', fit);
+reset(!Q.has('manual'));
+if (T_AT !== null) { for (let n = Math.round(T_AT * 60 / 1000); n > 0; n--) step(); draw(); showStatus();
+  document.documentElement.dataset.state = JSON.stringify({ phase: fl.phase, progress: +fl.progress.toFixed(3), x: Math.round(fl.x), y: Math.round(fl.y), heading: +fl.heading.toFixed(3), frame }); }
+if (!FREEZE) { let acc = 0, prev = null; const loop = now => { if (prev === null) prev = now; acc += Math.min(250, now - prev); prev = now; while (acc >= 1000 / 60) { step(); acc -= 1000 / 60; } draw(); if ((frame & 7) === 0) showStatus(); requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
+</script>
+</body>
+</html>

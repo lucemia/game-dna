@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paper Doll</title>
+<style>
+  :root { --bg: #0f0c16; --panel: #1b1626; --line: #352b47; --ink: #efe9f7; --dim: #a397b8; --acc: #ffc76a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; overflow-x: hidden; }
+  main { max-width: 1000px; margin: 0 auto; padding: 14px 16px 28px; }
+  h1 { font-size: 20px; margin: 0 0 2px; }
+  .sub { color: var(--dim); margin: 0 0 12px; font-size: 13.5px; }
+  #stage { position: relative; background: #000; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; display: flex; justify-content: center; }
+  @media (max-width: 560px) { #stage { margin: 0 -16px; border-radius: 0; border-left: 0; border-right: 0; } }
+  canvas#game { display: block; touch-action: none; image-rendering: pixelated; image-rendering: crisp-edges; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0 6px; }
+  .bar input[type=range] { flex: 1 1 180px; min-width: 120px; accent-color: var(--acc); }
+  .time { font-variant-numeric: tabular-nums; color: var(--dim); min-width: 56px; }
+  button { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 7px; padding: 6px 12px; font: inherit; cursor: pointer; }
+  button.on { background: var(--acc); color: #2a1606; border-color: var(--acc); font-weight: 600; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 12px; }
+  .grid label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--dim); }
+  .grid select, .grid input[type=range] { font: inherit; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 5px; padding: 3px; accent-color: var(--acc); }
+  .note { color: var(--dim); font-size: 12.5px; margin: 8px 0 0; }
+  kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; font: 12px ui-monospace, monospace; color: var(--ink); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Paper doll</h1>
+  <p class="sub">A pixel character built from layers (body, hair, hat, top, legs, boots, weapon, shield) that you can swap and recolour. Every part is drawn on one shared skeleton, so any combination lines up in every frame of the four-direction walk and the attack. The weapon stays in the right hand when the character turns: facing left it is the far hand, behind the body.</p>
+  <div id="stage"><canvas id="game" width="320" height="180"></canvas></div>
+  <div class="bar">
+    <button id="ward">Wardrobe</button><button id="play">Pause</button><button id="again">Replay</button>
+    <input id="scrub" type="range" min="0" max="30000" step="50" value="0"><span class="time" id="time">0.0 s</span>
+  </div>
+  <div class="grid" id="ctl"></div>
+  <p class="note">Arrow keys take over the traveller &middot; <kbd>Z</kbd> swing (in the wardrobe: switch to colour, next row) &middot; <kbd>C</kbd> wardrobe &middot; <kbd>X</kbd> back &middot; tap the arrows and swatches in the wardrobe. <code>?t=&lt;ms&gt;&amp;freeze=1</code> gives the same still every time.</p>
+</main>
+<script src="../../../pixel-kit/pixel-scene.js"></script>
+<script src="../module/paper-doll.js"></script>
+<script src="scene.js"></script>
+<script>
+/* D-02 paper-doll demo. One clock: sim.step() (scene.js). The world is drawn at native resolution into the canvas, which CSS
+   scales by a whole number (pixelated): 320x180 x3 on desktops, a narrower native view x2 on phones (the wardrobe is 192 px wide). */
+(function () {
+  'use strict';
+  var Q = new URLSearchParams(location.search), PD = GameDNA_PaperDoll, D = GameDNA_PaperDollDemo, PXS = GameDNA_PixelScene, T = D.T, STEP = D.STEP, END = D.END;
+  var T0 = Q.has('t') ? Math.max(0, +Q.get('t') || 0) : null, FREEZE = Q.get('freeze') === '1';
+  var stage = document.getElementById('stage'), cv = document.getElementById('game'), g = cv.getContext('2d');
+  var W = 320, H = 180, K = 3;
+  function fit() {
+    var avail = Math.min(stage.clientWidth || 320, 1000), k = Math.max(2, Math.floor(avail / 320)), w = Math.min(320, Math.floor(avail / k));
+    if (w < 192) { k = 1; w = Math.min(320, avail); }
+    var h = w < 280 ? 216 : 180;
+    if (w !== W || h !== H) { W = w; H = h; cv.width = W; cv.height = H; }
+    K = k; cv.style.width = W * K + 'px'; cv.style.height = H * K + 'px';
+  }
+  fit();
+  var params = { stride: Q.has('stride') ? +Q.get('stride') : 5, sparkle: Q.get('sparkle') !== 'off' };
+  var SC = PXS.scene({ seed: 23, map: D.rows, props: D.props });
+  var sim = null, clock = 0, seedN = 1;
+  function build() {
+    sim = D.make(PD, { stride: params.stride, view: function () { return { x: 0, y: 0, w: W, h: H }; } });
+    sim.order.forEach(function (id) { sim.actors[id].doll.params.sparkleMs = params.sparkle ? 520 : 0; });
+    if (Q.get('preset') && D.looks[Q.get('preset')]) sim.hero.doll.setLook(D.looks[Q.get('preset')]);
+    clock = 0;
+  }
+  function simTo(ms) { build(); sim.runTo(ms); clock = sim.clock; }
+
+  /* ---------- the straw dummy (code-drawn, demo only) ---------- */
+  function dummy(gg, x, y) {
+    var hit = sim.dummyHit && clock - sim.dummyHit < 260 ? (clock - sim.dummyHit < 130 ? 1 : -1) : 0, X = Math.round(x), Y = Math.round(y);
+    var R = function (a, b, c, d, col) { gg.fillStyle = col; gg.fillRect(X + a, Y + b, c, d); };
+    R(-5, -1, 11, 2, 'rgba(16,10,30,0.3)');
+    R(-1, -10, 3, 10, '#1a1024'); R(0, -10, 1, 10, '#8c5c34');                                    // post
+    var o = hit;                                                                                        // the body sways on a hit
+    R(-5 + o, -23, 11, 14, '#1a1024'); R(-4 + o, -22, 9, 12, '#d8b45c'); R(-4 + o, -22, 2, 12, '#ecd27c'); R(3 + o, -22, 2, 12, '#b08a3c');
+    R(-4 + o, -17, 9, 1, '#7c4c2c'); R(-4 + o, -13, 9, 1, '#7c4c2c'); R(-7 + o, -20, 3, 3, '#1a1024'); R(5 + o, -20, 3, 3, '#1a1024'); R(-6 + o, -19, 2, 1, '#d8b45c'); R(5 + o, -19, 2, 1, '#b08a3c');
+    R(-3 + o, -30, 7, 8, '#1a1024'); R(-2 + o, -29, 5, 6, '#c8a87c'); R(-2 + o, -29, 1, 6, '#e0c49a'); R(-1 + o, -26, 1, 1, '#5a3a22'); R(1 + o, -26, 1, 1, '#5a3a22');
+    for (var i = 0; i < 4; i++) R(-4 + i * 3 + o, -9, 1, 2, '#b08a3c');
+  }
+
+  /* ---------- drawing ---------- */
+  function camera() {
+    var h = sim.hero, ww = D.COLS * T, wh = D.ROWS * T;
+    return { x: Math.round(Math.max(0, Math.min(ww - W, h.x - W / 2))), y: Math.round(Math.max(0, Math.min(wh - H, h.y - 14 - H / 2))) };
+  }
+  function chip(label, x, y, hot) {
+    var tw = PD.textWidth(label), w = tw + 8;
+    g.fillStyle = '#0c0814'; g.fillRect(x, y, w + 2, 13); g.fillStyle = hot ? '#5a4790' : '#2a2046'; g.fillRect(x + 1, y + 1, w, 11);
+    g.fillStyle = '#41346a'; g.fillRect(x + 1, y + 1, w, 1);
+    PD.text(g, label, x + 5, y + 3, hot ? '#ffe7a0' : '#e4dcf0', '#0c0814');
+    return { x: x, y: y, w: w + 2, h: 13 };
+  }
+  var chipRect = null;
+  function render() {
+    fit();
+    var cam = camera(), ox = -cam.x, oy = -cam.y, ex = [];
+    g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = false; g.fillStyle = '#0c0a14'; g.fillRect(0, 0, W, H);
+    sim.order.forEach(function (id) { var a = sim.actors[id]; ex.push({ y: a.y, draw: function (gg) { a.doll.draw(gg, a.x + ox, a.y + oy, sim.drawOpts(a)); } }); });
+    ex.push({ y: D.dummy.y, draw: function (gg) { dummy(gg, D.dummy.x + ox, D.dummy.y + oy); } });
+    SC.draw(g, clock, ex, ox, oy);
+    var vg = g.createRadialGradient(W / 2, H / 2, H * 0.45, W / 2, H / 2, W * 0.75); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(14,8,26,0.32)'); g.fillStyle = vg; g.fillRect(0, 0, W, H);
+    if (!sim.wardrobe.visible()) {
+      chipRect = chip('C  WARDROBE', 4, H - 17, false);
+      if (sim.auto) { var lb = 'DEMO  ARROWS: PLAY'; chip(lb, W - PD.textWidth(lb) - 14, 4, false); }
+    } else chipRect = null;
+    sim.wardrobe.draw(g);
+    document.getElementById('time').textContent = (clock / 1000).toFixed(1) + ' s';
+    if (!dragging) document.getElementById('scrub').value = Math.min(END, clock);
+  }
+
+  /* ---------- text state for checks and critics ---------- */
+  window.__state = function () { var s = sim.state(); s.camera = camera(); s.view = { w: W, h: H, k: K }; s.events = sim.events.slice(-6); return s; };
+  window.__seek = function (ms) { simTo(ms); render(); return window.__state(); };
+  window.__dolls = function () { var o = {}; sim.order.forEach(function (id) { o[id] = sim.actors[id].doll; }); return o; };
+
+  /* ---------- controls ---------- */
+  var ctl = document.getElementById('ctl');
+  function addSel(label, opts, val, fn) { var l = document.createElement('label'); l.textContent = label; var s = document.createElement('select'); opts.forEach(function (o) { var op = document.createElement('option'); op.value = o[0]; op.textContent = o[1]; s.appendChild(op); }); s.value = val; s.onchange = function () { fn(s.value); }; l.appendChild(s); ctl.appendChild(l); return s; }
+  addSel('Traveller outfit', [['', 'As dressed'], ['knight', 'Knight'], ['mage', 'Mage'], ['ranger', 'Ranger'], ['villager', 'Villager'], ['random', 'Random']], '', function (v) {
+    if (!v) return; sim.takeOver(); sim.hero.doll.setLook(v === 'random' ? PD.random(seedN++) : D.looks[v]);
+  });
+  (function () { var l = document.createElement('label'); l.textContent = 'Walk stride (px per frame)'; var i = document.createElement('input'); i.type = 'range'; i.min = 3; i.max = 9; i.step = 1; i.value = params.stride; i.oninput = function () { params.stride = +i.value; sim.order.forEach(function (id) { sim.actors[id].doll.params.stride = params.stride; }); }; l.appendChild(i); ctl.appendChild(l); })();
+  addSel('Equip sparkle', [['on', 'On'], ['off', 'Off']], params.sparkle ? 'on' : 'off', function (v) { params.sparkle = v === 'on'; sim.order.forEach(function (id) { sim.actors[id].doll.params.sparkleMs = params.sparkle ? 520 : 0; }); });
+  var running = true, dragging = false;
+  document.getElementById('ward').onclick = function () { sim.takeOver(); sim.wardrobe.open(); };
+  document.getElementById('play').onclick = function () { running = !running; this.textContent = running ? 'Pause' : 'Play'; };
+  document.getElementById('again').onclick = function () { simTo(0); running = true; document.getElementById('play').textContent = 'Pause'; };
+  var scrub = document.getElementById('scrub');
+  scrub.oninput = function () { dragging = true; simTo(+scrub.value); render(); };
+  scrub.onchange = function () { dragging = false; };
+
+  /* ---------- input ---------- */
+  var KEYS = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' };
+  addEventListener('keydown', function (e) {
+    var k = KEYS[e.key], wr = sim.wardrobe;
+    if (k) { e.preventDefault(); sim.takeOver(); if (wr.isOpen()) { if (!e.repeat || k === 'up' || k === 'down') wr.input(k); } else sim.keys[k] = true; return; }
+    if (e.key === 'z' || e.key === 'Z' || e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sim.takeOver(); if (!wr.input('ok')) sim.attack(); }
+    else if (e.key === 'x' || e.key === 'X' || e.key === 'Escape') { e.preventDefault(); sim.takeOver(); wr.input('back'); }
+    else if (e.key === 'c' || e.key === 'C') { e.preventDefault(); sim.takeOver(); if (wr.isOpen()) wr.close(); else { sim.keys = {}; wr.open(); } }
+  });
+  addEventListener('keyup', function (e) { if (KEYS[e.key]) sim.keys[KEYS[e.key]] = false; });
+  cv.addEventListener('pointerdown', function (e) {
+    var r = cv.getBoundingClientRect(), x = (e.clientX - r.left) * W / r.width, y = (e.clientY - r.top) * H / r.height;
+    sim.takeOver();
+    if (sim.wardrobe.pointer(x, y)) return;
+    if (chipRect && x >= chipRect.x && y >= chipRect.y && x < chipRect.x + chipRect.w && y < chipRect.y + chipRect.h) { sim.keys = {}; sim.wardrobe.open(); }
+    else sim.attack();
+  });
+
+  /* ---------- run ---------- */
+  build();
+  if (T0 != null) { sim.runTo(T0); clock = sim.clock; render(); if (FREEZE) { window.__frozen = true; return; } }
+  else render();
+  var acc = 0, prev = null;
+  function frame(now) {
+    if (prev === null) prev = now;
+    var dt = Math.min(250, now - prev); prev = now;
+    if (running && !dragging) { acc += dt; while (acc >= STEP) { sim.step(); clock = sim.clock; acc -= STEP; } if (clock > END && sim.auto) simTo(0); }
+    render();
+    requestAnimationFrame(frame);
+  }
+  addEventListener('resize', render);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

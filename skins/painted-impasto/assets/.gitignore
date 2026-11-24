@@ -1,0 +1,3 @@
+# source PNGs (1-3 MB each) and console logs stay local; their sha256 is in gen/*/meta.json and assets.json
+gen/**/*.png
+gen/**/run.log

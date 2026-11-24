@@ -1,0 +1,159 @@
+{
+  "id": "painted-ui",
+  "code": "L-06",
+  "kind": "addon",
+  "name": "UI frames & icon sheet",
+  "family": "generated-art",
+  "requires": [
+    "art-direction-lock"
+  ],
+  "oneLiner": "A generated, style-locked UI kit (nine-slice window and small frames, a selection frame, an item slot, a pointer and a 24-icon sheet), cut into game-ready files and drawn by a small helper that keeps corners unstretched at any size, centres icons at one scale and falls back to the game's old panels and shapes when a file is missing; it also registers into the skin bitmap roles so the shop and window modules pick it up.",
+  "fits": [
+    "RPG and adventure menus, shops, bags and dialogue boxes",
+    "top-down action RPG",
+    "turn-based battle and tactics menus",
+    "crafting, farming and life sims with item grids",
+    "any HD game moving from code-drawn panels and shape icons to painted UI"
+  ],
+  "notFor": [
+    "pixel-art styles (pixel8, pixel16, handheld4): painted frames on a 256x224 grid read as smeared; pixel skins ignore the kit's global registrations by design",
+    "games that need UI art generated at runtime (no generator is called by the game)",
+    "text baked into art: the kit has no words, numbers or letters; labels stay game text"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "the game's boot function (first step, ?t= fast-forward, first animation frame), moved into GameDNA_Assets' onReady callback (L-00 loader)",
+      "every panel draw site with its rect; every item / status draw site with its box; the selected-row highlight and the pointer",
+      "a map from the game's item ids to the kit's icon keys",
+      "optional: skins/skin-api.js v0.5 (frame9 and icon bitmap roles) for modules that draw through a skin"
+    ],
+    "provides": [
+      "ui.frame(ctx, rect, {variant}) -> inner rect: nine-slice window / small / select / slot frames with a panel fill, corners never stretched",
+      "ui.icon(ctx, key, x, y, size) / ui.select(ctx, rect, t) / ui.cursor(ctx, x, y, h)",
+      "ui.attach(GameDNA_Skin, {skins}): frame9 roles window/banner/tooltip/plate, icon role for every icon and alias, skin.icon() for the G-01 shop",
+      "assets.json manifest: prompts, GEN.md, model, date and sha256 of every shipped file; tools/uikit.py (icon-sheet split, nine-slice cut) and kitcheck.py"
+    ]
+  },
+  "params": [
+    {
+      "key": "kit",
+      "label": "Kit",
+      "type": "select",
+      "options": [
+        "on",
+        "split",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "scale",
+      "label": "UI scale",
+      "type": "select",
+      "options": [
+        "0.8",
+        "1",
+        "1.25"
+      ],
+      "default": "1"
+    },
+    {
+      "key": "panel",
+      "label": "Panel fill",
+      "type": "select",
+      "options": [
+        "walnut",
+        "slate",
+        "glass"
+      ],
+      "default": "walnut"
+    },
+    {
+      "key": "guides",
+      "label": "Slice guides",
+      "type": "select",
+      "options": [
+        "1",
+        "0"
+      ],
+      "default": "1"
+    }
+  ],
+  "promptParams": [
+    {
+      "key": "materials",
+      "default": "chosen from the game's world"
+    },
+    {
+      "key": "icons",
+      "default": "24 (6x4)"
+    },
+    {
+      "key": "corner",
+      "default": "about 1/12 of the canvas height"
+    },
+    {
+      "key": "panel",
+      "default": "a dark, 96 % opaque fill"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Painted kit",
+      "params": {
+        "kit": "on",
+        "scale": "1",
+        "panel": "walnut"
+      }
+    },
+    {
+      "name": "Plain vs painted",
+      "params": {
+        "kit": "split"
+      }
+    },
+    {
+      "name": "Large UI on slate",
+      "params": {
+        "kit": "on",
+        "scale": "1.25",
+        "panel": "slate"
+      }
+    },
+    {
+      "name": "Compact glass",
+      "params": {
+        "kit": "on",
+        "scale": "0.8",
+        "panel": "glass"
+      }
+    }
+  ],
+  "assets": [
+    "module/painted-ui.js: GameDNA_PaintedUI helper (one global, no dependencies; uses GameDNA_Assets from L-00)",
+    "assets/assets.json: manifest of 6 generated files (WebP, 113 KB), with prompts, GEN.md, meta and sha256 per Codex run under assets/gen/",
+    "assets/prompts/: style lock (L-00's), frames / icon-sheet briefs and the general templates.md",
+    "tools/uikit.py (icon-sheet split, nine-slice cut, slot / cursor trim), tools/build_kit.py; tools/assets/assetcheck.py frame9 check (shared)"
+  ],
+  "assetPack": {
+    "manifest": "assets/assets.json",
+    "generated": true,
+    "tool": "codex image_gen.imagegen (built-in)",
+    "date": "2026-11-16",
+    "budgetBytes": 600000,
+    "styles": "hd (non-pixel skins)",
+    "check": "tools/assets/assetcheck.py assets/assets.json; checks/kitcheck.py",
+    "regenerate": "prompt.md + assets/prompts/templates.md + tools/uikit.py + tools/assets"
+  },
+  "status": "draft",
+  "module": {
+    "file": "module/painted-ui.js",
+    "global": "GameDNA_PaintedUI",
+    "version": "1.0.0",
+    "docs": "module/README.md"
+  },
+  "skinSpec": "v0.5 bitmap roles frame9 and icon (skins/SPEC.md 2.7)"
+}

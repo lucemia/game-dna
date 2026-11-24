@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Lantern Road</title>
+<style>
+:root { --bg: #0d0a16; --ink: #ece2fa; --dim: #9a8fbc; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font: 13px/1.45 "Trebuchet MS", "Segoe UI", system-ui, -apple-system, sans-serif; }
+#wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 12px; min-height: 100vh; }
+#stage { width: 100%; max-width: 1600px; display: flex; align-items: center; justify-content: center; }
+#screen { display: block; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); touch-action: none; background: #000; }
+#bar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: center; color: var(--dim); font-size: 12px; max-width: 100%; }
+#bar b { color: var(--ink); }
+.pad { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
+.pad button { background: #241d3c; color: var(--ink); border: 1px solid #40366a; border-radius: 6px; padding: 6px 10px; font: inherit; touch-action: manipulation; }
+#info { display: none; width: 100%; max-width: 640px; background: #171228; border: 1px solid #3a3160; border-radius: 8px; padding: 8px 10px; font-size: 13px; line-height: 1.45; color: var(--ink); }
+#info b { color: #ffe7b0; } #info .dim { color: var(--dim); }
+@media (max-width: 760px) { #wrap { padding: 8px 4px; } #info { display: block; } }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage"><canvas id="screen" width="640" height="360"></canvas></div>
+  <div id="info" aria-live="polite"></div>
+  <div id="bar">
+    <span><b>The Lantern Road</b>: drag a card onto a foe (or tap the card, then the foe). Read each foe's intent, then end your turn.</span>
+    <span>Arrows choose, Z / Enter lift and play, X back, <b>E</b> end turn, <b>P</b> auto play. <b>?auto=1</b> to watch.</span>
+    <span class="pad"><button data-key="left" aria-label="Left">&#9664;</button><button data-key="right" aria-label="Right">&#9654;</button><button data-key="ok">Z</button><button data-key="back">X</button><button data-key="end">End turn</button><button data-key="auto">Auto</button></span>
+  </div>
+</div>
+<script>
+/*@@ART@@*/
+</script>
+<script>
+/*@@MODULE@@*/
+</script>
+<script>
+/*@@GAME@@*/
+</script>
+<script>
+/* ================================ ADDONS SLOT ================================
+   Paste addon modules here (or add <script src> tags right above this block) and register each one with
+   GAME.addons.push({...}). New content goes here too: GAME.addCard(id, def, {deck, pool}), GAME.addEnemy(id, def, {fight}),
+   GAME.addStatus(id, def). This block runs after window.GAME exists and BEFORE the game boots, so addons and content see
+   the first fight and every ?t=&freeze=1 fast-forwarded frame. Hooks: see README.md "Extension points". */
+</script>
+</body>
+</html>

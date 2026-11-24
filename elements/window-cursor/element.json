@@ -1,0 +1,178 @@
+{
+  "id": "window-cursor",
+  "code": "C-01",
+  "kind": "addon",
+  "name": "Bevelled window + pointer cursor",
+  "family": "ui-windows",
+  "oneLiner": "A drop-in replacement for plain text boxes and menus: bevelled gradient windows that grow from their centre when they open, a pointing glove that bobs beside the selected item and slides between items, greyed-out disabled items, a target pointer for picking units, and a placement helper that keeps every window on screen and off the sprites and HUD it must not cover.",
+  "fits": [
+    "turn-based RPG battle",
+    "top-down adventure / RPG (dialogue, shops, menus)",
+    "tactics / strategy RPG",
+    "monster battler",
+    "dungeon crawler",
+    "any game with text boxes or command menus"
+  ],
+  "notFor": [
+    "games whose menus are diegetic (in-world signs, holograms)",
+    "touch-first UIs that need large thumb buttons (rows are 10-16 native px)",
+    "text-heavy games needing scrolling lists or CJK text (one page per message, English UI)"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "a fixed 60 Hz update step (dt in ms, the module animates on it)",
+      "the screen area windows must stay inside (native px)",
+      "optional: rectangles to avoid (sprites with ids, HUD rects windows must not cover)",
+      "the host's own menu state: which menu is open, its items, which item is selected, which units are targeted"
+    ],
+    "provides": [
+      "window and pointer rectangles on screen (ui rects for other overlays to avoid)",
+      "itemAt(id, x, y) for tap / click hit tests on menu rows",
+      "a placement helper: place(w, h, want) -> a rect on screen and off the given rects"
+    ]
+  },
+  "params": [
+    {
+      "key": "open",
+      "label": "Open / close (frames)",
+      "type": "range",
+      "min": 0,
+      "max": 12,
+      "step": 1,
+      "default": 6
+    },
+    {
+      "key": "slide",
+      "label": "Cursor slide (ms)",
+      "type": "range",
+      "min": 0,
+      "max": 160,
+      "step": 10,
+      "default": 50
+    },
+    {
+      "key": "bob",
+      "label": "Cursor bob step (ms)",
+      "type": "range",
+      "min": 100,
+      "max": 500,
+      "step": 20,
+      "default": 200
+    },
+    {
+      "key": "rowH",
+      "label": "Row height (px)",
+      "type": "range",
+      "min": 10,
+      "max": 16,
+      "step": 1,
+      "default": 12
+    },
+    {
+      "key": "type",
+      "label": "Typewriter (chars/s, 0 = off)",
+      "type": "range",
+      "min": 0,
+      "max": 120,
+      "step": 10,
+      "default": 0
+    },
+    {
+      "key": "margin",
+      "label": "Gap to avoided rects (px)",
+      "type": "range",
+      "min": 0,
+      "max": 8,
+      "step": 1,
+      "default": 2
+    },
+    {
+      "key": "tint",
+      "label": "Window tint",
+      "type": "select",
+      "options": [
+        "a",
+        "n",
+        "b"
+      ],
+      "default": "a"
+    },
+    {
+      "key": "pointer",
+      "label": "Pointer art",
+      "type": "select",
+      "options": [
+        "glove",
+        "skin"
+      ],
+      "default": "glove"
+    },
+    {
+      "key": "band",
+      "label": "Selected-row band",
+      "type": "select",
+      "options": [
+        "auto",
+        "on",
+        "off"
+      ],
+      "default": "auto"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Classic 16-bit",
+      "params": {
+        "open": 6,
+        "slide": 50,
+        "bob": 200,
+        "rowH": 12,
+        "type": 0,
+        "tint": "a",
+        "pointer": "glove"
+      }
+    },
+    {
+      "name": "Snappy",
+      "params": {
+        "open": 3,
+        "slide": 30,
+        "bob": 160,
+        "rowH": 11
+      }
+    },
+    {
+      "name": "Storybook dialogue",
+      "params": {
+        "open": 8,
+        "slide": 80,
+        "bob": 260,
+        "rowH": 13,
+        "type": 40,
+        "tint": "n"
+      }
+    },
+    {
+      "name": "No motion",
+      "params": {
+        "open": 0,
+        "slide": 0,
+        "bob": 500
+      }
+    }
+  ],
+  "assets": [
+    "module/window-cursor.js: the element as one dependency-free script (global GameDNA_WindowCursor): window frames, 5x7 text with punctuation, glove pointer, layout, placement, animation, drawing; draws through GameDNA_Skin when skin-api.js is loaded, otherwise with its built-in copy of the pixel16 look",
+    "no image or audio files"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/window-cursor.js",
+    "global": "GameDNA_WindowCursor",
+    "version": "1.1.0",
+    "docs": "module/README.md"
+  }
+}

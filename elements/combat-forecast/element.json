@@ -1,0 +1,63 @@
+{
+  "id": "combat-forecast",
+  "code": "A-03",
+  "kind": "addon",
+  "name": "Combat forecast window",
+  "family": "combat-preview",
+  "oneLiner": "Before an attack is confirmed, a two-sided window shows what will happen: both units' HP now and after, damage, hit and critical chances, whether the target strikes back and for how much, an x2 badge for double attacks and arrows for weapon or type advantage, in team colours, updating live as the target or weapon changes and placed so it never covers the two units or the cursor. The game supplies every number; the module only shows them.",
+  "fits": [
+    "tactics / strategy RPG",
+    "grid skirmish or wargame with attack previews",
+    "turn-based RPG with a target-select step",
+    "monster battler (move preview)",
+    "roguelike with a melee preview"
+  ],
+  "notFor": [
+    "real-time action games (no confirm step to preview)",
+    "games that hide combat odds on purpose",
+    "games whose attacks resolve many different units at once (area previews are a different element)"
+  ],
+  "interfaces": {
+    "time": "turn",
+    "coords": "grid",
+    "layer": "ui",
+    "needs": [
+      "the target-select step: which unit attacks which, while the player is choosing (before confirm)",
+      "the game's own forecast numbers per pair: damage (number or range), hit %, crit %, strikes (x2), advantage, counter {damage, hit, crit, strikes} or none",
+      "both units' screen rects, HP and max HP, team (player / enemy / neutral), optional weapon name",
+      "a fixed update step (ms) and the screen area above the HUD (native px)",
+      "optional: the cursor rect and other rects to avoid (sprites with ids, HUD and windows without)"
+    ],
+    "provides": [
+      "the forecast window rect while it is open (ui rect for other overlays to avoid)",
+      "open / close / pair-change debug events"
+    ]
+  },
+  "params": [
+    { "key": "open", "label": "Open / close (frames)", "type": "range", "min": 0, "max": 12, "step": 1, "default": 6 },
+    { "key": "slide", "label": "Slide to a new spot (ms)", "type": "range", "min": 0, "max": 200, "step": 10, "default": 80 },
+    { "key": "place", "label": "Placement", "type": "select", "options": ["corner", "near"], "default": "corner" },
+    { "key": "rows", "label": "Rows", "type": "select", "options": ["auto", "all", "compact"], "default": "auto" },
+    { "key": "bars", "label": "HP bars", "type": "select", "options": ["on", "off"], "default": "on" },
+    { "key": "blink", "label": "HP loss blink (ms, 0 = steady)", "type": "range", "min": 0, "max": 800, "step": 20, "default": 320 },
+    { "key": "sides", "label": "Left side", "type": "select", "options": ["attacker", "team"], "default": "attacker" },
+    { "key": "margin", "label": "Gap to the units (px)", "type": "range", "min": 0, "max": 8, "step": 1, "default": 3 }
+  ],
+  "variants": [
+    { "name": "Classic 16-bit", "params": { "open": 6, "slide": 80, "place": "corner", "rows": "auto", "bars": "on", "blink": 320, "sides": "attacker", "margin": 3 } },
+    { "name": "Compact, beside the fight", "params": { "rows": "compact", "bars": "off", "place": "near", "margin": 2 } },
+    { "name": "Player always left", "params": { "sides": "team" } },
+    { "name": "No motion", "params": { "open": 0, "slide": 0, "blink": 0 } }
+  ],
+  "assets": [
+    "module/combat-forecast.js: the element as one dependency-free script (global GameDNA_CombatForecast): layout, placement, live updates, open/slide/flash animation, drawing; draws through GameDNA_Skin when skin-api.js is loaded, otherwise with its built-in copy of the pixel16 look",
+    "no image or audio files"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/combat-forecast.js",
+    "global": "GameDNA_CombatForecast",
+    "version": "1.0.0",
+    "docs": "module/README.md"
+  }
+}

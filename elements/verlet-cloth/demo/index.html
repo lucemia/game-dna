@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Verlet Rope &amp; Cloth</title>
+<style>
+:root {
+  --bg: #0b0d16; --panel: #141726; --panel2: #1a1e31; --line: #2a2f4a; --text: #edf0fa; --dim: #959cbd; --accent: #ffcf7a; --accent2: #7fd8ff; --off: #ff7a8a;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1100px 560px at 30% -12%, #2a2140 0%, var(--bg) 62%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 16px 20px 10px; max-width: 1360px; margin: 0 auto; }
+.code { white-space: nowrap; font: 700 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #2a1800; background: linear-gradient(#ffe9b8, var(--accent)); padding: 6px 8px; border-radius: 6px; box-shadow: 0 0 0 1px #00000040, 0 4px 14px #ffcf7a40; }
+h1 { font-size: 18px; margin: 0; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; max-width: 920px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 18px; padding: 0 20px 20px; max-width: 1360px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; }
+.frame { position: relative; border-radius: 14px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px #34304e, 0 24px 60px #00000090; touch-action: none; }
+#game { display: block; width: 100%; height: auto; aspect-ratio: 960 / 420; cursor: ew-resize; }
+.caption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; margin-top: 10px; color: var(--dim); font-size: 12px; }
+.caption b { color: var(--text); font-weight: 600; }
+.keys { margin-top: 8px; color: var(--dim); font-size: 12px; }
+.keys kbd { font: 600 11px ui-monospace, Menlo, monospace; background: #221f33; border: 1px solid #3a3556; border-bottom-width: 2px; border-radius: 4px; padding: 1px 5px; color: var(--text); }
+.pads { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.pads button { flex: 1 1 90px; }
+aside { background: linear-gradient(var(--panel2), var(--panel)); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+section { border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+section:last-of-type { border-bottom: 0; padding-bottom: 0; }
+h2 { display: flex; align-items: center; justify-content: space-between; margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.row { margin-bottom: 8px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 3px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 5px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--fill), #2c2842 var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 15px; height: 15px; border-radius: 50%; background: #fff8ea; box-shadow: 0 0 0 3px #ffcf7a55, 0 2px 6px #000a; cursor: pointer; }
+.seg { display: flex; background: #0e0d17; border: 1px solid var(--line); border-radius: 8px; padding: 2px; gap: 2px; }
+.seg button { flex: 1; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 4px; border-radius: 6px; cursor: pointer; }
+.seg button[aria-checked=true] { background: #2b2840; color: var(--text); box-shadow: inset 0 0 0 1px #4a4468; }
+.btn { appearance: none; border: 1px solid #3a3556; background: #1f1c2e; color: var(--text); border-radius: 9px; padding: 9px 10px; font: 600 12.5px/1 inherit; cursor: pointer; }
+.btn:active { transform: scale(.98); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips button { appearance: none; border: 1px solid #3a3556; background: #1a1828; color: var(--text); border-radius: 999px; padding: 5px 10px; font: 600 12px/1 inherit; cursor: pointer; }
+.chips button.on { border-color: var(--accent); color: var(--accent); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.note { color: var(--dim); font-size: 11.5px; margin: 4px 0 0; }
+.stat { font: 11.5px/1.55 ui-monospace, Menlo, monospace; color: var(--dim); }
+.stat b { color: var(--text); font-weight: 600; }
+.chk { display: flex; align-items: center; gap: 8px; font-size: 12.5px; cursor: pointer; margin-top: 4px; }
+@media (max-width: 1040px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 680px; width: 100%; margin: 0 auto; } }
+@media (max-width: 560px) { header { padding: 12px 16px 8px; } main { padding: 0 16px 16px; gap: 12px; } .frame { border-radius: 10px; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">E-12</span>
+  <div><h1>Verlet rope &amp; cloth</h1><p>Capes, scarves, plumes, banners, ropes and chains that swing with movement and wind: a few dozen points and distance constraints per piece, pinned to a moving anchor, with gravity, damping, gusts from game time and a ground line. It only reads the anchor and only draws, so hit boxes and rules never change. Press <b>Off | On</b> (or drag on the game) for a divider: <b>left of it</b> the same scene with baked cloth (a fixed shape, as older games drew it), <b>right of it</b> the solver.</p></div>
+</header>
+<main>
+  <div id="stage">
+    <div class="frame"><canvas id="game" width="960" height="420"></canvas></div>
+    <div class="caption">
+      <span id="cap-mode"><b>HD</b> 960&times;420</span>
+      <span id="cap-time">t <b>0.00 s</b></span>
+      <span id="cap-pts">points <b>0</b></span>
+      <span id="cap-ms">solver <b>0.00 ms</b></span>
+    </div>
+    <div class="pads">
+      <button class="btn" id="b-left">&larr; Run</button>
+      <button class="btn" id="b-right">Run &rarr;</button>
+      <button class="btn" id="b-jump">Jump (Z)</button>
+      <button class="btn" id="b-swing">Swing (X)</button>
+      <button class="btn" id="b-blink">Blink (C)</button>
+      <button class="btn" id="b-gust">Gust (G)</button>
+    </div>
+    <p class="keys"><kbd>&larr;</kbd><kbd>&rarr;</kbd> run &middot; <kbd>Z</kbd> jump &middot; <kbd>X</kbd> swing (knocks the lantern) &middot; <kbd>C</kbd> blink 300 px (a teleport: the cape comes along, no rubber band) &middot; <kbd>G</kbd> gust &middot; <kbd>S</kbd> slow motion. A key takes over from the script; &ldquo;Script&rdquo; gives it back.</p>
+  </div>
+  <aside>
+    <section>
+      <h2>Playback</h2>
+      <div class="row"><label>Speed</label><div class="seg" id="slow"><button data-v="1" aria-checked="true">1&times;</button><button data-v="0.35" aria-checked="false">0.35&times;</button><button data-v="0.12" aria-checked="false">0.12&times;</button></div></div>
+      <div class="two">
+        <div class="row"><label>Render</label><div class="seg" id="mode"><button data-v="hd" aria-checked="true">HD</button><button data-v="pixel" aria-checked="false">Pixel</button></div></div>
+        <div class="row"><label>Drive</label><div class="seg" id="drive"><button data-v="script" aria-checked="true">Script</button><button data-v="play" aria-checked="false">Play</button></div></div>
+      </div>
+      <div class="row"><label>Compare (drag on the game) <output id="o-split">0 %</output></label><div class="seg" id="split"><button data-v="0" aria-checked="true">All on</button><button data-v="50" aria-checked="false">Off | On</button><button data-v="100" aria-checked="false">All off</button></div></div>
+      <label class="chk"><input type="checkbox" id="dbg"> Show points and constraints</label>
+    </section>
+    <section>
+      <h2>Presets</h2>
+      <div class="chips" id="variants"></div>
+    </section>
+    <section>
+      <h2>Parameters</h2>
+      <div id="params"></div>
+      <div class="two">
+        <div class="row"><label>Outline</label><div class="seg" id="outline"><button data-v="auto" aria-checked="true">auto</button><button data-v="on" aria-checked="false">on</button><button data-v="off" aria-checked="false">off</button></div></div>
+        <div class="row"><label>Pixel snap</label><div class="seg" id="snap"><button data-v="auto" aria-checked="true">auto</button><button data-v="pixel" aria-checked="false">pixel</button><button data-v="smooth" aria-checked="false">smooth</button></div></div>
+      </div>
+      <div class="two">
+        <div class="row"><label>Reduced motion</label><div class="seg" id="reduced"><button data-v="system" aria-checked="true">system</button><button data-v="on" aria-checked="false">on</button><button data-v="off" aria-checked="false">off</button></div></div>
+        <div class="row"><label>HD look</label><div class="seg" id="look"><button data-v="painted" aria-checked="true">painted</button><button data-v="flat" aria-checked="false">flat</button></div></div>
+      </div>
+    </section>
+    <section>
+      <h2>Solver (right side)</h2>
+      <div class="stat" id="stat"></div>
+      <p class="note">Fixed 1/120 s sub-steps from game time only, so <code>?t=&amp;freeze=1</code> gives the same frame every run. A blink moves the anchor 300 px in one step: the cloth is carried over (a snap), never stretched across the screen.</p>
+    </section>
+  </aside>
+</main>
+<script src="../module/verlet-cloth.js"></script>
+<script src="../../../demo-kit/kit-art.js"></script>
+<script src="../../cutout-characters/module/cutout-characters.js"></script>
+<script src="../../cutout-characters/assets/pack.js"></script>
+<script src="../../../demo-kit/kit.js"></script>
+<script>
+"use strict";
+(() => {
+  const CL = window.GameDNA_Cloth, KIT = window.GameDNA_DemoKit;   // KIT: the shared painted demo cast + backdrops (demo-kit/)
+  const qs = new URLSearchParams(location.search);
+  const LW = 960, LH = 420, GROUND = 352, STEP = 1000 / 60, LOOP = 600, U = 1.15, HH = 152, HK = HH / 118, JV = 8.4;   // HH: hero height px (about 100 px on a 640 px wide card); HK: the pins and hero cloth were laid out at 118   // U: px per unit (420 px tall view)
+  const PARAMS = [
+    { key: 'wind', label: 'Wind (+ blows right)', min: -3, max: 3, step: 0.05 },
+    { key: 'gust', label: 'Gustiness', min: 0, max: 1, step: 0.05 },
+    { key: 'stiffness', label: 'Stiffness', min: 0, max: 1, step: 0.05 },
+    { key: 'segments', label: 'Segments (cape, scarf)', min: 2, max: 24, step: 1 },
+    { key: 'damping', label: 'Damping', min: 0, max: 0.3, step: 0.005 },
+    { key: 'gravity', label: 'Gravity', min: 0, max: 3, step: 0.05 },
+    { key: 'drape', label: 'Drape (toward the back)', min: 0, max: 2, step: 0.05 },
+    { key: 'shade', label: 'Shading', min: 0, max: 1, step: 0.05 },
+  ];
+  const DEF = { wind: 0.5, gust: 0.5, stiffness: 0.8, damping: 0.03, gravity: 1, segments: 8, drape: 0.5, shade: 1, outline: 'auto', snap: 'auto', reduced: 'system', texture: 1, look: 'painted' };
+  const VARIANTS = [
+    ['Breezy (default)', {}],
+    ['Still air', { wind: 0, gust: 0 }],
+    ['Storm', { wind: 1.8, gust: 1, damping: 0.02 }],
+    ['Heavy wool', { stiffness: 1, damping: 0.08, gravity: 1.4, drape: 0.8, wind: 0.3 }],
+    ['Silk', { stiffness: 0.55, damping: 0.01, gravity: 0.7, wind: 0.7 }],
+    ['Low-cost', { segments: 4, stiffness: 0.5 }],
+    ['Underwater', { gravity: 0.25, damping: 0.12, wind: 0.15, gust: 1 }],
+  ];
+  const P = Object.assign({}, DEF);
+  for (const k in DEF) if (qs.has(k)) P[k] = typeof DEF[k] === 'number' ? Number(qs.get(k)) : qs.get(k);
+  let slow = Number(qs.get('slow')) || 1, mode = qs.get('mode') === 'pixel' ? 'pixel' : 'hd', drive = qs.get('drive') === 'play' ? 'play' : 'script';
+  let split = qs.has('split') ? Math.max(0, Math.min(100, Number(qs.get('split')))) : 0, dbg = qs.get('debug') === '1';
+  const FREEZE = qs.get('freeze') === '1', T0 = qs.has('t') ? Math.max(0, Number(qs.get('t')) || 0) : null;
+
+  // ---------------------------------------------------------------- canvases
+  const cv = document.getElementById('game'), ctx = cv.getContext('2d');
+  const low = document.createElement('canvas'); low.width = LW / 3; low.height = LH / 3;   // pixel mode: 320x140, whole-pixel scaled
+  const lctx = low.getContext('2d');
+
+  // ---------------------------------------------------------------- world state (deterministic from the step count + input)
+  let W;
+  function reset() {
+    W = { f: 0, hero: { x: 250, y: GROUND, vx: 0, vy: 0, ground: true, facing: 1, swing: 0, blink: 0, trail: [] }, lantern: 0, gustT: 0, events: [], pin: null };
+    hero.reset(); pinHero();
+  }
+  // the hero's body: a rigged kit character. Its pose advances in step(); the cloth pins are read from its joints every step
+  const hero = KIT.actor('mage', { h: HH });
+  function pinHero() {
+    // (offsets retuned 2026-11-17: since L-10 v1.2.4 the head sits lower on a 4 % larger body, and the old pins put the scarf over the mouth)
+    // the kit's 'chest' point sits on this rig's upper back (it moves less than the head in a swing): shoulders, neck and knot are placed from it
+    const h = W.hero, f = h.facing, o = { h: HH, facing: f }, n = hero.point('chest', h.x, h.y, o), at = (dx, dy) => ({ x: n.x + f * dx * HK, y: n.y + dy * HK });
+    const a = hero.point('hand', h.x, h.y, o), b = hero.point('tip', h.x, h.y, o);
+    // the white plume is a tassel tied under the staff's head
+    W.pin = { neck: at(11.5, 8), cape: at(6, 11), scarf: at(3, 7), plume: { x: a.x + (b.x - a.x) * 0.7 - f * 2 * HK, y: a.y + (b.y - a.y) * 0.7 }, facing: f };
+  }
+  reset();
+  // scripted input per frame of a 10 s loop
+  function scriptInput(f) {
+    const t = f % LOOP, i = { left: false, right: false, jump: false, swing: false, blink: false, gust: false };
+    if (t >= 90 && t < 210) i.right = true;                 // run right (cape trails)
+    if (t === 160) i.jump = true;                            // jump mid-run
+    if (t === 262) i.swing = true;                           // stopped under the lantern, facing it: the swing knocks it
+    if (t === 330) i.blink = true;                           // blink 300 px left: a teleport
+    if (t === 380) i.gust = true;                            // a strong gust
+    if (t >= 470 && t < 540) i.right = true;                 // walk back
+    return i;
+  }
+  const held = new Set(), taps = new Set();
+  function humanInput() {
+    const i = { left: held.has('left'), right: held.has('right'), jump: taps.has('jump'), swing: taps.has('swing'), blink: taps.has('blink'), gust: taps.has('gust') };
+    taps.clear(); return i;
+  }
+  const LANTERN_X = 716, BEAM_Y = 82;   // the beam clears the hero's jump (head and staff)
+  // the staff's upper half in world px, as the rig draws it this step (hand -> tip)
+  function bladePts(h) {
+    const o = { h: HH, facing: h.facing }, a = hero.point('hand', h.x, h.y, o), b = hero.point('tip', h.x, h.y, o), out = [];
+    for (let k = 0.5; k <= 1.001; k += 0.1) out.push([a.x + (b.x - a.x) * k, a.y + (b.y - a.y) * k]);
+    return out;
+  }
+  function step() {
+    const inp = drive === 'script' ? scriptInput(W.f) : humanInput();
+    const h = W.hero;
+    if (drive === 'script' && W.f % LOOP === 0) { h.x = 250; h.vx = 0; h.facing = 1; }
+    const dir = (inp.right ? 1 : 0) - (inp.left ? 1 : 0);
+    if (dir) h.facing = dir;
+    h.vx += (dir * 3.4 - h.vx) * (h.ground ? 0.2 : 0.08);
+    if (inp.jump && h.ground) { h.vy = -JV; h.ground = false; }
+    h.vy += 0.42; h.y += h.vy; h.x += h.vx;
+    if (h.y >= GROUND) { h.y = GROUND; h.vy = 0; h.ground = true; }
+    if (h.x < 60) { h.x = 60; h.vx = 0; } if (h.x > LW - 60) { h.x = LW - 60; h.vx = 0; }
+    // the body's pose for this step (walk cycle speed from the ground speed, so planted feet do not slide)
+    hero.walk(h.ground ? h.vx * 60 : 0);
+    if (h.ground) hero.pose(null); else hero.pose('jump', Math.max(0, Math.min(1, (h.vy + JV) / (2 * JV))));
+    if (inp.swing && h.swing === 0) { h.swing = 18; h.hit = false; hero.play('attack', { dur: 430 }); }
+    hero.update(STEP, { facing: h.facing });
+    if (h.swing > 0) {
+      h.swing--;
+      if (h.swing === 12) cloth.impulse('hero', -h.facing * 560, -160);     // the swing whips the cape
+      // hit test: the drawn staff crosses the lantern's body (the lamp lanternBody() paints under the chain's tip), once per swing
+      if (h.swing <= 12 && h.swing >= 5 && !h.hit) {
+        const lt = cloth.tip('lantern');
+        if (lt && bladePts(h).some(([bx, by]) => Math.abs(bx - lt.x) <= 15 && by >= lt.y - 2 && by <= lt.y + 50)) {
+          h.hit = true; cloth.impulse('lantern', h.facing * 300, -40); W.lantern = 20; W.lanternHits = (W.lanternHits || 0) + 1;
+        }
+      }
+    }
+    if (inp.blink) { h.trail = [h.x, h.y, h.facing]; h.blink = 24; h.x += h.facing > 0 ? 300 : -300; if (h.x > LW - 60) h.x -= 600; if (h.x < 60) h.x += 600; h.facing = -h.facing; }
+    if (h.blink > 0) h.blink--;
+    if (W.lantern > 0) W.lantern--;
+    if (inp.gust) { cloth.gust(2.2, 1100, 1); baked.gust(0, 1); W.gustT = 66; }
+    if (W.gustT > 0) W.gustT--;
+    W.f++;
+    pinHero();   // after every move of this step (run, jump, blink), right before the cloth reads its anchors
+    cloth.update(STEP); baked.update(STEP);
+  }
+
+  // ---------------------------------------------------------------- cloth (one live instance, one "baked" instance)
+  // hero pieces are pinned on the rig's joints (W.pin, refreshed every step): shoulders for the cape, the neck knot for the scarf, under the staff's head for the plume (a tassel)
+  const heroAnchor = k => () => ({ x: W.pin[k].x, y: W.pin[k].y, facing: W.hero.facing });
+  const ATT = [
+    ['hero-cape', { kind: 'cape', group: 'hero', anchor: heroAnchor('cape'), length: 60 * HK, width: 26 * HK, cols: 5, color: '#a3283a', color2: '#5a1830', trim: '#e2b552', body: [9 * HK, 18 * HK, 15 * HK] }],
+    ['hero-scarf', { kind: 'scarf', group: 'hero', anchor: heroAnchor('scarf'), length: 26 * HK, width: 8 * HK, color: '#3a6cb4', color2: '#1f3f80', layer: 'back' }],
+    ['hero-plume', { kind: 'hair', group: 'hero', layer: 'front', anchor: heroAnchor('plume'), length: 24 * HK, width: 9 * HK, taper: 0.45, color: '#d8582f', color2: '#7a2a22', segments: 6 }],
+    ['lantern', { kind: 'chain', group: 'lantern', anchor: () => ({ x: LANTERN_X, y: BEAM_Y + 4 }), length: 118, width: 7, color: '#a7afbd', segments: 9 }],
+    ['bellrope', { kind: 'rope', group: 'post', anchor: () => ({ x: 800, y: BEAM_Y + 4 }), length: 150, width: 3.2, color: '#b48a52', segments: 12 }],
+    ['banner-a', { kind: 'banner', group: 'pole-a', anchor: () => ({ x: 108, y: 168, facing: 1 }), length: 70, width: 42, cols: 4, segments: 8, flutter: 2, drag: 2, color: '#2f6f62', color2: '#1d4a44', trim: '#e2b552' }],
+    ['banner-b', { kind: 'banner', group: 'pole-b', anchor: () => ({ x: 884, y: 150, facing: 1 }), length: 62, width: 36, cols: 4, segments: 8, flutter: 2, drag: 2, color: '#6a3f8f', color2: '#3f2560', trim: '#f0d68a' }],
+    ['streamer', { kind: 'ribbon', group: 'post', anchor: () => ({ x: 640, y: BEAM_Y + 8 }), length: 74, width: 6, color: '#e6b347', color2: '#a8742a', segments: 10 }],
+  ];
+  const opts = () => ({ wind: P.wind, gust: P.gust, stiffness: P.stiffness, damping: P.damping, gravity: P.gravity, segments: P.segments, drape: P.drape, shade: P.shade, outline: P.outline, snap: P.snap, reduced: P.reduced, texture: P.texture, look: P.look });
+  let cloth, baked;
+  const SUN = { x: -0.8, y: -0.6 };   // toward the low sun on the left of the backdrop: the module shades every piece from it
+  function makeCloth() {
+    cloth = CL.create({ params: opts(), scale: U, ground: GROUND - 1, light: SUN });
+    baked = CL.create({ params: Object.assign(opts(), { wind: 0, gust: 0 }), scale: U, ground: GROUND - 1, light: SUN });
+    // baked = the same pieces, settled once in still air and carried rigidly (what a fixed sprite cape does)
+    for (const [id, o] of ATT) { cloth.attach(id, o); baked.attach(id, Object.assign({}, o, { rigid: true })); }
+  }
+  makeCloth();
+
+  // ---------------------------------------------------------------- art (painted backdrop + rigged hero from the shared demo kit; timber, poles and fittings painted in code to match)
+  const INK = '#2b1a14';
+  const hsh = (a, b) => { const s = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return s - Math.floor(s); };
+  function scene(g) {
+    KIT.backdrop(g, 'meadow-dusk', { x: 0, y: 0, w: LW, h: LH, groundY: GROUND + 6 });
+  }
+  // a timber: lit side (the low sun is on the left) -> core -> shade side, ink line, grain, knots. Axis-aligned; long = the grain axis
+  function timber(g, x, y, w, h, seed) {
+    const vert = h > w, gr = vert ? g.createLinearGradient(x, 0, x + w, 0) : g.createLinearGradient(0, y, 0, y + h);
+    gr.addColorStop(0, '#c98f58'); gr.addColorStop(0.28, '#9a6a40'); gr.addColorStop(0.7, '#6e4830'); gr.addColorStop(1, '#4a2e22');
+    g.save(); g.lineJoin = 'round'; g.lineCap = 'round';
+    g.fillStyle = gr; g.strokeStyle = INK; g.lineWidth = 1.7;
+    g.beginPath(); g.roundRect(x, y, w, h, 1.6); g.fill();
+    g.save(); g.beginPath(); g.roundRect(x, y, w, h, 1.6); g.clip();
+    const L = vert ? h : w, T = vert ? w : h, n = Math.max(3, Math.round(L / 13));
+    for (let i = 0; i < n; i++) {   // grain: short dark strokes and a few warm ones, along the long axis
+      const a = hsh(i, seed) * L, len = 8 + hsh(i, seed + 1) * 22, o = (0.18 + 0.68 * hsh(i, seed + 2)) * T, warm = hsh(i, seed + 3) > 0.7;
+      g.strokeStyle = warm ? 'rgba(244,190,128,0.5)' : 'rgba(52,28,20,0.5)'; g.lineWidth = warm ? 0.9 : 1;
+      g.beginPath();
+      if (vert) { g.moveTo(x + o, y + a); g.quadraticCurveTo(x + o + 0.8, y + a + len / 2, x + o - 0.3, y + a + len); }
+      else { g.moveTo(x + a, y + o); g.quadraticCurveTo(x + a + len / 2, y + o + 0.8, x + a + len, y + o - 0.3); }
+      g.stroke();
+    }
+    for (let i = 0; i < Math.max(1, Math.round(L / 90)); i++) {   // knots
+      const a = (0.15 + 0.7 * hsh(i, seed + 7)) * L, o = (0.35 + 0.3 * hsh(i, seed + 8)) * T, kx = vert ? x + o : x + a, ky = vert ? y + a : y + o;
+      g.fillStyle = 'rgba(48,26,18,0.75)'; g.beginPath(); g.ellipse(kx, ky, vert ? 1.5 : 2.4, vert ? 2.4 : 1.5, 0, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = 'rgba(48,26,18,0.4)'; g.lineWidth = 0.8; g.beginPath(); g.ellipse(kx, ky, vert ? 2.8 : 4.4, vert ? 4.4 : 2.8, 0, 0, Math.PI * 2); g.stroke();
+    }
+    // warm rim on the lit edge, cool bounce on the shade edge
+    g.fillStyle = 'rgba(255,214,150,0.5)'; if (vert) g.fillRect(x + 1, y, 1.2, h); else g.fillRect(x, y + 1, w, 1.2);
+    g.fillStyle = 'rgba(120,90,150,0.28)'; if (vert) g.fillRect(x + w - 2.2, y, 1.4, h); else g.fillRect(x, y + h - 2.2, w, 1.4);
+    g.restore();
+    g.beginPath(); g.roundRect(x, y, w, h, 1.6); g.stroke();
+    g.restore();
+  }
+  // an iron band / ring with an ink line and a highlight
+  function iron(g, x, y, w, h) {
+    const gr = g.createLinearGradient(x, y, x + w, y + h); gr.addColorStop(0, '#8d8894'); gr.addColorStop(0.5, '#514c5c'); gr.addColorStop(1, '#2e2a38');
+    g.save(); g.fillStyle = gr; g.strokeStyle = INK; g.lineWidth = 1.4; g.lineJoin = 'round';
+    g.beginPath(); g.roundRect(x, y, w, h, 1.2); g.fill(); g.stroke();
+    g.fillStyle = 'rgba(255,226,180,0.55)'; g.fillRect(x + 1, y + 1, Math.max(1, w * 0.3), 1);
+    g.restore();
+  }
+  // an eye bolt under a beam: the ring a rope or chain hangs from, centred on the pin (x, y)
+  function eyeBolt(g, x, y) {
+    g.save(); g.lineCap = 'round';
+    g.strokeStyle = INK; g.lineWidth = 4.2; g.beginPath(); g.moveTo(x, y - 8); g.lineTo(x, y - 4); g.stroke(); g.beginPath(); g.arc(x, y - 0.5, 3.6, 0, Math.PI * 2); g.stroke();
+    g.strokeStyle = '#6a6474'; g.lineWidth = 2; g.beginPath(); g.moveTo(x, y - 8); g.lineTo(x, y - 4); g.stroke(); g.beginPath(); g.arc(x, y - 0.5, 3.6, 0, Math.PI * 2); g.stroke();
+    g.strokeStyle = 'rgba(255,226,180,0.7)'; g.lineWidth = 0.9; g.beginPath(); g.arc(x, y - 0.5, 3.6, Math.PI * 1.05, Math.PI * 1.55); g.stroke();
+    g.restore();
+  }
+  // grass tufts round a post foot: tapered blades in the backdrop's greens, leaning with the live wind
+  function tuft(g, x, y, n, seed, spread) {
+    const t = W.f / 60, w0 = cloth.wind(x, y).x / (220 * U);
+    for (let i = 0; i < n; i++) {
+      const bx = x + (hsh(i, seed) - 0.5) * spread, hgt = 7 + hsh(i, seed + 1) * 9, lean = Math.max(-1.3, Math.min(1.3, w0 * 0.9 + 0.14 * Math.sin(t * 3 + bx))) * hgt * 0.55 + (hsh(i, seed + 2) - 0.5) * 4;
+      g.fillStyle = ['#6b6e2c', '#8a8a3a', '#b5a648', '#59602a'][i % 4];
+      g.beginPath(); g.moveTo(bx - 1, y + 1); g.quadraticCurveTo(bx - 0.5 + lean * 0.3, y - hgt * 0.6, bx + lean, y - hgt); g.quadraticCurveTo(bx + 0.7 + lean * 0.4, y - hgt * 0.5, bx + 1, y + 1); g.closePath(); g.fill();
+    }
+  }
+  // packed earth round a post foot (the path's colours)
+  function mound(g, x, y, r, seed) {
+    const gr = g.createLinearGradient(x - r, 0, x + r, 0); gr.addColorStop(0, '#d0895c'); gr.addColorStop(0.5, '#b06a48'); gr.addColorStop(1, '#84503c');
+    g.save(); KIT.shadow(g, x + 3, y + 3, r * 1.25, 4, 0.3); g.fillStyle = gr; g.beginPath(); g.moveTo(x - r, y + 3); g.quadraticCurveTo(x - r * 0.5, y - 5, x, y - 4.5); g.quadraticCurveTo(x + r * 0.6, y - 5, x + r, y + 3); g.quadraticCurveTo(x, y + 6, x - r, y + 3); g.fill();
+    g.strokeStyle = 'rgba(70,34,26,0.6)'; g.lineWidth = 1; g.beginPath(); g.moveTo(x - r * 0.8, y + 0.5); g.quadraticCurveTo(x - r * 0.45, y - 4.6, x, y - 4.5); g.quadraticCurveTo(x + r * 0.55, y - 4.8, x + r * 0.85, y + 0.8); g.stroke();
+    g.restore();
+  }
+  // wind grass along the path's far verge: blades lean with the live wind at their place
+  function verge(g) { for (let x = 10; x < LW; x += 30 + hsh(x, 4) * 44) tuft(g, x, 299 + hsh(x, 6) * 4, 5 + Math.floor(hsh(x, 9) * 4), x, 22); }
+  const POLES = [[108, 140, 11], [884, 128, 23]], POST_X = 818, POST_W = 15, BEAM_X = 590, BEAM_W = 262, BEAM_H = 13, FOOT = GROUND - 14;
+  function props(g) {
+    // banner poles: a tapered wooden pole, iron bands where the banner is tied, a gilt finial
+    for (const [x, top, seed] of POLES) {
+      KIT.shadow(g, x + 8, FOOT + 1, 26, 4, 0.4);
+      timber(g, x - 4, top, 8, FOOT - top, seed);
+      iron(g, x - 5.5, FOOT - 9, 11, 5);
+      const by = top + 26 - (seed === 23 ? 6 : 0);   // the banner's pinned edge starts here
+      iron(g, x - 5, by - 3, 10, 4); iron(g, x - 5, by + (seed === 23 ? 40 : 47), 10, 4);
+      const fg = g.createRadialGradient(x - 2, top - 8, 0.5, x, top - 6, 6.5); fg.addColorStop(0, '#fff0b8'); fg.addColorStop(0.45, '#e9b84e'); fg.addColorStop(1, '#8a5a1e');
+      g.save(); g.fillStyle = fg; g.strokeStyle = INK; g.lineWidth = 1.5;
+      g.beginPath(); g.arc(x, top - 6, 5.6, 0, Math.PI * 2); g.fill(); g.stroke();
+      iron(g, x - 5, top - 1, 10, 3.5); g.restore();
+      mound(g, x, FOOT, 15, seed);
+    }
+    // the lantern frame: a post, a beam on top of it, a diagonal brace, lashed with rope and iron, eye bolts for what hangs
+    KIT.shadow(g, POST_X + POST_W / 2 + 10, FOOT + 1, 34, 5, 0.42);
+    g.save(); g.translate(POST_X - 15, BEAM_Y + 27); g.rotate(Math.PI / 4); timber(g, -4, -31, 8, 62, 5); g.restore();   // brace (behind the post and beam)
+    timber(g, POST_X, BEAM_Y + 4, POST_W, FOOT - BEAM_Y - 4, 3);
+    timber(g, BEAM_X, BEAM_Y - 5, BEAM_W, BEAM_H, 9);
+    // end grain on the beam's free end, pegs, a rope lashing at the joint, an iron shoe at the foot
+    g.save(); g.fillStyle = '#d9a66c'; g.strokeStyle = INK; g.lineWidth = 1.2; g.beginPath(); g.ellipse(BEAM_X + 2.5, BEAM_Y + 1.5, 2.2, 5.2, 0, 0, Math.PI * 2); g.fill(); g.stroke();
+    g.strokeStyle = 'rgba(90,52,30,0.7)'; g.lineWidth = 0.8; g.beginPath(); g.ellipse(BEAM_X + 2.5, BEAM_Y + 1.5, 1, 2.6, 0, 0, Math.PI * 2); g.stroke();
+    for (let i = 0; i < 4; i++) {   // lashing: light rope turns with ink between
+      const lx = POST_X - 2 + i * 4.6; g.fillStyle = i % 2 ? '#c9a66c' : '#e2c48c'; g.strokeStyle = INK; g.lineWidth = 1;
+      g.beginPath(); g.roundRect(lx, BEAM_Y - 7, 4.6, BEAM_H + 4, 1.8); g.fill(); g.stroke();
+    }
+    g.restore();
+    iron(g, POST_X - 2, FOOT - 11, POST_W + 4, 6); iron(g, POST_X - 1.5, BEAM_Y + 78, POST_W + 3, 4.5);
+    for (const px of [640, LANTERN_X, 800]) eyeBolt(g, px, BEAM_Y + (px === 640 ? 8 : 4) + 0.5);
+    mound(g, POST_X + POST_W / 2, FOOT, 22, 41);
+  }
+  // the lantern: the kit's painted lamp head (cut from the `lamp` prop) hanging from the chain's last link, turning with it
+  const LAMP = { sx: 96, sy: 58, sw: 92, sh: 146, hookX: 49, hookY: 6, h: 50 };   // source rect in lamp.webp; hook = the ring on its top
+  let lampIm = null;
+  function lanternBody(g, c) {
+    const tp = c.tip('lantern'); if (!tp) return;
+    const pts = c.points('lantern'), a = pts && pts.length > 1 ? pts[pts.length - 2] : { x: tp.x, y: tp.y - 1 };
+    const rot = Math.max(-1.1, Math.min(1.1, Math.atan2(-(tp.x - a.x), tp.y - a.y))), hot = W.lantern > 0 ? W.lantern / 20 : 0;
+    const s = LAMP.h / LAMP.sh, cx = tp.x - Math.sin(rot) * 28, cy = tp.y + Math.cos(rot) * 28;   // the flame's place
+    if (lampIm) {
+      g.save(); g.translate(tp.x, tp.y); g.rotate(rot); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+      g.beginPath(); for (const [qx, qy] of [[122, 58], [188, 58], [188, 204], [96, 204], [96, 86], [122, 86]]) g.lineTo((qx - LAMP.sx - LAMP.hookX) * s, (qy - LAMP.sy - LAMP.hookY) * s - 2);   // without the bracket's curl
+      g.closePath(); g.clip();
+      g.drawImage(lampIm, LAMP.sx, LAMP.sy, LAMP.sw, LAMP.sh, -LAMP.hookX * s, -LAMP.hookY * s - 2, LAMP.sw * s, LAMP.sh * s); g.restore();
+    } else {   // no kit art: a plain lantern
+      g.fillStyle = '#2a2230'; g.fillRect(tp.x - 9, tp.y, 18, 4); g.fillRect(tp.x - 7, tp.y + 22, 14, 4); g.fillStyle = '#ffd98a'; g.fillRect(tp.x - 7, tp.y + 4, 14, 18);
+    }
+    KIT.flame(g, cx, cy, 58 + hot * 26, W.f * STEP);
+    if (hot > 0) KIT.flame(g, cx, cy, 30 + hot * 30, W.f * STEP + 400);
+  }
+  // the hero: the kit's rigged mage (a real walk cycle, jump pose, staff swing); the cape, scarf and plume are the simulated cloth
+  function heroBody(g, x, y, facing, alpha) {
+    const air = GROUND - y;   // in a jump the shadow stays on the ground and shrinks
+    if (alpha == null && air > 0.5) KIT.shadow(g, x, GROUND + 1, HH * 0.24 * Math.max(0.55, 1 - air / 160), 4, 0.36);
+    if (!hero.draw(g, x, y, { h: HH, facing, alpha: alpha == null ? 1 : alpha, shadow: alpha == null && air <= 0.5 })) {   // art missing: a plain stand-in
+      g.fillStyle = '#5a3a4a'; g.fillRect(x - 12, y - HH, 24, HH);
+    }
+  }
+  // the cord that ties the plume under the staff's head
+  function tassel(g) {
+    const p = W.pin.plume;
+    g.save(); g.fillStyle = '#e6b54a'; g.strokeStyle = '#5a3414'; g.lineWidth = 1; g.beginPath(); g.ellipse(p.x, p.y, 3.2 * HK, 2.4 * HK, 0, 0, Math.PI * 2); g.fill(); g.stroke(); g.restore();
+  }
+  // the scarf's wrap round the neck and the cape's clasp, painted over the body at the pins (their tails are cloth)
+  function fittings(g) {
+    const f = W.hero.facing, p = W.pin;
+    g.save(); g.lineJoin = 'round'; g.lineCap = 'round';
+    g.translate(p.neck.x, p.neck.y); g.scale(f * HK, HK);
+    const gr = g.createLinearGradient(-10, 0, 10, 0); gr.addColorStop(0, '#254a90'); gr.addColorStop(0.55, '#3a6cb4'); gr.addColorStop(1, '#6f9cd8');
+    const EDGE = '#1c2c5e';   // the scarf's own edge line: a darker hue of the cloth, as the module draws its tails
+    g.fillStyle = gr; g.strokeStyle = EDGE; g.lineWidth = 0.9;
+    g.beginPath(); g.moveTo(-10.5, -3.5); g.quadraticCurveTo(0, 2.5, 9.5, -4.5); g.lineTo(10, 1.5); g.quadraticCurveTo(0, 9, -11.5, 3); g.closePath(); g.fill(); g.stroke();
+    g.strokeStyle = 'rgba(24,46,100,0.7)'; g.lineWidth = 1; g.beginPath(); g.moveTo(-6, 0.5); g.quadraticCurveTo(-2, 4, 3, 3.6); g.stroke();
+    g.strokeStyle = 'rgba(190,220,255,0.55)'; g.lineWidth = 0.9; g.beginPath(); g.moveTo(-8.5, -2); g.quadraticCurveTo(0, 3.6, 8, -3); g.stroke();   // light on the wrap's upper fold
+    g.strokeStyle = 'rgba(20,30,80,0.35)'; g.lineWidth = 1.6; g.beginPath(); g.moveTo(-9, 3.2); g.quadraticCurveTo(0, 7.6, 8.6, 1.6); g.stroke();   // its under side
+    // knot at the back, where the tails start
+    g.fillStyle = '#2c5aa2'; g.strokeStyle = EDGE; g.lineWidth = 0.9; g.beginPath(); g.ellipse(-10.5, 0.5, 3.4, 4.2, 0.3, 0, Math.PI * 2); g.fill(); g.stroke();
+    // cape clasp on the near shoulder
+    const cg = g.createRadialGradient(-7.5, 8.5, 0.4, -6.5, 9.5, 4.5); cg.addColorStop(0, '#fff2c0'); cg.addColorStop(0.5, '#e6b54a'); cg.addColorStop(1, '#8a5a1e');
+    g.fillStyle = cg; g.strokeStyle = '#5a3414'; g.lineWidth = 0.9; g.beginPath(); g.arc(-6.5, 9.5, 2.9, 0, Math.PI * 2); g.fill(); g.stroke();
+    g.restore();
+  }
+  function drawScene(g, live) {
+    const c = live ? cloth : baked;
+    scene(g); verge(g); props(g);
+    c.draw(g, 'back', 'pole-a'); c.draw(g, 'back', 'pole-b'); c.draw(g, 'back', 'post');
+    c.draw(g, 'back', 'lantern'); lanternBody(g, c);
+    const h = W.hero;
+    if (h.blink > 0) {   // afterimage at the old place
+      heroBody(g, h.trail[0], h.trail[1], h.trail[2], h.blink / 24 * 0.5);   // the afterimage keeps the side she faced when she left
+      const k0 = 1 - h.blink / 24;   // sparkle rings at both ends (no line between them: the cloth must not show one either)
+      g.save(); g.globalAlpha = h.blink / 24; g.strokeStyle = '#bff0ff'; g.fillStyle = '#e8fbff'; g.lineWidth = 2;
+      const K = HH / 78;
+      for (const [cx, cy] of [[h.trail[0], h.trail[1] - 38 * K], [h.x, h.y - 38 * K]]) {
+        g.beginPath(); g.ellipse(cx, cy, (14 + k0 * 30) * K, (30 + k0 * 26) * K, 0, 0, Math.PI * 2); g.stroke();
+        for (let k = 0; k < 8; k++) { const a = k * 0.785 + k0 * 2, r = 18 + k0 * 34; g.fillRect(cx + Math.cos(a) * r - 1.5, cy + Math.sin(a) * r * 1.3 - 1.5, 3, 3); }
+      }
+      g.restore();
+    }
+    c.draw(g, 'back', 'hero');
+    heroBody(g, h.x, h.y, h.facing);
+    fittings(g);
+    c.draw(g, 'front', 'hero');
+    tassel(g);
+    if (W.gustT > 0 && live) {   // gust streaks
+      g.save(); g.globalAlpha = Math.min(1, W.gustT / 30) * 0.6; g.lineCap = 'round';
+      for (let k = 0; k < 9; k++) {   // soft tapered wisps
+        const x = ((66 - W.gustT) * 18 + k * 113) % LW, y = 150 + (k * 47 % 190), len = 46 + (k * 29 % 30), gs = g.createLinearGradient(x, 0, x + len, 0);
+        gs.addColorStop(0, 'rgba(255,244,224,0)'); gs.addColorStop(0.6, 'rgba(255,244,224,0.9)'); gs.addColorStop(1, 'rgba(255,244,224,0)');
+        g.strokeStyle = gs; g.lineWidth = 1.2 + (k % 3) * 0.5; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + len * 0.5, y - 4, x + len, y - 1); g.stroke();
+      }
+      g.restore();
+    }
+    if (dbg && live) debug(g, c);
+  }
+  function debug(g, c) {
+    g.save(); g.lineWidth = 1;
+    for (const id of c.ids()) {
+      const pts = c.points(id); if (!pts) continue;
+      g.fillStyle = '#7fd8ff';
+      for (const p of pts) { g.fillStyle = p.pinned ? '#ff6a7a' : '#7fd8ff'; g.fillRect(p.x - 1.5, p.y - 1.5, 3, 3); }
+    }
+    g.restore();
+  }
+  function render() {
+    // the baked copy: re-posed rigidly at its anchors every frame (what a fixed sprite cape does)
+    const target = mode === 'pixel' ? lctx : ctx, s = mode === 'pixel' ? 1 / 3 : 1;
+    // phones: zoom the camera on the hero (drawing only; the simulation is the same at every width)
+    const Z = cv.clientWidth > 0 && cv.clientWidth < 700 ? 2 : 1, h = W.hero;
+    const tx = Z > 1 ? Math.max(0, Math.min(LW - LW / Z, h.x - LW / (2 * Z))) : 0, ty = Z > 1 ? Math.max(0, Math.min(LH - LH / Z, h.y - HH * 0.6 - LH / (2 * Z))) : 0;
+    target.setTransform(s * Z, 0, 0, s * Z, -tx * s * Z, -ty * s * Z);
+    target.imageSmoothingEnabled = mode !== 'pixel';
+    const sx = LW * split / 100, sxw = tx + sx / Z;
+    if (sx > 0) { target.save(); target.beginPath(); target.rect(0, 0, sxw, LH); target.clip(); drawScene(target, false); target.restore(); }
+    if (sx < LW) { target.save(); target.beginPath(); target.rect(sxw, 0, LW - sxw, LH); target.clip(); drawScene(target, true); target.restore(); }
+    if (mode === 'pixel') { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false; ctx.drawImage(low, 0, 0, LW, LH); }
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    if (sx > 0 && sx < LW) {   // divider + labels
+      ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(sx - 1, 0, 2, LH);
+      ctx.fillStyle = 'rgba(12,10,22,0.8)'; ctx.beginPath(); ctx.arc(sx, LH / 2, 13, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(sx - 5, LH / 2 - 4); ctx.lineTo(sx - 8, LH / 2); ctx.lineTo(sx - 5, LH / 2 + 4); ctx.moveTo(sx + 5, LH / 2 - 4); ctx.lineTo(sx + 8, LH / 2); ctx.lineTo(sx + 5, LH / 2 + 4); ctx.stroke();
+      tag(12, 'BAKED (off)', '#ff9aa6'); tag(LW - 12, 'VERLET (on)', '#9fe6ff', true);
+    }
+    updateCaption();
+  }
+  function tag(x, s, col, right) {
+    ctx.font = '700 12px ui-sans-serif, -apple-system, Segoe UI, sans-serif'; const w = ctx.measureText(s).width + 16;
+    const x0 = right ? x - w : x;
+    ctx.fillStyle = 'rgba(12,10,22,0.72)'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x0, 12, w, 22, 11) : ctx.rect(x0, 12, w, 22); ctx.fill();
+    ctx.fillStyle = col; ctx.textBaseline = 'middle'; ctx.fillText(s, x0 + 8, 23);
+  }
+
+  // ---------------------------------------------------------------- UI
+  let solverMs = 0;
+  function updateCaption() {
+    const st = cloth.stats();
+    document.getElementById('cap-mode').innerHTML = mode === 'pixel' ? '<b>Pixel</b> 320&times;140 &times;3' : '<b>HD</b> 960&times;420';
+    document.getElementById('cap-time').innerHTML = 't <b>' + (W.f / 60).toFixed(2) + ' s</b>' + (slow !== 1 ? ' &middot; ' + slow + '&times;' : '');
+    document.getElementById('cap-pts').innerHTML = 'points <b>' + st.points + '</b> &middot; constraints <b>' + st.constraints + '</b>';
+    document.getElementById('cap-ms').innerHTML = 'solver <b>' + solverMs.toFixed(2) + ' ms</b>/step';
+    const L = cloth.list(), cape = L.find(l => l.id === 'hero-cape');
+    document.getElementById('stat').innerHTML =
+      'pieces <b>' + L.length + '</b> &middot; sub-steps <b>' + st.substeps + '</b><br>' +
+      'teleport snaps <b>' + st.snaps + '</b> &middot; NaN resets <b>' + st.resets + '</b><br>' +
+      'max stretch now: ' + ['hero-cape', 'banner-a', 'banner-b', 'lantern'].map(id => { const l = L.find(q => q.id === id); return id.replace('hero-', '') + ' <b>' + (l ? l.maxStretch.toFixed(2) : '-') + '</b>'; }).join(' &middot; ') + '<br>' +
+      'strand clamps (safety net) <b>' + st.clamped + '</b><br>' +
+      'cape reach <b>' + (cape ? cape.reach.toFixed(1) : '-') + '</b> / ' + (cape ? cape.maxReach.toFixed(0) : '-') + ' px &middot; pin error <b>' + (cape ? cape.pinErr.toFixed(2) : '-') + '</b><br>' +
+      'wind at hero <b>' + (cloth.wind(W.hero.x, W.hero.y).x / U).toFixed(0) + '</b> px/s';
+  }
+  function seg(id, val, cb) {
+    const el = document.getElementById(id);
+    const set = v => { for (const b of el.querySelectorAll('button')) b.setAttribute('aria-checked', String(b.dataset.v === String(v))); };
+    set(val);
+    el.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; set(b.dataset.v); cb(b.dataset.v); });
+    return set;
+  }
+  const sliders = {};
+  function buildParams() {
+    const box = document.getElementById('params');
+    for (const p of PARAMS) {
+      const row = document.createElement('div'); row.className = 'row';
+      row.innerHTML = `<label>${p.label}<output></output></label><input type="range" min="${p.min}" max="${p.max}" step="${p.step}">`;
+      const inp = row.querySelector('input'), out = row.querySelector('output');
+      const show = () => { out.textContent = Number(inp.value).toFixed(p.step < 0.01 ? 3 : p.step < 1 ? 2 : 0); inp.style.setProperty('--fill', ((inp.value - p.min) / (p.max - p.min) * 100) + '%'); };
+      inp.value = P[p.key]; show();
+      inp.addEventListener('input', () => { P[p.key] = Number(inp.value); show(); apply(); markVariant(null); });
+      sliders[p.key] = { inp, show };
+      box.appendChild(row);
+    }
+  }
+  function apply() { cloth.setParams(opts()); baked.setParams(Object.assign(opts(), { wind: 0, gust: 0 })); }
+  const setOutline = seg('outline', P.outline, v => { P.outline = v; apply(); });
+  const setSnap = seg('snap', P.snap, v => { P.snap = v; apply(); });
+  const setReduced = seg('reduced', P.reduced, v => { P.reduced = v; apply(); });
+  const setLook = seg('look', P.look, v => { P.look = v; apply(); });
+  seg('slow', slow, v => { slow = Number(v); });
+  seg('mode', mode, v => { mode = v; cv.style.imageRendering = v === 'pixel' ? 'pixelated' : ''; });
+  const setDrive = seg('drive', drive, v => { drive = v; });
+  const setSplit = seg('split', split, v => { split = Number(v); document.getElementById('o-split').textContent = split + ' %'; });
+  document.getElementById('o-split').textContent = split + ' %';
+  const dbgEl = document.getElementById('dbg'); dbgEl.checked = dbg; dbgEl.addEventListener('change', () => { dbg = dbgEl.checked; });
+  function markVariant(i) { document.querySelectorAll('#variants button').forEach((b, k) => b.classList.toggle('on', k === i)); }
+  function buildVariants() {
+    const box = document.getElementById('variants');
+    VARIANTS.forEach(([name, o], i) => {
+      const b = document.createElement('button'); b.textContent = name;
+      b.addEventListener('click', () => {
+        Object.assign(P, DEF, o);
+        for (const k in sliders) { sliders[k].inp.value = P[k]; sliders[k].show(); }
+        setOutline(P.outline); setSnap(P.snap); setReduced(P.reduced); setLook(P.look); apply(); markVariant(i);
+      });
+      box.appendChild(b);
+    });
+    markVariant(0);
+  }
+  buildParams(); buildVariants();
+  if (mode === 'pixel') cv.style.imageRendering = 'pixelated';
+
+  // divider drag
+  let dragging = false;
+  const toSplit = e => { const r = cv.getBoundingClientRect(); split = Math.round(Math.max(0, Math.min(100, (e.clientX - r.left) / r.width * 100))); setSplit(-1); document.getElementById('o-split').textContent = split + ' %'; };
+  cv.addEventListener('pointerdown', e => { dragging = true; cv.setPointerCapture(e.pointerId); toSplit(e); });
+  cv.addEventListener('pointermove', e => { if (dragging) toSplit(e); });
+  cv.addEventListener('pointerup', () => { dragging = false; });
+
+  const KEYS = { ArrowLeft: 'left', ArrowRight: 'right', z: 'jump', Z: 'jump', ' ': 'jump', x: 'swing', X: 'swing', c: 'blink', C: 'blink', g: 'gust', G: 'gust' };
+  function takeOver() { if (drive !== 'play') { drive = 'play'; setDrive('play'); } }
+  addEventListener('keydown', e => {
+    if (e.key === 's' || e.key === 'S') { slow = slow === 1 ? 0.35 : slow === 0.35 ? 0.12 : 1; document.querySelectorAll('#slow button').forEach(b => b.setAttribute('aria-checked', String(Number(b.dataset.v) === slow))); return; }
+    const k = KEYS[e.key]; if (!k) return;
+    if (e.target && e.target.tagName === 'INPUT') return;
+    e.preventDefault(); takeOver();
+    if (k === 'left' || k === 'right') held.add(k); else if (!e.repeat) taps.add(k);
+  });
+  addEventListener('keyup', e => { const k = KEYS[e.key]; if (k) held.delete(k); });
+  addEventListener('blur', () => held.clear());
+  for (const [id, k] of [['b-left', 'left'], ['b-right', 'right']]) {   // hold to run (touch)
+    const b = document.getElementById(id);
+    b.addEventListener('pointerdown', e => { e.preventDefault(); takeOver(); held.add(k); b.setPointerCapture(e.pointerId); });
+    for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) b.addEventListener(ev, () => held.delete(k));
+  }
+  for (const [id, k] of [['b-jump', 'jump'], ['b-swing', 'swing'], ['b-blink', 'blink'], ['b-gust', 'gust']]) document.getElementById(id).addEventListener('click', () => { takeOver(); taps.add(k); });
+
+  // ---------------------------------------------------------------- loop
+  function timedStep() { const t0 = performance.now(); step(); solverMs = solverMs * 0.9 + (performance.now() - t0) * 0.1; }
+  /* text state for critics and tools/sprites/statecheck.py (960x420 stage px, feet): one hero. She faces her run direction; while she swings she targets
+     the hanging lantern (a prop: its x). A blink teleports her and turns her round; its fading afterimage is an effect, not an actor. */
+  window.__state = () => { const h = W.hero; return { t: Math.round(W.f * STEP), actors: [{ id: 'hero', x: Math.round(h.x), y: Math.round(h.y), facing: h.facing > 0 ? 'right' : 'left',
+    target: h.swing > 0 ? LANTERN_X : null, vx: Math.abs(h.vx) < 0.05 ? 0 : +(h.vx * 60).toFixed(1), asset: 'mage' }] }; };
+  window.__cloth = () => ({ f: W.f, hero: { x: W.hero.x, y: W.hero.y }, lanternHits: W.lanternHits || 0, stats: cloth.stats(), list: cloth.list() });
+  window.__clothLive = () => cloth;   // tests: points(id), tip(id)
+  let acc = 0, last = null;
+  function loop(ts) {
+    if (last === null) last = ts;
+    acc += Math.min(250, ts - last) * slow; last = ts;
+    while (acc >= STEP) { timedStep(); acc -= STEP; }
+    render();
+    requestAnimationFrame(loop);
+  }
+  // boot once the kit art has decoded (no timers): the ?t= fast-forward and the frozen paint, or the live loop
+  function boot() {
+    reset();   // the rig is loaded now: pins from its real joints
+    if (T0 !== null) {
+      const n = Math.floor(T0 / STEP); for (let i = 0; i < n; i++) step();
+      render();
+      if (FREEZE) { window.__frozen = true; document.documentElement.dataset.frozen = '1'; return; }
+    }
+    requestAnimationFrame(loop);
+  }
+  KIT.ready(() => {
+    const A = window.GameDNA_DemoKitArt, src = A && A.sprites && A.sprites.lamp && A.sprites.lamp.src;
+    if (!src) return boot();
+    const im = new Image(); im.onload = () => { lampIm = im; boot(); }; im.onerror = boot; im.src = src;
+  });
+})();
+</script>
+</body>
+</html>

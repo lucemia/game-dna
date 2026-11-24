@@ -1,0 +1,132 @@
+{
+  "id": "adaptive-music",
+  "code": "F-05",
+  "kind": "addon",
+  "name": "Adaptive music",
+  "family": "music-layers",
+  "requires": [
+    "chip-music"
+  ],
+  "oneLiner": "Layered music that follows the game's state over F-03 chip music: each chip channel is a stem (bass, drums, melody, a tense danger line), drums come in for fights, the danger line at low health, the boss gets its own track. The game only reports active / combat / boss / hp each step; the module debounces flickers (0.5 s to start, 3 s to calm down, HP hysteresis), lands every change on the next bar line with a one-bar stinger when the mood changes, never overlaps two changes, and steps aside for the game's own jingles. Deterministic on the music clock, silent until the first click.",
+  "fits": [
+    "top-down adventure and action RPG (exploring, fights, a boss room)",
+    "platformer and metroidvania with enemies and a boss",
+    "dungeon crawler and roguelike",
+    "turn-based RPG with a field map and battle scenes",
+    "any game with chip music (F-03) and a hero with health"
+  ],
+  "notFor": [
+    "choosing tracks per scene only (title, field, battle): F-03 chip music alone does that",
+    "sound effects (F-02 procedural-sfx)",
+    "rhythm judging (F-04 beat-judge)",
+    "recorded audio stems or orchestral music"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "fx",
+    "needs": [
+      "one F-03 chip-music instance (shipped in the same basket; the game creates it once and steps it)",
+      "a per-step report read from game state: active (gameplay), combat (foes engaged or close), boss (a boss fight), hp (0-1)",
+      "the track picker that calls chip music's play() each step, returning null during gameplay"
+    ],
+    "provides": [
+      "layered music: update(report) every step, debounced, bar-quantized changes with stingers, no overlapping changes",
+      "state(): mood, low HP, layer gains, the pending change and when it lands, the hold left; plan(): every change with its bar line",
+      "gainsAt(clock) / curve() for visualizers, recent() events (commit, ignored, conflict), stats()",
+      "render(spec) via OfflineAudioContext for tests"
+    ]
+  },
+  "params": [
+    {
+      "key": "quantize",
+      "label": "Changes land on",
+      "type": "select",
+      "options": [
+        "bar",
+        "beat"
+      ],
+      "default": "bar"
+    },
+    {
+      "key": "enterMs",
+      "label": "Hold before a state counts (ms)",
+      "type": "range",
+      "min": 0,
+      "max": 2000,
+      "step": 100,
+      "default": 500
+    },
+    {
+      "key": "exitMs",
+      "label": "Calm-down hold (ms)",
+      "type": "range",
+      "min": 0,
+      "max": 6000,
+      "step": 250,
+      "default": 3000
+    },
+    {
+      "key": "lowHp",
+      "label": "Low HP below",
+      "type": "range",
+      "min": 0.1,
+      "max": 0.6,
+      "step": 0.05,
+      "default": 0.3
+    },
+    {
+      "key": "stingers",
+      "label": "Stingers on mood changes",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Classic (default)",
+      "params": {
+        "quantize": "bar",
+        "enterMs": 500,
+        "exitMs": 3000
+      }
+    },
+    {
+      "name": "Snappy action",
+      "params": {
+        "quantize": "beat",
+        "enterMs": 250,
+        "exitMs": 1500
+      }
+    },
+    {
+      "name": "Slow and calm",
+      "params": {
+        "enterMs": 1000,
+        "exitMs": 5000,
+        "stingers": "off"
+      }
+    },
+    {
+      "name": "Danger early",
+      "params": {
+        "lowHp": 0.45
+      }
+    }
+  ],
+  "assets": [
+    "module/adaptive-music.js: the element as one dependency-free script (global GameDNA_AdaptiveMusic) on top of F-03's public API: report handling with hysteresis, debounce, bar-quantized change planning, stingers, layer gains on chip music's channels, conflict detection, offline render for tests",
+    "original songs as chip-music pattern data in the module: two stem loops (Wildwood Trail, The Warden Wakes) and three one-bar stingers (Alarm, The Warden Rises, All Clear); no audio files"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/adaptive-music.js",
+    "global": "GameDNA_AdaptiveMusic",
+    "version": "1.0.2",
+    "docs": "module/README.md"
+  }
+}

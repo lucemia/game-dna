@@ -1,0 +1,663 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Camera Director</title>
+<style>
+:root {
+  --bg: #0b0d14; --panel: #141722; --panel2: #1a1e2c; --line: #2a3046; --text: #edf0f8; --dim: #929ab4; --accent: #7ff0c8; --accent2: #ffb86b; --off: #ff7a8a;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1100px 560px at 30% -12%, #1d2a46 0%, var(--bg) 62%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 16px 20px 10px; max-width: 1440px; margin: 0 auto; }
+.code { white-space: nowrap; font: 700 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #06231a; background: linear-gradient(#b8ffe6, var(--accent)); padding: 6px 8px; border-radius: 6px; box-shadow: 0 0 0 1px #00000040, 0 4px 14px #7ff0c840; }
+h1 { font-size: 18px; margin: 0; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; max-width: 980px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 18px; padding: 0 20px 20px; max-width: 1440px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; }
+.views { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.views.single { grid-template-columns: 1fr; }
+.views.single .v-off { display: none; }
+.view { min-width: 0; }
+.vlabel { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; color: var(--dim); margin: 0 2px 6px; }
+.vlabel b { color: var(--text); font-weight: 650; letter-spacing: .02em; }
+.vlabel .tag { font: 600 10.5px ui-monospace, Menlo, monospace; padding: 2px 6px; border-radius: 4px; background: #2a1820; color: var(--off); }
+.v-on .vlabel .tag { background: #10291f; color: var(--accent); }
+.frame { position: relative; border-radius: 12px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px #343a56, 0 20px 50px #00000090; }
+canvas.game { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; }
+#chart { display: block; width: 100%; height: auto; aspect-ratio: 1280 / 150; margin-top: 12px; border-radius: 10px; box-shadow: 0 0 0 1px #2a3046; background: #0f121b; }
+.caption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; margin-top: 8px; color: var(--dim); font-size: 12px; }
+.caption b { color: var(--text); font-weight: 600; }
+.keys { margin-top: 6px; color: var(--dim); font-size: 12px; }
+.keys kbd { font: 600 11px ui-monospace, Menlo, monospace; background: #1f2333; border: 1px solid #3a4160; border-bottom-width: 2px; border-radius: 4px; padding: 1px 5px; color: var(--text); }
+.pads { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.pads button { flex: 1 1 100px; }
+aside { background: linear-gradient(var(--panel2), var(--panel)); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+section { border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+section:last-of-type { border-bottom: 0; padding-bottom: 0; }
+h2 { margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.row { margin-bottom: 7px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 2px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 5px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--fill), #2a3048 var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 15px; height: 15px; border-radius: 50%; background: #effff8; box-shadow: 0 0 0 3px #7ff0c855, 0 2px 6px #000a; cursor: pointer; }
+.seg { display: flex; background: #0d0f18; border: 1px solid var(--line); border-radius: 8px; padding: 2px; gap: 2px; }
+.seg button { flex: 1; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 4px; border-radius: 6px; cursor: pointer; }
+.seg button[aria-checked=true] { background: #262c44; color: var(--text); box-shadow: inset 0 0 0 1px #48507a; }
+.btn { appearance: none; border: 1px solid #394060; background: #1c2030; color: var(--text); border-radius: 9px; padding: 9px 10px; font: 600 12.5px/1 inherit; cursor: pointer; }
+.btn:active { transform: scale(.98); }
+.btn.hot { color: #06231a; border: 0; background: linear-gradient(#b8ffe6, var(--accent)); box-shadow: 0 6px 18px #7ff0c830; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips button { appearance: none; border: 1px solid #394060; background: #181b28; color: var(--text); border-radius: 999px; padding: 5px 10px; font: 600 12px/1 inherit; cursor: pointer; }
+.chips button.on { border-color: var(--accent); color: var(--accent); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.chk { display: flex; align-items: center; gap: 8px; font-size: 12.5px; cursor: pointer; margin-bottom: 6px; }
+.stat { font: 11.5px/1.55 ui-monospace, Menlo, monospace; color: var(--dim); }
+.stat b { color: var(--text); font-weight: 600; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11.5px; color: var(--dim); margin-top: 6px; }
+.legend i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
+@media (max-width: 1100px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 700px; width: 100%; margin: 0 auto; } }
+@media (max-width: 760px) { .views { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { header { padding: 12px 16px 8px; } main { padding: 0 16px 16px; gap: 12px; } .frame { border-radius: 9px; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">K-01</span>
+  <div><h1>Camera director</h1><p>One run, filmed by the director: a critically damped spring with a dead zone, eased look-ahead, vertical re-framing only on landing, the boss framed with the hero (zoom out), zoom punches and trauma shake on big hits, level and arena edges without jitter, and a cut on teleport. The dashed guides are the director&rsquo;s dead zone, look-ahead and framing box. Tick <b>Compare</b> to film the same run beside the game&rsquo;s own hard-follow camera. View only: the game underneath is identical.</p></div>
+</header>
+<main>
+  <div id="stage">
+    <div class="views" id="views">
+      <div class="view v-off"><div class="vlabel"><b>Before: hard follow</b><span class="tag">OFF</span></div><div class="frame"><canvas class="game" id="cvOff" width="1280" height="720"></canvas></div></div>
+      <div class="view v-on"><div class="vlabel"><b id="on-title">After: camera director</b><span class="tag">K-01 ON</span></div><div class="frame"><canvas class="game" id="cvOn" width="1280" height="720"></canvas></div></div>
+    </div>
+    <canvas id="chart" width="1280" height="150"></canvas>
+    <div class="legend"><span><i style="background:#ff7a8a"></i>hard follow</span><span><i style="background:#7ff0c8"></i>director</span><span>top: camera height over the last 4 s &middot; bottom: horizontal camera speed</span></div>
+    <div class="caption">
+      <span id="cap-scene">scene <b>meadow</b></span>
+      <span id="cap-time">t <b>0.00 s</b></span>
+      <span id="cap-cam">zoom <b>1.00</b> &middot; trauma <b>0.00</b></span>
+    </div>
+    <div class="pads">
+      <button class="btn" id="b-light">Light hit</button>
+      <button class="btn" id="b-heavy">Heavy hit</button>
+      <button class="btn hot" id="b-fin">Finisher</button>
+      <button class="btn" id="b-cut">Teleport (cut)</button>
+    </div>
+    <p class="keys"><kbd>&larr;</kbd><kbd>&rarr;</kbd> run &middot; <kbd>Z</kbd> jump &middot; <kbd>X</kbd> slash &middot; <kbd>T</kbd> teleport &middot; <kbd>D</kbd> camera guides &middot; <kbd>S</kbd> slow motion. Pressing a key takes over from the script; &ldquo;Script&rdquo; gives it back.</p>
+  </div>
+  <aside>
+    <section>
+      <h2>Playback</h2>
+      <div class="row"><div class="seg" id="drive"><button data-v="script" aria-checked="true">Script</button><button data-v="play" aria-checked="false">Play</button></div></div>
+      <div class="row"><div class="seg" id="speed"><button data-v="1" aria-checked="true">1&times;</button><button data-v="0.35" aria-checked="false">0.35&times;</button><button data-v="0.12" aria-checked="false">0.12&times;</button></div></div>
+      <label class="chk"><input type="checkbox" id="cmp" checked> Compare with the hard-follow camera</label>
+      <label class="chk"><input type="checkbox" id="dbg" checked> Camera guides (dead zone, look-ahead, framing box)</label>
+      <button class="btn" id="restart" style="width:100%">Restart run</button>
+    </section>
+    <section>
+      <h2>Presets</h2>
+      <div class="chips" id="presets"></div>
+    </section>
+    <section>
+      <h2>Follow</h2>
+      <div id="sl-follow"></div>
+      <div class="row"><label>Vertical</label><div class="seg" id="platform"><button data-v="auto" aria-checked="true">Platform</button><button data-v="off" aria-checked="false">Dead zone</button></div></div>
+    </section>
+    <section>
+      <h2>Framing &amp; hits</h2>
+      <div id="sl-frame"></div>
+      <div class="row"><label>Multi-target</label><div class="seg" id="frame"><button data-v="zoom" aria-checked="true">Zoom</button><button data-v="bias" aria-checked="false">Bias</button><button data-v="off" aria-checked="false">Off</button></div></div>
+    </section>
+    <section>
+      <h2>Render</h2>
+      <div class="row"><label>Snap</label><div class="seg" id="snap"><button data-v="smooth" aria-checked="true">Sub-pixel</button><button data-v="pixel" aria-checked="false">Whole px</button></div></div>
+      <div class="row"><label>Reduced motion</label><div class="seg" id="reduced"><button data-v="system" aria-checked="true">System</button><button data-v="on" aria-checked="false">On</button><button data-v="off" aria-checked="false">Off</button></div></div>
+      <div class="stat" id="stat"></div>
+    </section>
+  </aside>
+</main>
+<script src="../../../demo-kit/kit-art.js"></script>
+<script src="../../cutout-characters/module/cutout-characters.js"></script>
+<script src="../../cutout-characters/assets/pack.js"></script>
+<script src="../../../demo-kit/kit.js"></script>
+<script src="../module/camera-director.js"></script>
+<script>
+"use strict";
+(function () {
+  // ================================================================ config
+  const VW = 640, VH = 360, STEP = 1000 / 60, WORLD_W = 3800, WORLD_H = 1000;
+  const Q = new URLSearchParams(location.search);
+  const HAS_T = Q.has('t'), FREEZE = Q.get('freeze') === '1', START_T = Math.max(0, +Q.get('t') || 0), LOG = Q.get('log') === '1';
+  const BS = Math.max(1, Math.min(3, +Q.get('bs') || 2));            // backing scale (deterministic: not tied to the screen)
+  const SPEC = [
+    { key: 'follow', label: 'Follow spring (Hz)', min: 0.3, max: 6, step: 0.1, group: 'follow' },
+    { key: 'followY', label: 'Vertical spring (Hz)', min: 0.3, max: 6, step: 0.1, group: 'follow' },
+    { key: 'deadW', label: 'Dead zone width', min: 0, max: 0.4, step: 0.01, group: 'follow' },
+    { key: 'look', label: 'Look-ahead', min: 0, max: 0.35, step: 0.01, group: 'follow' },
+    { key: 'lookHz', label: 'Look-ahead ease (Hz)', min: 0.2, max: 4, step: 0.05, group: 'follow' },
+    { key: 'farY', label: 'Vertical band (air)', min: 0.08, max: 0.45, step: 0.01, group: 'follow' },
+    { key: 'safe', label: 'Safe frame', min: 0.4, max: 0.95, step: 0.01, group: 'follow' },
+    { key: 'minZoom', label: 'Furthest zoom-out', min: 0.5, max: 1, step: 0.01, group: 'frame' },
+    { key: 'punch', label: 'Zoom punch', min: 0, max: 0.2, step: 0.005, group: 'frame' },
+    { key: 'shake', label: 'Shake (% of height)', min: 0, max: 8, step: 0.1, group: 'frame' },
+    { key: 'roll', label: 'Roll (deg)', min: 0, max: 5, step: 0.1, group: 'frame' },
+    { key: 'decay', label: 'Trauma decay (/s)', min: 0.3, max: 5, step: 0.1, group: 'frame' }
+  ];
+  const PRESETS = {
+    'Director': {},
+    'Snappy action': { follow: 3, followY: 2.4, deadW: 0.04, look: 0.12, lookHz: 1.2, punch: 0.05, shake: 2.5, roll: 0.8, decay: 2.2 },
+    'Cinematic': { follow: 1.1, followY: 0.9, deadW: 0.12, look: 0.2, lookHz: 0.45, minZoom: 0.62, punch: 0.08, shake: 3.5, roll: 1.8, decay: 1.2 },
+    'Heavy impacts': { punch: 0.11, shake: 5.5, roll: 2.4, decay: 1.1 },
+    'No juice': { punch: 0, shake: 0, roll: 0 },
+    'Reduced motion': { reduced: 'on' }
+  };
+  const P0 = GameDNA_Camera.defaults();
+  const PARAMS = Object.assign({}, P0, { view: 'side', snap: 'smooth' });
+  for (const k in P0) if (Q.has(k)) { const v = Q.get(k); PARAMS[k] = isNaN(+v) ? v : +v; }
+
+  // ================================================================ deterministic helpers
+  function hash(a, b, s) { let h = (Math.imul(a | 0, 374761393) ^ Math.imul(b | 0, 668265263) ^ Math.imul(s | 0, 2246822519)) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; }
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const lerp = (a, b, t) => a + (b - a) * t;
+
+  // ================================================================ level (world px, y down)
+  const SOLIDS = [
+    { x: -200, y: 760, w: 1300, h: 240, kind: 'ground' },
+    { x: 340, y: 716, w: 180, h: 44, kind: 'block' },
+    { x: 640, y: 690, w: 200, h: 70, kind: 'block' },
+    { x: 1100, y: 760, w: 600, h: 240, kind: 'ground' },
+    { x: 1060, y: 650, w: 190, h: 26, kind: 'ledge' },
+    { x: 1300, y: 550, w: 190, h: 26, kind: 'ledge' },
+    { x: 1540, y: 450, w: 600, h: 40, kind: 'walk' },
+    { x: 1700, y: 840, w: 440, h: 160, kind: 'ground' },
+    { x: 2140, y: 860, w: 900, h: 140, kind: 'arena' },
+    { x: 3040, y: 860, w: 960, h: 140, kind: 'ground' }
+  ];
+  const GATE = { x: 3040, y: 560, w: 40, h: 300 };
+  const ARENA = { x: 2140, y: 470, w: 900, h: 530 };
+  const GEM = { x: 110, y: 724 };
+  const PORTAL = { x: 3640, y: 860 };
+  const BOSS_X = 2760;
+
+  // ================================================================ simulation (view-independent)
+  let G;
+  function newRun() {
+    G = { t: 0, frame: 0, scene: 'meadow', hero: { x: 270, y: 760, vx: 0, vy: 0, onGround: true, facing: -1, slash: 0, slashCd: 0, land: 0, run: 0, hitT: 0 },
+      gem: true, boss: { hp: 4, max: 4, state: 'idle', t: 0, alive: true, crumble: 0, flash: 0, slams: 0 }, gate: 0, parts: [], waves: [], events: [],
+      script: { phase: 'gem', wait: 0, jumpHold: 0, retreat: 0, back: 0, backDone: false }, teleports: 0, slashes: 0, fx: [] };
+  }
+  function solidList() { const L = SOLIDS.slice(); if (G.gate < 1) L.push({ x: GATE.x, y: GATE.y + G.gate * GATE.h, w: GATE.w, h: GATE.h * (1 - G.gate), kind: 'gate' }); return L; }
+  function overlaps(a, b) { return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y; }
+  const HW = 11, HH = 40;   // hero half width, height (feet at y)
+  function heroBox(h) { return { x: h.x - HW, y: h.y - HH, w: HW * 2, h: HH }; }
+  function emit(type, data) { G.events.push(Object.assign({ type, t: G.t }, data || {})); if (LOG) console.log('[ev]', Math.round(G.t), type, JSON.stringify(data || {})); }
+
+  function scriptInput() {
+    const h = G.hero, s = G.script, inp = { left: false, right: false, jump: false, jumpHeld: false, slash: false };
+    const jumpAt = (x0, x1) => { if (h.onGround && h.vx > 0 && h.x >= x0 && h.x < x1 && s.jumpHold === 0) s.jumpHold = 18; };
+    if (G.frame < 24) return inp;
+    if (s.phase === 'gem') { inp.left = true; if (!G.gem || h.x < 120) { s.phase = 'pause'; s.wait = 20; } }
+    else if (s.phase === 'pause') { if (--s.wait <= 0) s.phase = 'east'; }
+    else if (s.phase === 'east') {
+      inp.right = true;
+      jumpAt(278, 300); jumpAt(588, 606); jumpAt(985, 1000); jumpAt(1218, 1236); jumpAt(1450, 1468);
+      // a full-speed turn-around in the open, on the long walkway: run back for ~0.9 s, then on again
+      if (!s.backDone && h.onGround && h.y === 450 && h.x > 2010) { s.back = 96; s.backDone = true; }
+      if (s.back > 0) { s.back--; inp.right = false; inp.left = true; }
+      if (h.x > 2200 && h.onGround) s.phase = 'fight';
+    } else if (s.phase === 'fight') {
+      const b = G.boss, dx = BOSS_X - h.x;
+      if (!b.alive) { s.phase = 'exit'; }
+      else if (b.state === 'wind' || (s.retreat > 0)) { if (b.state === 'wind') s.retreat = 70; s.retreat--; if (h.x > BOSS_X - 430) inp.left = true; }
+      else if (dx > 112) inp.right = true;
+      else { if (h.facing < 0) inp.right = true; if (h.slashCd === 0) inp.slash = true; }
+    } else if (s.phase === 'exit') {
+      if (G.gate >= 1) { inp.right = true; } else if (h.x < 2900) inp.right = true;
+    }
+    if (s.jumpHold > 0) { inp.jump = s.jumpHold === 18; inp.jumpHeld = true; s.jumpHold--; }
+    return inp;
+  }
+
+  const held = new Set(), pressed = new Set();
+  function humanInput() {
+    const inp = { left: held.has('ArrowLeft'), right: held.has('ArrowRight'), jump: pressed.has('KeyZ') || pressed.has('Space'), jumpHeld: held.has('KeyZ') || held.has('Space'), slash: pressed.has('KeyX') };
+    pressed.clear();
+    return inp;
+  }
+
+  function moveHero(h, inp) {
+    const dir = (inp.right ? 1 : 0) - (inp.left ? 1 : 0);
+    if (dir && h.slash === 0) h.facing = dir;
+    const target = dir * 4.0;
+    h.vx += (target - h.vx) * (h.onGround ? 0.22 : 0.12);
+    if (Math.abs(h.vx) < 0.02) h.vx = 0;
+    if (inp.jump && h.onGround) { h.vy = -12.6; h.onGround = false; emit('jump', { x: Math.round(h.x) }); }
+    if (!inp.jumpHeld && h.vy < -5) h.vy = -5;
+    h.vy = Math.min(h.vy + 0.6, 14);
+    const L = solidList();
+    // x
+    h.x += h.vx;
+    let b = heroBox(h);
+    for (const s of L) if (overlaps(b, s)) { if (h.vx > 0) h.x = s.x - HW; else if (h.vx < 0) h.x = s.x + s.w + HW; h.vx = 0; b = heroBox(h); }
+    h.x = clamp(h.x, 20, WORLD_W - 20);
+    // y
+    const wasGround = h.onGround, vyIn = h.vy;
+    h.y += h.vy; h.onGround = false;
+    b = heroBox(h);
+    for (const s of L) if (overlaps(b, s)) {
+      if (h.vy > 0) { h.y = s.y; h.onGround = true; } else if (h.vy < 0) { h.y = s.y + s.h + HH; }
+      h.vy = 0; b = heroBox(h);
+    }
+    if (!h.onGround) { const probe = { x: h.x - HW, y: h.y, w: HW * 2, h: 1 }; if (L.some(s => overlaps(probe, s)) && h.vy >= 0) h.onGround = true; }
+    if (h.onGround && !wasGround) { h.land = 10; if (vyIn > 6) puff(h.x, h.y, Math.min(1, vyIn / 14)); emit('land', { x: Math.round(h.x), y: Math.round(h.y), vy: +vyIn.toFixed(1) }); }
+    if (h.land > 0) h.land--;
+    h.run += Math.abs(h.vx);
+  }
+  function puff(x, y, k) { for (let i = 0; i < 6 + k * 8; i++) { const a = hash(G.frame, i, 3) * Math.PI, sp = 0.6 + hash(G.frame, i, 4) * 2.4 * (0.5 + k); G.parts.push({ x, y: y - 2, vx: Math.cos(a) * sp * (i % 2 ? 1 : -1), vy: -Math.sin(a) * sp * 0.5, life: 26 + hash(G.frame, i, 5) * 18, t: 0, kind: 'dust', r: 3 + k * 4 }); } }
+  function sparks(x, y, n, col) { for (let i = 0; i < n; i++) { const a = hash(G.frame, i, 7) * Math.PI * 2, sp = 2 + hash(G.frame, i, 8) * 6; G.parts.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 1.5, life: 18 + hash(G.frame, i, 9) * 14, t: 0, kind: 'spark', col }); } }
+  function rocks(x, y, n) { for (let i = 0; i < n; i++) { const a = -Math.PI * (0.1 + 0.8 * hash(G.frame, i, 11)), sp = 3 + hash(G.frame, i, 12) * 6; G.parts.push({ x: x + (hash(G.frame, i, 13) - 0.5) * 80, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 60 + hash(G.frame, i, 14) * 30, t: 0, kind: 'rock', r: 4 + hash(G.frame, i, 15) * 7, grav: 0.4 }); } }
+
+  function updateBoss() {
+    const b = G.boss, h = G.hero;
+    if (b.flash > 0) b.flash--;
+    if (!b.alive) { if (b.crumble < 90) { b.crumble++; if (b.crumble === 40) emit('gateOpen'); } if (b.crumble > 40) G.gate = Math.min(1, G.gate + 1 / 60); return; }
+    if (h.x < ARENA.x + 60) { b.state = 'idle'; b.t = 0; return; }
+    b.t++;
+    if (b.state === 'idle' && b.t > 150) { b.state = 'wind'; b.t = 0; emit('wind'); }
+    else if (b.state === 'wind' && b.t > 46) { b.state = 'slam'; b.t = 0; }
+    else if (b.state === 'slam' && b.t === 6) { b.slams++; G.waves.push({ x: BOSS_X - 50, t: 0, dir: -1 }); G.waves.push({ x: BOSS_X + 50, t: 0, dir: 1 }); rocks(BOSS_X - 40, 860, 10); emit('slam', { x: BOSS_X - 70, y: 860 }); }
+    else if (b.state === 'slam' && b.t > 30) { b.state = 'idle'; b.t = 0; }
+  }
+  function updateSlash() {
+    const h = G.hero, b = G.boss;
+    if (h.slashCd > 0) h.slashCd--;
+    if (h.slash > 0) {
+      h.slash--;
+      if (h.slash === 12 && b.alive) {
+        const reach = { x: h.facing > 0 ? h.x : h.x - 100, y: h.y - 48, w: 100, h: 52 }, bb = { x: BOSS_X - 56, y: 700, w: 112, h: 160 };
+        if (overlaps(reach, bb) && b.state !== 'slam') {
+          b.hp--; b.flash = 8;
+          const kind = b.hp <= 0 ? 'finisher' : (b.max - b.hp) % 3 === 0 ? 'heavy' : 'light';
+          const at = { x: BOSS_X - 44 * h.facing, y: h.y - 26 };
+          sparks(at.x, at.y, kind === 'finisher' ? 34 : kind === 'heavy' ? 18 : 10, kind === 'finisher' ? '#ffd27a' : '#bff6ff');
+          emit('hit', { strength: kind, at });
+          if (b.hp <= 0) { b.alive = false; b.crumble = 0; rocks(BOSS_X, 800, 26); }
+        }
+      }
+    }
+  }
+  let inputFn = scriptInput;
+  function step() {
+    const h = G.hero;
+    G.frame++; G.t += STEP;
+    const inp = inputFn();
+    if (inp.slash && h.slashCd === 0 && h.slash === 0) { h.slash = 18; h.slashCd = 26; G.slashes++; }
+    moveHero(h, inp);
+    updateSlash();
+    updateBoss();
+    if (G.gem && Math.abs(h.x - GEM.x) < 26 && Math.abs(h.y - 20 - GEM.y) < 40) { G.gem = false; sparks(GEM.x, GEM.y, 14, '#8ff7ff'); emit('gem'); }
+    for (const w of G.waves) w.t++;
+    G.waves = G.waves.filter(w => w.t < 40);
+    for (const p of G.parts) { p.t++; p.x += p.vx; p.y += p.vy; if (p.kind === 'dust') { p.vx *= 0.9; p.vy *= 0.9; } else if (p.kind === 'rock') { p.vy += p.grav; if (p.y > 860) { p.y = 860; p.vy *= -0.3; p.vx *= 0.6; } } else { p.vy += 0.15; p.vx *= 0.95; } }
+    G.parts = G.parts.filter(p => p.t < p.life);
+    G.scene = h.x < 1000 ? 'meadow' : h.x < 2140 ? 'ruins' : h.x < 3040 ? 'arena' : 'gate';
+    if (Math.abs(h.x - PORTAL.x) < 30 && h.onGround) {   // portal: teleport back to the start (a cut)
+      const keepT = G.t, keepF = G.frame, tp = G.teleports + 1; newRun(); G.t = keepT; G.frame = keepF; G.teleports = tp; G.hero.facing = 1;
+      emit('teleport', { x: G.hero.x, y: G.hero.y });
+    }
+  }
+
+  // ================================================================ cameras (view only)
+  const LABEL = { x: 12, y: 12, w: 150, h: 30 };   // the scene label (HUD): the hero is never framed under it
+  const camOn = GameDNA_Camera.create({ view: { x: 0, y: 0, w: VW, h: VH }, bounds: { x: 0, y: 0, w: WORLD_W, h: WORLD_H }, params: PARAMS, seed: 7, uiRects: [LABEL] });
+  const camOff = GameDNA_Camera.create({ view: { x: 0, y: 0, w: VW, h: VH }, bounds: { x: 0, y: 0, w: WORLD_W, h: WORLD_H }, params: { mode: 'off', snap: 'pixel' }, seed: 7 });
+  function legacyCam() { const h = G.hero; return { x: Math.round(clamp(h.x - VW / 2, 0, WORLD_W - VW)), y: Math.round(clamp(h.y - 20 - VH / 2 - 20, 0, WORLD_H - VH)) }; }
+  const hist = [];
+  function camStep() {
+    const h = G.hero, b = G.boss, legacy = legacyCam();
+    for (const e of G.events) {
+      if (e.type === 'hit') camOn.hit({ strength: e.strength, at: e.at });
+      else if (e.type === 'slam') { camOn.trauma(0.55); camOn.punch(0.035, { at: { x: e.x, y: e.y } }); }
+      else if (e.type === 'teleport') camOn.cut(e.x, e.y - 20);
+      else if (e.type === 'land' && e.vy > 12) camOn.trauma(0.18);
+    }
+    G.events.length = 0;
+    const extra = b.alive ? [{ x: BOSS_X, y: 770, w: 300, h: 210 }] : [];   // the golem and its slam reach; the module fades it in by distance
+    // the arena holds the camera while the gate is shut; the room is released the moment the gate starts to open
+    const room = G.gate === 0 && h.x > ARENA.x + 30 && h.x < ARENA.x + ARENA.w - 10 && h.y > ARENA.y ? ARENA : null;
+    const target = { x: h.x, y: h.y - 20, w: 22, h: 40, vx: h.vx, vy: h.vy, onGround: h.onGround, facing: h.facing };
+    camOn.update(STEP, { target, extra, room, legacy });
+    camOff.update(STEP, { target, legacy });
+    const sOn = camOn.state();
+    const pv = hist.length ? hist[hist.length - 1] : null;
+    hist.push({ yOn: camOn.cy, yOff: camOff.cy, xOn: camOn.cx, xOff: camOff.cx, base: sOn.base.cx, tr: sOn.trauma,
+      vOn: pv ? (sOn.base.cx - pv.base) * 60 : 0, vOff: pv ? (camOff.cx - pv.xOff) * 60 : 0, hv: Math.abs(h.vx) * 60 });
+    if (hist.length > 241) hist.shift();
+  }
+  function fullStep() { step(); camStep(); castStep(); }
+
+  // ================================================================ art
+  const cvOn = document.getElementById('cvOn'), cvOff = document.getElementById('cvOff'), chart = document.getElementById('chart');
+  for (const c of [cvOn, cvOff]) { c.width = VW * BS; c.height = VH * BS; }
+  const ctxOn = cvOn.getContext('2d'), ctxOff = cvOff.getContext('2d'), cctx = chart.getContext('2d');
+  // Painted scene: the committed painted-parallax dusk layers behind the level, its forest-floor texture on every
+  // platform, kit props, and stone pieces cut from a kit backdrop. Loaded up front; the page boots when all are in.
+  const Kit = window.GameDNA_DemoKit, KART = window.GameDNA_DemoKitArt || { scenes: {} };
+  const IMG = {}; let imgPending = 1, imgDone = null;
+  function imgSettle() { if (--imgPending === 0 && imgDone) imgDone(); }
+  function loadImg(name, src) { if (!src) return; const im = new Image(); imgPending++; im.onload = () => { IMG[name] = im; imgSettle(); }; im.onerror = imgSettle; im.src = src; }
+  for (const n of ['far', 'clouds', 'mid', 'near', 'under']) loadImg(n, '../../painted-parallax/assets/dusk/' + n + '.webp');
+  loadImg('stone', KART.scenes['ruins-night'] && KART.scenes['ruins-night'].src);
+  loadImg('rock', KART.sprites && KART.sprites.golem && KART.sprites.golem.src);
+  const HERO_H = 60, GOLEM_H = 172;
+  const heroA = Kit.actor('sword', { h: HERO_H }), golemA = Kit.actor('golem', { h: GOLEM_H });
+  let castX = null;
+  // cast poses are a pure function of the simulation, advanced in the fixed step (frozen frames equal live play)
+  function castStep() {
+    const h = G.hero, b = G.boss;
+    if (castX !== null && Math.abs(h.x - castX) > 120) heroA.reset();   // teleport: no cape whip
+    castX = h.x;
+    if (h.slash > 0) heroA.pose('slash', 1 - h.slash / 18);
+    else if (!h.onGround) heroA.pose('jump', clamp(0.5 + h.vy / 20, 0, 1));
+    else { heroA.pose(null); heroA.walk(h.vx * 60); }
+    heroA.update(STEP, { vx: h.vx * 60, facing: h.facing });
+    if (!b.alive) golemA.pose('down', Math.min(1, b.crumble / 60));
+    else if (b.state === 'wind') golemA.pose('attack', 0.3 * Math.min(1, b.t / 46));
+    else if (b.state === 'slam') golemA.pose('attack', 0.3 + 0.7 * Math.min(1, b.t / 30));
+    else if (b.flash > 0) golemA.pose('hurt', 1 - b.flash / 8);
+    else golemA.pose(null);
+    golemA.update(STEP, { facing: h.x < BOSS_X + 20 ? -1 : 1 });
+  }
+  function buildArt() {}
+  // one parallax band: sc = layer scale, f = parallax factor, top0 = its top on screen with the camera at ground height
+  function band(ctx, img, cam, sc, f, top0, below, drift, fy) {
+    if (!img) return;
+    const z = 1 + (cam.zoom - 1) * f, W = img.width * sc, w = W * z, h = img.height * sc * z, u0 = cam.cx * f + (drift || 0);
+    const y = Math.round(VH / 2 + (top0 + (720 - cam.cy) * (fy == null ? f : fy) - VH / 2) * z);
+    for (let u = Math.floor((u0 - VW / (2 * z)) / W) * W; ; u += W) {
+      const x = Math.floor(VW / 2 + (u - u0) * z);
+      if (x > VW) break;
+      ctx.drawImage(img, x, y, Math.ceil(w) + 1, h);
+    }
+    if (below) { ctx.fillStyle = below; ctx.fillRect(0, y + h - 1, VW, Math.max(0, VH - y - h + 2)); }
+  }
+  function drawSky(ctx, cam, t) {
+    ctx.fillStyle = '#6c6b99'; ctx.fillRect(0, 0, VW, VH);
+    band(ctx, IMG.far, cam, 450 / 540, 0.04, -70, '#6e8aa3');
+    band(ctx, IMG.clouds, cam, 1, 0.07, -14, null, t * 0.004);
+    band(ctx, IMG.mid, cam, 2 / 3, 0.2, -70, '#3b5868');
+    // warm haze between the hills and the trees
+    const hz = ctx.createLinearGradient(0, VH * 0.4, 0, VH); hz.addColorStop(0, 'rgba(255,190,150,0)'); hz.addColorStop(1, 'rgba(255,190,150,0.16)');
+    ctx.fillStyle = hz; ctx.fillRect(0, 0, VW, VH);
+    band(ctx, IMG.near, cam, 2 / 3, 0.45, -50, '#162732', 0, 0.25);
+  }
+  function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+  // fluted stone shaft (cut from the kit's ruins backdrop), stacked in drums from the top down
+  function drawColumn(ctx, x, y, w, h) {
+    if (h <= 0.5) return;
+    ctx.save(); ctx.beginPath(); ctx.rect(x - 1, y, w + 2, h); ctx.clip();
+    if (IMG.stone) { const sh = w * 112 / 54; for (let yy = y, i = 0; yy < y + h; yy += sh, i++) { ctx.drawImage(IMG.stone, 855, 206, 54, 112, x, yy, w, sh + 0.5); ctx.fillStyle = 'rgba(30,20,44,0.55)'; ctx.fillRect(x, yy - 0.8, w, 1.6); } }
+    else { ctx.fillStyle = '#8f86a6'; ctx.fillRect(x, y, w, h); }
+    const sg = ctx.createLinearGradient(x, 0, x + w, 0); sg.addColorStop(0, 'rgba(20,14,40,0.05)'); sg.addColorStop(1, 'rgba(20,14,40,0.4)'); ctx.fillStyle = sg; ctx.fillRect(x, y, w, h);
+    ctx.restore();
+    ctx.strokeStyle = '#231a33'; ctx.lineWidth = 1.4; ctx.strokeRect(x, y, w, h);
+  }
+  function drawBlock(ctx, x, y, w, h) {
+    if (IMG.stone) ctx.drawImage(IMG.stone, 905, 472, 100, 36, x, y, w, h); else { ctx.fillStyle = '#9a90ae'; ctx.fillRect(x, y, w, h); }
+    ctx.strokeStyle = '#231a33'; ctx.lineWidth = 1.4; ctx.strokeRect(x, y, w, h);
+  }
+  function drawSolid(ctx, s, vis) {
+    if (s.x > vis.x + vis.w || s.x + s.w < vis.x || s.y > vis.y + vis.h || s.y + s.h < vis.y) return;
+    if (s.kind === 'gate') { drawColumn(ctx, s.x, s.y, s.w, s.h); drawBlock(ctx, s.x - 6, s.y - 13, s.w + 12, 14); return; }
+    const deep = s.kind === 'ledge' || s.kind === 'walk' ? 0 : 1;
+    // how far each side face is exposed (a neighbour of the same or greater height hides it: no seam between ground pieces)
+    let exL = s.h, exR = s.h;
+    if (deep) for (const n of SOLIDS) { if (n === s || n.kind === 'ledge' || n.kind === 'walk') continue; if (n.x + n.w === s.x) exL = Math.max(0, Math.min(exL, n.y - s.y)); if (n.x === s.x + s.w) exR = Math.max(0, Math.min(exR, n.y - s.y)); }
+    const r = deep ? [exL > 6 ? 5 : 0, exR > 6 ? 5 : 0, 0, 0] : 8;
+    // soft shadow under floating platforms
+    if (!deep) { const sg = ctx.createLinearGradient(0, s.y + s.h, 0, s.y + s.h + 40); sg.addColorStop(0, 'rgba(8,14,24,0.35)'); sg.addColorStop(1, 'rgba(8,14,24,0)'); ctx.fillStyle = sg; ctx.fillRect(s.x + 8, s.y + s.h, s.w - 16, 40); }
+    ctx.save(); rr(ctx, s.x, s.y, s.w, s.h, r); ctx.clip();
+    ctx.fillStyle = '#112c39'; ctx.fillRect(s.x, s.y, s.w, s.h);
+    if (IMG.under) { const TW = 700, TH = 135; for (let x = Math.floor(s.x / TW) * TW; x < s.x + s.w; x += TW) ctx.drawImage(IMG.under, x, s.y - 2.5, TW + 0.5, TH); }
+    if (!deep) { const bg = ctx.createLinearGradient(0, s.y + s.h - 16, 0, s.y + s.h); bg.addColorStop(0, 'rgba(6,14,20,0)'); bg.addColorStop(1, 'rgba(6,14,20,0.8)'); ctx.fillStyle = bg; ctx.fillRect(s.x, s.y + s.h - 16, s.w, 16); }
+    // side faces fall into shade
+    const eg = ctx.createLinearGradient(s.x, 0, s.x + s.w, 0), e = Math.min(0.45, 14 / s.w);
+    eg.addColorStop(0, 'rgba(6,14,20,' + (exL > 6 ? 0.55 : 0) + ')'); eg.addColorStop(e, 'rgba(6,14,20,0)'); eg.addColorStop(1 - e, 'rgba(6,14,20,0)'); eg.addColorStop(1, 'rgba(6,14,20,' + (exR > 6 ? 0.55 : 0) + ')');
+    ctx.fillStyle = eg; ctx.fillRect(s.x, s.y + 5, s.w, deep ? Math.max(exL, exR) : s.h);
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(9,18,24,0.9)'; ctx.lineWidth = 1.5; ctx.lineJoin = 'round';
+    if (!deep) { rr(ctx, s.x, s.y, s.w, s.h, r); ctx.stroke(); }
+    else { ctx.beginPath(); ctx.moveTo(s.x, s.y + exL); ctx.lineTo(s.x, s.y + r[0]); ctx.quadraticCurveTo(s.x, s.y, s.x + r[0], s.y); ctx.lineTo(s.x + s.w - r[1], s.y); ctx.quadraticCurveTo(s.x + s.w, s.y, s.x + s.w, s.y + r[1]); ctx.lineTo(s.x + s.w, s.y + exR); ctx.stroke(); }
+  }
+  function glow(ctx, x, y, r, col, a) { const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, col); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.globalAlpha = a; ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2); ctx.globalAlpha = 1; }
+  const LAMPS = [[40, 760, 1], [952, 760, -1], [1180, 650, 1], [1700, 450, 1], [1990, 450, -1], [3300, 860, 1]], BRAZIERS = [[2180, 860], [3000, 860]];
+  function drawProps(ctx, t) {
+    for (const [x, y, f] of LAMPS) { Kit.sprite(ctx, 'lamp', x, y + 1, { h: 96, facing: f }); Kit.flame(ctx, x + f * 13.5, y - 72, 46, t + x); }
+    for (const [x, y] of BRAZIERS) { Kit.sprite(ctx, 'brazier', x, y + 1, { h: 44 }); Kit.flame(ctx, x, y - 38, 44, t + x); }
+    // gem
+    if (G.gem) { const gx = GEM.x, gy = GEM.y + Math.sin(t / 260) * 4; ctx.save(); ctx.globalCompositeOperation = 'lighter'; glow(ctx, gx, gy, 34, 'rgba(120,240,255,0.6)', 1); ctx.restore();
+      const facet = (col, pts) => { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(gx + pts[0], gy + pts[1]); for (let i = 2; i < pts.length; i += 2) ctx.lineTo(gx + pts[i], gy + pts[i + 1]); ctx.closePath(); ctx.fill(); };
+      facet('#3aa9c4', [0, 14, 10, -3, -10, -3]); facet('#7fe9f2', [0, 14, 3, -3, -3, -3]); facet('#c8fbff', [-10, -3, -5, -11, 5, -11, 10, -3]); facet('#effeff', [-5, -11, 5, -11, 3, -3, -3, -3]); facet('#2b8fae', [10, -3, 3, -3, 0, 14]);
+      ctx.strokeStyle = '#123040'; ctx.lineWidth = 1.4; ctx.lineJoin = 'round'; ctx.beginPath(); ctx.moveTo(gx, gy + 14); ctx.lineTo(gx + 10, gy - 3); ctx.lineTo(gx + 5, gy - 11); ctx.lineTo(gx - 5, gy - 11); ctx.lineTo(gx - 10, gy - 3); ctx.closePath(); ctx.stroke(); }
+    // portal: stone gateway with a lit veil
+    const px = PORTAL.x, py = PORTAL.y;
+    ctx.save(); ctx.globalCompositeOperation = 'lighter'; glow(ctx, px, py - 60, 120, 'rgba(160,120,255,0.5)', 1);
+    const veil = ctx.createRadialGradient(px, py - 62, 4, px, py - 62, 62); veil.addColorStop(0, 'rgba(235,225,255,0.75)'); veil.addColorStop(0.5, 'rgba(150,120,255,0.4)'); veil.addColorStop(1, 'rgba(90,70,220,0)');
+    ctx.fillStyle = veil; ctx.beginPath(); ctx.ellipse(px, py - 62, 30, 60, 0, 0, Math.PI * 2); ctx.fill();
+    for (let i = 0; i < 3; i++) { ctx.strokeStyle = `rgba(${190 - i * 30},${160 + i * 20},255,${0.7 - i * 0.2})`; ctx.lineWidth = 3 - i * 0.8; ctx.beginPath(); ctx.ellipse(px, py - 62, 26 + i * 5 + Math.sin(t / 200 + i) * 2.5, 54 + i * 5, 0, 0, Math.PI * 2); ctx.stroke(); }
+    ctx.restore();
+    drawColumn(ctx, px - 52, py - 132, 20, 132); drawColumn(ctx, px + 32, py - 132, 20, 132); drawBlock(ctx, px - 60, py - 150, 120, 19);
+  }
+  function drawBoss(ctx, t) {
+    const b = G.boss, x = BOSS_X, base = 860;
+    if (!b.alive && b.crumble > 60) return;
+    const sink = !b.alive ? b.crumble * 1.2 : 0, al = !b.alive ? 1 - b.crumble / 60 : 1;
+    golemA.draw(ctx, x, base + sink, { h: GOLEM_H, alpha: al, flash: b.flash > 0 ? 0.8 * b.flash / 8 : 0 });
+    if (b.state === 'wind' || b.state === 'slam') { const k = b.state === 'wind' ? Math.min(1, b.t / 30) : Math.max(0, 1 - b.t / 8); ctx.save(); ctx.globalCompositeOperation = 'lighter'; glow(ctx, x + golemA.facing * 10, base - GOLEM_H * 0.58, 30 + k * 34, 'rgba(110,255,230,0.8)', 0.75 * k); ctx.restore(); }
+    // HP pips above
+    if (b.alive) { for (let i = 0; i < b.max; i++) { ctx.fillStyle = 'rgba(20,14,30,0.7)'; rr(ctx, x - b.max * 9 + i * 18 - 1, base - GOLEM_H - 19, 16, 7, 3); ctx.fill(); ctx.fillStyle = i < b.hp ? '#ff9a6a' : 'rgba(255,255,255,0.22)'; rr(ctx, x - b.max * 9 + i * 18, base - GOLEM_H - 18, 14, 5, 2); ctx.fill(); } }
+  }
+  function drawHero(ctx) {
+    const h = G.hero;
+    heroA.draw(ctx, h.x, h.y, { h: HERO_H, facing: h.facing, swoosh: true });
+  }
+  function drawWaves(ctx) {
+    for (const w of G.waves) { const r = w.t * 9, a = 1 - w.t / 40; ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = `rgba(255,170,110,${a})`; ctx.lineWidth = 4 * a + 1; ctx.beginPath(); ctx.ellipse(w.x + w.dir * r, 858, 18 + r * 0.25, 7, 0, Math.PI, Math.PI * 2); ctx.stroke(); ctx.restore(); }
+  }
+  function drawParts(ctx, rocksOnly) {
+    for (const p of G.parts) {
+      if ((p.kind === 'rock') !== !!rocksOnly) continue;
+      const a = 1 - p.t / p.life;
+      if (p.kind === 'dust') { ctx.fillStyle = `rgba(226,214,200,${a * 0.45})`; ctx.beginPath(); ctx.arc(p.x, p.y, p.r * (1 + p.t / 20), 0, Math.PI * 2); ctx.fill(); }
+      else if (p.kind === 'rock') {   // chipped stone shard
+        const r = p.r, ro = p.r * 3.1 + p.t * 0.14 * (p.vx > 0 ? 1 : -1), k = Math.floor(p.r * 977) % 5;
+        ctx.save(); ctx.globalAlpha = Math.min(1, a * 2); ctx.translate(p.x, p.y - r * 0.6); ctx.rotate(ro);
+        ctx.beginPath(); ctx.moveTo(-r, -r * 0.3); ctx.lineTo(-r * 0.2, -r); ctx.lineTo(r, -r * 0.4); ctx.lineTo(r * 0.7, r * 0.7); ctx.lineTo(-r * 0.6, r * 0.8); ctx.closePath();
+        ctx.fillStyle = '#8d8478'; ctx.fill();
+        if (IMG.rock) { ctx.save(); ctx.clip(); ctx.drawImage(IMG.rock, [70, 250, 150, 300, 40][k], [70, 60, 300, 330, 230][k], 56, 56, -r, -r, r * 2, r * 2); ctx.restore(); }
+        ctx.strokeStyle = 'rgba(44,36,48,0.85)'; ctx.lineWidth = 0.8; ctx.lineJoin = 'round'; ctx.stroke();
+        ctx.restore();
+      }
+      else { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = p.col; ctx.globalAlpha = a; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - p.vx * 2, p.y - p.vy * 2); ctx.stroke(); ctx.restore(); }
+    }
+  }
+  function drawMotes(ctx, cam, t) {
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 26; i++) {
+      const px = (hash(i, 3, 3) * 900 + t * 0.012 * (0.5 + hash(i, 4, 3)) - cam.cx * 0.9) % 900, py = hash(i, 5, 3) * VH + Math.sin(t / 900 + i) * 12;
+      glow(ctx, (px + 900) % 900 - 130, py, 6, 'rgba(255,230,170,0.8)', 0.5);
+    }
+    ctx.restore();
+  }
+  function render(ctx, cam, withDebug) {
+    const t = G.t;
+    ctx.setTransform(BS, 0, 0, BS, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    drawSky(ctx, cam, t);
+    cam.apply(ctx);
+    const vis = cam.visible(40);
+    drawProps(ctx, t);
+    for (const s of solidList()) drawSolid(ctx, s, vis);
+    drawWaves(ctx);
+    drawBoss(ctx, t);
+    drawParts(ctx, true);
+    drawHero(ctx);
+    drawParts(ctx);
+    cam.restore(ctx);
+    drawMotes(ctx, cam, t);
+    // vignette
+    const vg = ctx.createRadialGradient(VW / 2, VH / 2, VH * 0.35, VW / 2, VH / 2, VW * 0.62); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(6,10,22,0.42)');
+    ctx.fillStyle = vg; ctx.fillRect(0, 0, VW, VH);
+    // HUD (never moves with the camera)
+    const lg = ctx.createLinearGradient(0, LABEL.y, 0, LABEL.y + LABEL.h); lg.addColorStop(0, 'rgba(34,30,48,0.86)'); lg.addColorStop(1, 'rgba(14,14,26,0.86)');
+    ctx.fillStyle = lg; rr(ctx, LABEL.x, LABEL.y, LABEL.w, LABEL.h, 6); ctx.fill();
+    ctx.strokeStyle = 'rgba(232,196,136,0.75)'; ctx.lineWidth = 1; rr(ctx, LABEL.x + 0.5, LABEL.y + 0.5, LABEL.w - 1, LABEL.h - 1, 6); ctx.stroke();
+    ctx.fillStyle = '#e8c488'; ctx.beginPath(); ctx.moveTo(25, 23); ctx.lineTo(29, 27); ctx.lineTo(25, 31); ctx.lineTo(21, 27); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#f6ecd8'; ctx.font = 'italic 600 13px Georgia, "Iowan Old Style", "Times New Roman", serif'; ctx.textBaseline = 'middle';
+    ctx.fillText(G.scene === 'arena' ? 'Stone Warden' : G.scene === 'ruins' ? 'Fern Ledges' : G.scene === 'gate' ? 'The Far Gate' : 'Dusk Meadow', 37, 27.5);
+    if (withDebug) cam.debug(ctx);
+  }
+  // phones get a taller, narrower chart backing (720x320 instead of 1280x150) so the lanes and labels stay readable
+  const narrowMQ = matchMedia('(max-width: 600px)');
+  function sizeChart() {
+    const n = narrowMQ.matches, w = n ? 720 : 1280, h = n ? 320 : 150;
+    if (chart.width !== w || chart.height !== h) { chart.width = w; chart.height = h; chart.style.aspectRatio = w + ' / ' + h; }
+  }
+  narrowMQ.addEventListener('change', () => { sizeChart(); drawChart(); });
+  function drawChart() {
+    sizeChart();
+    const W = chart.width, H = chart.height, c = cctx, n = H > 200, fs = n ? 22 : 12, lw = n ? 3 : 2;
+    c.setTransform(1, 0, 0, 1, 0, 0); c.fillStyle = '#0f121b'; c.fillRect(0, 0, W, H);
+    c.font = '600 ' + fs + 'px ui-monospace, Menlo, monospace'; c.textBaseline = 'middle';
+    const sep = Math.round(H * 0.497) + 0.5;
+    c.strokeStyle = '#232a40'; c.lineWidth = 1; c.beginPath(); c.moveTo(0, sep); c.lineTo(W, sep); c.stroke();
+    if (hist.length < 2) return;
+    const X = i => W - (hist.length - 1 - i) * (W / 240);
+    const path = (col, fn) => { c.strokeStyle = col; c.lineWidth = lw; c.beginPath(); hist.forEach((p, i) => { const y = fn(p, i); i ? c.lineTo(X(i), y) : c.moveTo(X(i), y); }); c.stroke(); };
+    // lane 1: camera height (world px), auto range
+    let lo = Infinity, hi = -Infinity; for (const p of hist) { lo = Math.min(lo, p.yOn, p.yOff); hi = Math.max(hi, p.yOn, p.yOff); }
+    if (hi - lo < 120) { const m = (hi + lo) / 2; lo = m - 60; hi = m + 60; }
+    const Y1 = v => H * (n ? 0.16 : 0.067) + (v - lo) / (hi - lo) * H * (n ? 0.3 : 0.373);
+    path('#ff7a8a', p => Y1(p.yOff)); path('#7ff0c8', p => Y1(p.yOn));
+    // lane 2: horizontal camera speed (px/s), scaled to the peak in view, with the hero's speed for reference
+    let pk = 300; for (const p of hist) pk = Math.max(pk, Math.abs(p.vOn), Math.abs(p.vOff), p.hv);
+    pk = Math.ceil(pk / 100) * 100;
+    const mid = H * (n ? 0.8 : 0.747), amp = H * (n ? 0.15 : 0.227), Y2 = v => mid - v / pk * amp;
+    c.strokeStyle = '#232a40'; c.setLineDash([4, 4]); c.beginPath(); c.moveTo(0, mid + 0.5); c.lineTo(W, mid + 0.5); c.moveTo(0, Y2(pk) + 0.5); c.lineTo(W, Y2(pk) + 0.5); c.moveTo(0, Y2(-pk) + 0.5); c.lineTo(W, Y2(-pk) + 0.5); c.stroke(); c.setLineDash([]);
+    c.strokeStyle = 'rgba(255,255,255,0.18)'; c.lineWidth = 1; c.beginPath(); hist.forEach((p, i) => { const y = Y2(p.hv); i ? c.lineTo(X(i), y) : c.moveTo(X(i), y); }); c.stroke();
+    path('#ff7a8a', p => Y2(p.vOff)); path('#7ff0c8', p => Y2(p.vOn));
+    c.fillStyle = '#aeb6d0'; c.fillText('camera height (world px)', 10, H * (n ? 0.06 : 0.093)); c.fillText(n ? 'camera x speed, px/s (faint: hero)' : 'camera x speed, px/s  (faint: hero speed)', 10, H * (n ? 0.56 : 0.547));
+    c.fillStyle = '#7c86a6'; c.textAlign = 'right'; c.fillText('+' + pk + ' px/s', W - 8, Y2(pk) + fs * 0.67); c.fillText('-' + pk, W - 8, Y2(-pk) - fs * 0.67); c.textAlign = 'left';
+  }
+
+  // ================================================================ UI
+  let debugOn = Q.get('debug') !== '0', compare = Q.get('compare') === '1', speed = +Q.get('slow') || 1;
+  const $ = id => document.getElementById(id);
+  $('dbg').checked = debugOn; $('cmp').checked = compare;
+  function layout() { $('views').classList.toggle('single', !compare); $('on-title').textContent = compare ? 'After: camera director' : 'Camera director'; }
+  layout();
+  const outs = {};
+  for (const s of SPEC) {
+    const host = $('sl-' + s.group), row = document.createElement('div'); row.className = 'row';
+    row.innerHTML = `<label>${s.label}<output></output></label><input type="range" min="${s.min}" max="${s.max}" step="${s.step}">`;
+    const inp = row.querySelector('input'), out = row.querySelector('output');
+    const sync = () => { inp.value = PARAMS[s.key]; out.textContent = (+PARAMS[s.key]).toFixed(s.step < 0.01 ? 3 : s.step < 0.1 ? 2 : 1); inp.style.setProperty('--fill', ((PARAMS[s.key] - s.min) / (s.max - s.min) * 100) + '%'); };
+    inp.addEventListener('input', () => { PARAMS[s.key] = +inp.value; camOn.setParams({ [s.key]: +inp.value }); sync(); });
+    outs[s.key] = sync; sync(); host.appendChild(row);
+  }
+  function segs(id, key) {
+    const el = $(id), sync = () => el.querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', String(b.dataset.v === String(PARAMS[key]))));
+    el.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; PARAMS[key] = b.dataset.v; camOn.setParams({ [key]: b.dataset.v }); sync(); });
+    outs[key] = sync; sync();
+  }
+  segs('platform', 'platform'); segs('frame', 'frame'); segs('snap', 'snap'); segs('reduced', 'reduced');
+  const pre = $('presets');
+  for (const name in PRESETS) { const b = document.createElement('button'); b.textContent = name; b.onclick = () => { Object.assign(PARAMS, P0, { view: 'side', snap: PARAMS.snap }, PRESETS[name]); camOn.setParams(PARAMS); for (const k in outs) outs[k](); pre.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); }; pre.appendChild(b); }
+  pre.firstChild.classList.add('on');
+  const seg = (id, fn) => $(id).addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $(id).querySelectorAll('button').forEach(x => x.setAttribute('aria-checked', String(x === b))); fn(b.dataset.v); });
+  seg('drive', v => { inputFn = v === 'play' ? humanInput : scriptInput; });
+  seg('speed', v => { speed = +v; });
+  $('dbg').onchange = e => { debugOn = e.target.checked; };
+  $('cmp').onchange = e => { compare = e.target.checked; layout(); };
+  $('restart').onclick = () => restart();
+  $('b-light').onclick = () => camOn.hit('light', { at: { x: G.hero.x, y: G.hero.y - 20 } });
+  $('b-heavy').onclick = () => camOn.hit('heavy', { at: { x: G.hero.x, y: G.hero.y - 20 } });
+  $('b-fin').onclick = () => camOn.hit('finisher', { at: { x: G.hero.x, y: G.hero.y - 20 } });
+  $('b-cut').onclick = () => teleport();
+  function teleport() { const h = G.hero; h.x = h.x < 1500 ? 2300 : 270; h.y = h.x > 2000 ? 860 : 760; h.vx = h.vy = 0; G.events.push({ type: 'teleport', x: h.x, y: h.y }); }
+  function takeOver() { if (inputFn !== humanInput) { inputFn = humanInput; $('drive').querySelectorAll('button').forEach(x => x.setAttribute('aria-checked', String(x.dataset.v === 'play'))); } }
+  addEventListener('keydown', e => {
+    if (['ArrowLeft', 'ArrowRight', 'KeyZ', 'KeyX', 'Space'].includes(e.code)) { takeOver(); if (!e.repeat) pressed.add(e.code); held.add(e.code); e.preventDefault(); }
+    else if (e.code === 'KeyD') { debugOn = !debugOn; $('dbg').checked = debugOn; }
+    else if (e.code === 'KeyT') teleport();
+    else if (e.code === 'KeyS') { speed = speed === 1 ? 0.35 : speed === 0.35 ? 0.12 : 1; $('speed').querySelectorAll('button').forEach(x => x.setAttribute('aria-checked', String(+x.dataset.v === speed))); }
+  });
+  addEventListener('keyup', e => held.delete(e.code));
+  addEventListener('blur', () => held.clear());
+
+  function hud() {
+    const s = camOn.stats();
+    $('cap-scene').innerHTML = 'scene <b>' + G.scene + '</b>';
+    $('cap-time').innerHTML = 't <b>' + (G.t / 1000).toFixed(2) + ' s</b>';
+    $('cap-cam').innerHTML = 'zoom <b>' + camOn.zoom.toFixed(2) + '</b> &middot; trauma <b>' + s.trauma.toFixed(2) + '</b>';
+    $('stat').innerHTML = `peak pan <b>${Math.round(s.maxPan)} px/s</b> with the hero at ${Math.round(s.maxPanTarget)} px/s &middot; zoom <b>${camOn.zoom.toFixed(2)}</b><br>hits <b>${s.hits}</b> &middot; punches <b>${s.punches}</b> &middot; cuts <b>${s.cuts}</b><br>landings re-framed <b>${s.landings}</b> &middot; safe-frame catches <b>${s.catchUps}</b><br>framed frames <b>${s.framedFrames}</b> &middot; min zoom <b>${s.minZoom.toFixed(2)}</b><br>max shake <b>${s.maxShakePx.toFixed(1)} px</b> &middot; max roll <b>${s.maxRollDeg.toFixed(2)}&deg;</b>`;
+  }
+  // ?pip=1 (stills): one large director view with the hard-follow camera of the same frame as an inset, so the
+  // hero stays readable at card size (the side-by-side halves each view)
+  const pip = Q.get('pip') === '1';
+  function drawPip() {
+    const g = ctxOn, W = cvOn.width, H = cvOn.height, w = Math.round(W * 0.34), h = Math.round(w * H / W), m = Math.round(W * 0.018), x = W - w - m, y = m, r = Math.round(W * 0.008);
+    g.save(); g.setTransform(1, 0, 0, 1, 0, 0);
+    g.shadowColor = 'rgba(4,6,14,0.55)'; g.shadowBlur = W * 0.014; g.shadowOffsetY = W * 0.004;
+    g.fillStyle = '#0c1020'; g.beginPath(); g.roundRect(x - 3, y - 3, w + 6, h + 6, r + 3); g.fill();
+    g.shadowColor = 'transparent';
+    g.save(); g.beginPath(); g.roundRect(x, y, w, h, r); g.clip(); g.imageSmoothingQuality = 'high'; g.drawImage(cvOff, x, y, w, h); g.restore();
+    g.lineWidth = Math.max(2, W * 0.0022); g.strokeStyle = 'rgba(236,226,200,0.85)'; g.beginPath(); g.roundRect(x, y, w, h, r); g.stroke();
+    const fs = Math.round(W * 0.0125), tw = fs * 8.6, th = fs * 1.9;
+    g.fillStyle = 'rgba(12,16,32,0.82)'; g.beginPath(); g.roundRect(x + r, y + h - th - r, tw, th, th / 2); g.fill();
+    g.fillStyle = '#f0e6cc'; g.font = '700 ' + fs + 'px system-ui, sans-serif'; g.textBaseline = 'middle'; g.textAlign = 'center';
+    g.fillText('HARD FOLLOW', x + r + tw / 2, y + h - th / 2 - r + 1);
+    g.restore();
+  }
+  function paint() { render(ctxOn, camOn, debugOn); if (compare || pip) render(ctxOff, camOff, false); if (pip && !compare) drawPip(); drawChart(); hud(); }
+
+  function restart() { newRun(); hist.length = 0; camOn.clear(); camOff.clear(); heroA.reset(); golemA.reset(); castX = null; }
+  newRun();
+  /* text state for critics and tools/sprites/statecheck.py (world px; the camera only moves the view). The hero targets the golem while it
+     stands and fights (slashing or not running) inside the arena; when it runs (also the scripted retreat from a slam) it faces its move direction. */
+  window.__state = () => { const h = G.hero, b = G.boss, dir = f => f > 0 ? 'right' : 'left', duel = b.alive && G.script.phase === 'fight' && (h.slash > 0 || Math.abs(h.vx) < 0.5);
+    return { t: Math.round(G.t), actors: [
+      { id: 'hero', x: Math.round(h.x), y: Math.round(h.y), facing: dir(h.facing), target: duel ? 'golem' : null, vx: Math.abs(h.vx) < 0.5 ? 0 : +(h.vx * 60).toFixed(1), asset: 'sword' },
+      Object.assign({ id: 'golem', x: BOSS_X, y: 860, facing: dir(golemA.facing), target: 'hero', asset: 'golem' }, b.alive ? null : { noFace: 'dead (crumbling or gone)' })] }; };
+  window.__camDemo = () => ({ t: G.t, frame: G.frame, scene: G.scene, hero: { x: G.hero.x, y: G.hero.y, onGround: G.hero.onGround }, boss: { hp: G.boss.hp, alive: G.boss.alive, state: G.boss.state }, teleports: G.teleports, cam: camOn.state(), off: camOff.state(), stats: camOn.stats() });
+  // trace hook for checks/trace.py: runs n more fixed steps and returns one row per step (no drawing)
+  window.__camRun = n => { const rows = []; for (let i = 0; i < n; i++) { fullStep(); const h = G.hero, s = camOn.state(), st = camOn.stats(), sc = camOn.toScreen(h.x, h.y - 20);
+    rows.push({ t: G.t, hx: h.x, hy: h.y - 20, hvx: h.vx * 60, hvy: h.vy * 60, g: h.onGround, gate: G.gate, alive: G.boss.alive, bcx: s.base.cx, bcy: s.base.cy, cx: s.cx, cy: s.cy, zoom: s.zoom, sx: sc.x, sy: sc.y, offcy: camOff.cy, catch: st.catchUps }); } return rows; };
+  if (Q.get('drive') === 'play') inputFn = humanInput;
+  if (HAS_T) { const n = Math.floor(START_T / STEP); for (let i = 0; i < n; i++) fullStep(); }
+  let acc = 0, last = null;
+  function loop(ts) {
+    if (last === null) last = ts;
+    acc += Math.min(250, ts - last) * speed; last = ts;
+    let n = 0;
+    while (acc >= STEP && n < 20) { fullStep(); acc -= STEP; n++; }
+    paint();
+    requestAnimationFrame(loop);
+  }
+  // boot once the kit cast and the painted layers have decoded (no timers: safe under a fake clock)
+  let booted = 0;
+  function boot() {
+    if (++booted < 2) return;
+    buildArt();
+    if (HAS_T) { paint(); if (FREEZE) { window.__frozen = true; document.documentElement.dataset.frozen = '1'; return; } }
+    requestAnimationFrame(loop);
+  }
+  Kit.ready(boot); imgDone = boot; imgSettle();
+})();
+</script>
+</body>
+</html>

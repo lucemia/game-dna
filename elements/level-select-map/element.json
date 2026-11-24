@@ -1,0 +1,68 @@
+{
+  "id": "level-select-map",
+  "code": "B-05",
+  "kind": "system",
+  "name": "Level-select path reveal",
+  "family": "B: map & movement",
+  "oneLiner": "An overworld map between levels: level, secret, castle, save-hut, shop and bonus nodes joined by paths; the hero walks node to node along the paths; cleared levels change colour and fly a flag; clearing a level draws the next path stone by stone with a sound per stone while the camera follows, a secret exit opens a different path, locked paths show faint, an info panel names the node and its collected items, huts save through the game, and the map scrolls when it is bigger than the screen.",
+  "fits": [
+    "level-based platformers",
+    "action or puzzle games with a stage list",
+    "short-stage arcade games",
+    "board-game style campaigns",
+    "any game with 3+ levels or arenas to string together"
+  ],
+  "notFor": [
+    "free-roaming open worlds (no fixed nodes)",
+    "grid tactics movement (use B-01)",
+    "games with a single endless level"
+  ],
+  "interfaces": {
+    "time": "tick",
+    "coords": "side",
+    "layer": "scene",
+    "needs": [
+      "a scene switch: title -> map -> level -> map (the game shows the map scene between levels)",
+      "the graph: nodes {id, x, y, kind, name} in map pixels and edges {a, b, via, exit}",
+      "the cleared state to start from (or none for a new game)",
+      "enterLevel(id): start that level; and a call back to complete(id, exit) or fail(id) when the level ends",
+      "input on the map: 4 directions (held) and a confirm press",
+      "a fixed 60 Hz update step while the map is shown",
+      "optional: onSave(state) for huts, onShop(id), onSound(name), nodeInfo(id) items for the panel"
+    ],
+    "provides": [
+      "event enterLevel(id) (after an iris close)",
+      "events arrive / leave / reveal / revealDone / clear / save / shop / deny / allClear via onEvent",
+      "sound cue names: step, arrive, dot, open, enter, save, shop, deny",
+      "state {at, cleared, open, saves} for saving",
+      "data player anchor on screen, UI rects (panel, toasts), camera offset",
+      "autopilot that walks to the next uncleared level and enters it"
+    ]
+  },
+  "params": [
+    { "key": "walk", "label": "Walk speed (px per frame)", "type": "range", "min": 0.5, "max": 3, "step": 0.25, "default": 1.25 },
+    { "key": "reveal", "label": "Frames per path stone", "type": "range", "min": 1, "max": 12, "step": 1, "default": 4 },
+    { "key": "spacing", "label": "Stone spacing (px)", "type": "range", "min": 4, "max": 10, "step": 1, "default": 6 },
+    { "key": "terrain", "label": "Built-in terrain", "type": "select", "options": ["coast", "dusk", "none"], "default": "coast" },
+    { "key": "locked", "label": "Locked paths", "type": "select", "options": ["faint", "hidden"], "default": "faint" },
+    { "key": "panel", "label": "Info panel", "type": "select", "options": ["auto", "top", "bottom", "off"], "default": "auto" },
+    { "key": "iris", "label": "Iris into levels", "type": "select", "options": ["on", "off"], "default": "on" },
+    { "key": "camera", "label": "Camera", "type": "select", "options": ["smooth", "instant"], "default": "smooth" }
+  ],
+  "variants": [
+    { "name": "Coastal trail (default)", "params": { "walk": 1.25, "reveal": 4, "spacing": 6, "terrain": "coast", "locked": "faint", "panel": "auto", "iris": "on", "camera": "smooth" } },
+    { "name": "Quick reveal", "params": { "walk": 2, "reveal": 2, "spacing": 6, "terrain": "coast", "locked": "faint", "panel": "auto", "iris": "on", "camera": "smooth" } },
+    { "name": "Dusk coast", "params": { "walk": 1, "reveal": 6, "spacing": 5, "terrain": "dusk", "locked": "faint", "panel": "bottom", "iris": "on", "camera": "smooth" } },
+    { "name": "No spoilers", "params": { "walk": 1.25, "reveal": 4, "spacing": 7, "terrain": "coast", "locked": "hidden", "panel": "top", "iris": "on", "camera": "smooth" } }
+  ],
+  "assets": "none: terrain, hero, node buildings, stones, icons and windows are drawn by code in the module",
+  "status": "draft",
+  "delivery": {
+    "version": "v1",
+    "module": "module/level-select-map.js",
+    "global": "GameDNA_LevelMap",
+    "readme": "module/README.md"
+  },
+  "starter": "starter/index.html",
+  "starterReadme": "starter/README.md"
+}

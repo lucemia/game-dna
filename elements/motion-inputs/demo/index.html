@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Motion Inputs</title>
+<style>
+  :root { --bg: #120d16; --panel: #1d1622; --edge: #3a2c44; --text: #efe6da; --dim: #a898a8; --gold: #ffd166; --a: #e8553a; --b: #3a8ae8; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+  main { max-width: 1312px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 20px; margin: 0 0 2px; letter-spacing: 0.02em; }
+  .sub { color: var(--dim); margin: 0 0 12px; font-size: 13px; }
+  #stage { width: 100%; display: flex; justify-content: center; background: #000; border-radius: 6px; overflow: hidden; }
+  canvas { display: block; touch-action: none; }
+  canvas.pixel { image-rendering: pixelated; image-rendering: crisp-edges; }
+  .row { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--edge); border-radius: 8px; padding: 12px 14px; flex: 1 1 280px; min-width: 0; }
+  .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gold); margin: 0 0 8px; }
+  button, select { font: inherit; color: var(--text); background: #2a2032; border: 1px solid var(--edge); border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+  button.on { border-color: var(--gold); color: var(--gold); }
+  label { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: 13px; }
+  label span { flex: 0 0 132px; color: var(--dim); }
+  input[type=range] { flex: 1; min-width: 60px; }
+  output { flex: 0 0 34px; text-align: right; font-variant-numeric: tabular-nums; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  td { padding: 4px 4px; border-top: 1px solid #2c2236; vertical-align: middle; }
+  td.n { font-family: ui-monospace, Menlo, Consolas, monospace; white-space: nowrap; }
+  .k { display: inline-block; min-width: 20px; padding: 0 5px; border-radius: 4px; background: #2a2032; border: 1px solid var(--edge); text-align: center; font-size: 12px; }
+  .ba { color: #fff; background: var(--a); border-radius: 50%; display: inline-block; width: 20px; height: 20px; text-align: center; line-height: 20px; font-weight: 800; font-size: 12px; }
+  .bb { color: #fff; background: var(--b); border-radius: 50%; display: inline-block; width: 20px; height: 20px; text-align: center; line-height: 20px; font-weight: 800; font-size: 12px; }
+  .ar { font-size: 16px; letter-spacing: 2px; }
+  #status { color: var(--dim); font-size: 13px; margin-top: 6px; min-height: 19px; }
+  .btns { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Motion-input special moves</h1>
+  <p class="sub">An input buffer reads quarter circles, the forward-down-diagonal motion, charge and a full turn, with leniency windows; the display shows the last inputs and names each special. The demo plays a recorded tape; press any key or a pad button to play yourself.</p>
+  <div id="stage"><canvas id="cv"></canvas></div>
+  <div id="status"></div>
+  <div class="row">
+    <div class="card">
+      <h2>Move list</h2>
+      <table id="moves"></table>
+      <p style="color:var(--dim);font-size:12px;margin:8px 0 0">Arrows are drawn for the way the hero faces now: they mirror when the hero crosses over.</p>
+    </div>
+    <div class="card">
+      <h2>Controls</h2>
+      <div class="btns">
+        <button id="look-pixel">Pixel</button><button id="look-hd">HD</button>
+        <button id="restart">Restart demo</button><button id="listbtn">Move list in game</button>
+      </div>
+      <p style="margin:4px 0;font-size:13px"><span class="k">&larr;</span> <span class="k">&rarr;</span> walk &middot; <span class="k">&darr;</span> crouch &middot; <span class="k">&uarr;</span> jump &middot; <span class="k">J</span>/<span class="k">X</span> <span class="ba">A</span> slash &middot; <span class="k">K</span>/<span class="k">C</span> <span class="bb">B</span> spell &middot; pad: d-pad or stick, face buttons</p>
+    </div>
+    <div class="card">
+      <h2>Leniency</h2>
+      <label><span>Leniency</span><select id="len"><option value="on">on (default)</option><option value="off">off</option></select></label>
+      <label><span>Step window</span><input type="range" id="stepWindow" min="4" max="24" step="1"><output></output></label>
+      <label><span>Press window</span><input type="range" id="pressWindow" min="0" max="16" step="1"><output></output></label>
+      <label><span>Gap (neutral)</span><input type="range" id="gap" min="0" max="8" step="1"><output></output></label>
+      <label><span>Charge (steps)</span><input type="range" id="chargeFrames" min="20" max="70" step="2"><output></output></label>
+      <label><span>Busy buffer</span><input type="range" id="buffer" min="0" max="24" step="1"><output></output></label>
+      <label><span>Display side</span><select id="side"><option value="left">left</option><option value="right">right</option></select></label>
+    </div>
+  </div>
+</main>
+<script src="../../../pixel-kit/pixel-scene.js"></script>
+<script src="../module/motion-inputs.js"></script>
+<script src="arena.js"></script>
+<script>
+'use strict';
+(function () {
+  const Q = new URLSearchParams(location.search);
+  const LOOK = Q.get('look') === 'hd' ? 'hd' : 'pixel';
+  const HAS_T = Q.has('t'), FREEZE = Q.get('freeze') === '1', START_T = Math.max(0, +Q.get('t') || 0);
+  const MUT = Q.get('mutant') || '';
+  const STEP_MS = 1000 / 60;
+  const WW = 320, WH = 180, W = LOOK === 'hd' ? 640 : 320, H = LOOK === 'hd' ? 360 : 180, WS = LOOK === 'hd' ? 2 : 1;   // view size, world -> view scale
+  const MI = window.GameDNA_MotionInputs, PXS = window.GameDNA_PixelScene, FONT = MI.font;
+  const cv = document.getElementById('cv'), CTX = cv.getContext('2d'); let ctx = CTX;
+  if (LOOK === 'pixel') { cv.width = W; cv.height = H; cv.className = 'pixel'; }
+
+  // module params from the page (?stepWindow=..)
+  const params = {};
+  ['fade', 'stepWindow', 'pressWindow', 'gap', 'motionWindow', 'chargeFrames', 'chargeKeep', 'buffer', 'history', 'shortcuts', 'display', 'callout', 'rows', 'side', 'frames', 'render', 'hudScale', 'theme', 'leniency'].forEach(k => { if (Q.has(k)) params[k] = Q.get(k); });
+  if (MUT === 'small') params.hudScale = 1;
+  if (MUT === 'jump') params.fade = 0;
+  if (Q.get('list') !== '0') params.moveList = 'on';
+
+  /* ---------- sizing: pixel = integer CSS scale (phones: fill the width), HD = device pixels ---------- */
+  function fit() {
+    const avail = Math.max(200, document.getElementById('stage').clientWidth);
+    if (LOOK === 'pixel') {
+      const k = avail >= W ? Math.floor(avail / W) : avail / W;
+      cv.style.width = Math.round(W * k) + 'px'; cv.style.height = Math.round(H * k) + 'px';
+    } else {
+      // the pixel world is shown at a whole number of device pixels per art pixel; the HD UI is drawn at device resolution
+      const dpr = window.devicePixelRatio || 1, n = Math.max(1, Math.floor(Math.min(avail, 1280) * dpr / 320));
+      const bw = n * 320, bh = n * 180;
+      cv.style.width = (bw / dpr) + 'px'; cv.style.height = (bh / dpr) + 'px';
+      if (cv.width !== bw || cv.height !== bh) { cv.width = bw; cv.height = bh; }
+    }
+  }
+  fit();
+
+  /* ---------- HUD rects (view units), computed from the module's text scale so phones stay readable ---------- */
+  function hudScale() { const css = cv.getBoundingClientRect().width / W || 1; return LOOK === 'pixel' ? Math.max(1, Math.min(4, Math.ceil(10 / (7 * css) - 1e-6))) : Math.max(10.5 / css, H * 0.032); }
+  function hudRects() {
+    const k = hudScale();
+    if (LOOK === 'pixel') return [{ x: 3, y: 3, w: 8 * 6 * k + 6 * k, h: 7 * k + 6 * k, id: 'plate' }, { x: W - 3 - (7 * 6 * k + 50), y: 3, w: 7 * 6 * k + 50, h: 7 * k + 6 * k, id: 'partner' }];
+    const fs = k; return [{ x: 10, y: 10, w: fs * 6.4 + 24, h: fs + 18, id: 'plate' }, { x: W - 10 - (fs * 5 + 150), y: 10, w: fs * 5 + 150, h: fs + 18, id: 'partner' }];
+  }
+  let A = null;
+  function heroView() { const r = A.heroRect(); return { x: r.x * WS, y: r.y * WS, w: r.w * WS, h: r.h * WS }; }
+  A = MotionArena.create(MI, { body: MUT === 'push' ? { push: 6 } : null, mutant: MUT, mi: { view: { w: W, h: H }, canvas: cv, params: params,
+    avoid: () => MUT === 'cover' ? [] : [heroView()], uiRects: () => MUT === 'cover' ? [] : hudRects() } });
+  const mi = A.mi;
+  // ?mutant=jump (checks): instant fades and the display side flipped every 200 steps -> panels jump across the screen
+  function stepWorld(d) { A.step(d); if (MUT === 'jump' && A.S.step % 200 === 0) mi.setParams({ side: (A.S.step / 200) % 2 ? 'right' : 'left' }); }
+  window.__mi = mi; window.__arena = A;
+
+  /* ---------- input: keyboard + gamepad (the script plays until the first real input) ---------- */
+  const KEYS = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', ArrowUp: 'up', KeyW: 'up', Space: 'up', ArrowDown: 'down', KeyS: 'down', KeyJ: 'a', KeyX: 'a', KeyK: 'b', KeyC: 'b' };
+  const held = new Set(); let userKeys = false, listOn = Q.get('list') !== '0';
+  addEventListener('keydown', e => {
+    if (e.code === 'KeyM') { listOn = mi.showMoveList(); syncButtons(); return; }
+    if (e.code === 'KeyR') { A.restartScript(); userKeys = false; return; }
+    const k = KEYS[e.code]; if (!k) return; e.preventDefault(); held.add(k); userKeys = true;
+  });
+  addEventListener('keyup', e => { const k = KEYS[e.code]; if (k) held.delete(k); });
+  addEventListener('blur', () => held.clear());
+  function device() {
+    const pad = MI.pad(null, { a: [0, 2], b: [1, 3] });
+    if (pad.pad && (pad.left || pad.right || pad.up || pad.down || pad.a || pad.b)) userKeys = true;
+    if (!userKeys) return null;
+    const kb = { left: held.has('left'), right: held.has('right'), up: held.has('up'), down: held.has('down'), a: held.has('a'), b: held.has('b') };
+    return MI.merge(kb, pad);
+  }
+
+  /* ---------- pixel art: the pixel-kit fighters, real poses, walk / crouch / jump frames derived from the stance ---------- */
+  const HERO_O = { pal: { h: '#6a3a22', H: '#9a5a34', x: '#3e2014', t: '#d83a3a', T: '#ff7a6a', u: '#8a1a1a', b: '#3c72e4', B: '#78a8ff', d: '#2442a4' }, head: 'band', gear: 'sword' };
+  const FOE_O = { pal: { h: '#a8b4d0', H: '#d0d8ec', x: '#58607e', b: '#8a4a2a', B: '#c07a4a', d: '#5a2e18', r: '#e0b040' }, head: 'helm', gear: 'axe', shield: ['#8a6a40', '#c09a60', '#5a4020'] };
+  const FC = {};
+  function clone(c) { const d = document.createElement('canvas'); d.width = c.width; d.height = c.height; d.getContext('2d').drawImage(c, 0, 0); d.footX = c.footX; d.footY = c.footY; return d; }
+  // rows of the 48x48 pose canvas: legs from y 39 (hip) to 47 (sole outline); split the two legs at the gap column
+  function derive(o, side, kind, ph) {
+    const key = JSON.stringify(o) + side + kind + ph; if (FC[key]) return FC[key];
+    const base = PXS.fighterPose(o, 'ready', side), Wd = 48, Hd = 48;
+    const src = base.getContext('2d').getImageData(0, 0, Wd, Hd), out = new ImageData(Wd, Hd), s = src.data, d = out.data;
+    const put = (x, y, i) => { if (x < 0 || y < 0 || x >= Wd || y >= Hd) return; const q = (y * Wd + x) * 4; if (d[q + 3] && s[i + 3] && d[q] === 26 && d[q + 1] === 16) { d[q] = s[i]; d[q + 1] = s[i + 1]; d[q + 2] = s[i + 2]; d[q + 3] = 255; return; } if (d[q + 3]) return; d[q] = s[i]; d[q + 1] = s[i + 1]; d[q + 2] = s[i + 2]; d[q + 3] = s[i + 3]; };
+    const split = side === 'right' ? 25.5 : 21.5, front = side === 'right' ? 1 : -1;   // the leg on the facing side is the front leg
+    for (let y = 0; y < Hd; y++) for (let x = 0; x < Wd; x++) {
+      const i = (y * Wd + x) * 4; if (!s[i + 3]) continue;
+      let nx = x, ny = y;
+      if (kind === 'walk') {
+        if (y >= 40) {
+          const isFront = (x - split) * front > 0, k = (y - 39) / 8;
+          // ph 0: front leg forward, 1: passing (front foot lifted), 2: back leg forward, 3: passing
+          const amp = ph === 0 ? 2.4 : ph === 2 ? -2.4 : 0;
+          nx = x + Math.round((isFront ? amp : -amp) * k * front);
+          if ((ph === 1 && isFront || ph === 3 && !isFront) && y >= 44) ny = y - 1;
+        }
+        if (ph === 1 || ph === 3) { if (y < 39) ny = y - 0; }
+      } else if (kind === 'crouch') {
+        if (y < 39) ny = y + 4; else if (y < 43) continue;
+      } else if (kind === 'tuck') {
+        // knees pulled up: thighs shortened, shins and boots raised 5 px, the front knee 2 px forward
+        if (y >= 41 && y < 46) continue;
+        if (y >= 46) { ny = y - 5; const isFront = (x - split) * front > 0; if (isFront) nx = x + 2 * front; }
+        else if (y >= 39) { const isFront = (x - split) * front > 0; if (isFront) nx = x + (y - 38) * front; }
+      } else if (kind === 'breathe') {
+        if (y < 37) ny = y + 1;
+      }
+      put(nx, ny, i);
+    }
+    const c = document.createElement('canvas'); c.width = Wd; c.height = Hd; c.getContext('2d').putImageData(out, 0, 0);
+    // crouch: fill the knees bent forward (2 px wide bend) so the legs read as bent, not cut
+    c.footX = base.footX; c.footY = base.footY;
+    return (FC[key] = c);
+  }
+  function pose(o, name, side) { return PXS.fighterPose(o, name, side); }
+  const TINT = {}; let TINTN = 0;
+  function tinted(c, col) { const key = (c.__id || (c.__id = 'c' + (++TINTN))) + col; if (TINT[key]) return TINT[key]; const d = clone(c), g = d.getContext('2d'); g.globalCompositeOperation = 'source-atop'; g.globalAlpha = 0.5; g.fillStyle = col; g.fillRect(0, 0, d.width, d.height); return (TINT[key] = d); }
+  function heroFrame(h) {
+    const side = h.face > 0 ? 'right' : 'left', t = h.t, st = h.st;
+    if (st === 'walk') return derive(HERO_O, side, 'walk', Math.floor(h.walkT / 4) % 4);
+    if (st === 'crouch' || st === 'prejump' || st === 'land') return derive(HERO_O, side, 'crouch', 0);
+    if (st === 'air') return derive(HERO_O, side, 'tuck', 0);
+    if (st === 'slash') return pose(HERO_O, t < 5 ? 'windup' : t < 9 ? 'swing' : 'follow', side);
+    if (st === 'cast') return pose(HERO_O, 'cast', side);
+    if (st === 'ember-wave') return pose(HERO_O, t < 6 ? 'windup' : t < 26 ? 'swing' : 'follow', side);
+    if (st === 'rising-fang') return t < 4 ? derive(HERO_O, side, 'crouch', 0) : pose(HERO_O, h.vy < 0.4 ? 'cast' : 'follow', side);
+    if (st === 'gale-rush') return t < 4 ? derive(HERO_O, side, 'crouch', 0) : pose(HERO_O, t < 18 ? 'windup' : t < 24 ? 'swing' : 'follow', side);
+    if (st === 'ward-sigil') return pose(HERO_O, 'cast', side);
+    if (st === 'earthbreaker') return t < 6 ? derive(HERO_O, side, 'crouch', 0) : t < 100 ? pose(HERO_O, 'cast', side) : pose(HERO_O, 'follow', side);
+    return Math.floor((A.S.step + 7) / 32) % 2 ? derive(HERO_O, side, 'breathe', 0) : pose(HERO_O, 'ready', side);
+  }
+  // the cast for tools/sprites/sheet.py: one character alone, by the same frame code the demo uses
+  window.__miCast = {
+    draw: (g, id, x, footY, want, name) => {
+      const o = id === 'partner' ? FOE_O : HERO_O, side = want === 'left' ? 'left' : 'right';
+      let c;
+      if (/^walk[0-3]$/.test(name)) c = derive(o, side, 'walk', +name.slice(4));
+      else if (name === 'crouch' || name === 'tuck' || name === 'breathe') c = derive(o, side, name, 0);
+      else c = pose(o, name || 'ready', side);
+      g.imageSmoothingEnabled = false; g.drawImage(c, Math.round(x) - c.footX, Math.round(footY) + 1 - c.footY); return true;
+    }
+  };
+  function foeFrame(f) {
+    const side = f.face > 0 ? 'right' : 'left';
+    if (f.down > 0) return pose(FOE_O, 'down', side);
+    if (f.hurt > 0) return pose(FOE_O, 'hurt', side);
+    if (Math.abs(f.vx) > 0.1) return derive(FOE_O, side, 'walk', Math.floor(f.walkT / 4) % 4);
+    return Math.floor(A.S.step / 36) % 2 ? derive(FOE_O, side, 'breathe', 0) : pose(FOE_O, 'ready', side);
+  }
+
+  /* ---------- pixel backdrop: dusk training yard (cached) ---------- */
+  let BG = null;
+  function hsh(x, y, s) { return PXS.hash(x, y, s); }
+  function buildBG() {
+    const c = document.createElement('canvas'); c.width = WW; c.height = WH; const g = c.getContext('2d');
+    const sky = ['#2a1838', '#3a1f46', '#55264e', '#7a3450', '#a44a4e', '#cc6a4a', '#e8945a', '#f4b86a'];
+    for (let y = 0; y < 120; y++) { const k = Math.min(sky.length - 1, Math.floor(y / 120 * sky.length + (hsh(0, y, 3) < 0.5 && (y % 15) > 12 ? 1 : 0))); g.fillStyle = sky[k]; g.fillRect(0, y, WW, 1); }
+    // sun disc behind the far ridge
+    for (let y = -14; y <= 14; y++) for (let x = -14; x <= 14; x++) if (x * x + y * y <= 196) { g.fillStyle = x * x + y * y < 120 ? '#ffe6a0' : '#ffd080'; g.fillRect(232 + x, 98 + y, 1, 1); }
+    // three ridge layers
+    const ridge = (base, amp, sc, seed, col, hi) => { for (let x = 0; x < WW; x++) { const top = Math.round(base - PXS.noise(x, 0, sc, seed) * amp - PXS.noise(x, 3, sc / 3, seed + 1) * amp * 0.3); g.fillStyle = col; g.fillRect(x, top, 1, WH - top); if (hi) { g.fillStyle = hi; g.fillRect(x, top, 1, 1); } } };
+    ridge(104, 40, 60, 11, '#5a2e52', '#7a4262');
+    ridge(118, 30, 34, 21, '#3e2140', '#58304e');
+    ridge(134, 20, 20, 31, '#2a1630', '#3c2040');
+    // palisade fence with posts
+    for (let x = 0; x < WW; x += 6) { const top = 116 + Math.round(hsh(x, 1, 7) * 3); g.fillStyle = '#3a2418'; g.fillRect(x, top, 5, 150 - top); g.fillStyle = '#5a3a24'; g.fillRect(x + 1, top + 1, 2, 150 - top - 1); g.fillStyle = '#7a5434'; g.fillRect(x + 1, top, 3, 1); g.fillStyle = '#1e120c'; g.fillRect(x + 5, top, 1, 150 - top); }
+    g.fillStyle = '#2a1a12'; g.fillRect(0, 128, WW, 2); g.fillStyle = '#6a4a2e'; g.fillRect(0, 127, WW, 1);
+    // props: weapon rack, banners, barrels, lanterns
+    PXS.drawProp(g, 'rack', 34, 150, {}, 0); PXS.drawProp(g, 'barrel', 300, 150, {}, 0); PXS.drawProp(g, 'barrel', 288, 150, {}, 0);
+    PXS.drawProp(g, 'banner', 160, 128, {}, 0);
+    // ground
+    PXS.sideGround(g, 0, 150, WW, 30, { seed: 9 });
+    // stone sparring circle edge in the ground
+    for (let x = 60; x < 262; x++) { g.fillStyle = (x % 9 === 0) ? '#6a5a4a' : '#8a7a62'; g.fillRect(x, 151, 1, 1); }
+    return c;
+  }
+  function px(g, x, y, w, h, col) { g.fillStyle = col; g.fillRect(Math.round(x), Math.round(y), w, h); }
+  function pText(g, s, x, y, k, col, sh) {
+    s = String(s).toUpperCase();
+    for (let pass = sh ? 0 : 1; pass < 2; pass++) { g.fillStyle = pass ? col : sh; const o = pass ? 0 : k;
+      for (let i = 0; i < s.length; i++) { const gl = FONT[s[i]] || FONT[' ']; for (let r = 0; r < 7; r++) for (let c = 0; c < 5; c++) if (gl[r] & (16 >> c)) g.fillRect(x + (i * 6 + c) * k + o, y + r * k + o, k, k); } }
+  }
+  function torch(g, x, y, t) {
+    const fl = Math.floor(t / 90) % 3;
+    PXS.glow(g, x, y - 4, 22 + fl, '#ffb050', 0.9);
+    px(g, x - 1, y, 3, 14, '#3a2418'); px(g, x - 2, y - 1, 5, 2, '#6a4a2e');
+    const F = [['.y.', 'yoy', 'oro', '.r.'], ['y..', 'oy.', 'ooy', '.r.'], ['..y', '.yo', 'yoo', '.r.']][fl];
+    F.forEach((row, r) => row.split('').forEach((ch, c) => { if (ch !== '.') px(g, x - 1 + c, y - 5 + r, 1, 1, ch === 'y' ? '#fff0a0' : ch === 'o' ? '#ffa030' : '#e04a20'); }));
+  }
+  function pxDisc(g, x, y, r, col) { for (let dy = -r; dy <= r; dy++) { const w = Math.floor(Math.sqrt(r * r - dy * dy + 0.5)); g.fillStyle = col; g.fillRect(Math.round(x) - w, Math.round(y) + dy, w * 2 + 1, 1); } }
+  const BALL = ['....rrr....', '..rrooorr..', '.rooyyyoor.', 'rooyyyyyyor', 'royywwwyyor', 'royywwwwyor', 'royywwwyyor', 'rooyyyyyyor', '.rooyyyoor.', '..rrooorr..', '....rrr....'];
+  function drawShotPixel(g, s) {
+    const x = Math.round(s.x), y = Math.round(s.y), f = s.face, fl = s.t % 4 < 2 ? 0 : 1;
+    g.save(); g.globalCompositeOperation = 'lighter';
+    pxDisc(g, x, y, 16, 'rgba(255,110,30,0.10)'); pxDisc(g, x, y, 11, 'rgba(255,150,50,0.14)'); pxDisc(g, x, y, 8, 'rgba(255,200,90,0.16)');
+    g.restore();
+    // flame tail: puffs that shrink and cool behind the ball
+    const flown = Math.abs(s.x - (s.x0 == null ? s.x : s.x0)) + 2;   // the tail never reaches back over the caster
+    for (let i = 7; i >= 1; i--) {
+      if (4 + i * 3 > flown) continue;
+      const tx = x - f * (4 + i * 3), ty = y + Math.round(Math.sin((s.t * 0.9 + i * 1.7)) * (i * 0.35)), r = Math.max(1, 5 - Math.floor(i * 0.65));
+      pxDisc(g, tx, ty, r, i < 3 ? '#ff9a30' : i < 5 ? '#e0501c' : '#9a2a18');
+      if (i < 4) pxDisc(g, tx, ty, Math.max(0, r - 2), '#ffd860');
+    }
+    BALL.forEach((row, r) => { for (let c = 0; c < 11; c++) { const ch = row.charAt(c); if (ch === '.') continue; const xx = f > 0 ? x - 5 + c : x + 5 - c; let col = ch === 'w' ? '#ffffff' : ch === 'y' ? '#ffe070' : ch === 'o' ? '#ff9030' : '#c83a1a'; if (fl && ch === 'w' && c === 4) col = '#ffe070'; px(g, xx, y - 5 + r, 1, 1, col); } });
+    // sparks thrown off the front
+    for (let i = 0; i < 3; i++) { const k = (s.t + i * 5) % 12; px(g, x + f * (3 + k), y - 6 + i * 6 + Math.round((i - 1) * k * 0.4), 1, 1, k < 6 ? '#fff0a0' : '#ff9030'); }
+  }
+  function star(g, x, y, r, col, core) { for (let i = -r; i <= r; i++) { px(g, x + i, y, 1, 1, Math.abs(i) < 2 ? core : col); px(g, x, y + i, 1, 1, Math.abs(i) < 2 ? core : col); } if (r > 3) { for (let i = -2; i <= 2; i++) { px(g, x + i, y + i, 1, 1, col); px(g, x + i, y - i, 1, 1, col); } } }
+  function drawFxPixel(g, e) {
+    const t = e.t;
+    if (e.k === 'spark') { const r = t < 4 ? 3 + t * 2 : Math.max(1, 11 - t); star(g, Math.round(e.x), Math.round(e.y), e.big ? r + 2 : r, '#ffd070', '#ffffff'); }
+    if (e.k === 'burst') { const R = 3 + t; for (let a = 0; a < 12; a++) { const an = a / 12 * 6.283, xx = e.x + Math.cos(an) * R, yy = e.y + Math.sin(an) * R * 0.8; px(g, xx, yy, 1, 1, t < 8 ? '#ffe070' : '#e05a20'); } PXS.glow(g, e.x, e.y, 18 - t, '#ff8030', 1); }
+    if (e.k === 'twinkle') { const r = t < 6 ? t : Math.max(0, 12 - t); star(g, Math.round(e.x), Math.round(e.y), Math.round(r / 2) + 1, '#9ad0ff', '#ffffff'); }
+    if (e.k === 'ward') {
+      const fade = Math.min(1, t / 6, (40 - t) / 8); g.globalAlpha = Math.max(0, fade);
+      PXS.glow(g, e.x, e.y, 22, '#60c0ff', 1);
+      for (let a = 0; a < 40; a++) { const an = a / 40 * 6.283, xx = e.x + Math.cos(an) * 6, yy = e.y + Math.sin(an) * 15; px(g, xx, yy, 1, 1, a % 5 === Math.floor(t / 3) % 5 ? '#ffffff' : '#7ad0ff'); }
+      for (let a = 0; a < 4; a++) { const an = a / 4 * 6.283 + t * 0.12, xx = e.x + Math.cos(an) * 6, yy = e.y + Math.sin(an) * 15; px(g, xx - 1, yy - 1, 3, 3, '#2a6aa8'); px(g, xx, yy, 1, 1, '#ffffff'); }
+      g.globalAlpha = 1;
+    }
+    if (e.k === 'quake') {
+      // pixel shock wave: a crack along the floor, rock slabs heaving up in a wave on both sides (outlined, 3 shades),
+      // chips thrown out on arcs, dust rolling outward
+      const ROCK = ['.ooo.', 'ollmo', 'olmmdo'.slice(0, 5), 'ommdo', '.ooo.'], RC = { o: '#1a1024', l: '#c8b894', m: '#8a7a62', d: '#5a4a3a' };
+      const rock = (x, y, big) => { const rows = big ? ['..oooo..', '.olllmo.', 'ollmmmdo', 'olmmmmdo', 'ommmmddo', '.oodddo.', '..oooo..'] : ROCK; rows.forEach((row, r) => { for (let c = 0; c < row.length; c++) { const ch = row.charAt(c); if (ch !== '.') px(g, x - (row.length >> 1) + c, y - rows.length + 1 + r, 1, 1, RC[ch]); } }); };
+      if (t < 30) { const len = Math.min(70, t * 7), a = t < 20 ? 1 : (30 - t) / 10; g.globalAlpha = a; px(g, e.x - len, e.y, len * 2, 1, '#2a1a12'); if (t < 12) { px(g, e.x - len, e.y - 1, len * 2, 1, '#ffd070'); } g.globalAlpha = 1; }
+      for (let side = -1; side <= 1; side += 2) for (let i = 0; i < 6; i++) {
+        const q = t - i * 2; if (q < 0 || q > 18) continue;
+        const xx = Math.round(e.x + side * (10 + i * 10)), up = Math.round(Math.sin(q / 18 * Math.PI) * (9 - i));
+        rock(xx, e.y + 1 - up, i < 2);
+      }
+      if (t < 22) for (let i = 0; i < 8; i++) { const an = -0.35 - (i / 8) * 2.45, v = 1.4 + (i % 3) * 0.45, xx = e.x + Math.cos(an) * (10 + v * t * 1.6), yy = e.y - 2 + Math.sin(an) * (4 + v * t * 1.6) + 0.11 * t * t; if (yy > e.y) continue; px(g, xx - 1, yy - 1, 3, 3, '#1a1024'); px(g, xx, yy, 1, 1, i % 2 ? '#c8b894' : '#8a7a62'); }
+      if (t > 4 && t < 36) for (let side = -1; side <= 1; side += 2) for (let i = 0; i < 3; i++) { const r = 2 + Math.floor((t - 4) / 6) + i, xx = e.x + side * (18 + (t - 4) * 1.5 + i * 7), yy = e.y - 2 - i; g.globalAlpha = Math.max(0, 1 - (t - 4) / 32) * 0.8; pxDisc(g, xx, yy, r + 1, '#7a6a58'); pxDisc(g, xx, yy - 1, r, '#c8b8a0'); pxDisc(g, xx - 1, yy - 2, Math.max(1, r - 2), '#e8dcc4'); g.globalAlpha = 1; }
+    }
+  }
+  const SHADOWS = [];
+  function shadowPx(g, x, y, w, lift, id) {
+    const k = Math.max(0.4, 1 - (lift || 0) / 60); w = Math.max(6, Math.round(w * k / 2) * 2);
+    SHADOWS.push({ id, x: Math.round(x), y: Math.round(y), w });
+    g.globalAlpha = 0.25 + 0.15 * k; px(g, x - w / 2, y, w, 1, '#120a14'); px(g, x - w / 2 + 2, y + 1, w - 4, 1, '#120a14'); g.globalAlpha = 1;
+  }
+  function drawFighterPx(g, c, x, y) { g.drawImage(c, Math.round(x) - c.footX, Math.round(y) - c.footY); }
+
+  function renderPixel() {
+    const S = A.S, f = S.foe;
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false;
+    worldPixel();
+    pixelHud(f, S);
+  }
+  // the world (backdrop, fighters, effects) in art pixels, into ctx (the canvas itself, or the HD look's 320x180 layer)
+  function worldPixel() {
+    const S = A.S, h = S.hero, f = S.foe, t = S.step * STEP_MS;
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false;
+    if (!BG) BG = buildBG();
+    const sx = S.shake ? ((S.shake % 2) ? 1 : -1) : 0;
+    ctx.drawImage(BG, sx, 0); if (sx) ctx.drawImage(BG, 0, 0, 1, WH, sx > 0 ? 0 : WW - 1, 0, 1, WH);
+    torch(ctx, 96 + sx, 112, t); torch(ctx, 226 + sx, 112, t + 40);
+    ctx.save(); ctx.translate(sx, 0);
+    // contact shadows always on the floor line, narrower the higher the fighter is
+    SHADOWS.length = 0;
+    shadowPx(ctx, f.x, MUT === 'shadow' ? f.y : 150, 18, 0, 'partner'); shadowPx(ctx, h.x, MUT === 'shadow' ? h.y : 150, 18, 150 - h.y, 'hero');
+    DRAWN.partner = f.face > 0 ? 'right' : 'left'; drawFighterPx(ctx, foeFrame(f), f.x, f.y);
+    // gale rush: afterimages of the dash pose, tinted cool and fading
+    if (h.st === 'gale-rush' && h.trail.length) { const fr = heroFrame(h); h.trail.forEach((p, i) => { if (i % 2) return; ctx.globalAlpha = 0.5 - i * 0.12; drawFighterPx(ctx, tinted(fr, '#7ad0ff'), p.x, p.y); }); ctx.globalAlpha = 1; }
+    // rising fang: a crescent of light along the rising blade
+    if (h.st === 'rising-fang' && h.t >= 4 && h.vy < 1.5) { for (let i = 0; i < 22; i++) { const a = -2.1 + i * 0.1, r = 16, xx = h.x + h.face * (4 + Math.cos(a) * r), yy = h.y - 24 + Math.sin(a) * r * 1.25, w = i < 4 || i > 18 ? 1 : i < 8 || i > 14 ? 2 : 3; px(ctx, xx - (h.face > 0 ? 0 : w - 1), yy, w, 2, '#ffd070'); px(ctx, xx - (h.face > 0 ? 0 : w - 1) + (h.face > 0 ? -1 : w), yy, 1, 2, '#fff8e0'); } PXS.glow(ctx, h.x + h.face * 8, h.y - 34, 16, '#ffd070', 0.8); }
+    const hf = MUT === 'face' ? -h.face : h.face; DRAWN.hero = hf > 0 ? 'right' : 'left'; drawFighterPx(ctx, heroFrame(Object.assign({}, h, { face: hf })), h.x, h.y);
+    S.shots.forEach(s => drawShotPixel(ctx, s));
+    S.fx.forEach(e => drawFxPixel(ctx, e));
+    ctx.restore();
+  }
+  function pixelHud(f, S) {
+    const k = hudScale(), R = hudRects();
+    const plate = R[0]; panelPx(plate); pText(ctx, S.live ? 'LIVE' : 'TRAINING', plate.x + 3 * k, plate.y + 3 * k, k, '#ffd166', '#1a0c06');
+    const pr = R[1]; panelPx(pr); pText(ctx, 'PARTNER', pr.x + 3 * k, pr.y + 3 * k, k, '#efe6da', '#1a0c06');
+    const bx = pr.x + 3 * k + 7 * 6 * k + 2, bw = pr.x + pr.w - 4 - bx, by = pr.y + Math.round(pr.h / 2) - 2;
+    px(ctx, bx - 1, by - 1, bw + 2, 6, '#140c14'); px(ctx, bx, by, bw, 4, '#3a2030');
+    const hpW = Math.round(bw * f.hp / f.maxHp); px(ctx, bx, by, hpW, 4, f.hp / f.maxHp > 0.3 ? '#e8b43a' : '#e8553a'); px(ctx, bx, by, hpW, 1, '#fff0a0');
+    mi.draw(ctx);
+  }
+  function panelPx(r) { px(ctx, r.x + 1, r.y, r.w - 2, r.h, '#3a2438'); px(ctx, r.x, r.y + 1, r.w, r.h - 2, '#3a2438'); ctx.fillStyle = 'rgba(20,12,24,0.86)'; ctx.fillRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2); px(ctx, r.x + 2, r.y + 1, r.w - 4, 1, '#6a4a5e'); }
+
+  /* ---------- HD look: the same pixel world at a whole number of device pixels per art pixel, with the smooth HD UI ---------- */
+  let LAYER = null;
+  function rr(g, x, y, w, h, r) { g.beginPath(); g.roundRect(x, y, w, h, r); }
+  function renderHD() {
+    const S = A.S, f = S.foe, sc = cv.width / W;
+    if (!LAYER) { LAYER = document.createElement('canvas'); LAYER.width = 320; LAYER.height = 180; }
+    const main = ctx; ctx = LAYER.getContext('2d'); worldPixel(); ctx = main;
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(LAYER, 0, 0, cv.width, cv.height);
+    ctx.setTransform(sc, 0, 0, sc, 0, 0); ctx.imageSmoothingEnabled = true;
+    const R = hudRects(), fs = hudScale();
+    const P0 = R[0]; rr(ctx, P0.x, P0.y, P0.w, P0.h, 9); ctx.fillStyle = 'rgba(20,12,24,0.82)'; ctx.fill(); ctx.strokeStyle = '#4a3450'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.font = '800 ' + fs.toFixed(1) + 'px system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif'; ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; ctx.fillStyle = '#ffd166'; ctx.fillText(S.live ? 'LIVE' : 'TRAINING', P0.x + 12, P0.y + P0.h / 2 + 1);
+    const P1 = R[1]; rr(ctx, P1.x, P1.y, P1.w, P1.h, 9); ctx.fillStyle = 'rgba(20,12,24,0.82)'; ctx.fill(); ctx.strokeStyle = '#4a3450'; ctx.stroke();
+    ctx.fillStyle = '#efe6da'; ctx.fillText('PARTNER', P1.x + 12, P1.y + P1.h / 2 + 1);
+    const bx = P1.x + 22 + fs * 4.8, bw = P1.x + P1.w - 12 - bx, by = P1.y + P1.h / 2 - 5;
+    rr(ctx, bx, by, bw, 10, 5); ctx.fillStyle = '#2a1828'; ctx.fill();
+    rr(ctx, bx, by, Math.max(10, bw * f.hp / f.maxHp), 10, 5); const gr = ctx.createLinearGradient(0, by, 0, by + 10); gr.addColorStop(0, '#ffe08a'); gr.addColorStop(1, '#d08a20'); ctx.fillStyle = gr; ctx.fill();
+    mi.draw(ctx);
+  }
+  const DRAWN = { hero: null, partner: null };   // the facing each draw call used this frame (the text state reports these)
+  function render() { if (LOOK === 'hd') renderHD(); else renderPixel(); updatePage(); }
+  // live input for checks: feed device frames ({left,right,up,down,a,b}) through the same step as the keyboard
+  window.__feed = list => { const out = []; for (const d of list) { stepWorld(Object.assign({ left: false, right: false, up: false, down: false, a: false, b: false }, d)); out.push({ st: A.S.hero.st, ground: A.S.hero.ground, fired: A.S.fired.length ? A.S.fired[A.S.fired.length - 1].id + '@' + A.S.fired[A.S.fired.length - 1].step : '' }); } render(); return out; };
+  window.__advance = n => { for (let i = 0; i < n; i++) stepWorld(null); render(); return window.__state(); };
+
+  /* ---------- page: move list (mirrors with the facing), status ---------- */
+  const ARW = { 1: '&#8601;', 2: '&darr;', 3: '&#8600;', 4: '&larr;', 6: '&rarr;', 7: '&#8598;', 8: '&uarr;', 9: '&#8599;' };
+  let lastFace = 0, lastListKey = '';
+  function updatePage() {
+    const S = A.S, face = S.hero.face;
+    const key = face + '|' + (S.lastSpecial ? S.lastSpecial.id + S.lastSpecial.step : '');
+    if (key !== lastListKey) {
+      lastListKey = key;
+      document.getElementById('moves').innerHTML = mi.moves().map(m => {
+        const g = mi.glyphs(m.id, face).map(it => it.btn ? '<span class="b' + it.btn.toLowerCase() + '">' + it.btn + '</span>' : it.spin ? '&#10227;' : (it.hold ? '[' + ARW[it.dir] + ']' : ARW[it.dir])).join(' ');
+        const hot = S.lastSpecial && S.lastSpecial.id === m.id && S.step - S.lastSpecial.step < 90;
+        return '<tr' + (hot ? ' style="background:#3a2a14"' : '') + '><td class="n ar">' + g + '</td><td>' + m.name + '</td><td class="n" style="color:var(--dim)">' + m.notation + '</td></tr>';
+      }).join('');
+    }
+    const st = mi.stats();
+    document.getElementById('status').textContent = (S.live ? 'Live play' : 'Recorded tape: ' + S.beat) + ' \u00b7 specials ' + st.firedTotal + ' (buffered ' + st.buffered + ') \u00b7 facing ' + (face > 0 ? 'right' : 'left');
+  }
+  function syncButtons() {
+    document.getElementById('look-pixel').classList.toggle('on', LOOK === 'pixel'); document.getElementById('look-hd').classList.toggle('on', LOOK === 'hd');
+    document.getElementById('listbtn').classList.toggle('on', listOn);
+  }
+  function setQ(k, v) { const q = new URLSearchParams(location.search); q.set(k, v); q.delete('t'); q.delete('freeze'); location.search = q.toString(); }
+  document.getElementById('look-pixel').onclick = () => setQ('look', 'pixel');
+  document.getElementById('look-hd').onclick = () => setQ('look', 'hd');
+  document.getElementById('restart').onclick = () => { A.restartScript(); userKeys = false; held.clear(); };
+  document.getElementById('listbtn').onclick = () => { listOn = mi.showMoveList(); syncButtons(); };
+  const P = mi.params();
+  ['stepWindow', 'pressWindow', 'gap', 'chargeFrames', 'buffer'].forEach(id => {
+    const el = document.getElementById(id), out = el.nextElementSibling; el.value = P[id]; out.textContent = P[id];
+    el.oninput = () => { out.textContent = el.value; mi.setParams({ [id]: +el.value }); };
+  });
+  const len = document.getElementById('len'); len.value = P.leniency === 'off' ? 'off' : 'on';
+  len.onchange = () => { if (len.value === 'off') mi.setParams({ leniency: 'off' }); else mi.setParams({ leniency: 'on', gap: MI.DEFAULTS.gap, pressWindow: MI.DEFAULTS.pressWindow, shortcuts: 'on' }); ['pressWindow', 'gap'].forEach(id => { const el = document.getElementById(id); el.value = mi.params()[id]; el.nextElementSibling.textContent = el.value; }); };
+  const side = document.getElementById('side'); side.value = P.side; side.onchange = () => mi.setParams({ side: side.value });
+  syncButtons();
+
+  /* ---------- text state for checks and critics ---------- */
+  window.__state = () => {
+    const S = A.S, h = S.hero, f = S.foe, dxh = f.x - h.x;
+    const hero = { id: 'hero', x: Math.round(h.x * WS * 10) / 10, y: Math.round(h.y * WS), facing: DRAWN.hero || (h.face > 0 ? 'right' : 'left'), target: 'partner', vx: Math.round(h.vx * 100) / 100, state: h.st };
+    if (Math.abs(dxh) < 6) { hero.target = null; hero.noFace = 'directly above the partner during a jump'; }
+    const foe = { id: 'partner', x: Math.round(f.x * WS * 10) / 10, y: Math.round(f.y * WS), facing: DRAWN.partner || (f.face > 0 ? 'right' : 'left'), target: 'hero', vx: Math.round(f.vx * 100) / 100 };
+    if (Math.abs(dxh) < 6) { foe.target = null; foe.noFace = 'the hero is directly above'; }
+    if (f.down > 0) foe.noFace = 'knocked down';
+    const lay = mi.layout(), drawn = mi.lastDrawn();
+    let event = S.beat;
+    return { t: Math.round(S.step * STEP_MS), step: S.step, loopStep: S.loopStep, look: LOOK, event, live: S.live, actors: [hero, foe],
+      special: S.lastSpecial, sinceSpecial: S.lastSpecial ? S.step - S.lastSpecial.step : null, fired: S.fired.map(q => q.id + (q.buffered ? '*' : '')),
+      callouts: drawn.filter(r => r.kind === 'callout' || r.kind === 'miss').length, rows: mi.rows().slice(0, 8), layout: lay, drawn, heroRect: heroView(), hudRects: hudRects(),
+      stats: mi.stats(), shots: S.shots.map(q => ({ x: q.x, x0: q.x0, face: q.face })), shotLog: S.shotLog.slice(-4), shadows: SHADOWS.map(q => Object.assign({}, q)), world: { hero: { x: h.x, y: h.y, ground: h.ground }, partner: { x: f.x, y: f.y, down: f.down }, floor: A.GROUND, push: A.PUSH } };
+  };
+  window.__marks = A.tape.marks.map(m => ({ name: m.name, step: m.step, ms: Math.round(m.step * STEP_MS), note: m.note }));
+
+  /* ---------- loop: one clock for the tape and ?t= ---------- */
+  function boot() {
+    if (HAS_T) {
+      const n = Math.floor(START_T / STEP_MS);
+      for (let i = 0; i < n; i++) stepWorld(null);
+      render();
+      if (FREEZE) { window.__frozen = true; return; }
+    } else render();
+    let acc = 0, last = null;
+    const loop = now => {
+      if (last === null) last = now;
+      acc += Math.min(250, now - last); last = now;
+      let guard = 0;
+      while (acc >= STEP_MS && guard++ < 8) { stepWorld(device()); acc -= STEP_MS; }
+      render(); requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+  }
+  addEventListener('resize', () => { fit(); render(); });
+  boot();
+})();
+</script>
+</body>
+</html>

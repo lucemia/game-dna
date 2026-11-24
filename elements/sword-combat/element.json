@@ -1,0 +1,76 @@
+{
+  "id": "sword-combat",
+  "code": "A-05",
+  "kind": "system",
+  "name": "Real-time sword combat",
+  "family": "Battle flow",
+  "oneLiner": "Top-down real-time melee on the map: a 4- or 8-way sword swing with anticipation, active and recovery frames and a sweeping arc hitbox, a 2-3 hit combo with buffered input, knockback with friction, translucent invulnerability flicker after a hit, enemies built from small reusable state machines (wander, chase, telegraphed charge, keep-distance shooter, a boss that mixes them), contact and projectile damage, hearts, and drops on defeat.",
+  "fits": [
+    "top-down action adventure",
+    "dungeon rooms with real-time fights",
+    "village or overworld quests that need combat on the map",
+    "arena or wave survival",
+    "twin-stick-free action RPG prototypes"
+  ],
+  "notFor": [
+    "menu or turn-based battles (use A-01 or A-02)",
+    "side-view platform combat with gravity",
+    "grid tactics",
+    "fighting games with frame-perfect cancels and juggles"
+  ],
+  "interfaces": {
+    "time": "realtime",
+    "coords": "grid",
+    "layer": "actor",
+    "needs": [
+      "a fixed 60 Hz update step",
+      "the player's feet box {x, y, w, h} in world px (the game keeps walking it; the module moves it only for knockback)",
+      "a wall test solid(x, y, w, h) in the same world px",
+      "held directions and an attack press per step (edge-latched)",
+      "enemy spawn points (id, behaviour, position) from the game's rooms or map",
+      "optional: the game's own HP getter/setter, enemy art, a hit-stop gate"
+    ],
+    "provides": [
+      "hit events: onHit {kind melee|projectile|contact|charge|host, source, target, amount, at, dir, strength, killed, hpBefore, hpAfter} and onDefeat",
+      "hit-stop requests onHitStop(ms), or a built-in freeze",
+      "anchor(id) sprite boxes for the player and every enemy, uiRects() for the hearts",
+      "canMove() / pose() / playerAlpha() so the game's walking and sprite follow the swing and the i-frame flicker",
+      "an autopilot that scores moves by danger along the path (projectiles, telegraphed charges, bodies) and fights",
+      "drops and pickups (hearts heal, gems count, custom kinds through onPickup)"
+    ]
+  },
+  "params": [
+    { "key": "dirs", "label": "Swing directions", "type": "select", "options": ["4", "8"], "default": "4" },
+    { "key": "antic", "label": "Anticipation frames", "type": "range", "min": 0, "max": 12, "step": 1, "default": 4 },
+    { "key": "active", "label": "Active frames", "type": "range", "min": 1, "max": 10, "step": 1, "default": 4 },
+    { "key": "recover", "label": "Recovery frames", "type": "range", "min": 2, "max": 24, "step": 1, "default": 10 },
+    { "key": "combo", "label": "Combo length", "type": "range", "min": 1, "max": 3, "step": 1, "default": 3 },
+    { "key": "buffer", "label": "Input buffer (frames)", "type": "range", "min": 0, "max": 20, "step": 1, "default": 12 },
+    { "key": "reach", "label": "Blade reach (px)", "type": "range", "min": 12, "max": 36, "step": 1, "default": 22 },
+    { "key": "arc", "label": "Swing arc (degrees)", "type": "range", "min": 60, "max": 360, "step": 10, "default": 150 },
+    { "key": "knockback", "label": "Knockback (px/frame)", "type": "range", "min": 0, "max": 6, "step": 0.5, "default": 3 },
+    { "key": "friction", "label": "Knockback friction", "type": "range", "min": 0.5, "max": 0.95, "step": 0.05, "default": 0.8 },
+    { "key": "iframes", "label": "Invulnerability frames", "type": "range", "min": 0, "max": 120, "step": 5, "default": 60 },
+    { "key": "hitstop", "label": "Hit-stop frames", "type": "range", "min": 0, "max": 10, "step": 1, "default": 4 },
+    { "key": "telegraph", "label": "Enemy telegraph frames", "type": "range", "min": 8, "max": 48, "step": 2, "default": 24 },
+    { "key": "enemySpeed", "label": "Enemy speed", "type": "range", "min": 0.5, "max": 2, "step": 0.25, "default": 1 },
+    { "key": "hearts", "label": "Hearts", "type": "range", "min": 1, "max": 10, "step": 1, "default": 3 },
+    { "key": "overlay", "label": "Hitbox overlay", "type": "select", "options": ["off", "on"], "default": "off" }
+  ],
+  "variants": [
+    { "name": "Classic 4-way (default)", "params": {} },
+    { "name": "8-way flurry", "params": { "dirs": "8", "antic": 2, "active": 3, "recover": 6, "arc": 120 } },
+    { "name": "Heavy blade", "params": { "antic": 8, "active": 5, "recover": 16, "reach": 28, "knockback": 5, "hitstop": 7, "combo": 2 } },
+    { "name": "Single swing", "params": { "combo": 1 } },
+    { "name": "Hitbox lab", "params": { "overlay": "on", "enemySpeed": 0.5 } },
+    { "name": "Hard mode", "params": { "enemySpeed": 1.5, "telegraph": 14, "iframes": 30, "hearts": 2 } }
+  ],
+  "assets": "module/sword-combat.js (global GameDNA_SwordCombat, no dependencies; API in module/README.md). Built-in procedural pixel sprites for five enemy looks (slime, hound, boar, archer, warden), hearts, gems, projectiles, the blade and slash trail. No external files.",
+  "status": "v1-module",
+  "module": {
+    "file": "module/sword-combat.js",
+    "global": "GameDNA_SwordCombat",
+    "version": "1.0.1"
+  },
+  "starter": "starter/index.html"
+}

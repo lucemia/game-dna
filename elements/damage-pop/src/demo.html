@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modern Damage Numbers</title>
+<style>
+:root {
+  --bg: #0b0912; --panel: #15121f; --line: #2a2540; --text: #ece8f6; --dim: #9a93b4; --accent: #ffb43a; --accent2: #7ab8ff;
+  --phys: #dfe5f3; --fire: #ff6a2b; --ice: #5fcdff; --shock: #ffd52a; --poison: #6fcf3f; --arcane: #ad68ff; --heal: #2fd96c; --shield: #a3b6dc; --mana: #4799ff; --word: #c6cbdc;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1100px 560px at 25% -10%, #2a1d40 0%, var(--bg) 62%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 16px 20px 10px; max-width: 1280px; margin: 0 auto; }
+.code { white-space: nowrap; font: 800 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #1a1206; background: linear-gradient(#ffd27a, var(--accent)); padding: 6px 8px; border-radius: 5px; box-shadow: 0 2px 10px #ffb43a40; }
+h1 { font-size: 19px; margin: 0; letter-spacing: .01em; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; max-width: 880px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; padding: 0 20px 24px; max-width: 1280px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.frame { padding: 6px; background: linear-gradient(#2a2340, #14101e); border-radius: 12px; box-shadow: 0 0 0 1px #3a3352, 0 24px 60px #000a; }
+#game { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; background: #000; }
+.caption { display: flex; justify-content: space-between; gap: 12px; color: var(--dim); font-size: 12px; padding: 0 4px; }
+.caption b { color: var(--text); font-weight: 600; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 12px; color: var(--dim); }
+.legend span::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 3px; background: var(--c); margin-right: 5px; vertical-align: -1px; box-shadow: 0 0 8px var(--c); }
+.cmp { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px 14px; }
+.cmp h2 { margin: 0 0 2px; }
+.cmp p { margin: 0 0 10px; color: var(--dim); font-size: 12.5px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pair figure { margin: 0; }
+.pair canvas { display: block; width: 100%; aspect-ratio: 16 / 9; image-rendering: pixelated; image-rendering: crisp-edges; border-radius: 6px; box-shadow: 0 0 0 1px #3a3352; background: #000; }
+.pair figcaption { font-size: 12px; color: var(--dim); margin-top: 6px; }
+.pair figcaption b { color: var(--text); }
+aside { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+h2 { margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.triggers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.triggers button { --c: var(--phys); appearance: none; border: 1px solid #00000060; border-radius: 7px; padding: 8px 2px 7px; cursor: pointer; color: var(--text); font: 600 11.5px/1.1 inherit;
+  background: linear-gradient(#2a2440, #1d192c); box-shadow: inset 0 1px 0 #ffffff14, inset 0 -2px 0 var(--c); transition: transform .06s, background .15s; }
+.triggers button:hover { background: linear-gradient(#352d50, #241f36); }
+.triggers button:active { transform: translateY(1px) scale(.98); }
+.triggers button i { display: block; font-style: normal; font: 900 15px/1 inherit; color: var(--c); margin-bottom: 3px; text-shadow: 0 0 10px var(--c), 0 1px 0 #000; }
+.row { margin-bottom: 10px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 5px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--fill), #2e2842 var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #fff3d0; border: 2px solid #1a1206; box-shadow: 0 1px 6px #000a; cursor: pointer; }
+input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: #fff3d0; border: 2px solid #1a1206; }
+.seg { display: flex; background: #0f0d17; border: 1px solid var(--line); border-radius: 7px; padding: 2px; gap: 2px; }
+.seg button { flex: 1; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 4px; border-radius: 5px; cursor: pointer; text-transform: capitalize; }
+.seg button[aria-checked=true] { background: #2e2746; color: var(--text); box-shadow: inset 0 0 0 1px #4a4068, inset 0 -2px 0 var(--accent); }
+.seg button:hover { color: var(--text); }
+.tog { display: flex; gap: 6px; }
+.tog button { flex: 1; appearance: none; background: #0f0d17; border: 1px solid var(--line); color: var(--text); border-radius: 7px; padding: 7px 8px; font: 600 12px inherit; cursor: pointer; }
+.tog button[aria-pressed=true] { box-shadow: inset 0 -2px 0 var(--heal); }
+.foot { color: var(--dim); font-size: 11.5px; border-top: 1px solid var(--line); padding-top: 10px; }
+.foot code { color: var(--text); }
+@media (max-width: 1000px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 680px; width: 100%; margin: 0 auto; } }
+@media (max-width: 560px) { header { padding: 12px 16px 8px; } main { padding: 0 16px 16px; gap: 12px; } .frame { padding: 3px; } .caption { flex-direction: column; gap: 2px; } .pair { grid-template-columns: 1fr; } .triggers { grid-template-columns: repeat(3, 1fr); } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">C-11</span>
+  <div><h1>Modern damage numbers</h1><p>Numbers arc out of the hit and land; crits pop with a big overshoot, a burst and a short shake; rapid hits on one target roll into a single total that punches on every add; each damage type has its own colour and icon. Big numbers are never covered by small ones, and nothing lands on another unit, the banner or the HUD.</p></div>
+</header>
+<main>
+  <section id="stage">
+    <div class="frame"><canvas id="game" width="640" height="360" aria-label="Battle arena with damage numbers"></canvas></div>
+    <div class="caption"><span><b>Watch:</b> the Arcane Barrage on the imp rolls 12 → 47 → 83 → 101 → 127; the Heavy Strike crit on the wisp; poison ticks merging on the golem.</span><span>Keys 1–8 fire hits</span></div>
+    <div class="legend"><span style="--c:var(--phys)">physical</span><span style="--c:var(--fire)">fire</span><span style="--c:var(--ice)">ice</span><span style="--c:var(--shock)">shock</span><span style="--c:var(--poison)">poison</span><span style="--c:var(--arcane)">arcane</span><span style="--c:var(--heal)">heal</span><span style="--c:var(--shield)">shield</span><span style="--c:var(--mana)">mana</span><span style="--c:var(--word)">miss / block</span></div>
+    <div class="cmp">
+      <h2>Same fight, two eras</h2>
+      <p>Both canvases are 256 × 144 native pixels, scaled up with nearest-neighbour. Left: the retro bouncing numbers (E-01). Right: this element in its crisp mode, which it picks by itself on a native pixel canvas.</p>
+      <div class="pair">
+        <figure><canvas id="retro" width="256" height="144"></canvas><figcaption><b>E-01 Bouncing damage numbers</b>: digits hop in turn, float straight up, fade in steps.</figcaption></figure>
+        <figure><canvas id="modern" width="256" height="144"></canvas><figcaption><b>C-11 Modern damage numbers</b>: arcs, merges, crit punch, type colour and icon.</figcaption></figure>
+      </div>
+    </div>
+  </section>
+  <aside>
+    <div>
+      <h2>Fire a hit</h2>
+      <div class="triggers">
+        <button type="button" data-fire="hit" style="--c:var(--phys)"><i>⚔</i>Hit</button>
+        <button type="button" data-fire="flurry" style="--c:var(--arcane)"><i>×5</i>Flurry</button>
+        <button type="button" data-fire="crit" style="--c:var(--accent)"><i>!</i>Crit</button>
+        <button type="button" data-fire="fire" style="--c:var(--fire)"><i>▲</i>Fire</button>
+        <button type="button" data-fire="ice" style="--c:var(--ice)"><i>◆</i>Ice</button>
+        <button type="button" data-fire="shock" style="--c:var(--shock)"><i>ϟ</i>Shock</button>
+        <button type="button" data-fire="poison" style="--c:var(--poison)"><i>●</i>Poison</button>
+        <button type="button" data-fire="heal" style="--c:var(--heal)"><i>+</i>Heal</button>
+        <button type="button" data-fire="shield" style="--c:var(--shield)"><i>■</i>Shield</button>
+        <button type="button" data-fire="mana" style="--c:var(--mana)"><i>●</i>Mana</button>
+        <button type="button" data-fire="miss" style="--c:var(--word)"><i>·</i>Miss</button>
+        <button type="button" data-fire="block" style="--c:var(--shield)"><i>▬</i>Block</button>
+      </div>
+    </div>
+    <div>
+      <h2>Target</h2>
+      <div class="seg" id="target" role="radiogroup">
+        <button type="button" role="radio" data-v="golem" aria-checked="true">Golem</button><button type="button" role="radio" data-v="imp" aria-checked="false">Imp</button><button type="button" role="radio" data-v="wisp" aria-checked="false">Wisp</button><button type="button" role="radio" data-v="knight" aria-checked="false">Rowan</button>
+      </div>
+    </div>
+    <div class="tog"><button type="button" id="auto" aria-pressed="true">Script: on</button><button type="button" id="slow" aria-pressed="false">Speed: 1×</button><button type="button" id="reset">Reset</button></div>
+    <div><h2>Parameters</h2><div id="params"></div></div>
+    <div class="foot">Deterministic: <code>?t=1700&amp;freeze=1</code> shows the same frame every time. Any parameter can be set in the URL, e.g. <code>?render=crisp&amp;palette=soft</code>.</div>
+  </aside>
+</main>
+<script>/*RETRO*/</script>
+<script>/*MODULE*/</script>
+<script src="../../../demo-kit/kit-art.js"></script>
+<script src="../../cutout-characters/module/cutout-characters.js"></script>
+<script src="../../cutout-characters/assets/pack.js"></script>
+<script src="../../../demo-kit/kit.js"></script>
+<script>/*MAIN*/</script>
+</body>
+</html>

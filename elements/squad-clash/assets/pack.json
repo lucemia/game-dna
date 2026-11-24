@@ -1,0 +1,1078 @@
+{
+ "px": 5.2,
+ "classes": {
+  "knight": {
+   "kind": "humanoid",
+   "w": 34,
+   "h": 70,
+   "poses": {
+    "ready": {
+     "rect": [
+      4,
+      4,
+      240,
+      365
+     ],
+     "foot": [
+      119.5,
+      365.0
+     ]
+    },
+    "attack": {
+     "rect": [
+      248,
+      4,
+      342,
+      305
+     ],
+     "foot": [
+      126.0,
+      305.0
+     ]
+    }
+   },
+   "head": [
+    132.0,
+    44.0,
+    37.0
+   ],
+   "file": "knight.webp",
+   "size": [
+    594,
+    373
+   ]
+  },
+  "lancer": {
+   "kind": "humanoid",
+   "w": 36,
+   "h": 74,
+   "poses": {
+    "ready": {
+     "rect": [
+      4,
+      4,
+      400,
+      385
+     ],
+     "foot": [
+      159.0,
+      385.0
+     ]
+    },
+    "attack": {
+     "rect": [
+      408,
+      4,
+      478,
+      327
+     ],
+     "foot": [
+      165.0,
+      327.0
+     ]
+    }
+   },
+   "head": [
+    188.0,
+    44.0,
+    39.0
+   ],
+   "file": "lancer.webp",
+   "size": [
+    890,
+    393
+   ]
+  },
+  "mage": {
+   "kind": "humanoid",
+   "w": 34,
+   "h": 70,
+   "poses": {
+    "ready": {
+     "rect": [
+      4,
+      4,
+      282,
+      392
+     ],
+     "foot": [
+      135.5,
+      392.0
+     ]
+    },
+    "attack": {
+     "rect": [
+      290,
+      4,
+      490,
+      320
+     ],
+     "foot": [
+      150.5,
+      320.0
+     ]
+    }
+   },
+   "head": [
+    170.0,
+    64.0,
+    37.0
+   ],
+   "file": "mage.webp",
+   "size": [
+    784,
+    400
+   ]
+  },
+  "archer": {
+   "kind": "humanoid",
+   "w": 32,
+   "h": 69,
+   "poses": {
+    "ready": {
+     "rect": [
+      4,
+      4,
+      233,
+      359
+     ],
+     "foot": [
+      116.0,
+      359.0
+     ]
+    },
+    "draw": {
+     "rect": [
+      241,
+      4,
+      265,
+      381
+     ],
+     "foot": [
+      122.0,
+      381.0
+     ]
+    },
+    "loose": {
+     "rect": [
+      510,
+      4,
+      288,
+      380
+     ],
+     "foot": [
+      137.0,
+      380.0
+     ]
+    }
+   },
+   "shotY": 46,
+   "shotX": 20,
+   "head": [
+    128.0,
+    42.0,
+    36.0
+   ],
+   "file": "archer.webp",
+   "size": [
+    802,
+    389
+   ]
+  },
+  "slinger": {
+   "kind": "humanoid",
+   "w": 34,
+   "h": 62,
+   "poses": {
+    "ready": {
+     "rect": [
+      4,
+      4,
+      260,
+      343
+     ],
+     "foot": [
+      123.5,
+      343.0
+     ]
+    },
+    "draw": {
+     "rect": [
+      268,
+      4,
+      324,
+      384
+     ],
+     "foot": [
+      152.5,
+      384.0
+     ]
+    },
+    "loose": {
+     "rect": [
+      596,
+      4,
+      466,
+      334
+     ],
+     "foot": [
+      153.5,
+      334.0
+     ]
+    }
+   },
+   "shot": "stone",
+   "shotY": 44,
+   "shotX": 24,
+   "head": [
+    182.0,
+    38.0,
+    35.0
+   ],
+   "file": "slinger.webp",
+   "size": [
+    1066,
+    392
+   ],
+   "facing": "right",
+   "left": {
+    "file": "slinger-left.webp",
+    "size": [
+     1072,
+     391
+    ],
+    "poses": {
+     "ready": {
+      "rect": [
+       4,
+       4,
+       266,
+       343
+      ],
+      "foot": [
+       135.5,
+       343.0
+      ]
+     },
+     "draw": {
+      "rect": [
+       274,
+       4,
+       334,
+       383
+      ],
+      "foot": [
+       178.5,
+       383.0
+      ]
+     },
+     "loose": {
+      "rect": [
+       612,
+       4,
+       456,
+       335
+      ],
+      "foot": [
+       301.0,
+       335.0
+      ]
+     }
+    },
+    "head": [
+     82.5,
+     32.9,
+     35.0
+    ]
+   }
+  },
+  "cleric": {
+   "kind": "humanoid",
+   "w": 32,
+   "h": 66,
+   "poses": {
+    "ready": {
+     "rect": [
+      4,
+      4,
+      229,
+      390
+     ],
+     "foot": [
+      99.5,
+      390.0
+     ]
+    },
+    "attack": {
+     "rect": [
+      237,
+      4,
+      374,
+      406
+     ],
+     "foot": [
+      142.5,
+      406.0
+     ]
+    }
+   },
+   "head": [
+    124.0,
+    62.0,
+    35.0
+   ],
+   "file": "cleric.webp",
+   "size": [
+    615,
+    414
+   ]
+  },
+  "hexer": {
+   "kind": "humanoid",
+   "w": 34,
+   "h": 68,
+   "poses": {
+    "ready": {
+     "rect": [
+      4,
+      4,
+      270,
+      379
+     ],
+     "foot": [
+      108.5,
+      379.0
+     ]
+    },
+    "attack": {
+     "rect": [
+      278,
+      4,
+      423,
+      396
+     ],
+     "foot": [
+      168.0,
+      396.0
+     ]
+    }
+   },
+   "head": [
+    156.0,
+    52.0,
+    37.0
+   ],
+   "file": "hexer.webp",
+   "size": [
+    705,
+    404
+   ],
+   "facing": "right",
+   "left": {
+    "file": "hexer-left.webp",
+    "size": [
+     708,
+     401
+    ],
+    "poses": {
+     "ready": {
+      "rect": [
+       4,
+       4,
+       283,
+       379
+      ],
+      "foot": [
+       160.0,
+       379.0
+      ]
+     },
+     "attack": {
+      "rect": [
+       291,
+       4,
+       413,
+       393
+      ],
+      "foot": [
+       238.5,
+       393.0
+      ]
+     }
+    },
+    "head": [
+     99.0,
+     49.8,
+     37.1
+    ]
+   }
+  },
+  "mender": {
+   "kind": "humanoid",
+   "w": 38,
+   "h": 62,
+   "poses": {
+    "ready": {
+     "rect": [
+      4,
+      4,
+      266,
+      347
+     ],
+     "foot": [
+      122.5,
+      347.0
+     ]
+    },
+    "attack": {
+     "rect": [
+      274,
+      4,
+      400,
+      357
+     ],
+     "foot": [
+      165.0,
+      357.0
+     ]
+    }
+   },
+   "head": [
+    150.0,
+    48.0,
+    33.0
+   ],
+   "file": "mender.webp",
+   "size": [
+    678,
+    365
+   ],
+   "facing": "right",
+   "left": {
+    "file": "mender-left.webp",
+    "size": [
+     645,
+     365
+    ],
+    "poses": {
+     "ready": {
+      "rect": [
+       4,
+       4,
+       266,
+       347
+      ],
+      "foot": [
+       145.0,
+       347.0
+      ]
+     },
+     "attack": {
+      "rect": [
+       274,
+       4,
+       367,
+       357
+      ],
+      "foot": [
+       211.5,
+       357.0
+      ]
+     }
+    },
+    "head": [
+     121.5,
+     55.4,
+     32.8
+    ]
+   }
+  },
+  "brigand": {
+   "kind": "humanoid",
+   "w": 38,
+   "h": 72,
+   "poses": {
+    "ready": {
+     "rect": [
+      4,
+      4,
+      252,
+      375
+     ],
+     "foot": [
+      125.5,
+      375.0
+     ]
+    },
+    "attack": {
+     "rect": [
+      260,
+      4,
+      363,
+      314
+     ],
+     "foot": [
+      142.5,
+      314.0
+     ]
+    }
+   },
+   "head": [
+    148.0,
+    40.0,
+    38.0
+   ],
+   "file": "brigand.webp",
+   "size": [
+    627,
+    383
+   ],
+   "facing": "right",
+   "left": {
+    "file": "brigand-left.webp",
+    "size": [
+     632,
+     383
+    ],
+    "poses": {
+     "ready": {
+      "rect": [
+       4,
+       4,
+       261,
+       375
+      ],
+      "foot": [
+       129.5,
+       375.0
+      ]
+     },
+     "attack": {
+      "rect": [
+       269,
+       4,
+       359,
+       317
+      ],
+      "foot": [
+       213.5,
+       317.0
+      ]
+     }
+    },
+    "head": [
+     127.0,
+     35.5,
+     38.1
+    ]
+   }
+  },
+  "ironclad": {
+   "kind": "humanoid",
+   "w": 40,
+   "h": 71,
+   "poses": {
+    "ready": {
+     "rect": [
+      4,
+      4,
+      282,
+      369
+     ],
+     "foot": [
+      137.0,
+      369.0
+     ]
+    },
+    "attack": {
+     "rect": [
+      290,
+      4,
+      386,
+      322
+     ],
+     "foot": [
+      160.5,
+      322.0
+     ]
+    }
+   },
+   "shadow": 1.25,
+   "head": [
+    155.3,
+    33.9,
+    37.4
+   ],
+   "file": "ironclad.webp",
+   "size": [
+    680,
+    377
+   ],
+   "facing": "right",
+   "left": {
+    "file": "ironclad-left.webp",
+    "size": [
+     711,
+     377
+    ],
+    "poses": {
+     "ready": {
+      "rect": [
+       4,
+       4,
+       299,
+       369
+      ],
+      "foot": [
+       154.5,
+       369.0
+      ]
+     },
+     "attack": {
+      "rect": [
+       307,
+       4,
+       400,
+       328
+      ],
+      "foot": [
+       236.0,
+       328.0
+      ]
+     }
+    },
+    "head": [
+     132.5,
+     35.1,
+     37.6
+    ]
+   }
+  },
+  "warlord": {
+   "kind": "humanoid",
+   "w": 42,
+   "h": 77,
+   "poses": {
+    "ready": {
+     "rect": [
+      4,
+      4,
+      389,
+      405
+     ],
+     "foot": [
+      154.5,
+      405.0
+     ]
+    },
+    "attack": {
+     "rect": [
+      397,
+      4,
+      478,
+      348
+     ],
+     "foot": [
+      192.0,
+      348.0
+     ]
+    }
+   },
+   "shadow": 1.3,
+   "head": [
+    161.8,
+    52.9,
+    38.1
+   ],
+   "file": "warlord.webp",
+   "size": [
+    879,
+    413
+   ],
+   "facing": "right",
+   "left": {
+    "file": "warlord-left.webp",
+    "size": [
+     926,
+     413
+    ],
+    "poses": {
+     "ready": {
+      "rect": [
+       4,
+       4,
+       411,
+       405
+      ],
+      "foot": [
+       244.0,
+       405.0
+      ]
+     },
+     "attack": {
+      "rect": [
+       419,
+       4,
+       503,
+       356
+      ],
+      "foot": [
+       309.5,
+       356.0
+      ]
+     }
+    },
+    "head": [
+     213.6,
+     74.9,
+     41.1
+    ]
+   }
+  },
+  "hound": {
+   "kind": "beast",
+   "w": 48,
+   "h": 32,
+   "poses": {
+    "ready": {
+     "rect": [
+      4,
+      4,
+      322,
+      166
+     ],
+     "foot": [
+      161.0,
+      166.0
+     ]
+    },
+    "attack": {
+     "rect": [
+      330,
+      4,
+      350,
+      171
+     ],
+     "foot": [
+      175.0,
+      171.0
+     ]
+    }
+   },
+   "shadow": 1.1,
+   "head": [
+    276.7,
+    59.1,
+    41.8
+   ],
+   "file": "hound.webp",
+   "size": [
+    684,
+    179
+   ],
+   "facing": "right",
+   "left": {
+    "file": "hound-left.webp",
+    "size": [
+     688,
+     189
+    ],
+    "poses": {
+     "ready": {
+      "rect": [
+       4,
+       4,
+       322,
+       177
+      ],
+      "foot": [
+       160.5,
+       177.0
+      ]
+     },
+     "attack": {
+      "rect": [
+       330,
+       4,
+       354,
+       181
+      ],
+      "foot": [
+       176.5,
+       181.0
+      ]
+     }
+    },
+    "head": [
+     62.0,
+     57.1,
+     51.5
+    ]
+   }
+  },
+  "raptor": {
+   "kind": "bird",
+   "w": 42,
+   "h": 36,
+   "poses": {
+    "ready": {
+     "rect": [
+      4,
+      4,
+      281,
+      204
+     ],
+     "foot": [
+      140.0,
+      204.0
+     ]
+    },
+    "attack": {
+     "rect": [
+      289,
+      4,
+      287,
+      186
+     ],
+     "foot": [
+      143.0,
+      186.0
+     ]
+    }
+   },
+   "lift": 1,
+   "shadow": 1.0,
+   "head": [
+    248.9,
+    76.1,
+    34.4
+   ],
+   "file": "raptor.webp",
+   "size": [
+    580,
+    212
+   ],
+   "facing": "right",
+   "left": {
+    "file": "raptor-left.webp",
+    "size": [
+     592,
+     218
+    ],
+    "poses": {
+     "ready": {
+      "rect": [
+       4,
+       4,
+       281,
+       210
+      ],
+      "foot": [
+       140.0,
+       210.0
+      ]
+     },
+     "attack": {
+      "rect": [
+       289,
+       4,
+       299,
+       190
+      ],
+      "foot": [
+       149.0,
+       190.0
+      ]
+     }
+    },
+    "head": [
+     54.6,
+     67.0,
+     45.0
+    ]
+   }
+  }
+ },
+ "fields": {
+  "day": {
+   "file": "field-day.webp",
+   "size": [
+    1600,
+    900
+   ]
+  },
+  "dusk": {
+   "file": "field-dusk.webp",
+   "size": [
+    1600,
+    900
+   ]
+  },
+  "night": {
+   "file": "field-night.webp",
+   "size": [
+    1600,
+    900
+   ]
+  },
+  "dawn": {
+   "file": "field-dawn.webp",
+   "size": [
+    1600,
+    900
+   ]
+  }
+ },
+ "files": {
+  "knight.webp": {
+   "sha256": "83a2972c94b76a35e4ade9a3bb5a5be4d6e0dd8c4503b70d246ffc2cee481647",
+   "bytes": 58690,
+   "from": "assets/gen/sheet-vanguard/sheet-vanguard.png",
+   "fromSha256": "e33acae4dd8f80c1bdbb64a0cc263c8bd492f83e6c340a354c79dc3c22e36422"
+  },
+  "lancer.webp": {
+   "sha256": "9d8b7bb3f9543dd669ca11e37e32a4567fc93f657829fed35ea9474b29c5837a",
+   "bytes": 74378,
+   "from": "assets/gen/sheet-vanguard/sheet-vanguard.png",
+   "fromSha256": "e33acae4dd8f80c1bdbb64a0cc263c8bd492f83e6c340a354c79dc3c22e36422"
+  },
+  "mage.webp": {
+   "sha256": "78337d5319e3f46ebd477f935b28f747be980a882d6d71d6edb2f7103a43d93d",
+   "bytes": 72774,
+   "from": "assets/gen/sheet-vanguard/sheet-vanguard.png",
+   "fromSha256": "e33acae4dd8f80c1bdbb64a0cc263c8bd492f83e6c340a354c79dc3c22e36422"
+  },
+  "archer.webp": {
+   "sha256": "fa3040f2de9afedf2b31da68e8cec5c7fbeac0ab586f1e1011f5948f4f42cc00",
+   "bytes": 101196,
+   "from": "assets/gen/sheet-archers/sheet-archers.png",
+   "fromSha256": "a1bd0623df9d9c524ca18bac53a3bd2bcddfe64b929c2e22f6ec6f572ad68cbb"
+  },
+  "slinger.webp": {
+   "sha256": "22feff2cfc7f84e91d6c6085f00288cc596f32546571a36cd04988a62775d2f9",
+   "bytes": 106628,
+   "from": "assets/gen/sheet-archers/sheet-archers.png",
+   "fromSha256": "a1bd0623df9d9c524ca18bac53a3bd2bcddfe64b929c2e22f6ec6f572ad68cbb"
+  },
+  "cleric.webp": {
+   "sha256": "6f19a1337828025f2eaec06f0a720b33bb8fb7698596246bdb1533d00fcd0001",
+   "bytes": 82882,
+   "from": "assets/gen/sheet-casters/sheet-casters.png",
+   "fromSha256": "689eddab1abf4530f2b0589478db0f267dbc44f0fb44f52961d83a26d668d469"
+  },
+  "hexer.webp": {
+   "sha256": "7856b657f07803ca0d4d072bf14a169c9856a01d10eef8945c25cdbf73c4ae48",
+   "bytes": 84680,
+   "from": "assets/gen/sheet-casters/sheet-casters.png",
+   "fromSha256": "689eddab1abf4530f2b0589478db0f267dbc44f0fb44f52961d83a26d668d469"
+  },
+  "mender.webp": {
+   "sha256": "160233eddda613f429fb22b92b72ee486e5d5b521f5a0e89650b13cc655a32c4",
+   "bytes": 73660,
+   "from": "assets/gen/sheet-casters/sheet-casters.png",
+   "fromSha256": "689eddab1abf4530f2b0589478db0f267dbc44f0fb44f52961d83a26d668d469"
+  },
+  "brigand.webp": {
+   "sha256": "10c3f7edf4932f69a123f253107a8b57c0613ae97c1bcb67dda1b1f226f0b3f9",
+   "bytes": 68052,
+   "from": "assets/gen/sheet-bruisers/sheet-bruisers.png",
+   "fromSha256": "496029882da4f908c7e600c35e329b3817653daa988491f8797a6de37184b3ea"
+  },
+  "ironclad.webp": {
+   "sha256": "17e5f9b0a5c4bc28b446b61414aa8881835baf7d8733435716527d5744a6024a",
+   "bytes": 70122,
+   "from": "assets/gen/sheet-bruisers/sheet-bruisers.png",
+   "fromSha256": "496029882da4f908c7e600c35e329b3817653daa988491f8797a6de37184b3ea"
+  },
+  "warlord.webp": {
+   "sha256": "ac041d33c44776250ad5d7d97363d7ee8e0675bd7a3659a5e6771d3937512f11",
+   "bytes": 97804,
+   "from": "assets/gen/sheet-bruisers/sheet-bruisers.png",
+   "fromSha256": "496029882da4f908c7e600c35e329b3817653daa988491f8797a6de37184b3ea"
+  },
+  "hound.webp": {
+   "sha256": "86f142087270938f3f453f0929f8125cfb1a6108dec5dc2babe28d96167f3607",
+   "bytes": 45070,
+   "from": "assets/gen/sheet-beasts/sheet-beasts.png",
+   "fromSha256": "c2df96011de2ebce32f6c9ad086d14606ef4220a7fe9413c36769927acb3d86b"
+  },
+  "raptor.webp": {
+   "sha256": "62de537fa21b0a23398d51340d59e5b1ca009833f63bc313eb2b6f359e63afad",
+   "bytes": 45480,
+   "from": "assets/gen/sheet-beasts/sheet-beasts.png",
+   "fromSha256": "c2df96011de2ebce32f6c9ad086d14606ef4220a7fe9413c36769927acb3d86b"
+  },
+  "slinger-left.webp": {
+   "sha256": "7e42b1d5922fd990b3478184fa5668c4476ecf3e618836afc407f34a64bc71c8",
+   "bytes": 108626,
+   "from": "assets/gen/sheet-archers-left/sheet-archers-left.png",
+   "fromSha256": "37f33a860a0ea14fed605ec125ddbdccca71f7f1468c7aaa422ba3bda1e78c28"
+  },
+  "hexer-left.webp": {
+   "sha256": "582821888b5e3a8961729aa111cada5fb468dd7439a2ad31c29fb27b964dd04f",
+   "bytes": 88744,
+   "from": "assets/gen/sheet-casters-left/sheet-casters-left.png",
+   "fromSha256": "ffd72f73b8fbffb5714c363e0e1a926d199f90f986c2ed08a1a7efa7d3d14454"
+  },
+  "mender-left.webp": {
+   "sha256": "71c28d1600463860ead0c0bad08fb00af7521a925609922bc4bd3100deb67f33",
+   "bytes": 74376,
+   "from": "assets/gen/sheet-casters-left/sheet-casters-left.png",
+   "fromSha256": "ffd72f73b8fbffb5714c363e0e1a926d199f90f986c2ed08a1a7efa7d3d14454"
+  },
+  "brigand-left.webp": {
+   "sha256": "d9394449407be58875fb7853d7959fa07cb10893fb584f60747c9247631d2bf3",
+   "bytes": 67688,
+   "from": "assets/gen/sheet-bruisers-left/sheet-bruisers-left.png",
+   "fromSha256": "07866d7b2e42c033d1a21d0e3a5d40db8053f90c05347a0b79496b6ba9ad2571"
+  },
+  "ironclad-left.webp": {
+   "sha256": "feadf2787e8d8950ce12429b5207f7a5e2ea067572030c74e9d03ca8aac300fe",
+   "bytes": 69896,
+   "from": "assets/gen/sheet-bruisers-left/sheet-bruisers-left.png",
+   "fromSha256": "07866d7b2e42c033d1a21d0e3a5d40db8053f90c05347a0b79496b6ba9ad2571"
+  },
+  "warlord-left.webp": {
+   "sha256": "d6f15989d31e0a2d07633f6fea452ce042da514e8805e27a4620252d8e4e963e",
+   "bytes": 103020,
+   "from": "assets/gen/sheet-bruisers-left/sheet-bruisers-left.png",
+   "fromSha256": "07866d7b2e42c033d1a21d0e3a5d40db8053f90c05347a0b79496b6ba9ad2571"
+  },
+  "hound-left.webp": {
+   "sha256": "4d2fbc801f3cada66c38752a6a9ae9eb4f7606fe979cda0815f616d4aa44ec0a",
+   "bytes": 48524,
+   "from": "assets/gen/sheet-beasts-left/sheet-beasts-left.png",
+   "fromSha256": "97200f7138fd12d1a03e5580bba4060906752c9f6e74ab95b82cad22ccbaa846"
+  },
+  "raptor-left.webp": {
+   "sha256": "8334db0fb8fbb77be8b4d028677b5d464cfe7ae679479df6ccb63983853d2731",
+   "bytes": 48606,
+   "from": "assets/gen/sheet-beasts-left/sheet-beasts-left.png",
+   "fromSha256": "97200f7138fd12d1a03e5580bba4060906752c9f6e74ab95b82cad22ccbaa846"
+  },
+  "field-day.webp": {
+   "sha256": "79396dffbff66badf3f9264e181b9ac86e1d1400072abcf86c4bd437d15e033b",
+   "bytes": 225640,
+   "from": "assets/gen/field-day/field-day.png",
+   "fromSha256": "e4d4b6de22f1ee7eabb6e6b21a57427b90448a2c4339f358e663e3d052dd16fb"
+  },
+  "field-dusk.webp": {
+   "sha256": "747150be4b13f6ef0d15c842ff413abe0a4699f427f412c46e76c053a68dfc3f",
+   "bytes": 214672,
+   "from": "assets/gen/field-dusk/field-dusk.png",
+   "fromSha256": "3ed3deb7ca142befe4491f0396c1a470ba4c97de3d44dc9418982a2489d78061"
+  },
+  "field-night.webp": {
+   "sha256": "c5673602208d5556073fc050e1593cc781fc1fc0fe54fd7e9210b4c293cbcb6d",
+   "bytes": 201956,
+   "from": "assets/gen/field-night/field-night.png",
+   "fromSha256": "4930c8d11b344959f721112b5ed0742511b0cbd6d90996c23b98f5d53edcd254"
+  },
+  "field-dawn.webp": {
+   "sha256": "c250ef8f28507abee552f082431ab8b96b11c56f599d3a22e1ea0a4b1c183e0f",
+   "bytes": 190456,
+   "from": "assets/gen/field-dawn/field-dawn.png",
+   "fromSha256": "4beefd81d47b4c10f846784cd8900edfc81cbbdca9dc461fe90ae82af2e8ea0e"
+  }
+ }
+}

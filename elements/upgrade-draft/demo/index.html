@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Upgrade Draft</title>
+<style>
+:root { --bg: #0b0a13; --panel: #15121f; --panel2: #1c1829; --line: #2b2640; --text: #eee9f8; --dim: #9a93b4; --accent: #ffd66b; --accent2: #8fd7ff; --ok: #7ee8b0; --epic: #d79bff; --rare: #6cc0ff; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1100px 560px at 26% -14%, #2f2250 0%, var(--bg) 62%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 16px 20px 10px; max-width: 1380px; margin: 0 auto; }
+.code { white-space: nowrap; font: 700 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #1d1206; background: linear-gradient(#ffe7a8, var(--accent)); padding: 6px 8px; border-radius: 6px; box-shadow: 0 0 0 1px #00000040, 0 4px 14px #ffd66b40; }
+h1 { font-size: 18px; margin: 0; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; max-width: 940px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 350px; gap: 18px; padding: 0 20px 20px; max-width: 1380px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; }
+.frame { position: relative; border-radius: 14px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px #3a3352, 0 24px 60px #00000090; }
+.frame canvas { display: block; width: 100%; height: auto; }
+.frame canvas.px { image-rendering: pixelated; image-rendering: crisp-edges; }
+.pad { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: center; }
+.key { appearance: none; border: 1px solid #3c3558; background: linear-gradient(#262036, #1a1626); color: var(--text); border-radius: 9px; padding: 9px 13px; font: 600 13px/1 inherit; cursor: pointer; min-width: 44px; box-shadow: 0 3px 0 #0d0b14; transition: transform .06s, box-shadow .06s; }
+.key:active { transform: translateY(2px); box-shadow: 0 1px 0 #0d0b14; }
+.key b { color: var(--accent); }
+.key.go b { color: #7a4200; }
+h2 .status { text-transform: none; letter-spacing: 0; font-weight: 400; max-width: 62%; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.key.go { background: linear-gradient(#ffe7a8, var(--accent)); color: #241400; border-color: #ffd66b; }
+.pad .sp { flex: 1; }
+.status { font: 12px ui-monospace, Menlo, monospace; color: var(--dim); }
+.status b { color: var(--ok); font-weight: 600; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+.card { background: linear-gradient(var(--panel2), var(--panel)); border: 1px solid var(--line); border-radius: 12px; padding: 12px; min-width: 0; }
+aside { background: linear-gradient(var(--panel2), var(--panel)); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+section { border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+section:last-of-type { border-bottom: 0; padding-bottom: 0; }
+h2 { display: flex; align-items: center; justify-content: space-between; margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.row { margin-bottom: 8px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 3px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 5px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--fill), #2c2742 var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 15px; height: 15px; border-radius: 50%; background: #fff4e2; border: 0; box-shadow: 0 0 0 3px #ffd66b55, 0 2px 6px #000a; cursor: pointer; }
+.seg { display: flex; background: #0e0c16; border: 1px solid var(--line); border-radius: 8px; padding: 2px; gap: 2px; }
+.seg button { flex: 1; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 4px; border-radius: 6px; cursor: pointer; }
+.seg button[aria-checked=true] { background: #2e2648; color: var(--text); box-shadow: inset 0 0 0 1px #4c4270; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.note { color: var(--dim); font-size: 11.5px; margin: 6px 0 0; }
+#log { font: 11.5px/1.55 ui-monospace, Menlo, monospace; color: var(--dim); min-height: 110px; max-height: 190px; overflow: auto; }
+#log div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#log b { color: var(--text); font-weight: 600; } #log .r { color: var(--rare); } #log .e { color: var(--epic); } #log .ok { color: var(--ok); }
+#stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+#stats div { background: #0e0c16; border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; font: 11px ui-monospace, Menlo, monospace; color: var(--dim); transition: background .4s; }
+#stats div b { display: block; color: var(--text); font-size: 15px; font-family: ui-sans-serif, -apple-system, sans-serif; }
+#stats div.up { background: #1d3a2c; }
+#build { display: flex; flex-wrap: wrap; gap: 6px; min-height: 30px; }
+#build span { font: 600 11.5px/1 inherit; padding: 6px 8px; border-radius: 7px; background: #221d33; border: 1px solid #3a3352; }
+#build span.rare { border-color: #3c7cc0; } #build span.epic { border-color: #9a5ad0; }
+textarea { width: 100%; min-height: 150px; background: #0e0c16; color: #d9d3ef; border: 1px solid var(--line); border-radius: 8px; font: 11px/1.45 ui-monospace, Menlo, monospace; padding: 8px; resize: vertical; }
+.err { color: #ff8a96; font-size: 11.5px; min-height: 16px; }
+@media (max-width: 1080px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 700px; width: 100%; margin: 0 auto; } }
+@media (max-width: 640px) { header { padding: 12px 16px 8px; } main { padding: 0 16px 16px; gap: 12px; } .cols { grid-template-columns: 1fr; } .frame { border-radius: 10px; } .key { padding: 9px 10px; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">G-07</span>
+  <div><h1>Upgrade draft &middot; pick 1 of 3</h1><p>At a moment the game chooses (level-up, chest, wave clear) the world pauses and three upgrade cards deal in, flip and glow by rarity. Move between them and take one; cards that share a tag with your build show a synergy hint; reroll or skip if allowed. The pick flies into your build strip. Upgrades are a plain table the designer edits; draws are seeded, weighted by rarity and never offer a maxed upgrade.</p></div>
+</header>
+<main>
+  <div id="stage">
+    <div class="frame"><canvas id="cv" width="640" height="360"></canvas></div>
+    <div class="pad">
+      <button class="key" data-a="left">&larr;</button><button class="key" data-a="right">&rarr;</button>
+      <button class="key" data-a="confirm"><b>Z</b> take</button><button class="key" data-a="reroll"><b>R</b> reroll</button><button class="key" data-a="skip"><b>X</b> skip</button>
+      <span class="sp"></span>
+      <button class="key go" id="lvl">Level up! <b>L</b></button><button class="key" id="chest">Open chest <b>C</b></button><button class="key" id="wave">Wave clear</button>
+    </div>
+    <div class="cols">
+      <div class="card"><h2>Hero stats <span class="status" id="wt">world 0.0 s</span></h2><div id="stats"></div><h2 style="margin-top:12px">Build</h2><div id="build"></div></div>
+      <div class="card"><h2>onPick log <span class="status" id="status">demo</span></h2><div id="log"></div></div>
+    </div>
+  </div>
+  <aside>
+    <section>
+      <h2>Look &amp; table</h2>
+      <div class="row"><label>Look</label><div class="seg" id="look"><button data-v="hd">HD 640&times;360</button><button data-v="pixel">Pixel 256&times;224</button></div></div>
+      <div class="row"><label>Upgrade table</label><div class="seg" id="table"><button data-v="wanderer">Wanderer</button><button data-v="arcane">Arcane tower</button><button data-v="tiny">Tiny (maxes fast)</button></div></div>
+      <div class="two">
+        <label class="row" style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px">Autoplay <input type="checkbox" id="auto"></label>
+        <button class="key" id="reset" style="padding:6px 10px">Reset build</button>
+      </div>
+    </section>
+    <section>
+      <h2>Draw</h2>
+      <div class="two">
+        <div class="row"><label>Seed <output></output></label><input type="range" data-k="seed" min="1" max="999" step="1"></div>
+        <div class="row"><label>Choices <output></output></label><input type="range" data-k="choices" min="2" max="4" step="1"></div>
+        <div class="row"><label>Rerolls <output></output></label><input type="range" data-k="rerolls" min="0" max="3" step="1"></div>
+        <div class="row"><label>Max stacks <output></output></label><input type="range" data-k="maxStacks" min="1" max="9" step="1"></div>
+        <div class="row"><label>Common weight <output></output></label><input type="range" data-k="wCommon" min="0" max="100" step="1"></div>
+        <div class="row"><label>Rare weight <output></output></label><input type="range" data-k="wRare" min="0" max="100" step="1"></div>
+        <div class="row"><label>Epic weight <output></output></label><input type="range" data-k="wEpic" min="0" max="100" step="1"></div>
+        <div class="row"><label>Dim <output></output></label><input type="range" data-k="dim" min="0" max="0.85" step="0.05"></div>
+      </div>
+      <div class="row"><label>Skip</label><div class="seg" data-s="skip"><button data-v="on">on</button><button data-v="off">off</button></div></div>
+      <div class="row"><label>Synergy hints</label><div class="seg" data-s="synergy"><button data-v="on">on</button><button data-v="off">off</button></div></div>
+    </section>
+    <section>
+      <h2>Motion</h2>
+      <div class="two">
+        <div class="row"><label>Deal ms <output></output></label><input type="range" data-k="dealMs" min="0" max="1000" step="10"></div>
+        <div class="row"><label>Stagger ms <output></output></label><input type="range" data-k="stagger" min="0" max="200" step="5"></div>
+        <div class="row"><label>Flip ms <output></output></label><input type="range" data-k="flipMs" min="0" max="800" step="10"></div>
+        <div class="row"><label>Fan tilt &deg; <output></output></label><input type="range" data-k="tilt" min="0" max="12" step="0.5"></div>
+      </div>
+      <div class="row"><label>Reduced motion</label><div class="seg" data-s="reduced"><button data-v="off">off</button><button data-v="on">on</button></div></div>
+      <div class="row"><label>Build strip</label><div class="seg" data-s="strip"><button data-v="draft">in draft</button><button data-v="always">always</button><button data-v="off">off</button></div></div>
+    </section>
+    <section>
+      <h2>Autoplay</h2>
+      <div class="row"><label>Auto pick</label><div class="seg" data-s="autoPick"><button data-v="rarest">rarest</button><button data-v="synergy">synergy</button><button data-v="first">first</button><button data-v="skip">skip</button></div></div>
+      <div class="row"><label>Decide after ms <output></output></label><input type="range" data-k="autoMs" min="300" max="3000" step="50"></div>
+    </section>
+    <section>
+      <h2>Edit the table <span class="status">JSON, deltas only</span></h2>
+      <textarea id="json" spellcheck="false"></textarea>
+      <div class="two" style="margin-top:6px"><button class="key" id="applyJson" style="padding:7px 10px">Apply table</button><span class="err" id="err"></span></div>
+      <p class="note">Each entry: id, name, rarity (common / rare / epic), tags, text with {value} / {total}, max, weight, delta {stat: amount}. In code you can also give apply(target, info).</p>
+    </section>
+  </aside>
+</main>
+<script src="../../../demo-kit/kit-art.js"></script>
+<script src="../../cutout-characters/module/cutout-characters.js"></script>
+<script src="../../cutout-characters/assets/pack.js"></script>
+<script src="../../../demo-kit/kit.js"></script>
+<script src="../../../skins/skin-api.js"></script>
+<script src="../../../skins/pixel16.js"></script>
+<script src="../module/upgrade-draft.js"></script>
+<script>
+"use strict";
+(() => {
+  const qs = new URLSearchParams(location.search);
+  const DEBUG = qs.get('debug') === '1' || qs.get('stats') === '1';
+  const T0 = qs.has('t') ? Math.max(0, Number(qs.get('t')) || 0) : null, FROZEN = T0 !== null && qs.get('freeze') === '1';
+  const STEP = 1000 / 60;
+  const DEF = GameDNA_UpgradeDraft.defaults;
+  const NUM = ['seed', 'choices', 'rerolls', 'maxStacks', 'wCommon', 'wRare', 'wEpic', 'dim', 'dealMs', 'stagger', 'flipMs', 'tilt', 'autoMs'];
+  const SEL = ['skip', 'synergy', 'reduced', 'strip', 'autoPick'];
+  const P = {}; NUM.concat(SEL).forEach(k => P[k] = DEF[k]);
+  P.seed = 29;                                              // demo seed: a rare first, then an epic with a synergy
+  NUM.forEach(k => { if (qs.has(k) && isFinite(+qs.get(k))) P[k] = +qs.get(k); });
+  SEL.forEach(k => { if (qs.has(k)) P[k] = qs.get(k); });
+  let look = qs.has('look') ? (qs.get('look') === 'pixel' ? 'pixel' : 'hd') : (innerWidth < 520 ? 'pixel' : 'hd'), tableName = ['wanderer', 'arcane', 'tiny'].includes(qs.get('table')) ? qs.get('table') : 'wanderer';
+  let autoplay = qs.get('auto') === '1';
+  const scripted = T0 !== null || qs.get('script') === '1';
+
+  // ---------------------------------------------------------------- sample tables (plain data the designer edits)
+  const TABLES = {
+    wanderer: [
+      { id: 'ember-edge', name: 'Ember Edge', rarity: 'common', tags: ['fire', 'blade'], text: 'Your strikes burn for +{value} damage.', max: 5, delta: { atk: 2 } },
+      { id: 'stoneskin', name: 'Stoneskin', rarity: 'common', tags: ['guard'], text: 'Take {value} less damage from every hit.', max: 3, delta: { def: 1 } },
+      { id: 'hearthroot', name: 'Hearthroot', rarity: 'common', tags: ['heart', 'regen'], text: '+{value} max HP. Grows with every stack.', max: 5, delta: { maxHp: [10, 12, 14, 16, 20] } },
+      { id: 'fleetfoot', name: 'Fleetfoot Charm', rarity: 'common', tags: ['speed'], text: 'Move {value}% faster.', max: 4, delta: { speed: 8 } },
+      { id: 'lucky-penny', name: 'Lucky Penny', rarity: 'common', tags: ['gold', 'luck'], text: 'Foes drop {value}% more coins.', max: 3, delta: { coinPct: 15 } },
+      { id: 'venom-fang', name: 'Venom Fang', rarity: 'common', tags: ['poison', 'blade'], text: 'Hits poison for {value} damage over 3 s.', max: 4, delta: { poison: 4 } },
+      { id: 'frostbite', name: 'Frostbite Rune', rarity: 'rare', tags: ['frost', 'magic'], text: 'Hits slow foes by {value}% for 2 s.', max: 3, delta: { slowPct: 20 } },
+      { id: 'stormcaller', name: 'Stormcaller Ring', rarity: 'rare', tags: ['storm', 'magic'], icon: 'ring', text: 'Every 4th hit calls lightning for {value} damage.', max: 3, delta: { bolt: 12 } },
+      { id: 'keen-eye', name: 'Keen Eye', rarity: 'rare', tags: ['crit', 'arrow'], icon: 'eye', text: '+{value}% critical chance.', max: 4, delta: { crit: 8 } },
+      { id: 'thornmail', name: 'Thornmail', rarity: 'rare', tags: ['guard', 'poison'], text: 'Attackers take {value} damage back.', max: 3, delta: { thorns: 3 } },
+      { id: 'second-wind', name: 'Second Wind', rarity: 'rare', tags: ['heart', 'light'], text: 'Heal {value} HP after every fight.', max: 3, delta: { regen: 5 } },
+      { id: 'gale-step', name: 'Gale Step', rarity: 'rare', tags: ['speed', 'storm'], text: 'Dash {value}% farther and leave sparks.', max: 3, delta: { dash: 25 } },
+      { id: 'phoenix-feather', name: 'Phoenix Feather', rarity: 'epic', tags: ['fire', 'light'], icon: 'feather', text: 'Once per run, rise again with {value}% HP.', max: 1, delta: { revive: 50 } },
+      { id: 'arcane-surge', name: 'Arcane Surge', rarity: 'epic', tags: ['magic', 'storm'], text: 'Spells are free for {value} s after a kill.', max: 2, delta: { surge: 3 } },
+      { id: 'wyrmscale', name: 'Wyrmscale Plate', rarity: 'epic', tags: ['guard', 'fire'], text: 'Take {value}% less damage. Immune to burning.', max: 1, delta: { armorPct: 20 } },
+      { id: 'moonwell', name: 'Moonwell Pendant', rarity: 'epic', tags: ['magic', 'regen'], icon: 'moon', text: '+{value} max HP and heal to full now.', max: 1, value: 25,
+        apply: (hero, info) => { hero.maxHp += 25; hero.hp = hero.maxHp; } }
+    ],
+    arcane: [
+      { id: 'spark', name: 'Spark Primer', rarity: 'common', tags: ['storm'], text: 'Bolts deal +{value} damage.', max: 5, delta: { atk: 2 } },
+      { id: 'focus', name: 'Quiet Focus', rarity: 'common', tags: ['magic'], text: '+{value} mana. Total +{total}.', max: 5, delta: { mana: 10 } },
+      { id: 'ward', name: 'Glyph Ward', rarity: 'common', tags: ['guard', 'magic'], text: 'Block {value} damage per hit.', max: 3, delta: { def: 1 } },
+      { id: 'ember-ink', name: 'Ember Ink', rarity: 'common', tags: ['fire', 'magic'], text: 'Fire spells burn {value} s longer.', max: 3, delta: { burn: 1 } },
+      { id: 'rime', name: 'Rime Circle', rarity: 'rare', tags: ['frost'], text: 'Frost novas grow {value}% wider.', max: 3, delta: { nova: 15 } },
+      { id: 'chain', name: 'Chain Arc', rarity: 'rare', tags: ['storm', 'crit'], text: 'Bolts jump to {value} more foes.', max: 3, delta: { chain: 1 } },
+      { id: 'starlight', name: 'Starlight Lens', rarity: 'rare', tags: ['light', 'crit'], text: '+{value}% critical chance with spells.', max: 4, delta: { crit: 10 } },
+      { id: 'tome', name: 'Tome of Echoes', rarity: 'epic', tags: ['magic', 'luck'], text: '{value}% chance to cast every spell twice.', max: 1, delta: { echo: 25 } },
+      { id: 'sun-crown', name: 'Sunfire Crown', rarity: 'epic', tags: ['fire', 'light'], text: 'Spells leave burning ground for {value} s.', max: 1, delta: { ground: 4 } }
+    ],
+    tiny: [
+      { id: 'whetstone', name: 'Whetstone', rarity: 'common', tags: ['blade'], text: '+{value} attack.', max: 2, delta: { atk: 1 } },
+      { id: 'buckler', name: 'Oak Buckler', rarity: 'common', tags: ['guard'], text: '+{value} defence.', max: 1, delta: { def: 1 } },
+      { id: 'tonic', name: 'Bitter Tonic', rarity: 'rare', tags: ['heart'], text: '+{value} max HP.', max: 1, delta: { maxHp: 15 } },
+      { id: 'comet', name: 'Comet Shard', rarity: 'epic', tags: ['magic', 'storm'], text: 'Every hit has a {value}% chance to call a comet.', max: 1, delta: { comet: 10 } }
+    ]
+  };
+  const FALLBACK = { id: 'coin-pouch', name: 'Pouch of Coins', rarity: 'common', tags: ['gold'], text: 'Nothing new to learn. Take {value} coins.', value: 25, delta: { coins: 25 } };
+  const LABELS = { atk: 'ATK', def: 'DEF', maxHp: 'HP', speed: 'SPD', coinPct: 'COIN%', poison: 'PSN', slowPct: 'SLOW', bolt: 'BOLT', crit: 'CRIT', thorns: 'THRN', regen: 'REGEN', dash: 'DASH', revive: 'REV', surge: 'SURGE', armorPct: 'ARM%', mana: 'MANA', burn: 'BURN', nova: 'NOVA', chain: 'CHAIN', echo: 'ECHO', ground: 'GRND', comet: 'COMET', coins: 'COINS' };
+  const BASE = { atk: 5, def: 0, maxHp: 60, hp: 60, speed: 100, crit: 5, mana: 30, coins: 0 };
+  let hero = Object.assign({}, BASE), table = TABLES[tableName].slice(), worldT = 0, simT = 0, lvl = 1;
+
+  // ---------------------------------------------------------------- canvas
+  const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+  let VW = 640, VH = 360;
+  function sizeCanvas() {
+    if (look === 'pixel') { VW = 256; VH = 224; cv.width = 256; cv.height = 224; cv.className = 'px'; }
+    else { VW = 640; VH = 360; const dpr = Math.min(3, window.devicePixelRatio || 1), w = Math.max(640, Math.round(cv.getBoundingClientRect().width * dpr) || 640); cv.width = w; cv.height = Math.round(w * 9 / 16); cv.className = ''; }
+  }
+  const hudRect = () => look === 'pixel' ? { x: 0, y: 0, w: 256, h: 13 } : { x: 0, y: 0, w: 640, h: 26 };
+
+  // ---------------------------------------------------------------- the module
+  let draft = null, logRows = [];
+  function make(keepState) {
+    const saved = keepState && draft ? draft.serialize() : null;
+    draft = GameDNA_UpgradeDraft.create({
+      view: () => ({ w: VW, h: VH }), upgrades: table, fallback: FALLBACK, params: Object.assign({ look: look }, P), statLabels: LABELS,
+      applyDelta: (stat, amount) => { if (!(stat in hero)) hero[stat] = 0; hero[stat] += amount; if (stat === 'maxHp') hero.hp += amount; flashStat(stat); },
+      getStat: stat => stat in hero ? hero[stat] : 0,
+      target: () => hero,
+      onPick: (u, info) => log(u, info),
+      autoplay: () => autoplay,
+      uiRects: () => [hudRect()]
+    });
+    if (saved) draft.restore(saved);
+    paintPanels();
+  }
+  const ups = new Set();
+  function flashStat(k) { ups.add(k); setTimeout(() => { ups.delete(k); paintPanels(); }, 700); }
+  function log(u, info) {
+    const d = Object.entries(info.deltas).map(([k, v]) => `${LABELS[k] || k} ${v > 0 ? '+' : ''}${v}`).join(', ');
+    logRows.unshift(`<div><span class="${u.rarity === 'epic' ? 'e' : u.rarity === 'rare' ? 'r' : ''}">${u.name}</span> <b>x${info.stacks}</b> ${d ? '<span class="ok">' + d + '</span>' : ''}${info.synergy ? ' &middot; synergy ' + info.synergy : ''}${info.auto ? ' &middot; auto' : ''}</div>`);
+    logRows = logRows.slice(0, 30); paintPanels();
+  }
+  function paintPanels() {
+    if (FROZEN && T0 !== null && simT < T0) return;
+    const keys = Object.keys(hero).filter(k => k !== 'hp');
+    document.getElementById('stats').innerHTML = keys.map(k => `<div class="${ups.has(k) ? 'up' : ''}">${LABELS[k] || k}<b>${k === 'maxHp' ? hero.hp + ' / ' + hero.maxHp : hero[k]}</b></div>`).join('');
+    document.getElementById('build').innerHTML = draft.owned().map(o => `<span class="${o.rarity}">${o.name}${o.stacks > 1 ? ' &times;' + o.stacks : ''}</span>`).join('') || '<span style="opacity:.5">nothing yet</span>';
+    document.getElementById('log').innerHTML = logRows.join('') || '<div>pick a card: onPick(upgrade, info) lands here</div>';
+  }
+  function openDraft(kind) {
+    if (kind === 'chest') draft.open({ title: 'TREASURE', subtitle: 'A chest of relics' });
+    else if (kind === 'wave') draft.open({ title: 'WAVE CLEAR', subtitle: 'Claim a boon' });
+    else { lvl++; draft.open({ title: 'LEVEL UP', subtitle: 'Level ' + lvl + ' · choose 1 of {n}' }); }
+  }
+
+  // ---------------------------------------------------------------- scripted timeline (?t= / ?script=1): deterministic
+  const SCRIPT = [
+    [300, () => openDraft('level')], [2300, () => draft.press('right')], [2700, () => draft.press('confirm')],
+    [4300, () => openDraft('level')], [6200, () => draft.press('left')], [6900, () => draft.press('confirm')],
+    [8600, () => openDraft('chest')], [10500, () => draft.press('reroll')], [12200, () => draft.press('right')], [12600, () => draft.press('confirm')],
+    [14200, () => openDraft('wave')], [16300, () => draft.press('skip')]
+  ];
+  let si = 0;
+  function step() {
+    simT += STEP;
+    while (scripted && si < SCRIPT.length && SCRIPT[si][0] <= simT) SCRIPT[si++][1]();
+    if (!draft.busy()) { worldT += STEP; stepWorld(STEP); }  // the world pauses while the draft is open
+    draft.update(STEP);
+  }
+
+  // ---------------------------------------------------------------- the backdrop scene (demo only)
+  const h1 = (i, k) => { let h = Math.imul(i * 374761393 + k * 668265263, 3266489917); h ^= h >>> 13; h = Math.imul(h, 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; };
+  // HD field: the shared painted demo kit (rigged hero, painted monsters, campfire, backdrop). Everything that moves is advanced
+  // in stepWorld() from the fixed step, and only while no draft is open, so the field really pauses and ?t= stills are exact.
+  const KIT = GameDNA_DemoKit, GY = 300, HERO_H = 100, HERO_X = 276, BEAT = 1300;
+  const HERO_F = 1, FOE_F = -1;   // the one facing every update / draw / point call of the hero and of the foes reads; __state reports it
+  const heroAct = KIT.actor('sword', { h: HERO_H });
+  const FOES = [['slime', 356], ['imp', 438], ['wolf', 540]].map(([id, x]) => ({ id, x, h: HERO_H * KIT.rel(id), act: KIT.actor(id, { h: HERO_H * KIT.rel(id) }) }));
+  let beat = 0, nextBeat = 0, gems = [], sparks = [], xp = 0;
+  function strike(f) {
+    f.act.play('hurt', { dur: 340 });
+    const c = f.act.point('chest', f.x, GY, { h: f.h, facing: FOE_F });
+    sparks.push({ x: c.x - 6, y: c.y, t: 0 });
+    for (let i = 0; i < 3; i++) gems.push({ x0: c.x, y0: c.y, t: -i * 70, a: -0.9 + i * 0.75, r: 26 + i * 9, k: beat * 3 + i });
+  }
+  function stepWorld(dt) {
+    while (worldT >= nextBeat) {
+      const i = beat++; nextBeat += BEAT;
+      if (i % 2 === 0) heroAct.play('slash', { dur: 520, onHit: () => strike(FOES[0]) });
+      else { FOES[(i >> 1) % 2].act.play('attack', { dur: 560 }); heroAct.play('guard', { dur: 520 }); }
+    }
+    heroAct.update(dt, { facing: HERO_F, h: HERO_H });
+    FOES.forEach(f => f.act.update(dt, { facing: FOE_F, h: f.h }));
+    gems.forEach(q => { q.t += dt; }); const n0 = gems.length; gems = gems.filter(q => q.t < 760); xp += n0 - gems.length;
+    sparks.forEach(q => { q.t += dt; }); sparks = sparks.filter(q => q.t < 260);
+  }
+  function gemAt(q) {                                        // pops out of the foe, hangs, then homes on the hero
+    const u = Math.max(0, q.t) / 760, out = Math.min(1, u / 0.3), e = 1 - (1 - out) * (1 - out), home = u < 0.42 ? 0 : (u - 0.42) / 0.58, h = home * home;
+    const px = q.x0 + Math.cos(q.a) * q.r * e, py = q.y0 - 18 * e - Math.abs(Math.sin(q.a)) * q.r * 0.5 * e, hp = heroAct.point('chest', HERO_X, GY, { h: HERO_H, facing: HERO_F });
+    return { x: px + (hp.x - px) * h, y: py + (hp.y - py) * h, s: (0.55 + 0.45 * e) * (1 - 0.5 * h), a: q.t < 0 ? 0 : 1 };
+  }
+  function drawGem(x, y, s, k) {                             // small shaded XP crystal (code-drawn effect)
+    const r = 5.2 * s; ctx.save(); ctx.translate(x, y); ctx.rotate(Math.sin(k * 1.7) * 0.35);
+    const gl = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 3.2); gl.addColorStop(0, 'rgba(120,255,214,0.5)'); gl.addColorStop(1, 'rgba(120,255,214,0)'); ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(0, 0, r * 3.2, 0, 7); ctx.fill();
+    const path = () => { ctx.beginPath(); ctx.moveTo(0, -r * 1.35); ctx.lineTo(r * 0.85, -r * 0.2); ctx.lineTo(0, r * 1.35); ctx.lineTo(-r * 0.85, -r * 0.2); ctx.closePath(); };
+    path(); const g = ctx.createLinearGradient(-r, -r, r, r); g.addColorStop(0, '#d9fff2'); g.addColorStop(0.45, '#4fe0b4'); g.addColorStop(1, '#147a78'); ctx.fillStyle = g; ctx.fill();
+    ctx.lineWidth = 1.1; ctx.lineJoin = 'round'; ctx.strokeStyle = '#0c3b44'; ctx.stroke();
+    ctx.fillStyle = 'rgba(8,70,80,0.45)'; ctx.beginPath(); ctx.moveTo(0, -r * 0.2); ctx.lineTo(r * 0.85, -r * 0.2); ctx.lineTo(0, r * 1.35); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.beginPath(); ctx.moveTo(-r * 0.1, -r * 1.0); ctx.lineTo(-r * 0.5, -r * 0.3); ctx.lineTo(-r * 0.12, -r * 0.3); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+  function rrp(x, y, w, h, r) { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); }
+  function hudHD() {
+    const W = 640, Hh = 26, F = 'ui-rounded, "SF Pro Rounded", system-ui, -apple-system, sans-serif';
+    let g = ctx.createLinearGradient(0, 0, 0, Hh); g.addColorStop(0, 'rgba(26,20,40,0.94)'); g.addColorStop(1, 'rgba(12,10,22,0.9)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, Hh);
+    ctx.fillStyle = 'rgba(255,214,140,0.5)'; ctx.fillRect(0, Hh - 1, W, 1); ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(0, Hh, W, 2);
+    ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+    rrp(8, 5, 40, 16, 8); g = ctx.createLinearGradient(0, 5, 0, 21); g.addColorStop(0, '#ffe7a8'); g.addColorStop(1, '#e9a93c'); ctx.fillStyle = g; ctx.fill(); ctx.strokeStyle = '#5a3708'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.font = '800 10.5px ' + F; ctx.fillStyle = '#3a2204'; ctx.fillText('LV ' + lvl, 28, 13.5);
+    // HP bar
+    const bx = 58, bw = 118; rrp(bx - 1.5, 6.5, bw + 3, 13, 6.5); ctx.fillStyle = '#120c18'; ctx.fill(); ctx.strokeStyle = 'rgba(255,214,140,0.55)'; ctx.stroke();
+    const fr = Math.max(0, Math.min(1, hero.hp / Math.max(1, hero.maxHp)));
+    ctx.save(); rrp(bx, 8, bw, 10, 5); ctx.clip(); g = ctx.createLinearGradient(0, 8, 0, 18); g.addColorStop(0, '#ff9aa0'); g.addColorStop(0.5, '#ec4a66'); g.addColorStop(1, '#b02a4c'); ctx.fillStyle = g; ctx.fillRect(bx, 8, bw * fr, 10);
+    ctx.fillStyle = 'rgba(255,255,255,0.28)'; ctx.fillRect(bx, 8, bw * fr, 3); ctx.restore();
+    ctx.font = '800 9px ' + F; ctx.lineJoin = 'round'; ctx.lineWidth = 2.5; ctx.strokeStyle = 'rgba(30,6,16,0.9)'; ctx.strokeText(hero.hp + ' / ' + hero.maxHp, bx + bw / 2, 13.5); ctx.fillStyle = '#fff4ea'; ctx.fillText(hero.hp + ' / ' + hero.maxHp, bx + bw / 2, 13.5);
+    // stat chips
+    ctx.textAlign = 'left'; let x = 190;
+    [['ATK', hero.atk], ['DEF', hero.def], ['SPD', hero.speed], ['CRIT', hero.crit + '%']].forEach(([k, v]) => {
+      ctx.font = '700 8.5px ' + F; const lw = ctx.measureText(k).width; ctx.font = '800 11px ' + F; const vw = ctx.measureText(String(v)).width, w = lw + vw + 17;
+      rrp(x, 6, w, 14, 7); ctx.fillStyle = 'rgba(255,255,255,0.07)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.font = '700 8.5px ' + F; ctx.fillStyle = '#b9a98a'; ctx.fillText(k, x + 6, 13.6); ctx.font = '800 11px ' + F; ctx.fillStyle = '#f6ecd6'; ctx.fillText(String(v), x + 11 + lw, 13.6); x += w + 6;
+    });
+    // XP crystals collected
+    ctx.textAlign = 'right'; ctx.font = '800 11px ' + F; ctx.fillStyle = '#bff5e2'; ctx.fillText(String(xp), W - 12, 13.6); drawGem(W - 20 - ctx.measureText(String(xp)).width, 13, 0.78, 0);
+    if (DEBUG) { ctx.font = '600 10px ' + F; ctx.fillStyle = '#9aa3c0'; ctx.fillText('world ' + (worldT / 1000).toFixed(1) + ' s', W - 60, 13.6); }   // dev readout (?debug=1); the panel shows it
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  }
+  function sceneHD() {
+    const W = 640, H = 360, t = worldT;
+    ctx.fillStyle = '#1a1424'; ctx.fillRect(0, 0, W, H);
+    KIT.backdrop(ctx, 'meadow-dusk', { x: 0, y: 0, w: W, h: H, groundY: GY });
+    let g = ctx.createLinearGradient(0, H * 0.6, 0, H); g.addColorStop(0, 'rgba(30,12,40,0)'); g.addColorStop(1, 'rgba(30,12,40,0.34)'); ctx.fillStyle = g; ctx.fillRect(0, H * 0.6, W, H * 0.4);
+    const ch = HERO_H * KIT.rel('campfire'); KIT.sprite(ctx, 'campfire', 150, GY + 10, { h: ch }); KIT.flame(ctx, 150, GY + 10 - ch * 0.55, 62, t);
+    FOES.slice().reverse().forEach(f => f.act.draw(ctx, f.x, GY + (f.id === 'wolf' ? -4 : f.id === 'imp' ? 1 : 5), { facing: FOE_F, flash: f.act.hurtFlash ? f.act.hurtFlash() * 0.55 : 0 }));
+    heroAct.draw(ctx, HERO_X, GY + 3, { h: HERO_H, facing: HERO_F });
+    sparks.forEach(q => { const u = q.t / 260, a = 1 - u; ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.translate(q.x, q.y);
+      const rg = ctx.createRadialGradient(0, 0, 0, 0, 0, 16 + 20 * u); rg.addColorStop(0, `rgba(255,250,220,${0.5 * a})`); rg.addColorStop(0.4, `rgba(255,200,110,${0.2 * a})`); rg.addColorStop(1, 'rgba(255,160,60,0)'); ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(0, 0, 16 + 20 * u, 0, 7); ctx.fill();
+      ctx.strokeStyle = `rgba(255,244,200,${a})`; ctx.lineCap = 'round'; for (let i = 0; i < 7; i++) { const an = i * 0.9 + 0.3, r0 = 5 + 16 * u, r1 = r0 + 9 * (1 - u * 0.5) * (0.6 + h1(i, 9) * 0.8); ctx.lineWidth = 2.2 * a + 0.4; ctx.beginPath(); ctx.moveTo(Math.cos(an) * r0, Math.sin(an) * r0); ctx.lineTo(Math.cos(an) * r1, Math.sin(an) * r1); ctx.stroke(); }
+      ctx.restore(); });
+    gems.forEach(q => { const p = gemAt(q); if (p.a) drawGem(p.x, p.y, p.s, q.k); });
+    for (let i = 0; i < 10; i++) { const x = (h1(i, 7) * W + Math.sin(t / 900 + i) * 30), y = 150 + h1(i, 8) * 130 + Math.cos(t / 700 + i * 2) * 12, a = 0.35 + 0.35 * Math.sin(t / 300 + i);
+      const fg = ctx.createRadialGradient(x, y, 0, x, y, 5); fg.addColorStop(0, `rgba(255,246,190,${a})`); fg.addColorStop(0.3, `rgba(255,220,130,${a * 0.5})`); fg.addColorStop(1, 'rgba(255,200,110,0)'); ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(x, y, 5, 0, 7); ctx.fill(); }
+    hudHD();
+  }
+  function scenePX() {
+    const W = 256, H = 224, t = worldT;
+    const bands = ['#141b38', '#1c2244', '#252a50', '#2e3159', '#383660', '#433a64', '#4f3e66'];
+    bands.forEach((c, i) => { ctx.fillStyle = c; ctx.fillRect(0, i * 20, W, 20); });
+    // no moon in the pixel scene: under the draft's dim a flat disc read as a UI dot (critic r1 / r2)
+    for (let i = 0; i < 26; i++) { ctx.fillStyle = h1(i, 3) > 0.6 ? '#ffffff' : '#9aa0c8'; ctx.fillRect(Math.floor(h1(i, 1) * W), Math.floor(h1(i, 2) * 90), 1, 1); }
+    for (let x = 0; x < W; x++) { const y1 = Math.floor(132 - Math.sin(x / 36 + 1) * 10 - h1(x >> 3, 1) * 5); ctx.fillStyle = '#2a2b4f'; ctx.fillRect(x, y1, 1, H - y1); }
+    for (let x = 0; x < W; x++) { const y2 = Math.floor(152 - Math.sin(x / 30 + 2) * 7 - h1(x >> 2, 2) * 4); ctx.fillStyle = '#222443'; ctx.fillRect(x, y2, 1, H - y2); }
+    for (let i = 0; i < 18; i++) { const x = i * 15 + Math.floor(h1(i, 5) * 8), hh = 22 + Math.floor(h1(i, 6) * 22); ctx.fillStyle = '#191b34'; for (let r = 0; r < hh; r++) { const w = Math.floor(r * 0.4); ctx.fillRect(x - w, 180 - hh + r, w * 2 + 1, 1); } }
+    ctx.fillStyle = '#26304a'; ctx.fillRect(0, 180, W, 44); ctx.fillStyle = '#1d2538'; for (let x = 0; x < W; x += 2) ctx.fillRect(x + ((x >> 1) & 1), 200, 1, 24);
+    const f = (Math.floor(t / 120) & 1);
+    ctx.fillStyle = '#5a3016'; ctx.fillRect(150, 190, 12, 2); ctx.fillStyle = '#ff8a30'; ctx.fillRect(152, 182 - f, 8, 8 + f); ctx.fillStyle = '#ffe08a'; ctx.fillRect(154, 185, 4, 5);
+    const HERO = ['...hhh...', '..hhhhh..', '..ssfss..', '..sssss..', '.cAAAAAc.', 'ccAAAAAcw', 'ccAAAAAc.', 'c.LL.LL..', '..LL.LL..', '..bb.bb..'];
+    const PAL = { h: '#5a3a22', s: '#e8c39a', f: '#2a1a12', A: '#9aa8c4', c: '#7a2638', L: '#2e3b5e', b: '#1a1a24', w: '#dfe6f0' };
+    const bob = (Math.floor(t / 400) & 1);
+    HERO.forEach((row, y) => [...row].forEach((ch, x) => { if (PAL[ch]) { ctx.fillStyle = PAL[ch]; ctx.fillRect(124 + x, 181 + y - (y < 7 ? bob : 0), 1, 1); } }));
+    ctx.fillStyle = '#dfe6f0'; for (let k = 0; k < 6; k++) ctx.fillRect(132 + k, 184 - k - bob, 1, 1);
+    for (let i = 0; i < 9; i++) { if (((Math.floor(t / 250) + i) % 3) === 0) continue; ctx.fillStyle = '#d8ff9a'; ctx.fillRect(Math.floor(h1(i, 7) * W + Math.sin(t / 900 + i) * 10), Math.floor(130 + h1(i, 8) * 60), 1, 1); }
+    ctx.fillStyle = '#0a0c18'; ctx.fillRect(0, 0, W, 13);
+    pxLine(`LV${lvl} HP${hero.hp}/${hero.maxHp} ATK${hero.atk} DEF${hero.def}`, 4, 3, '#dfe3f0');
+  }
+  // tiny 3x5 HUD digits/letters for the pixel demo scene (crisp, original)
+  const F3 = { A: '010101111101101', B: '110101110101110', C: '011100100100011', D: '110101101101110', E: '111100110100111', F: '111100110100100', H: '101101111101101', K: '101101110101101', L: '100100100100111', P: '110101110100100', T: '111010010010010', V: '101101101101010', '/': '001001010100100', ' ': '000000000000000',
+    0: '111101101101111', 1: '010110010010111', 2: '111001111100111', 3: '111001111001111', 4: '101101111001001', 5: '111100111001111', 6: '111100111101111', 7: '111001001010010', 8: '111101111101111', 9: '111101111001111' };
+  function pxLine(s, x, y, col) { ctx.fillStyle = col; for (const ch of s) { const g = F3[ch] || F3[' ']; for (let i = 0; i < 15; i++) if (g[i] === '1') ctx.fillRect(x + (i % 3), y + Math.floor(i / 3), 1, 1); x += ch === ' ' ? 3 : 4; } }
+
+  function render() {
+    if (look === 'pixel') { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false; scenePX(); }
+    else { ctx.setTransform(cv.width / VW, 0, 0, cv.height / VH, 0, 0); ctx.imageSmoothingEnabled = true; sceneHD(); }
+    draft.draw(ctx);
+    document.getElementById('wt').textContent = 'world ' + (worldT / 1000).toFixed(1) + ' s' + (draft.busy() ? ' (paused)' : '');
+    const st = draft.state(); document.getElementById('status').textContent = st ? `${st.stage} · draft #${st.draw + 1} · hand ${st.hand.join(', ')}` : 'closed';
+  }
+
+  // ---------------------------------------------------------------- input
+  addEventListener('keydown', e => {
+    if (e.target && (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT')) return;
+    if (draft.key(e.code, true)) { e.preventDefault(); return; }
+    if (e.code === 'KeyL') openDraft('level'); else if (e.code === 'KeyC') openDraft('chest');
+  });
+  addEventListener('keyup', e => draft.key(e.code, false));
+  const toNative = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * VW / r.width, (e.clientY - r.top) * VH / r.height]; };
+  // the pointer cursor shows what is clickable (cards, the R / X hints); hitTest is read-only
+  const setCursor = (x, y) => { const h = draft.hitTest(x, y); cv.style.cursor = h ? 'pointer' : ''; };
+  cv.addEventListener('pointermove', e => { const p = toNative(e); draft.pointer(...p, false); setCursor(...p); });
+  cv.addEventListener('pointerdown', e => { const p = toNative(e); draft.pointer(...p, true); setCursor(...p); });
+  cv.addEventListener('pointerleave', () => { cv.style.cursor = ''; });
+  document.querySelectorAll('[data-a]').forEach(b => b.onclick = () => draft.press(b.dataset.a));
+  document.getElementById('lvl').onclick = () => openDraft('level');
+  document.getElementById('chest').onclick = () => openDraft('chest');
+  document.getElementById('wave').onclick = () => openDraft('wave');
+  document.getElementById('reset').onclick = () => { hero = Object.assign({}, BASE); lvl = 1; xp = 0; logRows = []; make(false); };
+  const autoEl = document.getElementById('auto'); autoEl.checked = autoplay; autoEl.onchange = () => { autoplay = autoEl.checked; draft.auto(autoplay); };
+
+  // ---------------------------------------------------------------- controls
+  const fill = el => el.style.setProperty('--fill', ((el.value - el.min) / (el.max - el.min) * 100) + '%');
+  document.querySelectorAll('input[type=range][data-k]').forEach(el => {
+    const k = el.dataset.k, out = el.parentElement.querySelector('output');
+    el.value = P[k]; out.textContent = P[k]; fill(el);
+    el.oninput = () => { P[k] = +el.value; out.textContent = el.value; fill(el); draft.setParams({ [k]: P[k] }); };
+  });
+  function seg(el, cur, fn) { el.querySelectorAll('button').forEach(b => { b.setAttribute('aria-checked', b.dataset.v === cur); b.onclick = () => { el.querySelectorAll('button').forEach(x => x.setAttribute('aria-checked', x === b)); fn(b.dataset.v); }; }); }
+  document.querySelectorAll('.seg[data-s]').forEach(el => seg(el, P[el.dataset.s], v => { P[el.dataset.s] = v; draft.setParams({ [el.dataset.s]: v }); }));
+  seg(document.getElementById('look'), look, v => { look = v; sizeCanvas(); draft.setParams({ look: v }); render(); });   // the open hand stays
+  seg(document.getElementById('table'), tableName, v => { tableName = v; table = TABLES[v].slice(); hero = Object.assign({}, BASE); lvl = 1; logRows = []; showJson(); make(false); });
+  const ta = document.getElementById('json'), err = document.getElementById('err');
+  function showJson() { ta.value = '[\n' + table.map(u => '  ' + JSON.stringify(u)).join(',\n') + '\n]'; err.textContent = ''; }
+  document.getElementById('applyJson').onclick = () => {
+    try { const list = JSON.parse(ta.value); if (!Array.isArray(list)) throw new Error('needs an array'); table = list; hero = Object.assign({}, BASE); lvl = 1; logRows = []; make(false); err.textContent = ''; }
+    catch (e) { err.textContent = String(e.message || e); }
+  };
+
+  // ---------------------------------------------------------------- boot
+  sizeCanvas(); make(false); showJson();
+  /* text state for critics and tools/sprites/statecheck.py (640x360 stage px): the hero (left) fights the three foes on his right; he strikes the
+     nearest one (the slime), they all face him. The campfire is a prop. */
+  window.__state = () => ({ t: Math.round(worldT), actors: [{ id: 'hero', x: HERO_X, y: GY + 3, facing: HERO_F > 0 ? 'right' : 'left', target: FOES[0].id, asset: 'sword' }]
+    .concat(FOES.map(f => ({ id: f.id, x: f.x, y: GY + (f.id === 'wolf' ? -4 : f.id === 'imp' ? 1 : 5), facing: FOE_F > 0 ? 'right' : 'left', target: 'hero', asset: f.id }))) });
+  window.__draft = () => draft; window.__tables = TABLES; window.__demo = () => ({ simT, worldT, hero: Object.assign({}, hero), state: draft.state(), owned: draft.owned().map(o => o.id + 'x' + o.stacks) });
+  let acc = 0, prev = null;
+  function frame(now) {
+    if (prev === null) prev = now;
+    acc += Math.min(250, now - prev); prev = now;
+    const was = draft.busy();
+    while (acc >= STEP) { step(); acc -= STEP; }
+    if (was !== draft.busy() || ups.size) paintPanels();
+    render(); requestAnimationFrame(frame);
+  }
+  addEventListener('resize', () => { if (look === 'hd') { sizeCanvas(); if (window.__frozen) render(); } });   // a frozen frame is painted once: repaint after a resize clears the canvas
+  KIT.ready(() => {                                          // painted cast decoded: fast-forward (?t=) and first paint happen here
+    if (T0 !== null) {
+      for (let n = Math.floor(T0 / STEP); n > 0; n--) step();
+      paintPanels(); render();
+      if (FROZEN) { window.__frozen = true; document.documentElement.dataset.frozen = '1'; return; }
+    } else if (!scripted) setTimeout(() => { if (!draft.busy()) openDraft('level'); }, 500);
+    requestAnimationFrame(frame);
+  });
+})();
+</script>
+</body>
+</html>

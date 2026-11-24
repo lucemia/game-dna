@@ -1,0 +1,215 @@
+{
+  "id": "damage-pop",
+  "code": "C-11",
+  "kind": "addon",
+  "name": "Modern damage numbers",
+  "family": "combat-feedback",
+  "oneLiner": "2020s damage numbers: each hit arcs out of the target and lands, crits pop with a big overshoot, a burst and a short shake, rapid hits on one target roll into one punching total (12 → 47 → 83), every damage type has its own colour and a small procedural icon, misses and blocks are small words, big numbers stay on top, and nothing lands on another unit or the UI. Smooth bold sans on HD canvases, a crisp 1-bit raster on native pixel canvases. Replaces E-01 bouncing numbers (use one or the other).",
+  "fits": [
+    "action RPG",
+    "turn-based RPG battle",
+    "roguelite / ARPG loot games",
+    "tactics / strategy RPG",
+    "beat-'em-up",
+    "idle / clicker",
+    "auto-battler",
+    "monster battler"
+  ],
+  "notFor": [
+    "games that hide HP on purpose (horror, realism sims)",
+    "a strict 8/16-bit period look where the old bouncing digits are the point (use E-01)",
+    "rhythm games (timing words are a different element)",
+    "hundreds of hits per second from many sources on one target (merging helps, but the screen still fills)"
+  ],
+  "interfaces": {
+    "time": "realtime",
+    "coords": "side",
+    "layer": "fx",
+    "needs": [
+      "hit event on the impact frame: {target, amount, kind: damage|crit|heal|shield|mp|miss|block|dodge|status, type: physical|fire|ice|shock|poison|arcane|heal|shield|mana}",
+      "target screen anchor: centre x and top of head y (above any HP bar)",
+      "frame clock in ms (world time that pauses during hit-stop)",
+      "optional: rectangles to avoid (banner, HUD, windows) and unit sprite rects with ids"
+    ],
+    "provides": [
+      "hit-stop request (ms) on the impact frame",
+      "screen shake and flash request for criticals",
+      "list of live pop rectangles (for other overlays to avoid)"
+    ]
+  },
+  "params": [
+    {
+      "key": "size",
+      "label": "Number size (0 = auto)",
+      "type": "range",
+      "min": 0,
+      "max": 24,
+      "step": 1,
+      "default": 0
+    },
+    {
+      "key": "duration",
+      "label": "Duration (ms)",
+      "type": "range",
+      "min": 600,
+      "max": 2400,
+      "step": 50,
+      "default": 1100
+    },
+    {
+      "key": "arc",
+      "label": "Arc",
+      "type": "range",
+      "min": 0,
+      "max": 2,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "punch",
+      "label": "Punch (overshoot)",
+      "type": "range",
+      "min": 0,
+      "max": 1.2,
+      "step": 0.05,
+      "default": 0.6
+    },
+    {
+      "key": "merge",
+      "label": "Merge window (ms)",
+      "type": "range",
+      "min": 0,
+      "max": 1500,
+      "step": 50,
+      "default": 600
+    },
+    {
+      "key": "hitstop",
+      "label": "Hit-stop (ms)",
+      "type": "range",
+      "min": 0,
+      "max": 120,
+      "step": 10,
+      "default": 50
+    },
+    {
+      "key": "palette",
+      "label": "Palette",
+      "type": "select",
+      "options": [
+        "vivid",
+        "soft",
+        "mono",
+        "skin"
+      ],
+      "default": "vivid"
+    },
+    {
+      "key": "icons",
+      "label": "Type icons",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "crit",
+      "label": "Critical style",
+      "type": "select",
+      "options": [
+        "burst",
+        "flash",
+        "plain"
+      ],
+      "default": "burst"
+    },
+    {
+      "key": "render",
+      "label": "Render",
+      "type": "select",
+      "options": [
+        "auto",
+        "smooth",
+        "crisp"
+      ],
+      "default": "auto"
+    },
+    {
+      "key": "stack",
+      "label": "Avoidance",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Modern ARPG",
+      "params": {
+        "size": 0,
+        "duration": 1100,
+        "arc": 1,
+        "punch": 0.6,
+        "merge": 600,
+        "palette": "vivid",
+        "icons": "on",
+        "crit": "burst"
+      }
+    },
+    {
+      "name": "Big crit energy",
+      "params": {
+        "punch": 1.0,
+        "arc": 1.4,
+        "hitstop": 80,
+        "crit": "burst",
+        "merge": 900
+      }
+    },
+    {
+      "name": "Calm and clean",
+      "params": {
+        "punch": 0.25,
+        "arc": 0.4,
+        "hitstop": 0,
+        "crit": "flash",
+        "palette": "soft",
+        "duration": 1500
+      }
+    },
+    {
+      "name": "Readable mono",
+      "params": {
+        "palette": "mono",
+        "icons": "on",
+        "punch": 0.4
+      }
+    },
+    {
+      "name": "Pixel host, modern motion",
+      "params": {
+        "render": "crisp",
+        "size": 9
+      }
+    }
+  ],
+  "assets": [
+    "module/damage-pop.js: the element as one dependency-free script (global GameDNA_DamagePop): motion, merging, type colours and procedural icons, smooth and crisp text rasters, placement, drawing",
+    "no image, font or audio files (system sans stack, never loaded from the network)"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/damage-pop.js",
+    "global": "GameDNA_DamagePop",
+    "version": "1.0.0",
+    "docs": "module/README.md"
+  },
+  "replaces": [
+    "damage-numbers"
+  ]
+}

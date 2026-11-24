@@ -1,0 +1,1100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bouncing Damage Numbers</title>
+<style>
+:root {
+  --bg: #0d0b14; --panel: #16131f; --panel2: #1d1929; --line: #2c2740; --text: #ece8f6; --dim: #9a93b4; --accent: #f2c35a; --accent2: #7ab8ff;
+  --hit: #e8ecff; --crit: #ffb43a; --heal: #4ad870; --miss: #a8a8bc; --multi: #ff8a6a; --mp: #4aa8ff; --status: #b878f8;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1200px 600px at 30% -10%, #241c3a 0%, var(--bg) 60%) fixed, var(--bg); min-height: 100vh; }
+header { display: flex; align-items: center; gap: 14px; padding: 14px 20px 10px; max-width: 1240px; margin: 0 auto; }
+.code { white-space: nowrap; font: 700 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #1a1206; background: var(--accent); padding: 6px 8px; border-radius: 4px; box-shadow: 0 0 0 1px #00000040, 0 2px 0 #8a6428; }
+h1 { font-size: 18px; margin: 0; letter-spacing: .01em; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; padding: 0 20px 20px; max-width: 1240px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; display: flex; flex-direction: column; align-items: center; }
+.frame { padding: 6px; background: linear-gradient(#2a2340, #15111f); border-radius: 8px; box-shadow: 0 0 0 1px #3a3352, 0 18px 50px #00000080; }
+canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; border-radius: 3px; }
+.caption { display: flex; justify-content: space-between; gap: 12px; width: 100%; max-width: 780px; margin-top: 8px; color: var(--dim); font-size: 12px; }
+.caption b { color: var(--text); font-weight: 600; }
+#status::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--heal); margin-right: 6px; box-shadow: 0 0 8px var(--heal); vertical-align: 1px; }
+aside { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+h2 { margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.triggers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.triggers button { --c: var(--hit); appearance: none; border: 1px solid #00000060; border-radius: 6px; padding: 9px 4px 7px; cursor: pointer; color: var(--text); font: 600 12px/1.1 inherit;
+  background: linear-gradient(#2a2440, #1e1a2e); box-shadow: inset 0 1px 0 #ffffff14, inset 0 -2px 0 color-mix(in srgb, var(--c) 70%, black); transition: transform .06s, background .15s; }
+.triggers button:hover { background: linear-gradient(#352d50, #241f36); }
+.triggers button:active { transform: translateY(1px); box-shadow: inset 0 1px 0 #ffffff14, inset 0 -1px 0 var(--c); }
+.triggers button i { display: block; font-style: normal; font: 800 15px/1 ui-monospace, Menlo, monospace; color: var(--c); margin-bottom: 4px; text-shadow: 0 1px 0 #000, 1px 0 0 #000, -1px 0 0 #000, 0 -1px 0 #000; }
+.triggers kbd { display: block; font: 10px/1 ui-monospace, Menlo, monospace; color: var(--dim); margin-top: 4px; }
+.triggers .wide { grid-column: span 2; }
+.row { margin-bottom: 10px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 5px; color: var(--text); }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--fill), #2e2842 var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 4px; background: #fff3d0; border: 2px solid #1a1206; box-shadow: 0 1px 4px #000a; cursor: pointer; }
+input[type=range]:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--accent2); }
+.seg { display: flex; background: #0f0d17; border: 1px solid var(--line); border-radius: 6px; padding: 2px; gap: 2px; }
+.seg button { flex: 1; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 4px; border-radius: 4px; cursor: pointer; text-transform: capitalize; }
+.seg button[aria-checked=true] { background: #2e2746; color: var(--text); box-shadow: inset 0 0 0 1px #4a4068, inset 0 -2px 0 var(--accent); }
+.seg button:hover { color: var(--text); }
+select { width: 100%; appearance: none; background: #0f0d17 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239a93b4'/%3E%3C/svg%3E") no-repeat right 10px center; color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; font: 600 12.5px inherit; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.foot { display: flex; justify-content: space-between; align-items: center; color: var(--dim); font-size: 11.5px; border-top: 1px solid var(--line); padding-top: 10px; }
+.foot button { appearance: none; background: none; border: 1px solid var(--line); color: var(--text); border-radius: 5px; padding: 5px 9px; font: 600 11.5px inherit; cursor: pointer; }
+@media (max-width: 980px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 640px; width: 100%; margin: 0 auto; } }
+@media (max-width: 560px) { header { padding: 12px 16px 8px; } main { padding: 0 16px 16px; gap: 12px; } .frame { padding: 3px; } .caption { flex-direction: column; gap: 2px; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">E-01</span>
+  <div><h1>Bouncing damage numbers</h1><p>Numbers pop above the target on the hit frame, bounce per digit, hold, then fade, and never pile on top of each other.</p></div>
+</header>
+<main>
+  <section id="stage">
+    <div class="frame"><canvas id="cv" width="256" height="224" aria-label="Battle scene showing damage numbers"></canvas></div>
+    <div class="caption"><span id="status">Auto-loop</span><span><span id="scaleinfo">256×224 native</span> · keys <b>1–7</b> trigger</span></div>
+  </section>
+  <aside>
+    <div>
+      <h2>Trigger</h2>
+      <div class="triggers">
+        <button data-act="hit" style="--c:var(--hit)"><i>128</i>Hit<kbd>1</kbd></button>
+        <button data-act="crit" style="--c:var(--crit)"><i>999</i>Crit<kbd>2</kbd></button>
+        <button data-act="heal" style="--c:var(--heal)"><i>+182</i>Heal<kbd>3</kbd></button>
+        <button data-act="miss" style="--c:var(--miss)"><i>MISS</i>Miss<kbd>4</kbd></button>
+        <button data-act="multi" class="wide" style="--c:var(--multi)"><i>41 57 38</i>Multi-hit<kbd>5</kbd></button>
+        <button data-act="mp" style="--c:var(--mp)"><i>18</i>MP<kbd>6</kbd></button>
+        <button data-act="status" style="--c:var(--status)"><i>!</i>Status<kbd>7</kbd></button>
+      </div>
+    </div>
+    <div class="two">
+      <div><h2>Target</h2><select id="target"><option value="golem">Stone Golem</option><option value="wisp">Bog Wisp</option><option value="rowan">Rowan</option><option value="mira">Mira</option></select></div>
+      <div><h2>Speed</h2><div class="seg"><button data-speed="1" aria-checked="true">1×</button><button data-speed="0.5" aria-checked="false">½×</button><button data-speed="0.25" aria-checked="false">¼×</button></div></div>
+    </div>
+    <div><h2>Parameters</h2><div id="params"></div></div>
+    <div class="foot"><span>Changes apply live and are kept in the URL.</span><button id="reset" type="button">Reset</button></div>
+  </aside>
+</main>
+<script>
+/* GameDNA E-01 · Bouncing damage numbers · module v1 (plain script, no dependencies, one global)
+ *
+ *   const dn = GameDNA_DamageNumbers.create({
+ *     getAnchor: id => ({ x, top, w, h }),      // target centre x, top of its sprite (px), sprite box size; null if gone
+ *     getObstacles: () => [{ x, y, w, h, id }],  // sprites (with id), UI rects (no id), props ({ soft: true })
+ *     bounds: { x: 0, y: 0, w: 256, h: 156 },   // play field in native pixels (keep numbers above the HUD)
+ *     params: { bounce: 10, ... },              // see DEFAULTS
+ *     onHitStop: ms => {}, onShake: (px, ms) => {}, onFlash: (alpha, ms) => {}
+ *   });
+ *   dn.spawn(targetId, amount, kind)   // kind: 'damage' | 'crit' | 'heal' | 'miss' | 'mp' | 'status' (amount = word)
+ *   dn.update(dtMs)                    // world time; pass 0 while the game is frozen by hit-stop
+ *   dn.draw(ctx, offsetX, offsetY)     // native-resolution 2D context, after sprites/effects, before banner/HUD
+ */
+(function (root) {
+  'use strict';
+  var DEFAULTS = { bounce: 10, duration: 1000, stagger: 40, hitstop: 60, scale: 1, scheme: 'classic', crit: 'burst', stack: 'on', outline: 1, gap: 4, dense: 'auto' };
+
+  /* ---------- glyphs: 7x10 digits (2px strokes) and a 5x7 letter font; words are never drawn from the digit table ---------- */
+  var DIGITS = {
+    0: '.#####.|##...##|##...##|##..###|##.#.##|###..##|##...##|##...##|##...##|.#####.', 1: '...##..|..###..|.####..|...##..|...##..|...##..|...##..|...##..|...##..|.######',
+    2: '.#####.|##...##|.....##|.....##|...###.|..##...|.##....|##.....|##.....|#######', 3: '.#####.|##...##|.....##|.....##|..####.|.....##|.....##|.....##|##...##|.#####.',
+    4: '....##.|...###.|..####.|.##.##.|##..##.|##..##.|#######|....##.|....##.|....##.', 5: '#######|##.....|##.....|######.|.....##|.....##|.....##|.....##|##...##|.#####.',
+    6: '..####.|.##....|##.....|##.....|######.|##...##|##...##|##...##|##...##|.#####.', 7: '#######|##...##|.....##|....##.|....##.|...##..|...##..|..##...|..##...|..##...',
+    8: '.#####.|##...##|##...##|##...##|.#####.|##...##|##...##|##...##|##...##|.#####.', 9: '.#####.|##...##|##...##|##...##|##...##|.######|.....##|.....##|....##.|.####..',
+    '+': '......|......|..##..|..##..|######|######|..##..|..##..|......|......'
+  };
+  var LETTERS = {
+    A: '.###.|#...#|#...#|#####|#...#|#...#|#...#', B: '####.|#...#|#...#|####.|#...#|#...#|####.', C: '.###.|#...#|#....|#....|#....|#...#|.###.',
+    D: '####.|#...#|#...#|#...#|#...#|#...#|####.', E: '#####|#....|#....|####.|#....|#....|#####', F: '#####|#....|#....|####.|#....|#....|#....',
+    G: '.###.|#...#|#....|#.###|#...#|#...#|.####', H: '#...#|#...#|#...#|#####|#...#|#...#|#...#', I: '###|.#.|.#.|.#.|.#.|.#.|###',
+    J: '..###|...#.|...#.|...#.|...#.|#..#.|.##..', K: '#...#|#..#.|#.#..|##...|#.#..|#..#.|#...#', L: '#....|#....|#....|#....|#....|#....|#####',
+    M: '#...#|##.##|#.#.#|#.#.#|#...#|#...#|#...#', N: '#...#|##..#|#.#.#|#..##|#...#|#...#|#...#', O: '.###.|#...#|#...#|#...#|#...#|#...#|.###.',
+    P: '####.|#...#|#...#|####.|#....|#....|#....', Q: '.###.|#...#|#...#|#...#|#.#.#|#..#.|.##.#', R: '####.|#...#|#...#|####.|#.#..|#..#.|#...#',
+    S: '.####|#....|#....|.###.|....#|....#|####.', T: '#####|..#..|..#..|..#..|..#..|..#..|..#..', U: '#...#|#...#|#...#|#...#|#...#|#...#|.###.',
+    V: '#...#|#...#|#...#|#...#|#...#|.#.#.|..#..', W: '#...#|#...#|#...#|#.#.#|#.#.#|##.##|#...#', X: '#...#|#...#|.#.#.|..#..|.#.#.|#...#|#...#',
+    Y: '#...#|#...#|.#.#.|..#..|..#..|..#..|..#..', Z: '#####|....#|...#.|..#..|.#...|#....|#####', ' ': '...|...|...|...|...|...|...',
+    '!': '#|#|#|#|#|.|#', '-': '....|....|....|####|....|....|....', '?': '.###.|#...#|....#|...#.|..#..|.....|..#..'
+  };
+  var D10 = {}, L7 = {}, BOLD = {}, k;
+  for (k in DIGITS) D10[k] = DIGITS[k].split('|');
+  for (k in LETTERS) L7[k] = LETTERS[k].split('|');
+  function letterRows(ch) { return L7[ch] || L7['?']; }
+  // bold word font: every stroke widened 1px to the right, so words match the 2px digit strokes
+  function boldRows(ch) {
+    if (BOLD[ch]) return BOLD[ch];
+    return (BOLD[ch] = letterRows(ch).map(function (r) { var o = ''; for (var i = 0; i <= r.length; i++) o += r[i] === '#' || r[i - 1] === '#' ? '#' : '.'; return o; }));
+  }
+  function textW(s) { var w = 0; for (var i = 0; i < s.length; i++) w += letterRows(s[i])[0].length + 1; return Math.max(0, w - 1); }
+
+  /* ---------- colours: [edge highlight, top half, bottom half, bottom-edge shade] ---------- */
+  var SCHEMES = {
+    classic: { dmg: ['#ffffff', '#f4f6ff', '#b8c4f0', '#7a86c0'], crit: ['#ffffff', '#fff2a0', '#ffb43a', '#c0601a'], heal: ['#f0fff0', '#b8ffc0', '#4ad870', '#22904a'],
+      miss: ['#ffffff', '#e4e4ec', '#a8a8bc', '#6e6e84'], mp: ['#ffffff', '#c8eeff', '#4aa8ff', '#2060c0'], status: ['#ffffff', '#f0d4ff', '#b878f8', '#7038b0'], ol: '#120a1e' },
+    warm: { dmg: ['#ffffff', '#fff0d0', '#ffa860', '#c0582a'], crit: ['#ffffff', '#ffd0d0', '#ff4a4a', '#a01830'], heal: ['#ffffff', '#e8ffb0', '#9ce040', '#4c8a18'],
+      miss: ['#ffffff', '#ece4dc', '#b0a49a', '#706460'], mp: ['#ffffff', '#c8fff4', '#38d0c8', '#1a7a88'], status: ['#ffffff', '#ffd8f0', '#f070c0', '#982870'], ol: '#1e0a0a' },
+    contrast: { dmg: ['#ffffff', '#ffffff', '#ffffff', '#c8c8d0'], crit: ['#ffffff', '#ffff60', '#ffff00', '#d0b000'], heal: ['#ffffff', '#90ff90', '#30ff70', '#10b040'],
+      miss: ['#ffffff', '#d8d8d8', '#c0c0c0', '#909090'], mp: ['#ffffff', '#90e8ff', '#40c8ff', '#2080d0'], status: ['#ffffff', '#ff98ff', '#ff60ff', '#b030b0'], ol: '#000000' }
+  };
+  var FLASH = ['#ffffff', '#ffffff', '#ffffff', '#e8e8ff'];
+
+  function mk(w, h) { var c = document.createElement('canvas'); c.width = Math.max(1, w); c.height = Math.max(1, h); return c; }
+  // glyph sprite pair: outline (mask dilated by o px + 1px drop) and fill (2-tone with 1px edge light/shade); drawn outlines first, then fills
+  var GC = {};
+  function glyph(font, ch, s, R, ol, o) {
+    var key = font + '|' + ch + '|' + s + '|' + R.join() + '|' + ol + '|' + o;
+    if (GC[key]) return GC[key];
+    var rows = font === 'digit' ? D10[ch] : font === 'bold' ? boldRows(ch) : letterRows(ch), w = rows[0].length * s, h = rows.length * s;
+    var at = function (x, y) { return x >= 0 && y >= 0 && x < w && y < h && rows[(y / s) | 0][(x / s) | 0] === '#'; };
+    var cO = mk(w + 2 * o + 1, h + 2 * o + 1), cF = mk(w + 2 * o + 1, h + 2 * o + 1), gO = cO.getContext('2d'), gF = cF.getContext('2d'), x, y, dx, dy, hit;
+    gO.fillStyle = ol;
+    for (y = -o; y < h + o + 1; y++) for (x = -o; x < w + o; x++) {
+      hit = false;
+      for (dy = -o; dy <= o && !hit; dy++) for (dx = -o; dx <= o && !hit; dx++) if (at(x + dx, y + dy) || at(x + dx, y + dy - 1)) hit = true;
+      if (hit) gO.fillRect(x + o, y + o, 1, 1);
+    }
+    for (y = 0; y < h; y++) for (x = 0; x < w; x++) if (at(x, y)) {
+      gF.fillStyle = y < h / 2 ? (!at(x, y - 1) ? R[0] : R[1]) : (!at(x, y + 1) ? R[3] : R[2]);
+      gF.fillRect(x + o, y + o, 1, 1);
+    }
+    return (GC[key] = { ol: cO, fill: cF, w: w, h: h });
+  }
+  function overlap(a, b) { var w = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x), h = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y); return w > 0 && h > 0 ? w * h : 0; }
+  // vertical offset of one glyph, a = ms since that glyph started; negative = up
+  function bounceY(a, D, H, drift) {
+    var s = a / D, arc = function (u, h) { return -Math.round(h * 4 * u * (1 - u)); };
+    if (s < 0.2) return arc(s / 0.2, H);                  // rise and fall, peak at 10 % of the life
+    if (s < 0.23) return H >= 2 ? 1 : 0;                  // overshoot: 1px below rest on landing (not for a pinned number)
+    if (s < 0.33) return arc((s - 0.23) / 0.1, H * 0.3);  // second bounce
+    if (s < 0.35) return H >= 8 ? 1 : 0;
+    if (s < 0.41) return arc((s - 0.35) / 0.06, H * 0.12);
+    if (s < 0.78) return 0;                               // hold
+    return -Math.round((s - 0.78) / 0.22 * (drift == null ? 4 : drift));   // drift up (4px) while fading
+  }
+  function rdist(px, py, r) { return Math.hypot(Math.max(r.x - px, 0, px - (r.x + r.w)), Math.max(r.y - py, 0, py - (r.y + r.h))); }
+  function fadeA(a, D) { var s = a / D; return s < 0.78 ? 1 : s < 0.85 ? 0.75 : s < 0.92 ? 0.5 : 0.25; }
+  var KIND = { damage: 'dmg', dmg: 'dmg', crit: 'crit', critical: 'crit', heal: 'heal', miss: 'miss', mp: 'mp', status: 'status' };
+
+  function create(opt) {
+    opt = opt || {};
+    var P = {}, k2; for (k2 in DEFAULTS) P[k2] = DEFAULTS[k2]; set(opt.params);
+    // skin: with skins/skin-api.js loaded, every glyph, colour, outline and label is drawn by GameDNA_Skin.resolve(opt.skin).number();
+    // without it (single-file v1 hosts) the built-in pixel drawing below is used. Placement and timing never depend on the skin.
+    var SK = root.GameDNA_Skin && opt.skin !== false ? root.GameDNA_Skin.resolve(opt.skin) : null;
+    var SKIND = { dmg: 'damage', crit: 'crit', heal: 'heal', miss: 'miss', mp: 'mp', status: 'status' }, MEAS = {};
+    var t = 0, pops = [], waiting = [], seq = 0, drawn = [], cache = {}, warned = false;
+    var B = function () { return opt.bounds || { x: 0, y: 0, w: 256, h: 156 }; };
+    function set(o) { if (o) for (var key in o) if (key in DEFAULTS) P[key] = typeof DEFAULTS[key] === 'number' ? +o[key] : String(o[key]); }
+    function call(name) { var f = opt[name]; if (typeof f === 'function') try { f.apply(null, [].slice.call(arguments, 1)); } catch (e) { if (root.console) console.error(e); } }
+
+    var scaleOf = function (p) { return p.small ? 1 : +P.scale; };
+    var critBig = function (p) { return p.kind === 'crit' && P.crit === 'burst'; };
+    var stag = function (p) { return p.merged ? 0 : +P.stagger * Math.min(1, 12 / Math.max(1, +P.bounce)); };
+    function bounceH(p) { var h = +P.bounce * (p.kind === 'crit' ? 1.3 : p.kind === 'miss' || p.kind === 'status' ? 0.6 : 1); return p.hcap != null ? Math.min(h, p.hcap) : h; }
+    function durOf(p) { return +P.duration * (p.kind === 'crit' ? 1.15 : 1); }
+    function labelGap(p) { return 3 + Math.ceil(bounceH(p) * 0.16); }
+    // glyph boxes in the skin's own metrics (digit size, label width differ per style): measured once per text/kind/scale by drawing
+    // off-screen through skin.number() and reading back the fill rects it returns (number glyphs first, then the label's)
+    function skinLayout(p) {
+      var s = scaleOf(p), lab = p.kind === 'crit' && P.crit !== 'plain' ? 'CRITICAL' : null, big = critBig(p), gap = labelGap(p);
+      var o = { kind: SKIND[p.kind] || 'damage', scheme: P.scheme, scale: s, big: big, suffix: p.suffix || null, label: lab, labelGap: gap };
+      var key = [p.text, o.kind, s, big, o.suffix, lab, gap, P.scheme].join('|');
+      if (!MEAS[key]) {
+        // canonical items (SPEC v0.2 §2.1): roles main / suffix / label. Each part is measured on its own by skipping the others.
+        var GI = root.GameDNA_Skin.glyphItems ? root.GameDNA_Skin.glyphItems(p.text, o) : null;
+        var roleOf = function (i) { if (GI) return (GI[i] || {}).role; var a = p.text.length, b = a + (o.suffix ? o.suffix.length : 0); return i < a ? 'main' : i < b ? 'suffix' : 'label'; };
+        var cv = mk(512, 256), g = cv.getContext('2d');
+        var run = function (keep) { g.clearRect(0, 0, 512, 256); return SK.number(g, p.text, 256, 160, Object.assign({ align: 'left', baseline: 'top', glyphOffset: function (i, it) { return keep(it && it.role ? it.role : roleOf(i), it && it.k != null ? it.k : 0) ? {} : { skip: true }; } }, o)) || []; };
+        var u = function (list) { if (!list.length) return null; var x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; list.forEach(function (r) { x0 = Math.min(x0, r.x); y0 = Math.min(y0, r.y); x1 = Math.max(x1, r.x + r.w); y1 = Math.max(y1, r.y + r.h); }); return { x: x0 - 256, y: y0 - 160, w: x1 - x0, h: y1 - y0 }; };
+        var nb = u(run(function (r) { return r !== 'label'; })) || { x: 0, y: 0, w: 8, h: 10 }, lb = lab ? u(run(function (r) { return r === 'label'; })) : null;
+        var nGlyph = p.text.length + (o.suffix ? o.suffix.length : 0), ldx = [];
+        if (lab && lb) for (var k = 0; k < lab.length; k++) { var one = u(run(function (r, kk) { return r === 'label' && kk === k; })); ldx.push(one ? Math.max(0, one.x - lb.x) : 0); }   // letter offsets for the left-to-right label stagger
+        MEAS[key] = { items: new Array(nGlyph), w: Math.ceil(nb.x + nb.w), h: Math.ceil(nb.y + nb.h),
+          label: lab ? { text: lab, w: lb ? Math.ceil(lb.w) : 0, h: lb ? Math.max(0, Math.ceil(-lb.y) - gap) : 0, dx: ldx } : null };
+      }
+      return MEAS[key];
+    }
+    function layout(p) {
+      if (SK) return skinLayout(p);
+      var s = scaleOf(p), b = critBig(p) ? Math.min(s + 1, 2) : s, items = [], x = 0, i, ch, r;
+      if (/^[0-9+]+$/.test(p.text)) {
+        for (i = 0; i < p.text.length; i++) { ch = p.text[i]; r = D10[ch]; items.push({ font: 'digit', ch: ch, x: x, s: b, w: r[0].length * b, h: 10 * b }); x += (r[0].length + 1) * b; }
+        x -= b;
+        if (p.suffix) { x += 2 * s; for (i = 0; i < p.suffix.length; i++) { ch = p.suffix[i]; r = boldRows(ch); items.push({ font: 'bold', ch: ch, x: x, s: s, w: r[0].length * s, h: 7 * s }); x += (r[0].length + 1) * s; } x -= s; }
+      } else {
+        for (i = 0; i < p.text.length; i++) { ch = p.text[i]; r = boldRows(ch); items.push({ font: 'bold', ch: ch, x: x, s: s, w: r[0].length * s, h: 7 * s }); x += (r[0].length + 1) * s; }
+        x -= s;
+      }
+      var h = 0; items.forEach(function (it) { h = Math.max(h, it.h); }); items.forEach(function (it) { it.y = h - it.h; });   // bottom-aligned (the MP suffix sits on the digits' baseline)
+      var label = p.kind === 'crit' && P.crit !== 'plain' ? { text: 'CRITICAL', w: textW('CRITICAL'), h: 7 } : null;
+      return { items: items, w: x, h: h, label: label };
+    }
+    // the CRITICAL label types in after the digits' first bounce and ends with them, so a number's life is its digits' life
+    function life(p, L) { return durOf(p) + (L.items.length - 1) * stag(p); }
+    // occupied box: glyphs + label + 4px side margins + headroom (bounce + 5 while bouncing, 5 once settled)
+    function box(p, L, cx, by, settled) { var lh = L.label ? L.label.h + labelGap(p) : 0, hb = settled ? 5 : Math.ceil(bounceH(p)) + 5, bw = Math.max(L.w, L.label ? L.label.w : 0); return { x: Math.round(cx - bw / 2) - 4, y: by - L.h - lh - hb - 2, w: bw + 8, h: L.h + lh + hb + 4 }; }   // as wide as the CRITICAL label when it is wider
+    // anchors are cached per target id: a dying or removed unit keeps its last known spot (killing-blow numbers stay above it)
+    function valid(a) { return a && isFinite(a.x) && isFinite(a.top) ? { x: +a.x, top: +a.top, w: +a.w || 16, h: +a.h || 24 } : null; }
+    function fetch(id) {
+      var a = null; try { a = opt.getAnchor ? valid(opt.getAnchor(id)) : null; } catch (e) { a = null; }
+      if (a) cache[id] = a;
+      return a || cache[id] || null;
+    }
+    function anchor(p) { var a = fetch(p.tgt); if (a) p.last = a; return p.last; }
+    function anchorXY(p) { var a = anchor(p); return [a.x, a.top - +P.gap]; }
+    function fit(p, L, cx, by) { var b = B(), r = box(p, L, cx, by); cx += Math.max(0, b.x + 2 - r.x) - Math.max(0, r.x + r.w - (b.x + b.w - 2)); by += Math.max(0, b.y + 2 - r.y) - Math.max(0, by + 2 - (b.y + b.h - 2)); return [cx, by]; }
+    function pos(p, L) { var a = anchorXY(p); return fit(p, L, a[0] + p.ox, a[1] + p.oy); }
+    function liveBox(q) { var L = layout(q), xy = pos(q, L), settled = t - q.born > durOf(q) * 0.41 + (L.items.length - 1) * stag(q); return box(q, L, xy[0], xy[1], settled); }
+    function obstacles(p, ownOK) {
+      var list = []; try { list = (opt.getObstacles && opt.getObstacles()) || []; } catch (e) { list = []; }
+      var hard = [], sprites = [], soft = [], units = [];
+      var all = list.filter(function (o) { return o && isFinite(o.x); });
+      list.forEach(function (o) {
+        if (!o || !isFinite(o.x)) return;
+        if (o.soft) soft.push(o);
+        else if (o.id != null) {
+          if (o.id === p.tgt) { if (!ownOK) sprites.push(o); }
+          else { var fp = { x: o.x - 1, y: o.y - 1, w: o.w + 2, h: o.h + (o.w <= 20 && o.h <= 24 ? 2 : 9) };   /* small (tile) units keep their bar inside; bigger ones get a bar band below */ sprites.push(fp); units.push(fp); if (!ownOK) sprites.push({ x: o.x - 1, y: o.y - 40, w: o.w + 2, h: 40 }); }   // claim zones do not apply inside the target's own spot   // a unit's footprint includes an HP-bar band below it; the column above its head is theirs
+        }
+        else hard.push(o);
+      });
+      return { hard: hard, sprites: sprites, soft: soft, all: all, units: units };
+    }
+    // dense grids (tile-sized units standing next to each other): search a much smaller radius around the target
+    function isDense(p, tb, O) {
+      if (P.dense === 'on') return true; if (P.dense === 'off') return false;
+      if (tb.w > 20 || tb.h > 24) return false;
+      var cx = tb.x, cy = tb.top + tb.h / 2, R = 1.6 * Math.max(tb.w, tb.h);
+      return O.all.some(function (o) { return o.id != null && o.id !== p.tgt && Math.abs(o.x + o.w / 2 - cx) < R && Math.abs(o.y + o.h / 2 - cy) < R; });
+    }
+    // best offset around the anchor: pops/UI hard (x1000), sprites and claim zones (x2000), soft props x1.
+    // ownOK: the target's own sprite is not an obstacle and spots inside its own box are tried (last-resort fallback).
+    function place(p, blockers, column, ownOK, wide, only) {
+      var L = layout(p), a = anchorXY(p), ax = a[0], ay = a[1], tb = anchor(p), sc1 = scaleOf(p), O = obstacles(p, ownOK), hard = blockers.concat(O.hard);
+      var crowd = isDense(p, tb, O), dense = !wide && crowd, MAXX = (dense ? 6 : 26) * sc1 + tb.w / 2, MAXUP = (dense ? 20 : 36) * sc1;
+      var r0 = box(p, L, 0, 0), hx = Math.ceil(r0.w / 2), dy = Math.round((r0.h - 4) * 0.5), C = [], kk, m, best = null;
+      var cols = column ? [0] : dense ? [0, 1, -1] : [0, 1, -1, 2, -2];
+      for (kk = 0; kk <= 6; kk++) for (m = 0; m < cols.length; m++) C.push([cols[m] * hx, -kk * dy]);
+      if (!column && !dense) [1, -1].forEach(function (sd) { [0.15, 0.4].forEach(function (f) { C.push([sd * (tb.w / 2 + L.w / 2 + 5), Math.round(tb.h * f)]); }); });
+      if (ownOK) for (kk = 2; kk <= tb.h + +P.gap + 2; kk += 2) C.push([0, kk]);
+      if (ownOK) [1, -1].forEach(function (sd) { for (kk = 4; kk <= tb.h + +P.gap; kk += 4) C.push([sd * (tb.w / 2 + L.w / 2 + 3), kk]); });   // or right beside its own body   // down into the target's own sprite/tile
+      if (only) C = [only];
+      C.forEach(function (c) {
+        var xy = fit(p, L, ax + c[0], ay + c[1]), x = xy[0], y = xy[1], r = box(p, L, x, y);
+        if (!only && (Math.abs(x - ax) > MAXX || ay - y > MAXUP || y - ay > tb.h + +P.gap + 2)) return;
+        var hb = ownOK || !crowd ? 0 : Math.ceil(bounceH(p)), lbl = L.label ? L.label.h + labelGap(p) : 0, g = { x: r.x + 2, y: y - L.h - lbl - hb, w: r.w - 4, h: L.h + lbl + (ownOK ? 0 : 2) + hb }   /* at its own spot the glyph may sit flush between two units */, ho = 0, so = 0, lo = 0;   // glyphs incl. outline and drop (and the bounce in dense grids)
+        hard.forEach(function (o) { ho += overlap(r, o); }); O.sprites.forEach(function (o) { so += overlap(g, o); }); O.soft.forEach(function (o) { lo += overlap(g, o); });
+        // the settled number must be closer to its own unit than to any other unit (otherwise it reads as theirs)
+        var gcx = x, gcy = y - L.h / 2, own = { x: tb.x - tb.w / 2, y: tb.top, w: tb.w, h: tb.h }, dOwn = rdist(gcx, gcy, own);
+        O.units.forEach(function (u) { var d = rdist(gcx, gcy, u); if (d < dOwn + 2) so += 50 * (dOwn + 2 - d) + 50; });   // 2px safety margin
+        if (ownOK) lo += dOwn * 3;   // at its own spot: as deep into its own box as possible
+        var sc = ho * (ownOK === true ? 10 : 1000) + so * 2000 + lo + Math.abs(x - ax) * 2.5 + Math.abs(y - ay) * 0.8;   // at its own spot a number may sit under a banner rather than drift toward a neighbour
+        if (!best || sc < best.sc) best = { ox: x - ax, oy: y - ay, sc: sc, ho: ho, so: so };
+      });
+      best = best || { ox: 0, oy: 0, sc: Infinity, ho: 1, so: 1 };
+      // dense grids prefer the tight radius; if nothing is free there, look at the normal radius before any fallback
+      if (dense && !ownOK && !only && !(best.ho === 0 && best.so === 0)) { var b2 = place(p, blockers, column, false, true); if (b2.ho === 0 && b2.so === 0) return b2; }
+      return best;
+    }
+    // last resort, still on the hit frame: 1x, then the target's own spot (its own sprite may be covered, never a neighbour);
+    // same-target numbers in the way move or vanish, other targets' numbers block
+    function ownSpot(p, otherBoxes, strict) {
+      if (+P.scale > 1) p.small = true;
+      var b = place(p, otherBoxes, false, strict ? 'strict' : true), L = layout(p), a = anchorXY(p), O = obstacles(p, true);
+      if (!(b.ho === 0 && b.so === 0)) { var bw = place(p, otherBoxes, false, strict ? 'strict' : true, true); if (bw.sc < b.sc) b = bw; }
+      // the bounce may not rise into a neighbour above: cap it to the free space
+      var LW = Math.max(L.w, L.label ? L.label.w : 0), gx = a[0] + b.ox - LW / 2 - 2, gw = LW + 4, top = a[1] + b.oy - L.h - (L.label ? L.label.h + labelGap(p) : 0) - 2, free = +P.bounce;   // top of the label if there is one
+      O.sprites.forEach(function (o) { if (o.x < gx + gw && o.x + o.w > gx && o.y < top) free = Math.min(free, Math.max(0, top - (o.y + o.h))); });   // anything above it, even touching
+      p.hcap = Math.max(0, Math.min(p.hcap == null ? free : p.hcap, free));
+      return b;
+    }
+    function emit(info) { if (typeof opt.debug === 'function') try { opt.debug(info); } catch (e) {} }
+    // removing a number before its time is a failure (every HP change must be readable); report it
+    // instead of deleting a number that lost its spot: hide it and show it again (full life) as soon as there is room
+    function requeue(q, why) {
+      if (t - q.born >= 0.6 * life(q, layout(q))) { q.gone = true; emit({ event: 'retire', why: why, target: q.tgt, text: q.text, age: t - q.born }); return; }   // already read: it may end early
+      q.gone = true; waiting.push({ target: q.tgt, kind: q.kind, text: q.text, suffix: q.suffix, since: t, fresh: false, again: true }); emit({ event: 'requeue', why: why, target: q.tgt, text: q.text, age: t - q.born }); }
+    // a same-target number in the way: damage folds into the newcomer's total, anything else moves (or waits to come back)
+    function yieldTo(q, keeper, blockers) {
+      if ((q.kind === 'dmg' || q.kind === 'crit') && (keeper.kind === 'dmg' || keeper.kind === 'crit') && q.tgt === keeper.tgt) { keeper.text = String(+keeper.text + +q.text); keeper.merged = true; if (q.kind === 'crit') keeper.kind = 'crit'; q.gone = true; emit({ event: 'fold', target: q.tgt, text: q.text }); return; }
+      displace(q, blockers);
+    }
+    function drop(q, why) { q.gone = true; emit({ event: 'drop', why: why, target: q.tgt, text: q.text, age: t - q.born, life: life(q, layout(q)) }); }
+    var legal = function (b) { return b.ho === 0 && b.so === 0; };
+    // move an older pop out of the way: another legal spot, else 1x, else remove it on this frame (never lingers underneath)
+    function displace(q, blockers) {
+      var b = place(q, blockers);
+      if (legal(b)) { q.ox = b.ox; q.oy = b.oy; return; }
+      if (+P.scale > 1 && !q.small) { q.small = true; b = place(q, blockers); if (legal(b)) { q.ox = b.ox; q.oy = b.oy; return; } q.small = false; }
+      var hc = q.hcap, sm = q.small; b = ownSpot(q, blockers, true);   // its own spot, but clear of other numbers
+      if (b.ho === 0 && b.so === 0) { q.ox = b.ox; q.oy = b.oy; return; }
+      q.hcap = hc; q.small = sm; requeue(q, 'displaced');
+    }
+    function visible() { return pops.filter(function (q) { return !q.gone && t - q.born < life(q, layout(q)); }); }
+    function boxes(list) { return list.filter(function (q) { return !q.gone; }).map(liveBox); }
+    // returns the pop, or null when it must wait for room
+    function tryPlace(w) {
+      var p = { kind: w.kind, text: w.text, suffix: w.suffix, born: t, id: seq++, tgt: w.target, ox: 0, oy: 0, fresh: w.fresh, last: fetch(w.target) };
+      var L0 = layout(p), room = anchorXY(p)[1] - B().y - L0.h - (L0.label ? L0.label.h + labelGap(p) : 0) - 11;
+      if (bounceH(p) > room) p.hcap = Math.max(4, room);   // near the top: shrink the bounce instead of pushing the number onto its target
+      var path = 'free';
+      if (P.stack === 'on') {
+        var live = visible(), best = place(p, boxes(live)), others = function (ex) { return boxes(live.filter(function (o) { return ex.indexOf(o) < 0; })); };
+        var colSpot = p.kind === 'crit' ? place(p, [], true) : null;
+        if (colSpot && colSpot.so === 0 && !(legal(best) && best.ox === 0)) {
+          path = 'crit-column'; var own = colSpot, mine; p.ox = own.ox; p.oy = own.oy; mine = liveBox(p);
+          live.filter(function (q) { return overlap(liveBox(q), mine) > 0; }).forEach(function (q) { displace(q, others([q]).concat([mine])); });
+          best = null;
+        }
+        if (best && !legal(best)) {
+          // 1) fold a combo hit into the same target's number closest to its head (same target only); the total stays at that target
+          var fold = (p.kind === 'dmg' || p.kind === 'crit') ? live.filter(function (q) { return q.tgt === p.tgt && (q.kind === 'dmg' || q.kind === 'crit'); })
+            .sort(function (a, b) { return Math.abs(a.oy) + Math.abs(a.ox) - Math.abs(b.oy) - Math.abs(b.ox); })[0] : null;
+          if (fold) {
+            path = 'fold';
+            fold.text = String(+fold.text + +p.text); fold.born = t; fold.merged = true; if (p.kind === 'crit') fold.kind = 'crit';
+            var rest = others([fold]);
+            if (rest.some(function (o) { return overlap(liveBox(fold), o) > 0; })) {
+              var b2 = place(fold, rest);
+              if (!legal(b2)) b2 = ownSpot(fold, boxes(live.filter(function (o) { return o !== fold && o.tgt !== fold.tgt; })));
+              fold.ox = b2.ox; fold.oy = b2.oy;
+              var fb = liveBox(fold); live.filter(function (o) { return o !== fold && o.tgt === fold.tgt && !o.gone && overlap(liveBox(o), fb) > 0; }).forEach(function (o) { yieldTo(o, fold, others([o, fold]).concat([fb])); });
+            }
+            return fold;
+          }
+          // 2) one size smaller
+          if (+P.scale > 1) { p.small = true; var b3 = place(p, boxes(live)); if (legal(b3)) { best = b3; path = 'small'; } else p.small = false; }
+          // 3) newest wins, but a same-target number younger than half its life is never evicted: wait instead (max 900 ms)
+          if (!legal(best)) {
+            var b4 = place(p, boxes(live.filter(function (q) { return q.tgt !== p.tgt; })));
+            if (b4.so === 0) {
+              var r4 = liveBox({ kind: p.kind, text: p.text, suffix: p.suffix, born: t, tgt: p.tgt, ox: b4.ox, oy: b4.oy, small: p.small, hcap: p.hcap, last: p.last });
+              if (live.some(function (q) { return q.tgt === p.tgt && overlap(liveBox(q), r4) > 0 && t - q.born < durOf(q) * 0.5; }) && t - w.since < 900) return null;
+              best = b4; path = 'newest-wins'; p.ox = b4.ox; p.oy = b4.oy; var m4 = liveBox(p);
+              live.filter(function (q) { return q.tgt === p.tgt && overlap(liveBox(q), m4) > 0; }).forEach(function (q) { displace(q, others([q]).concat([m4])); });
+            }
+          }
+        }
+        if (best && !legal(best)) {
+          // 4) no free spot. Only a young number of the SAME target may delay it (max 900 ms); otherwise draw now at the
+          //    target's own spot (its own sprite may be covered, never a neighbour); same-target numbers there vanish
+          if (live.some(function (q) { return q.tgt === p.tgt && t - q.born < durOf(q) * 0.5; }) && t - w.since < 900) return null;
+          path = 'own-spot'; best = ownSpot(p, []); var ownOk = best.so === 0;
+          p.ox = best.ox; p.oy = best.oy; var m5 = liveBox(p);
+          // newest wins at its own spot: same-target numbers there vanish, other targets' numbers move away (or vanish)
+          live.filter(function (q) { return !q.gone && overlap(liveBox(q), m5) > 0; }).forEach(function (q) { if (q.tgt === p.tgt) yieldTo(q, p, others([q]).concat([m5])); else displace(q, others([q]).concat([m5])); });
+          best = null;
+        }
+        if (best) { p.ox = best.ox; p.oy = best.oy; }
+      }
+      p.ok = path === 'own-spot' ? ownOk : !best || legal(best);
+      if (typeof opt.debug === 'function') try { opt.debug({ target: p.tgt, text: p.text, path: path, ox: p.ox, oy: p.oy, hcap: p.hcap, small: !!p.small, anchor: p.last }); } catch (e) {}
+      pops.push(p); return p;
+    }
+    function safeAnchor(id) { try { return opt.getAnchor ? opt.getAnchor(id) : null; } catch (e) { return null; } }
+    function flushWaiting() { waiting = waiting.filter(function (w) { return !tryPlace(w); }); }
+
+    function spawn(targetId, amount, kind, opts) {
+      var kd = KIND[kind] || 'dmg', text, suffix = null, given = opts && valid(opts.anchor);
+      if (given && !valid(safeAnchor(targetId))) cache[targetId] = given;
+      if (!fetch(targetId)) {
+        if (!warned && root.console) { warned = true; console.warn('GameDNA_DamageNumbers: no anchor for target "' + targetId + '" - keep returning a unit\'s position from getAnchor while it is dying or dead, or pass spawn(id, amount, kind, {anchor}). Number skipped.'); }
+        emit({ event: 'skip', why: 'no-anchor', target: targetId }); return;
+      }
+      var n = Math.max(0, Math.round(Math.abs(+amount || 0)));
+      if (kd === 'miss') text = 'MISS';
+      else if (kd === 'status') text = String(amount == null ? '' : amount).toUpperCase().replace(/[^A-Z !?-]/g, '') || 'STATUS';
+      else if (kd === 'heal') text = '+' + n;          // the sign goes first
+      else { text = String(n); if (kd === 'mp') suffix = 'MP'; }
+      var w = { target: targetId, kind: kd, text: text, suffix: suffix, since: t, fresh: true };
+      if (waiting.length || !tryPlace(w)) waiting.push(w);   // keep order behind earlier waiting pops
+      if (kd === 'dmg' || kd === 'crit') { var hs = +P.hitstop * (kd === 'crit' ? 2 : 1); if (hs > 0) call('onHitStop', hs); }
+      if (kd === 'crit' && P.crit === 'burst') call('onShake', 2, 200);
+      if (kd === 'crit' && P.crit !== 'plain') call('onFlash', 0.35, 100);
+    }
+    function update(dt) {
+      dt = +dt; if (!(dt > 0)) dt = 0;
+      t += dt;
+      if (waiting.length) flushWaiting();
+      pops.forEach(function (q) { q.fresh = false; }); waiting.forEach(function (w) { w.fresh = false; });
+      // remember every live unit's spot each frame, so a unit that dies on its first hit still has an anchor
+      var obs = []; try { obs = (opt.getObstacles && opt.getObstacles()) || []; } catch (e) { obs = []; }
+      var seen = {};
+      obs.forEach(function (o) { if (!o || o.id == null || seen[o.id] || !isFinite(o.x)) return; seen[o.id] = 1; if (!fetch(o.id)) cache[o.id] = { x: o.x + o.w / 2, top: o.y, w: o.w, h: o.h }; });
+      pops = pops.filter(function (q) { return !q.gone && t - q.born < life(q, layout(q)); });
+      if (P.stack === 'on' && pops.length) revalidate();
+    }
+    // units move (dashes, walking, knock-back): a number that now covers a neighbour or sits nearer to one moves again
+    function revalidate() {
+      var live = visible();
+      live.forEach(function (q) {
+        if (q.gone) return;
+        var rest = boxes(live.filter(function (o) { return o !== q; })), now = place(q, rest, false, 'strict', true, [q.ox, q.oy]);   // same test as its own spot: its own sprite is fine, neighbours and other numbers are not
+        if (now.so === 0) return;
+        var b = place(q, rest);
+        if (!legal(b)) b = ownSpot(q, []);
+        if (b.so > 0) { if (q.ok !== false) requeue(q, 'walked-on'); return; }   // a number that never had a clean spot stays put   // nowhere clear any more (a unit walked onto it): hide it, show it again when there is room
+        q.ox = b.ox; q.oy = b.oy; q.ok = true;
+      });
+    }
+    function draw(ctx, offX, offY) {
+      if (!ctx) return;
+      offX = offX || 0; offY = offY || 0; drawn = [];
+      var SC = SCHEMES[P.scheme] || SCHEMES.classic, o = P.scheme === 'contrast' ? 2 : Math.max(1, Math.min(2, +P.outline || 1));
+      var prevAlpha = ctx.globalAlpha, prevSmooth = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false;
+      pops.forEach(function (p) {
+        if (p.gone) return;
+        var L = layout(p), age = t - p.born, D = durOf(p), st = stag(p), H = bounceH(p);
+        if (age < 0 || age >= life(p, L)) return;
+        if (SK) { drawSkin(ctx, p, L, age, D, st, H, offX, offY, o); return; }
+        var xy = pos(p, L), x0 = Math.round(xy[0] - L.w / 2) + offX, y0 = xy[1] - L.h + offY, R = SC[p.kind] || SC.dmg, big = critBig(p), s1 = scaleOf(p);
+        var gl = L.items.map(function (it, i) { return { it: it, a: age - i * st }; });
+        if (L.label) {
+          var lx = Math.round((L.w - L.label.w) / 2), x = lx, base = (L.items.length - 1) * st + D * 0.25, endT = (L.items.length - 1) * st + D;
+          for (var i = 0; i < L.label.text.length; i++) { var ch = L.label.text[i], t0 = base + (x - lx) * 3; gl.push({ it: { font: 'letter', ch: ch, x: x, y: -L.label.h - labelGap(p), s: 1, lab: 1 }, a: age - t0, Dl: endT - t0 }); x += letterRows(ch)[0].length + 1; }
+        }
+        ['ol', 'fill'].forEach(function (pass) {
+          gl.forEach(function (gg) {
+            var a = gg.a, it = gg.it, DD = gg.Dl || D; if (a < 0 || a >= DD) return;
+            var y = bounceY(a, DD, it.lab ? Math.min(6, H * 0.45) : H, p.hcap != null ? Math.min(4, p.hcap) : 4);
+            var j = !it.lab && big && a < 320 ? [[1, 0], [-1, 0], [0, -1], [1, 1], [-1, 0], [0, 1]][Math.floor(a / 33) % 6] : [0, 0];
+            var flash = p.kind === 'crit' && P.crit !== 'plain' && a < 120 && Math.floor(a / 40) % 2 === 0;
+            var img = glyph(it.font, it.ch, it.s, flash ? FLASH : R, SC.ol, o);
+            ctx.globalAlpha = it.lab ? fadeA(age - (L.items.length - 1) * st, D) : fadeA(a, D);   // the label fades with the last digit
+            ctx.drawImage(img[pass], x0 + it.x - o + j[0] * s1, y0 + it.y + y - o + j[1] * s1);
+            if (pass === 'fill') drawn.push({ pop: p.id, target: p.tgt, text: p.text, x: x0 + it.x + j[0] * s1, y: y0 + it.y + y + j[1] * s1, w: img.w, h: img.h });
+          });
+        });
+      });
+      ctx.globalAlpha = prevAlpha; ctx.imageSmoothingEnabled = prevSmooth;
+    }
+    // the same animation, handed to the skin per glyph: bounce/stagger (dy), crit jitter (dx), stepped fade, white flash, landing squash
+    function drawSkin(ctx, p, L, age, D, st, H, offX, offY, o) {
+      var xy = pos(p, L), x0 = Math.round(xy[0] - L.w / 2) + offX, y0 = xy[1] - L.h + offY, big = critBig(p), s1 = scaleOf(p), n = L.items.length;
+      var base = (n - 1) * st + D * 0.25, M = SK.motion || {}, SQ = M.squash, smooth = !M.fadeSteps;
+      var R = SK.number(ctx, p.text, x0, y0, {
+        kind: SKIND[p.kind] || 'damage', scheme: P.scheme, scale: s1, big: big, suffix: p.suffix || null, label: L.label ? L.label.text : null,
+        labelGap: labelGap(p), outline: o, align: 'left', baseline: 'top', age: age, life: life(p, L),   // SPEC v0.2+: per-number age/life (ms) for skin effects
+        glyphOffset: function (i, it) {
+          var lab = it && it.role ? it.role === 'label' : i >= n, t0 = lab ? base + ((L.label && L.label.dx[it && it.k != null ? it.k : i - n]) || 0) * 3 : i * st, a = age - t0;   // roles from the canonical items; the label's letters follow left to right
+          var DD = lab ? (n - 1) * st + D - t0 : D;   // the label ends with the digits
+          if (a < 0 || a >= DD) return { skip: true };
+          var y = bounceY(a, DD, lab ? Math.min(6, H * 0.45) : H, p.hcap != null ? Math.min(4, p.hcap) : 4);
+          var j = !lab && big && a < 320 ? [[1, 0], [-1, 0], [0, -1], [1, 1], [-1, 0], [0, 1]][Math.floor(a / 33) % 6] : [0, 0];
+          var af = lab ? age - (n - 1) * st : a, s = af / D, al = smooth ? (s < 0.78 ? 1 : Math.max(0, 1 - (s - 0.78) / 0.22)) : fadeA(af, D);   // the label fades with the last digit
+          var r = { dx: j[0] * s1, dy: y + j[1] * s1, alpha: al, flash: p.kind === 'crit' && P.crit !== 'plain' && a < 120 && Math.floor(a / 40) % 2 === 0 };
+          if (SQ && !lab && H >= 2 && a >= 0.2 * D && a < 0.2 * D + (SQ.ms || 70)) { r.sx = SQ.x; r.sy = SQ.y; }   // squash on landing (smooth skins)
+          return r;
+        }
+      }) || [];
+      R.forEach(function (r) { drawn.push({ pop: p.id, target: p.tgt, text: p.text, x: r.x, y: r.y, w: r.w, h: r.h }); });
+    }
+    return {
+      spawn: spawn, update: update, draw: draw,
+      setParams: function (o) { set(o); }, params: P,
+      // call at battle/wave start; numbers spawned since the last update() (e.g. a wave-clear refill in the same frame) survive
+      clear: function () { pops = pops.filter(function (q) { return q.fresh; }); waiting = waiting.filter(function (w) { return w.fresh; }); },
+      count: function () { return pops.length + waiting.length; },
+      lastDrawn: function () { return drawn.slice(); }   // glyph rects of the last draw (for tests)
+    };
+  }
+  root.GameDNA_DamageNumbers = { create: create, DEFAULTS: DEFAULTS, version: '1.1.0' };
+})(typeof window !== 'undefined' ? window : this);
+
+</script>
+<script>
+/* ===== shared pixel kit: 256x224 native, original art, light from top-left ===== */
+const W = 256, H = 224, FIELD_H = 156, FRAME = 1000 / 60;
+const OUT = '#140c1c';
+function mk(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+function rect(g, x, y, w, h, c) { g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); }
+function px(g, x, y, c) { g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), 1, 1); }
+function hash(a, b) { let h = (a * 374761393 + b * 668265263 + 1013904223) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
+function rng(seed) { let s = (seed * 2654435761 >>> 0) || 1; return () => { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; }; }
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v, lerp = (a, b, t) => a + (b - a) * t;
+const easeOut = t => 1 - (1 - t) * (1 - t);
+function ell(g, cx, cy, rx, ry, c) {
+  g.fillStyle = c; cx = Math.round(cx); cy = Math.round(cy);
+  for (let y = -ry; y <= ry; y++) { const w = Math.round(rx * Math.sqrt(Math.max(0, 1 - (y * y) / (ry * ry + 0.25)))); g.fillRect(cx - w, cy + y, w * 2 + 1, 1); }
+}
+// shaded ball, ramp = [dark, mid, light, highlight]
+function ball(g, cx, cy, rx, ry, R) {
+  ell(g, cx, cy, rx, ry, R[0]); ell(g, cx - 1, cy - 1, Math.max(0, rx - 1), Math.max(0, ry - 1), R[1]);
+  if (rx > 2 && ry > 2) ell(g, cx - Math.round(rx * 0.3), cy - Math.round(ry * 0.35), Math.round(rx * 0.45), Math.round(ry * 0.4), R[2]);
+  if (R[3] && rx > 4) ell(g, cx - Math.round(rx * 0.45), cy - Math.round(ry * 0.55), Math.max(1, Math.round(rx * 0.15)), 0, R[3]);
+}
+function alphaAt(d, w, h, x, y) { return x >= 0 && y >= 0 && x < w && y < h && d[(y * w + x) * 4 + 3] > 40; }
+function outlined(src, col) {
+  const w = src.width + 2, h = src.height + 2, c = mk(w, h), g = c.getContext('2d');
+  const d = src.getContext('2d').getImageData(0, 0, src.width, src.height).data, sw = src.width, sh = src.height;
+  g.fillStyle = col;
+  for (let y = -1; y <= sh; y++) for (let x = -1; x <= sw; x++)
+    if (!alphaAt(d, sw, sh, x, y) && (alphaAt(d, sw, sh, x - 1, y) || alphaAt(d, sw, sh, x + 1, y) || alphaAt(d, sw, sh, x, y - 1) || alphaAt(d, sw, sh, x, y + 1))) g.fillRect(x + 1, y + 1, 1, 1);
+  g.drawImage(src, 1, 1); return c;
+}
+function tint(src, col, a) { const c = mk(src.width, src.height), g = c.getContext('2d'); g.drawImage(src, 0, 0); g.globalCompositeOperation = 'source-atop'; g.globalAlpha = a; g.fillStyle = col; g.fillRect(0, 0, c.width, c.height); return c; }
+// sprite = {c, hit, ax, ay}: anchor = feet; hit = tinted interior, outline kept
+function sprite(w, h, ax, ay, draw, ol) {
+  const raw = mk(w, h); draw(raw.getContext('2d'));
+  return { c: outlined(raw, ol || OUT), hit: outlined(tint(raw, '#ffe8e0', 0.62), ol || OUT), ax: ax + 1, ay: ay + 1, w: w + 2, h: h + 2 };
+}
+function drawSpr(g, s, x, y, o) { o = o || {}; if (o.alpha != null) g.globalAlpha = o.alpha; g.drawImage(o.hit ? s.hit : s.c, Math.round(x - s.ax), Math.round(y - s.ay)); g.globalAlpha = 1; }
+
+/* ----- 5x7 pixel font (original) ----- */
+const F5SRC = {
+  A: '.###.|#...#|#...#|#####|#...#|#...#|#...#', B: '####.|#...#|#...#|####.|#...#|#...#|####.', C: '.###.|#...#|#....|#....|#....|#...#|.###.',
+  D: '####.|#...#|#...#|#...#|#...#|#...#|####.', E: '#####|#....|#....|####.|#....|#....|#####', F: '#####|#....|#....|####.|#....|#....|#....',
+  G: '.###.|#...#|#....|#.###|#...#|#...#|.####', H: '#...#|#...#|#...#|#####|#...#|#...#|#...#', I: '###|.#.|.#.|.#.|.#.|.#.|###',
+  J: '..###|...#.|...#.|...#.|...#.|#..#.|.##..', K: '#...#|#..#.|#.#..|##...|#.#..|#..#.|#...#', L: '#....|#....|#....|#....|#....|#....|#####',
+  M: '#...#|##.##|#.#.#|#.#.#|#...#|#...#|#...#', N: '#...#|##..#|#.#.#|#..##|#...#|#...#|#...#', O: '.###.|#...#|#...#|#...#|#...#|#...#|.###.',
+  P: '####.|#...#|#...#|####.|#....|#....|#....', Q: '.###.|#...#|#...#|#...#|#.#.#|#..#.|.##.#', R: '####.|#...#|#...#|####.|#.#..|#..#.|#...#',
+  S: '.####|#....|#....|.###.|....#|....#|####.', T: '#####|..#..|..#..|..#..|..#..|..#..|..#..', U: '#...#|#...#|#...#|#...#|#...#|#...#|.###.',
+  V: '#...#|#...#|#...#|#...#|#...#|.#.#.|..#..', W: '#...#|#...#|#...#|#.#.#|#.#.#|##.##|#...#', X: '#...#|#...#|.#.#.|..#..|.#.#.|#...#|#...#',
+  Y: '#...#|#...#|.#.#.|..#..|..#..|..#..|..#..', Z: '#####|....#|...#.|..#..|.#...|#....|#####',
+  0: '.###.|#...#|#..##|#.#.#|##..#|#...#|.###.', 1: '..#..|.##..|..#..|..#..|..#..|..#..|.###.', 2: '.###.|#...#|....#|...#.|..#..|.#...|#####',
+  3: '####.|....#|....#|.###.|....#|....#|####.', 4: '...#.|..##.|.#.#.|#..#.|#####|...#.|...#.', 5: '#####|#....|####.|....#|....#|#...#|.###.',
+  6: '.###.|#....|#....|####.|#...#|#...#|.###.', 7: '#####|....#|...#.|..#..|.#...|.#...|.#...', 8: '.###.|#...#|#...#|.###.|#...#|#...#|.###.',
+  9: '.###.|#...#|#...#|.####|....#|....#|.###.', '/': '....#|...#.|...#.|..#..|.#...|.#...|#....', '-': '....|....|....|####|....|....|....',
+  '+': '.....|..#..|..#..|#####|..#..|..#..|.....', ':': '.|#|.|.|.|#|.', '.': '.|.|.|.|.|.|#', '!': '#|#|#|#|#|.|#', "'": '#|#|.|.|.|.|.',
+  ' ': '...|...|...|...|...|...|...', '>': '#...|.#..|..#.|...#|..#.|.#..|#...', '?': '.###.|#...#|....#|...#.|..#..|.....|..#..', '(': '.#|#.|#.|#.|#.|#.|.#', ')': '#.|.#|.#|.#|.#|.#|#.'
+};
+const F5 = {}; for (const k in F5SRC) F5[k] = F5SRC[k].split('|');
+function textW(s) { let w = 0; for (const ch of s) w += (F5[ch] || F5['?'])[0].length + 1; return Math.max(0, w - 1); }
+const TXC = {};
+function textImg(s, col, sh, col2) {
+  const key = s + '|' + col + '|' + sh + '|' + col2; if (TXC[key]) return TXC[key];
+  const c = mk(textW(s) + 2, 9), g = c.getContext('2d');
+  for (const pass of [0, 1]) {
+    let x = 0;
+    for (const ch of s) {
+      const rows = F5[ch] || F5['?'];
+      for (let y = 0; y < 7; y++) for (let i = 0; i < rows[y].length; i++) if (rows[y][i] === '#') {
+        if (!pass) { if (sh) px(g, x + i + 1, y + 1, sh); } else px(g, x + i, y, col2 && y >= 4 ? col2 : col);
+      }
+      x += rows[0].length + 1;
+    }
+  }
+  return (TXC[key] = c);
+}
+function drawText(g, s, x, y, col, sh, col2) { g.drawImage(textImg(s, col || '#fff', sh === undefined ? '#0a0814' : sh, col2), Math.round(x), Math.round(y)); return textW(s); }
+
+/* ----- windows, gauges ----- */
+const WINC = {};
+function winImg(w, h) {
+  const key = w + 'x' + h; if (WINC[key]) return WINC[key];
+  const c = mk(w, h), g = c.getContext('2d'), bands = ['#2c3870', '#26305f', '#212a54', '#1c2449', '#181f3f', '#141a36'];
+  for (let y = 0; y < h; y++) rect(g, 0, y, w, 1, bands[Math.min(5, Math.floor(y / h * 6))]);
+  rect(g, 0, 0, w, 1, '#07060e'); rect(g, 0, h - 1, w, 1, '#07060e'); rect(g, 0, 0, 1, h, '#07060e'); rect(g, w - 1, 0, 1, h, '#07060e');
+  rect(g, 1, 1, w - 2, 1, '#f2dc98'); rect(g, 1, 1, 1, h - 2, '#f2dc98'); rect(g, 1, h - 2, w - 2, 1, '#8a6428'); rect(g, w - 2, 1, 1, h - 2, '#8a6428');
+  rect(g, 2, 2, w - 4, 1, '#c09848'); rect(g, 2, 2, 1, h - 4, '#c09848'); rect(g, 2, h - 3, w - 4, 1, '#5a4020'); rect(g, w - 3, 2, 1, h - 4, '#5a4020');
+  rect(g, 3, 3, w - 6, 1, '#0c1028'); rect(g, 3, 3, 1, h - 6, '#0c1028');
+  g.clearRect(0, 0, 1, 1); g.clearRect(w - 1, 0, 1, 1); g.clearRect(0, h - 1, 1, 1); g.clearRect(w - 1, h - 1, 1, 1);
+  for (const [x, y] of [[1, 1], [w - 2, 1], [1, h - 2], [w - 2, h - 2]]) px(g, x, y, '#fff4c8');
+  return (WINC[key] = c);
+}
+function drawWin(g, x, y, w, h) { g.drawImage(winImg(w, h), Math.round(x), Math.round(y)); }
+const GAUGE = { hp: ['#e0ffe8', '#5ce08e', '#2a9a5a', '#145a34'], low: ['#fff2c0', '#ffc444', '#c07818', '#6a3e10'], crit: ['#ffd8d0', '#f05a50', '#b42a3a', '#6a1424'],
+  mp: ['#e0f6ff', '#5ac8f8', '#2a80c0', '#14406a'], foe: ['#ffe4d0', '#f08a50', '#b44a2a', '#6a2414'], ghost: ['#fff', '#ffffff', '#d8d8f0', '#a0a0c8'] };
+function drawGauge(g, x, y, w, h, fr, kind, ghostFr) {
+  rect(g, x + 1, y, w - 2, 1, '#07060e'); rect(g, x + 1, y + h - 1, w - 2, 1, '#07060e'); rect(g, x, y + 1, 1, h - 2, '#07060e'); rect(g, x + w - 1, y + 1, 1, h - 2, '#07060e');
+  const iw = w - 2, ih = h - 2; rect(g, x + 1, y + 1, iw, ih, '#1a1c3e'); rect(g, x + 1, y + 1, iw, 1, '#0e1030');
+  if (ghostFr != null && ghostFr > fr) { const gw = Math.round(clamp(ghostFr, 0, 1) * iw); rect(g, x + 1, y + 1, gw, ih, '#e8e4ff'); rect(g, x + 1, y + h - 2, gw, 1, '#a8a0d0'); }
+  const fw = Math.round(clamp(fr, 0, 1) * iw); if (fw <= 0) return;
+  const C = GAUGE[kind] || GAUGE.hp;
+  rect(g, x + 1, y + 1, fw, ih, C[1]); rect(g, x + 1, y + 1, fw, 1, C[0]); if (ih > 2) rect(g, x + 1, y + h - 2, fw, 1, C[2]);
+  if (fw < iw) rect(g, x + fw, y + 1, 1, ih, C[3]);
+}
+function drawBanner(g, txt) { const w = textW(txt) + 24, x = Math.round((W - w) / 2); drawWin(g, x, 4, w, 17); drawText(g, txt, x + 12, 9, '#ffffff', '#0a0814', '#f2dc98'); px(g, x + 6, 12, '#f2dc98'); px(g, x + w - 7, 12, '#f2dc98'); }
+function bannerBox(txt) { const w = textW(txt) + 24; return { x: Math.round((W - w) / 2), y: 4, w, h: 17 }; }
+// pointing hand, tip at (x,y), pointing right
+function drawHand(g, x, y) {
+  const rows = ['.oooo.....', 'oWWWWoooo.', 'oWWWWWWWWo', 'oWWWWooooo', 'oWWWWo....', 'osWWso....', '.oooo.....'], P = { o: '#140c1c', W: '#ffffff', s: '#b8c0dc' };
+  rows.forEach((r, j) => { for (let i = 0; i < r.length; i++) if (P[r[i]]) px(g, x - 10 + i, y - 3 + j, P[r[i]]); });
+}
+
+/* ----- sprites ----- */
+const SKIN = ['#8a4a30', '#d88a60', '#f6c098', '#fff0d8'];
+function buildRowan(pose) {
+  return sprite(34, 32, 20, 31, g => {
+    const lean = pose === 'attack' ? -2 : pose === 'hurt' ? 2 : 0, ox = 14 + lean;
+    rect(g, ox + 2, 25, 3, 6, '#3a2418'); rect(g, ox + 7, 25, 3, 6, '#3a2418'); rect(g, ox + 2, 25, 1, 5, '#6a4430'); rect(g, ox + 1, 30, 4, 1, '#2a1810'); rect(g, ox + 6, 30, 4, 1, '#2a1810');
+    rect(g, ox + 2, 20, 8, 6, '#4a3a5c'); rect(g, ox + 2, 20, 3, 5, '#6a5a84');
+    rect(g, ox + 9, 11, 4, 14, '#7a1a2a'); rect(g, ox + 11, 12, 2, 13, '#520f1c'); rect(g, ox + 9, 11, 1, 10, '#a83040');
+    rect(g, ox + 1, 11, 10, 10, '#235084'); rect(g, ox + 1, 11, 4, 9, '#3478b8'); rect(g, ox + 2, 12, 1, 6, '#78b8ee'); rect(g, ox + 8, 12, 2, 8, '#183a62');
+    rect(g, ox + 1, 19, 10, 2, '#7a4e22'); px(g, ox + 4, 19, '#ffe070'); px(g, ox + 4, 20, '#c09030');
+    rect(g, ox + 1, 10, 9, 2, '#9aa8c8'); rect(g, ox + 1, 10, 4, 1, '#dde6ff');
+    ball(g, ox + 5, 6, 4, 4, SKIN); rect(g, ox + 4, 1, 7, 3, '#6a2a14'); rect(g, ox + 7, 2, 4, 7, '#6a2a14'); rect(g, ox + 3, 1, 5, 1, '#b8582a'); px(g, ox + 2, 3, '#6a2a14'); rect(g, ox + 5, 2, 3, 1, '#e07a3a');
+    px(g, ox + 3, 6, '#1a1020'); px(g, ox + 3, 8, '#b06048');
+    if (pose === 'attack') {
+      rect(g, ox - 3, 13, 5, 3, '#235084'); rect(g, ox - 4, 14, 2, 2, SKIN[2]);
+      rect(g, ox - 18, 13, 14, 1, '#f4f8ff'); rect(g, ox - 18, 14, 14, 1, '#9aa8c8'); px(g, ox - 19, 14, '#f4f8ff'); px(g, ox - 13, 13, '#ffffff');
+      rect(g, ox - 4, 11, 1, 6, '#e0b040'); rect(g, ox - 2, 14, 2, 1, '#6a4020');
+    } else {
+      const ay = pose === 'hurt' ? 1 : 0;
+      rect(g, ox - 1, 13 + ay, 3, 6, '#235084'); rect(g, ox - 1, 18 + ay, 2, 2, SKIN[2]);
+      rect(g, ox - 2, 2 + ay, 2, 15, '#d8e2f8'); rect(g, ox - 1, 2 + ay, 1, 15, '#8a98b8'); px(g, ox - 2, 1 + ay, '#ffffff'); px(g, ox - 2, 4 + ay, '#ffffff');
+      rect(g, ox - 4, 17 + ay, 6, 1, '#e0b040'); rect(g, ox - 4, 17 + ay, 2, 1, '#fff0a0'); rect(g, ox - 2, 18 + ay, 2, 3, '#6a4020'); px(g, ox - 2, 21 + ay, '#e0b040');
+    }
+  });
+}
+function buildMira(pose) {
+  return sprite(30, 36, 17, 35, g => {
+    const ox = 12 + (pose === 'hurt' ? 2 : 0);
+    for (let y = 14; y < 35; y++) { const w = 4 + Math.floor((y - 14) * 0.42); rect(g, ox + 6 - w, y, w * 2, 1, '#4a2470'); rect(g, ox + 6 - w, y, Math.max(1, Math.round(w * 0.7)), 1, '#6e3aa0'); px(g, ox + 7 - w, y, '#9a68d0'); rect(g, ox + 6 + w - 2, y, 2, 1, '#2e1450'); }
+    rect(g, ox, 34, 13, 1, '#2e1450'); rect(g, ox + 2, 22, 9, 1, '#e8c060'); rect(g, ox + 2, 22, 3, 1, '#fff0a8');
+    rect(g, ox + 1, 12, 10, 4, '#5a2e86'); rect(g, ox + 1, 12, 4, 3, '#8050b8');
+    ball(g, ox + 6, 8, 4, 4, SKIN);
+    rect(g, ox + 3, 2, 8, 4, '#e8d8a0'); rect(g, ox + 8, 4, 4, 11, '#e8d8a0'); rect(g, ox + 10, 6, 2, 9, '#b8a070'); rect(g, ox + 4, 2, 4, 1, '#fff8d8');
+    for (let i = 0; i < 7; i++) rect(g, ox + 1 + i, 3 - Math.min(i, 6 - i), 1, 1, '#3a1c5e');
+    rect(g, ox + 1, 3, 11, 2, '#3a1c5e'); rect(g, ox + 1, 3, 5, 1, '#6e3aa0'); rect(g, ox - 1, 5, 14, 1, '#2e1450'); rect(g, ox - 1, 5, 6, 1, '#5a2e86');
+    px(g, ox + 4, 8, '#1a1020'); px(g, ox + 4, 10, '#b06048');
+    const up = pose === 'cast' ? -5 : 0, sx = ox - 3 + (pose === 'cast' ? -2 : 0);
+    rect(g, sx, 8 + up, 2, 26 - up * 0, '#7a4a24'); rect(g, sx, 8 + up, 1, 26, '#a8703a');
+    rect(g, sx - 1, 16 + up, 6, 3, '#5a2e86'); rect(g, sx + 1, 17 + up, 2, 2, SKIN[2]);
+    ball(g, sx + 1, 5 + up, 3, 3, ['#1a5a8a', '#3aa8e0', '#9ae8ff', '#ffffff']);
+    rect(g, sx - 1, 8 + up, 4, 1, '#e8c060');
+  });
+}
+const STONE = ['#3a3442', '#5e5868', '#8a8494', '#c0bac8'];
+function buildGolem(pose) {
+  return sprite(56, 54, 26, 53, g => {
+    const raise = pose === 'raise', slam = pose === 'slam', hurt = pose === 'hurt', lx = hurt ? -2 : slam ? 3 : 0;
+    ball(g, 17 + lx, 45, 6, 7, STONE); ball(g, 34 + lx, 45, 6, 7, STONE);
+    rect(g, 11 + lx, 50, 13, 3, '#2a2430'); rect(g, 28 + lx, 50, 13, 3, '#2a2430');
+    ball(g, 9 + lx, 24, 7, 7, STONE);
+    if (!raise && !slam) ball(g, 7 + lx, 38, 6, 6, STONE);
+    ball(g, 25 + lx, 30, 16, 14, STONE);
+    for (const [a, b, c2] of [[18, 24, 9], [30, 34, 7], [22, 38, 6]]) for (let i = 0; i < c2; i++) px(g, a + lx + i, b + ((i * 3) % 4 === 0 ? 1 : 0), '#2e2836');
+    ball(g, 25 + lx, 13, 9, 7, STONE); rect(g, 17 + lx, 11, 16, 2, '#2e2836');
+    rect(g, 18 + lx, 13, 4, 2, '#ff9a30'); rect(g, 27 + lx, 13, 4, 2, '#ff9a30'); px(g, 19 + lx, 13, '#fff0a0'); px(g, 28 + lx, 13, '#fff0a0');
+    rect(g, 22 + lx, 26, 6, 1, '#ffb040'); rect(g, 24 + lx, 24, 2, 5, '#ffb040'); px(g, 24 + lx, 26, '#fff0a0');
+    for (const [x, y, r] of [[19, 7, 4], [8, 18, 3], [35, 20, 3], [14, 27, 2]]) { ell(g, x + lx, y, r, Math.max(1, r - 2), '#3e6a32'); ell(g, x + lx - 1, y - 1, Math.max(1, r - 2), 0, '#7aaa4a'); }
+    if (raise) { ball(g, 43, 18, 7, 7, STONE); ball(g, 46, 6, 7, 6, STONE); }
+    else if (slam) { ball(g, 44, 22, 7, 7, STONE); ball(g, 51, 34, 6, 7, STONE); rect(g, 47, 40, 7, 1, '#2a2430'); }
+    else { ball(g, 41 + lx, 24, 7, 7, STONE); ball(g, 44 + lx, 38, 6, 6, STONE); }
+    if (raise || slam) ball(g, 7 + lx, 38, 6, 6, STONE);
+  });
+}
+function buildWisp(fr) {
+  return sprite(30, 34, 15, 33, g => {
+    const sway = [0, 1, 0, -1][fr];
+    for (let i = 0; i < 6; i++) { const y = 26 + i, x = 15 + Math.round(Math.sin(i * 0.9 + fr * 1.57) * 3); ell(g, x, y, Math.max(1, 3 - (i >> 1)), 1, i < 3 ? '#2aa888' : '#1e6a5a'); }
+    ell(g, 15, 17, 9, 10, '#1e6a5a'); ell(g, 14, 17, 8, 9, '#2aa888'); ell(g, 13, 16, 5, 6, '#6ae8b8'); ell(g, 12, 15, 2, 3, '#d8fff0');
+    const tips = [[8, 9], [12, 4], [16, 2], [20, 6], [23, 11]];
+    tips.forEach(([x, y], i) => { const xx = x + (i % 2 ? sway : -sway); for (let k = 0; k < 6; k++) ell(g, lerp(xx, 15, k / 6), lerp(y, 12, k / 6), 1 + (k >> 2), 1, k < 2 ? '#6ae8b8' : '#2aa888'); px(g, xx, y, '#d8fff0'); });
+    rect(g, 10, 17, 2, 3, '#0a2420'); rect(g, 16, 17, 2, 3, '#0a2420'); px(g, 10, 17, '#ffffff'); px(g, 16, 17, '#ffffff');
+    rect(g, 12, 22, 4, 1, '#0a2420'); px(g, 13, 23, '#0a2420');
+  }, '#0a2420');
+}
+const SPR = {};
+function initSprites() {
+  for (const p of ['idle', 'attack', 'hurt']) SPR['rowan_' + p] = buildRowan(p);
+  for (const p of ['idle', 'cast', 'hurt']) SPR['mira_' + p] = buildMira(p);
+  for (const p of ['idle', 'raise', 'slam', 'hurt']) SPR['golem_' + p] = buildGolem(p);
+  for (let f = 0; f < 4; f++) SPR['wisp_' + f] = buildWisp(f);
+}
+
+/* ----- background: torch-lit training cavern ----- */
+let BG = null;
+const TORCHES = [[34, 58], [222, 54]];
+function buildBG() {
+  const c = mk(W, FIELD_H), g = c.getContext('2d');
+  const wall = ['#100c1a', '#151022', '#1a1428', '#20182e', '#261d35', '#2c223c'];
+  for (let y = 0; y < 104; y++) for (let x = 0; x < W; x += 4) { const n = hash(x >> 2, y >> 3) * 6 - 3; rect(g, x, y, 4, 1, wall[clamp(Math.floor((y + n) / 104 * 6), 0, 5)]); }
+  // rock blocks on the wall
+  const R = rng(11);
+  for (let i = 0; i < 46; i++) {
+    const x = R() * W, y = 18 + R() * 82, rx = 6 + R() * 12, ry = 4 + R() * 6, k = clamp(Math.floor(y / 26), 0, 3);
+    const tones = [['#120e1c', '#18122a', '#1e1830'], ['#171226', '#1e1830', '#272038'], ['#1c1630', '#251e3a', '#30283f'], ['#211a34', '#2c2440', '#3a3048']][k];
+    ell(g, x, y, rx, ry, tones[0]); ell(g, x - 1, y - 1, rx - 1, ry - 1, tones[1]); ell(g, x - 2, y - ry * 0.5, rx * 0.6, 0, tones[2]);
+  }
+  // distant opening with a cold light shaft
+  ell(g, 150, 44, 22, 18, '#0a0812'); ell(g, 150, 46, 18, 15, '#070610'); ell(g, 152, 40, 10, 8, '#141a30'); ell(g, 154, 37, 5, 4, '#26304e');
+  g.globalAlpha = 0.07; for (let k = 0; k < 3; k++) { g.fillStyle = '#9ab8ff'; g.beginPath(); g.moveTo(140 + k * 4, 30); g.lineTo(162 - k * 3, 30); g.lineTo(190 - k * 6, 112); g.lineTo(150 + k * 6, 112); g.fill(); } g.globalAlpha = 1;
+  // crystals
+  const crystal = (x, y, s, C) => { for (let i = 0; i < 3; i++) { const h = s + i * 3 - (i === 2 ? 5 : 0), xx = x + (i - 1) * 4; for (let k = 0; k < h; k++) { const w = Math.max(0, Math.round(2 - Math.max(0, k - h + 3) * 0.7)); rect(g, xx - w, y - k, w * 2 + 1, 1, C[1]); px(g, xx - w, y - k, C[2]); if (w > 0) px(g, xx + w, y - k, C[0]); } px(g, xx, y - h, C[3]); } };
+  crystal(92, 96, 9, ['#26407a', '#3a6ac8', '#7ab8ff', '#e0f4ff']); crystal(246, 92, 7, ['#4a2a7a', '#7a48c8', '#c098ff', '#f4e8ff']); crystal(8, 98, 6, ['#26407a', '#3a6ac8', '#7ab8ff', '#e0f4ff']);
+  // weapon rack against the back wall
+  rect(g, 176, 74, 34, 3, '#5a3a20'); rect(g, 176, 74, 34, 1, '#9a6a3a'); rect(g, 178, 74, 3, 30, '#4a2e18'); rect(g, 205, 74, 3, 30, '#4a2e18'); rect(g, 178, 74, 1, 30, '#7a5230');
+  for (let i = 0; i < 4; i++) { const x = 184 + i * 6; rect(g, x, 62 + (i % 2) * 3, 1, 40, '#8a6a48'); rect(g, x - 1, 60 + (i % 2) * 3, 3, 4, '#c8d0e0'); px(g, x - 1, 60 + (i % 2) * 3, '#ffffff'); }
+  // floor flagstones
+  const rows = [4, 5, 6, 7, 8, 9, 9, 10]; let y = 100;
+  rect(g, 0, 98, W, 3, '#0c0914');
+  rows.forEach((rh, r) => {
+    const tw = 16 + r * 4, off = hash(r, 3) * tw;
+    for (let x = -off; x < W; x += tw) {
+      const v = hash(Math.round(x), r + 7), lit = Math.max(0, 1 - Math.min(...TORCHES.map(t => Math.abs(x + tw / 2 - t[0]))) / 90) * 0.5 + (1 - Math.abs(x + tw / 2 - 128) / 160) * 0.5;
+      const k = clamp(Math.floor(lit * 3 + v * 1.4 - (r > 5 ? 0.6 : 0)), 0, 3);
+      const base = ['#2a2232', '#352b3e', '#40354a', '#4c3f56'][k], hi = ['#3a3044', '#463a52', '#54475e', '#62546c'][k];
+      rect(g, x + 1, y + 1, tw - 2, rh - 1, base); rect(g, x + 1, y + 1, tw - 2, 1, hi); rect(g, x + 1, y + 1, 1, rh - 1, hi);
+      rect(g, x, y, tw, 1, '#140f1c'); rect(g, x, y, 1, rh, '#140f1c');
+      if (v > 0.72) { const cx = x + 3 + Math.round(v * (tw - 8)); px(g, cx, y + 2, '#1c1624'); px(g, cx + 1, y + 3, '#1c1624'); if (rh > 6) px(g, cx + 1, y + 4, '#1c1624'); }
+      if (v < 0.15) { rect(g, x + 3, y + rh - 2, 4 + r, 1, '#3a5a34'); rect(g, x + 4, y + rh - 3, 2 + (r >> 1), 1, '#5a8a48'); }
+    }
+    y += rh;
+  });
+  // foreground rubble + hanging roots
+  const rock = (x, y, rx, ry) => ball(g, x, y, rx, ry, ['#0c0912', '#1a1424', '#2a2236', '#4a3e58']);
+  rock(4, 154, 12, 8); rock(20, 158, 9, 6); rock(250, 152, 14, 9); rock(232, 158, 8, 5); rock(128, 160, 10, 4);
+  for (let i = 0; i < 9; i++) { const x = 4 + i * 29 + Math.round(hash(i, 5) * 12), h = 6 + Math.round(hash(i, 9) * 12); for (let k = 0; k < h; k++) { const w = Math.max(0, Math.round((1 - k / h) * 3)); rect(g, x - w, k, w * 2 + 1, 1, '#0c0914'); px(g, x - w, k, '#2a2036'); } }
+  for (let i = 0; i < 5; i++) { const x = 6 + i * 5; for (let k = 0; k < 14 + i * 4; k++) px(g, x + Math.round(Math.sin(k * 0.4 + i) * 1.5), k, i % 2 ? '#2a3a22' : '#3a5030'); }
+  // torch brackets
+  for (const [tx, ty] of TORCHES) { rect(g, tx - 2, ty + 2, 5, 3, '#4a3a2a'); rect(g, tx - 1, ty + 5, 3, 6, '#3a2a1e'); rect(g, tx - 2, ty + 2, 5, 1, '#8a6a48'); rect(g, tx - 3, ty + 11, 7, 2, '#2a1e16'); }
+  // vignette corners
+  g.globalAlpha = 0.35; for (let i = 0; i < 18; i++) { rect(g, 0, 0, 18 - i, FIELD_H, '#05040a'); rect(g, W - 18 + i, 0, 18 - i, FIELD_H, '#05040a'); } g.globalAlpha = 1;
+  return c;
+}
+function drawBG(g, rt) {
+  if (!BG) BG = buildBG();
+  g.drawImage(BG, 0, 0);
+  const f = Math.floor(rt / 90);
+  g.globalCompositeOperation = 'lighter';
+  for (const [i, [tx, ty]] of TORCHES.entries()) {
+    const fl = 1 + ((hash(f, i) * 3) | 0) * 0.04;
+    for (const [r, a] of [[46, 0.05], [32, 0.06], [20, 0.08], [10, 0.1]]) { g.globalAlpha = a; ell(g, tx, ty, Math.round(r * fl), Math.round(r * fl * 0.85), '#ff9a40'); }
+  }
+  g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+  for (const [i, [tx, ty]] of TORCHES.entries()) {
+    const k = (f + i) % 3;
+    ell(g, tx, ty - 1, 3, 4 + (k === 1 ? 1 : 0), '#e8501e'); ell(g, tx + (k === 2 ? 1 : 0), ty - 2, 2, 3, '#ffa030'); ell(g, tx, ty - 1, 1, 2, '#fff0a0'); px(g, tx + (k - 1), ty - 7 - k, '#ffa030');
+  }
+  for (let i = 0; i < 14; i++) { const t = rt / 1000, x = (hash(i, 1) * W + t * (3 + i % 4)) % W, y = 20 + ((hash(i, 2) * 80 - t * (2 + i % 3) * 2) % 80 + 80) % 80; px(g, x, y, i % 3 ? '#5a4a6a' : '#8a7aa0'); }
+}
+function shadow(g, x, y, rx) { g.globalAlpha = 0.45; ell(g, x, y, rx, Math.max(1, Math.round(rx / 4)), '#05040a'); g.globalAlpha = 1; }
+
+/* ----- actors ----- */
+function makeActors() {
+  return [
+    { id: 'golem', name: 'STONE GOLEM', side: 'foe', hx: 54, hy: 140, hp: 2400, max: 2400, top: 46, half: 22 },
+    { id: 'wisp', name: 'BOG WISP', side: 'foe', hx: 112, hy: 120, hp: 1600, max: 1600, top: 34, half: 10, hover: 10 },
+    { id: 'rowan', name: 'ROWAN', side: 'hero', hx: 194, hy: 126, hp: 420, max: 420, top: 32, half: 8 },
+    { id: 'mira', name: 'MIRA', side: 'hero', hx: 218, hy: 146, hp: 260, max: 260, mp: 80, maxMp: 80, top: 36, half: 8 }
+  ].map(a => Object.assign(a, { x: a.hx, y: a.hy, pose: 'idle', hurtT: -1e9, shown: a.hp, ghost: a.hp, dead: false }));
+}
+function actorSprite(a, wt) {
+  if (a.id === 'wisp') return SPR['wisp_' + (Math.floor(wt / 140) % 4)];
+  return SPR[a.id + '_' + a.pose] || SPR[a.id + '_idle'];
+}
+// screen box of an actor at rest (for anchors and collision)
+function actorBox(a) { const lift = a.hover || 0; return { x: a.x - a.half - 2, y: a.y - lift - a.top, w: a.half * 2 + 4, h: a.top, cx: a.x, top: a.y - lift - a.top }; }
+function drawActor(g, a, wt, rt) {
+  if (a.dead && wt - a.deadT > 600) return;
+  const bob = a.id === 'wisp' ? Math.round(Math.sin(wt / 260) * 2) : (Math.floor((wt + a.hx * 7) / 420) % 2), lift = (a.hover || 0) + (a.id === 'wisp' ? bob : 0);
+  shadow(g, a.x, a.y, a.id === 'golem' ? 20 : a.id === 'wisp' ? 8 : 9);
+  if (a.id === 'wisp') { g.globalCompositeOperation = 'lighter'; for (const [r, al] of [[16, 0.06], [11, 0.08]]) { g.globalAlpha = al; ell(g, a.x, a.y - lift - 16, r, r, '#4affc0'); } g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; }
+  const hurtAge = wt - a.hurtT, hit = hurtAge >= 0 && hurtAge < 220 && Math.floor(rt / 50) % 2 === 0;
+  const kx = hurtAge >= 0 && hurtAge < 140 ? (a.side === 'foe' ? -2 : 2) : 0;
+  const s = actorSprite(a, wt), alpha = a.dead ? clamp(1 - (wt - a.deadT) / 600, 0, 1) : 1;
+  drawSpr(g, s, a.x + kx, a.y - lift - (a.id === 'wisp' ? 0 : bob === 1 && a.pose === 'idle' ? 1 : 0), { hit, alpha });
+}
+
+/* ----- effects (pure functions of age; deterministic) ----- */
+function fxParticles(seed, n, spread, speed) { const R = rng(seed), P = []; for (let i = 0; i < n; i++) { const a = -Math.PI / 2 + (R() - 0.5) * spread; const v = speed * (0.5 + R() * 0.7); P.push({ vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 260 + R() * 220, c: (R() * 3) | 0 }); } return P; }
+function drawFx(g, fx, wt) {
+  const age = wt - fx.t0; if (age < 0) return true;
+  const { x, y } = fx;
+  if (fx.kind === 'slash') {
+    if (age > 220) return false;
+    const q = Math.min(1, age / 90), fade = age > 120 ? 1 - (age - 120) / 100 : 1, dir = fx.dir || 1;
+    for (let k = 0; k < 3; k++) { g.globalAlpha = fade * (1 - k * 0.28); const r = 14 - k * 3; for (let i = 0; i <= 18 * q; i++) { const t = -1.1 + i / 18 * 2.2; px(g, x + Math.cos(t) * r * dir * -1 + (fx.off || 0), y + Math.sin(t) * r, ['#ffffff', '#c8e0ff', '#6a8ac8'][k]); px(g, x + Math.cos(t) * (r - 1) * -dir + (fx.off || 0), y + Math.sin(t) * (r - 1), ['#ffffff', '#c8e0ff', '#6a8ac8'][k]); } }
+    g.globalAlpha = 1; return true;
+  }
+  if (fx.kind === 'sparks') {
+    if (age > 500) return false;
+    const C = fx.cols || ['#ffffff', '#fff2a8', '#ffb050'];
+    for (const p of fx.P) { if (age > p.life) continue; const t = age / 1000, X = x + p.vx * t * 60, Y = y + p.vy * t * 60 + 90 * t * t * 1.5; px(g, X, Y, C[Math.min(2, p.c + (age > p.life * 0.6 ? 1 : 0))]); if (age < p.life * 0.4) px(g, X - p.vx * 0.6, Y - p.vy * 0.6, C[2]); }
+    return true;
+  }
+  if (fx.kind === 'bolt') {
+    if (age > 260) return false;
+    if (Math.floor(age / 33) % 3 === 2) return true;
+    const R = rng(fx.seed + Math.floor(age / 66)); let px0 = x + (R() - 0.5) * 10, py0 = 0;
+    for (let s = 0; s < 7; s++) {
+      const nx = s === 6 ? x : x + (R() - 0.5) * 16, ny = s === 6 ? y : (y / 7) * (s + 1);
+      const n = Math.ceil(Math.max(Math.abs(nx - px0), Math.abs(ny - py0)));
+      for (let i = 0; i <= n; i++) { const X = lerp(px0, nx, i / n), Y = lerp(py0, ny, i / n); rect(g, X - 1, Y, 3, 1, '#3a8af0'); px(g, X, Y, '#e8f8ff'); }
+      px0 = nx; py0 = ny;
+    }
+    g.globalAlpha = 0.5; ell(g, x, y, 9, 6, '#9ae8ff'); g.globalAlpha = 1; ell(g, x, y, 4, 3, '#ffffff');
+    return true;
+  }
+  if (fx.kind === 'mend' || fx.kind === 'hex') {
+    if (age > 700) return false;
+    const C = fx.kind === 'mend' ? ['#1a6a4a', '#3ac070', '#9cffb8', '#ffffff'] : ['#3a1a5a', '#8a48c8', '#d0a0ff', '#ffffff'];
+    const rr = Math.round(6 + easeOut(Math.min(1, age / 300)) * 10); g.globalAlpha = clamp(1 - age / 700, 0, 1);
+    for (let i = 0; i < 40; i++) { const t = i / 40 * Math.PI * 2; px(g, x + Math.cos(t) * rr, fx.fy + Math.sin(t) * rr * 0.35, C[2]); }
+    g.globalAlpha = 1;
+    for (let i = 0; i < 12; i++) { const life = age / 700 * 1.4 - hash(i, fx.seed) * 0.4; if (life <= 0 || life >= 1) continue; const X = x + (hash(i, fx.seed + 1) - 0.5) * 22, Y = fx.fy - life * 34, k = life < 0.3 ? 3 : life < 0.6 ? 2 : 1; px(g, X, Y, C[k]); if (i % 3 === 0) { px(g, X - 1, Y, C[k - 1]); px(g, X + 1, Y, C[k - 1]); px(g, X, Y - 1, C[k - 1]); px(g, X, Y + 1, C[k - 1]); } }
+    return true;
+  }
+  if (fx.kind === 'charge') {
+    if (age > fx.dur) return false;
+    const C = fx.cols || ['#1a5a8a', '#3aa8e0', '#9ae8ff', '#ffffff'];
+    g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.18 + 0.1 * (Math.floor(age / 66) % 2); ell(g, x, y, 7, 7, C[1]); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+    for (let i = 0; i < 8; i++) { const t = ((age / 400 + i / 8) % 1), a = i / 8 * Math.PI * 2 + age / 300, r = 12 * (1 - t); px(g, x + Math.cos(a) * r, y + Math.sin(a) * r, C[t > 0.6 ? 3 : 2]); }
+    return true;
+  }
+  if (fx.kind === 'dust') {
+    if (age > 500) return false;
+    const q = age / 500;
+    for (let i = 0; i < 6; i++) { const d = (i % 2 ? 1 : -1) * (4 + i * 3) * easeOut(q), r = Math.max(1, Math.round(3 - q * 2 + (i % 3))); g.globalAlpha = 0.8 * (1 - q); ell(g, x + d, y - 2 - q * 4 - (i % 3), r, Math.max(1, r - 1), i % 2 ? '#8a7a96' : '#b8a8c0'); }
+    g.globalAlpha = 1; return true;
+  }
+  if (fx.kind === 'drain') {
+    if (age > 520) return false;
+    for (let i = 0; i < 7; i++) { const t = clamp((age - i * 40) / 360, 0, 1); if (t <= 0 || t >= 1) continue; const X = lerp(x, fx.tx, t), Y = lerp(y, fx.ty, t) - Math.sin(t * Math.PI) * 14; ell(g, X, Y, 1, 1, '#3aa8e0'); px(g, X, Y, '#e0f8ff'); }
+    return true;
+  }
+  return false;
+}
+
+/* ----- HUD ----- */
+function drawHUD(g, actors, opt) {
+  opt = opt || {};
+  drawWin(g, 2, 158, 98, 64); drawWin(g, 102, 158, 152, 64);
+  const foes = actors.filter(a => a.side === 'foe'), heroes = actors.filter(a => a.side === 'hero');
+  foes.forEach((a, i) => {
+    const y = 167 + i * 26, col = a.dead ? '#6a6a88' : '#ffffff';
+    if (opt.cursor === a.id) drawHand(g, 17, y + 3);
+    drawText(g, a.name, 19, y, col);
+    drawGauge(g, 19, y + 10, 72, 4, a.shown / a.max, 'foe', a.ghost / a.max);
+  });
+  heroes.forEach((a, i) => {
+    const y = 166 + i * 27, low = a.shown / a.max < 0.25, col = a.dead ? '#a05060' : opt.active === a.id ? '#fff0a0' : '#ffffff';
+    if (opt.active === a.id) { g.globalAlpha = 0.25; rect(g, 106, y - 3, 144, 25, '#5a6ad0'); g.globalAlpha = 1; }
+    drawText(g, a.name, 112, y, col);
+    drawText(g, 'HP', 160, y, '#9ab0e0');
+    const hpS = Math.round(a.shown) + '/' + a.max; drawText(g, hpS, 244 - textW(hpS), y, low ? '#ffc444' : '#ffffff');
+    drawGauge(g, 112, y + 10, 132, 5, a.shown / a.max, low ? 'low' : 'hp', a.ghost / a.max);
+    if (a.maxMp) { drawText(g, 'MP', 112, y + 17, '#9ab0e0'); drawGauge(g, 126, y + 18, 50, 4, a.mp / a.maxMp, 'mp'); const ms = String(Math.round(a.mp)); drawText(g, ms, 182, y + 17, '#c8eeff'); }
+  });
+}
+// smooth HP readouts: shown follows hp; ghost (white) lags then drains
+function tickBars(actors, dt) {
+  for (const a of actors) {
+    const d = a.hp - a.shown; a.shown += Math.sign(d) * Math.min(Math.abs(d), Math.max(1, Math.abs(d) * 0.18) * dt / FRAME);
+    if (a.ghost < a.shown) a.ghost = a.shown; else if (a.ghost > a.shown) { a.ghostWait = (a.ghostWait || 0) - dt; if (a.ghostWait <= 0) a.ghost = Math.max(a.shown, a.ghost - a.max * 0.012 * dt / FRAME); }
+  }
+}
+
+/* ===== E-01 demo: drives the shared module (module/damage-numbers.js) ===== */
+const PARAMS = [
+  { key: 'bounce', label: 'Bounce height', type: 'range', min: 2, max: 24, step: 1, default: 10, unit: 'px' },
+  { key: 'duration', label: 'Duration', type: 'range', min: 500, max: 2000, step: 50, default: 1000, unit: 'ms' },
+  { key: 'stagger', label: 'Digit stagger', type: 'range', min: 0, max: 120, step: 5, default: 40, unit: 'ms' },
+  { key: 'hitstop', label: 'Hit-stop', type: 'range', min: 0, max: 150, step: 10, default: 60, unit: 'ms' },
+  { key: 'scale', label: 'Font scale', type: 'select', options: ['1', '2'], default: '1' },
+  { key: 'scheme', label: 'Color scheme', type: 'select', options: ['classic', 'warm', 'contrast'], default: 'classic' },
+  { key: 'crit', label: 'Critical style', type: 'select', options: ['burst', 'flash', 'plain'], default: 'burst' },
+  { key: 'stack', label: 'Stacking', type: 'select', options: ['on', 'off'], default: 'on' },
+  { key: 'outline', label: 'Outline', type: 'select', options: ['1', '2'], default: '1' }
+];
+const P = {}; PARAMS.forEach(p => P[p.key] = p.default);
+const AUDIT = new URLSearchParams(location.search).get('log') === '3';
+/* ===== demo world: deterministic fixed-step sim ===== */
+const S = { dnT: 0, rt: 0, wt: 0, stop: 0, pops: [], fx: [], acts: [], queue: [], banner: null, bannerUntil: 0, shakeT: -1e9, shakeAmp: 0, flashT: -1e9, flashA: 0, lastInput: -1e9, loopStart: 0, scriptI: 0, pendingLoop: false, seq: 0, rand: rng(42) };
+S.actors = makeActors();
+const A = id => S.actors.find(a => a.id === id);
+// --- integration: the module asks the game where targets and obstacles are; the game draws/advances it ---
+const lunging = a => S.acts.some(x => x.a === a && (x.type === 'sword' || x.type === 'touch'));
+const DN = GameDNA_DamageNumbers.create({
+  bounds: { x: 0, y: 0, w: W, h: FIELD_H },
+  params: P,
+  // while a target dashes at someone its numbers stay at its home spot; the wisp bobs 2px, so its top is 3px higher
+  getAnchor: id => { const a = A(id); if (!a) return null; const home = lunging(a), b = actorBox({ ...a, x: home ? a.hx : a.x, y: home ? a.hy : a.y }); return { x: home ? a.hx : a.x, top: b.top - (a.id === 'wisp' ? 3 : 0), w: b.w, h: b.h }; },
+  getObstacles: () => {
+    const o = [];
+    for (const a of S.actors) if (!a.dead) for (const p of [[a.x, a.y], [a.hx, a.hy]]) { const b = actorBox({ ...a, x: p[0], y: p[1] }); o.push({ x: b.x + 1, y: b.top, w: b.w - 2, h: b.h, id: a.id }); }
+    if (S.banner && S.wt < S.bannerUntil) o.push(bannerBox(S.banner));
+    for (const [x, y] of TORCHES) o.push({ x: x - 4, y: y - 8, w: 9, h: 12, soft: true });
+    return o;
+  },
+  onHitStop: ms => { S.stop = Math.max(S.stop, ms); },
+  onShake: px => { S.shakeT = S.rt; S.shakeAmp = px; },
+  onFlash: alpha => { S.flashT = S.rt; S.flashA = alpha; }
+});
+function auditReport() {
+  const bad = [], D = DN.lastDrawn();
+  for (let i = 0; i < D.length; i++) for (let j = i + 1; j < D.length; j++) if (D[i].pop !== D[j].pop && overlap2({ x: D[i].x - 4, y: D[i].y - 2, w: D[i].w + 8, h: D[i].h + 4 }, D[j])) bad.push('pop ' + D[i].text + '/' + D[j].text);
+  for (const d of D) for (const s of S.actors) { if (s.dead || s.id === d.target) continue; /* own sprite is allowed as a last resort */ const b = actorBox(s); if (overlap2(d, { x: b.x + 2, y: b.top, w: b.w - 4, h: b.h })) bad.push('sprite ' + d.text + '@' + s.id); }
+  return [...new Set(bad)];
+}
+function overlap2(a, b) { return Math.min(a.x + a.w, b.x + b.w) > Math.max(a.x, b.x) && Math.min(a.y + a.h, b.y + b.h) > Math.max(a.y, b.y); }
+const SCRIPT = [
+  [100, 'rowan', 'golem', 'sword', 'SWORD', [['dmg', 128]]],
+  [700, 'golem', 'mira', 'slam', 'ROCK SLAM', [['dmg', 46]]],
+  [880, 'mira', 'mira', 'mend', 'MEND', [['heal', 182]]],
+  [1040, 'wisp', 'mira', 'touch', '', [['miss']]],
+  [1500, 'rowan', 'golem', 'sword', 'FLURRY', [['dmg', 41], ['dmg', 57], ['dmg', 38], ['dmg', 64]]],
+  [1380, 'mira', 'wisp', 'spark', 'SPARK', [['crit', 728]]],
+  [3300, 'wisp', 'mira', 'drain', 'MANA DRAIN', [['mp', 18]]],
+  [3900, 'wisp', 'rowan', 'hex', 'HEX', [['status', 'POISON']]],
+  [5000, 'rowan', 'wisp', 'sword', 'SWORD', [['dmg', 133]]],
+  [5600, 'golem', 'rowan', 'slam', 'ROCK SLAM', [['dmg', 52]]]
+];
+SCRIPT.sort((a, b) => a[0] - b[0]);
+const LOOP = 6800;
+const T = { sword: { imp: 190, gap: 130 }, slam: { imp: 300, gap: 0 }, mend: { imp: 330 }, spark: { imp: 330 }, touch: { imp: 260, gap: 140 }, drain: { imp: 330 }, hex: { imp: 330 }, slow: { imp: 330 } };
+function startAct(who, tgt, type, name, hits) {
+  const a = A(who), t = A(tgt), tm = T[type];
+  const act = { a, t, type, t0: S.wt, hits: hits.map((h, i) => ({ dt: tm.imp + i * (tm.gap || 0), kind: h[0], val: h[1], done: false })) };
+  act.last = act.hits[act.hits.length - 1].dt; act.end = act.last + (type === 'sword' || type === 'touch' ? 320 : 220);
+  S.acts.push(act);
+  if (name) { S.banner = name; S.bannerUntil = S.wt + Math.max(700, act.last + 200); }
+  if (type === 'mend' || type === 'spark' || type === 'slow') S.fx.push({ kind: 'charge', x: a.x - 3, y: a.y - 32, t0: S.wt, dur: tm.imp });
+  if (type === 'drain' || type === 'hex') S.fx.push({ kind: 'charge', x: a.x, y: a.y - a.hover - 16, t0: S.wt, dur: tm.imp, cols: ['#3a1a5a', '#8a48c8', '#d0a0ff', '#ffffff'] });
+}
+function busy(id) { return S.acts.some(x => x.a.id === id); }
+function tickActs() {
+  for (const act of S.acts) {
+    const { a, t, type } = act, l = S.wt - act.t0;
+    if (type === 'sword') {
+      const tx = t.x + t.half + 12, ty = t.y + 3, back = clamp((l - act.last - 120) / 180, 0, 1), go = easeOut(clamp(l / 180, 0, 1));
+      a.x = lerp(lerp(a.hx, tx, go), a.hx, back); a.y = lerp(lerp(a.hy, ty, go), a.hy, back);
+      a.pose = l > 140 && l < act.last + 120 ? 'attack' : 'idle';
+    } else if (type === 'slam') {
+      a.pose = l < 260 ? 'raise' : l < act.end - 40 ? 'slam' : 'idle'; a.x = a.hx + (a.pose === 'slam' ? 8 : a.pose === 'raise' ? -2 : 0);
+    } else if (type === 'touch') {
+      const go = easeOut(clamp(l / 240, 0, 1)), back = clamp((l - act.last - 80) / 200, 0, 1);
+      a.x = lerp(lerp(a.hx, t.x - 24, go), a.hx, back); a.y = lerp(lerp(a.hy, t.y - 4, go), a.hy, back);
+    } else if (a.id === 'mira') a.pose = l < act.last + 160 ? 'cast' : 'idle';
+    for (const h of act.hits) if (!h.done && l >= h.dt) { h.done = true; impact(act, h); }
+  }
+  for (const act of S.acts) if (S.wt - act.t0 >= act.end) { act.a.x = act.a.hx; act.a.y = act.a.hy; act.a.pose = 'idle'; }
+  S.acts = S.acts.filter(x => S.wt - x.t0 < x.end);
+  for (let i = S.queue.length - 1; i >= 0; i--) { const q = S.queue[i]; if (!busy(q[0])) { S.queue.splice(i, 1); startAct(...q); } }
+}
+function impact(act, h) {
+  S.seq++;
+  const t = act.t, b = actorBox(t), cy = b.top + b.h * 0.5, kind = h.kind;
+  if (kind === 'dmg' || kind === 'crit') {
+    t.hp = Math.max(1, t.hp - h.val); t.hurtT = S.wt; t.ghostWait = 400; DN.spawn(t.id, h.val, kind === 'crit' ? 'crit' : 'damage');
+    if (act.type === 'sword') S.fx.push({ kind: 'slash', x: t.x, y: cy, t0: S.wt, dir: act.hits.indexOf(h) % 2 ? -1 : 1 });
+    if (act.type === 'spark') S.fx.push({ kind: 'bolt', x: t.x, y: cy, t0: S.wt, seed: S.seq });
+    if (act.type === 'slam') S.fx.push({ kind: 'dust', x: t.x, y: t.y, t0: S.wt });
+    const crit = kind === 'crit';
+    S.fx.push({ kind: 'sparks', x: t.x, y: cy, t0: S.wt, P: fxParticles(S.seq * 7 + 3, crit ? 16 : 8, crit ? 6.2 : 3.2, crit ? 2.4 : 1.6), cols: crit ? ['#ffffff', '#fff2a8', '#ffb050'] : ['#ffffff', '#c8e0ff', '#6a8ac8'] });
+  } else if (kind === 'heal') {
+    t.hp = Math.min(t.max, t.hp + h.val); DN.spawn(t.id, h.val, 'heal'); S.fx.push({ kind: 'mend', x: t.x, fy: t.y, t0: S.wt, seed: S.seq });
+  } else if (kind === 'miss') {
+    DN.spawn(t.id, 0, 'miss'); S.fx.push({ kind: 'dust', x: t.x + (t.side === 'hero' ? -6 : 6), y: t.y, t0: S.wt });
+  } else if (kind === 'mp') {
+    t.mp = Math.max(0, t.mp - h.val); DN.spawn(t.id, h.val, 'mp'); S.fx.push({ kind: 'drain', x: t.x, y: cy, tx: act.a.x, ty: act.a.y - act.a.hover - 16, t0: S.wt });
+  } else if (kind === 'status') {
+    DN.spawn(t.id, h.val, 'status'); S.fx.push({ kind: 'hex', x: t.x, fy: t.y, t0: S.wt, seed: S.seq });
+  }
+}
+function userAct(kind) {
+  S.lastInput = S.rt; S.pendingLoop = true;
+  const tsel = document.getElementById('target').value, R = S.rand, v = (a, b) => Math.round(a + R() * (b - a));
+  const tg = A(tsel), foe = tg.side === 'foe', lowHero = ['rowan', 'mira'].map(A).sort((x, y) => x.hp / x.max - y.hp / y.max)[0];
+  const Q = (...q) => S.queue.push(q);
+  if (kind === 'hit') foe ? Q('rowan', tsel, 'sword', 'SWORD', [['dmg', v(90, 160)]]) : Q('golem', tsel, 'slam', 'ROCK SLAM', [['dmg', v(30, 70)]]);
+  if (kind === 'crit') foe ? Q('mira', tsel, 'spark', 'SPARK', [['crit', v(600, 990)]]) : Q('golem', tsel, 'slam', 'ROCK SLAM', [['crit', v(110, 160)]]);
+  if (kind === 'heal') Q('mira', foe ? lowHero.id : tsel, 'mend', 'MEND', [['heal', v(120, 240)]]);
+  if (kind === 'miss') foe ? Q('rowan', tsel, 'sword', 'SWORD', [['miss']]) : Q('wisp', tsel, 'touch', '', [['miss']]);
+  if (kind === 'multi') foe ? Q('rowan', tsel, 'sword', 'FLURRY', [0, 1, 2, 3].map(() => ['dmg', v(30, 70)])) : Q('wisp', tsel, 'touch', 'WISP SWARM', [0, 1, 2].map(() => ['dmg', v(12, 30)]));
+  if (kind === 'mp') Q('wisp', 'mira', 'drain', 'MANA DRAIN', [['mp', v(8, 24)]]);
+  if (kind === 'status') foe ? Q('mira', tsel, 'slow', 'SLOW', [['status', 'SLOW']]) : Q('wisp', tsel, 'hex', 'HEX', [['status', 'POISON']]);
+  for (const a of S.actors) if (a.hp < a.max * 0.3) a.hp = a.max;
+  if (A('mira').mp < 20) A('mira').mp = A('mira').maxMp;
+}
+function startLoop() { S.loopStart = S.wt; S.scriptI = 0; for (const a of S.actors) { a.hp = a.max; if (a.maxMp) a.mp = a.maxMp; } }
+function tickLoop() {
+  if (S.pendingLoop) { if (S.rt - S.lastInput > 3000 && !S.acts.length && !S.queue.length) { S.pendingLoop = false; startLoop(); } else return; }
+  const l = S.wt - S.loopStart;
+  while (S.scriptI < SCRIPT.length && l >= SCRIPT[S.scriptI][0]) { const s = SCRIPT[S.scriptI++]; startAct(s[1], s[2], s[3], s[4], s[5]); }
+  if (S.scriptI >= SCRIPT.length && l >= LOOP) startLoop();
+}
+function step() {
+  S.rt += FRAME;
+  if (S.stop > 0) { S.stop -= FRAME; if (S.stop < 0) { S.wt += -S.stop; S.stop = 0; } }
+  else S.wt += FRAME;
+  if (S.stop <= 0) { tickLoop(); tickActs(); }
+  DN.update(S.wt - S.dnT); S.dnT = S.wt;   // world time only: numbers freeze with the hit-stop
+  tickBars(S.actors, FRAME);
+}
+
+/* ===== render ===== */
+const cv = document.getElementById('cv'), g = cv.getContext('2d');
+g.imageSmoothingEnabled = false;
+function render() {
+  const sa = S.rt - S.shakeT, shaking = sa < 200, sx = shaking ? (Math.floor(sa / 33) % 2 ? -S.shakeAmp : S.shakeAmp) : 0, sy = shaking ? (Math.floor(sa / 50) % 2 ? 1 : 0) : 0;
+  rect(g, 0, 0, W, H, '#05040a');
+  g.save(); g.translate(sx, sy);
+  drawBG(g, S.rt);
+  [...S.actors].sort((a, b) => a.y - b.y).forEach(a => drawActor(g, a, S.wt, S.rt));
+  S.fx = S.fx.filter(f => drawFx(g, f, S.wt));
+  DN.draw(g);
+  g.restore();
+  if (S.banner && S.wt < S.bannerUntil) drawBanner(g, S.banner);
+  drawHUD(g, S.actors);
+  const fa = S.rt - S.flashT; if (fa >= 0 && fa < 100) { g.globalAlpha = S.flashA * (1 - fa / 100); rect(g, 0, 0, W, FIELD_H, '#fff8e0'); g.globalAlpha = 1; }
+  const st = document.getElementById('status');
+  if (st) st.textContent = (S.pendingLoop ? 'Manual · auto-loop resumes after 3 s idle' : 'Auto-loop') + ' · ' + DN.count() + ' number' + (DN.count() === 1 ? '' : 's') + ' on screen' + (S.stop > 0 ? ' · HIT-STOP' : '');
+}
+
+/* ===== page wiring ===== */
+const Q = new URLSearchParams(location.search);
+PARAMS.forEach(p => { if (Q.has(p.key)) { const v = Q.get(p.key); P[p.key] = p.type === 'range' ? clamp(+v, p.min, p.max) : p.options.includes(v) ? v : p.default; } });
+DN.setParams(P);
+function buildParams() {
+  const box = document.getElementById('params');
+  for (const p of PARAMS) {
+    const row = document.createElement('div'); row.className = 'row';
+    if (p.type === 'range') {
+      row.innerHTML = `<label for="p-${p.key}"><span>${p.label}</span><output id="o-${p.key}"></output></label><input type="range" id="p-${p.key}" min="${p.min}" max="${p.max}" step="${p.step}">`;
+      box.appendChild(row); const inp = row.querySelector('input'), out = row.querySelector('output');
+      const sync = () => { out.textContent = P[p.key] + ' ' + p.unit; inp.style.setProperty('--fill', ((P[p.key] - p.min) / (p.max - p.min) * 100) + '%'); };
+      inp.value = P[p.key]; sync(); inp.addEventListener('input', () => { P[p.key] = +inp.value; DN.setParams(P); sync(); syncURL(); });
+    } else {
+      const names = { '1': p.key === 'scale' ? '1×' : '1 px', '2': p.key === 'scale' ? '2×' : '2 px' };
+      row.innerHTML = `<label><span>${p.label}</span></label><div class="seg" role="radiogroup" aria-label="${p.label}">` + p.options.map(o => `<button type="button" role="radio" data-v="${o}">${names[o] || o}</button>`).join('') + '</div>';
+      box.appendChild(row);
+      const btns = [...row.querySelectorAll('button')], sync = () => btns.forEach(b => b.setAttribute('aria-checked', b.dataset.v === String(P[p.key])));
+      sync(); btns.forEach(b => b.addEventListener('click', () => { P[p.key] = b.dataset.v; DN.setParams(P); sync(); syncURL(); }));
+    }
+  }
+}
+function wire() {
+  document.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', () => userAct(b.dataset.act)));
+  document.getElementById('reset').addEventListener('click', () => { PARAMS.forEach(p => P[p.key] = p.default); DN.setParams(P); document.getElementById('params').innerHTML = ''; buildParams(); syncURL(); });
+  document.querySelectorAll('[data-speed]').forEach(b => b.addEventListener('click', () => { SPEED = +b.dataset.speed; document.querySelectorAll('[data-speed]').forEach(x => x.setAttribute('aria-checked', x === b)); }));
+}
+function syncURL() { const u = new URLSearchParams(); PARAMS.forEach(p => { if (String(P[p.key]) !== String(p.default)) u.set(p.key, P[p.key]); }); history.replaceState(null, '', location.pathname + (u.toString() ? '?' + u : '')); }
+let SPEED = 1;
+window.addEventListener('keydown', e => { const k = { 1: 'hit', 2: 'crit', 3: 'heal', 4: 'miss', 5: 'multi', 6: 'mp', 7: 'status' }[e.key]; if (k && !e.target.closest('input')) userAct(k); });
+function fitCanvas() {
+  const stage = document.getElementById('stage'), avail = stage.clientWidth - 14, maxH = window.innerHeight - 140;
+  const s = Math.max(1, Math.floor(Math.min(avail / W, Math.max(2, maxH / H))));
+  cv.style.width = W * s + 'px'; cv.style.height = H * s + 'px';
+  const sc = document.getElementById('scaleinfo'); if (sc) sc.textContent = '256×224 native · ' + s + '× integer scale';
+}
+/* text state for critics and tools/sprites/statecheck.py. drawActor() never mirrors a sprite, so every actor is drawn
+   in its art's native side (ART_FACING, read off the sprites in common.js): the golem is a 3/4 view turned right, the
+   heroes look left, the wisp is a round frontal face (no side). */
+const ART_FACING = { golem: 'right', wisp: null, rowan: 'left', mira: 'left' };
+window.__state = () => ({ t: Math.round(S.wt), actors: S.actors.map(a => {
+  const act = S.acts.find(x => x.a === a && x.t !== a), foes = S.actors.filter(b => b.side !== a.side && !b.dead);
+  const o = { id: a.id, x: Math.round(a.x), y: Math.round(a.y), facing: ART_FACING[a.id], target: act ? act.t.id : foes.length ? Math.round(foes.reduce((n, b) => n + b.x, 0) / foes.length) : null };
+  if (a.dead) o.noFace = 'dead'; else if (!o.facing) o.noFace = 'frontal art'; return o; }) });
+initSprites(); buildParams(); wire(); startLoop(); fitCanvas(); window.addEventListener('resize', fitCanvas);
+const T0 = Q.has('t') ? Math.max(0, +Q.get('t')) : 0;
+while (S.rt + FRAME <= T0) step();
+render();
+if (AUDIT) console.log('AUDIT t=' + Q.get('t') + ' ' + JSON.stringify(auditReport()));
+if (Q.get('log') === '1') console.log(JSON.stringify({ rt: S.rt, wt: S.wt, numbers: DN.count() }));
+if (Q.get('freeze') !== '1') {
+  let last = performance.now(), acc = 0;
+  const loop = now => { acc += Math.min(100, now - last) * SPEED; last = now; while (acc >= FRAME) { step(); acc -= FRAME; } render(); requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+}
+
+</script>
+</body>
+</html>

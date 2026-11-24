@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Neon Vector Preview</title>
+<style>
+  :root { --bg: #000000; --fg: #c8fdff; --muted: #4c8f9a; --card: #000000; --line: #29f3ff; --accent: #ffe93b; --glow: rgba(41,243,255,0.45); }
+  @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg: #eef3f4; --fg: #062a30; --muted: #3c6b73; --card: #000000; --line: #0a8a99; --glow: rgba(10,138,153,0.25); } }
+  :root[data-theme="light"] { --bg: #eef3f4; --fg: #062a30; --muted: #3c6b73; --card: #000000; --line: #0a8a99; --glow: rgba(10,138,153,0.25); }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); }
+  body { padding: 16px; font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  header { max-width: 1120px; margin: 0 auto 12px; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+  h1 { margin: 0; font: 600 20px/1.1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0.18em; text-transform: uppercase;
+       color: var(--line); text-shadow: 0 0 6px var(--glow), 0 0 14px var(--glow); border: 1px solid var(--line); padding: 4px 12px; box-shadow: 0 0 10px var(--glow), inset 0 0 8px var(--glow); }
+  header p { margin: 0; color: var(--muted); min-width: 0; }
+  header code { color: var(--fg); }
+  main { max-width: 1120px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 1.25fr); gap: 16px; align-items: start; }
+  figure { margin: 0; min-width: 0; }
+  .stage { background: var(--card); border: 1px solid var(--line); box-shadow: 0 0 12px var(--glow); padding: 6px; }
+  canvas { display: block; width: 100%; height: auto; }
+  figcaption { color: var(--muted); font-size: 12px; margin-top: 8px; }
+  @media (max-width: 760px) { body { padding: 16px; } main { grid-template-columns: minmax(0, 1fr); } h1 { font-size: 17px; } }
+</style>
+</head>
+<body>
+<header><h1>neon-vector</h1><p>Neon vector arcade skin on the shared scene (same map, seed and moments as every style). <code>?t=ms&amp;freeze=1</code> for a fixed moment, <code>&amp;focus=grid|numbers|window</code> for one element, <code>&amp;crt=0</code> turns the scanlines and vignette off.</p></header>
+<main>
+  <figure><div class="stage"><canvas id="neon" aria-label="Neon vector style: the shared tactics scene"></canvas></div><figcaption>neon-vector: grid-range-path, damage-numbers and window-cursor all drawing through the skin; map, props, units and CRT mood from its tile / prop / unitToken / atmosphere hooks</figcaption></figure>
+  <figure><div class="stage"><canvas id="ref" aria-label="16-bit pixel reference: the same moment"></canvas></div><figcaption>same moment in pixel16 (reference)</figcaption></figure>
+</main>
+<script src="../skin-api.js"></script>
+<script src="../pixel16.js"></script>
+<script src="neon-vector.js"></script>
+<script src="../../elements/grid-range-path/module/grid-range-path.js"></script>
+<script src="../../elements/damage-numbers/module/damage-numbers.js"></script>
+<script src="../../elements/window-cursor/module/window-cursor.js"></script>
+<script src="../scene/shared-scene.js"></script>
+<script>
+'use strict';
+var Q = new URLSearchParams(location.search), FREEZE = Q.get('freeze') === '1', T0 = Q.has('t') ? +Q.get('t') : GameDNA_Scene.DEFAULT_T;
+var FOCUS = ['grid', 'numbers', 'window'].indexOf(Q.get('focus')) >= 0 ? Q.get('focus') : 'all';
+if (Q.get('crt') === '0') { var SKN = GameDNA_Skin.get('neon-vector'); SKN.crt = { scanlines: 0, vignette: 0 }; }
+var neonC = document.getElementById('neon'), refC = document.getElementById('ref');
+function widthOf(c) { return Math.max(256, Math.round(c.parentNode.clientWidth * (window.devicePixelRatio || 1))); }
+function render(t) {
+  GameDNA_Scene.draw(neonC, 'neon-vector', t, { width: widthOf(neonC), focus: FOCUS });
+  GameDNA_Scene.draw(refC, 'pixel16', t, { width: widthOf(refC), focus: FOCUS });
+}
+GameDNA_Scene.ready(['neon-vector', 'pixel16']).then(function () {
+  document.documentElement.dataset.overflowX = String(document.documentElement.scrollWidth > document.documentElement.clientWidth);
+  if (FREEZE) { render(T0); document.documentElement.dataset.ready = '1'; return; }
+  var t0 = performance.now() - T0;
+  (function loop(now) { render((now - t0) % GameDNA_Scene.LOOP); requestAnimationFrame(loop); })(performance.now());
+  document.documentElement.dataset.ready = '1';
+});
+</script>
+</body>
+</html>

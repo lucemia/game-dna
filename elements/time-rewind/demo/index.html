@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Time Rewind</title>
+<style>
+:root {
+  --bg: #0a0c15; --panel: #131626; --panel2: #191d31; --line: #282e4a; --text: #edf0fa; --dim: #959cbd; --accent: #9be7ff; --accent2: #c8a6ff;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1100px 560px at 30% -12%, #1d2a48 0%, var(--bg) 62%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 16px 20px 10px; max-width: 1360px; margin: 0 auto; }
+.code { white-space: nowrap; font: 700 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #06223a; background: linear-gradient(#e2f6ff, var(--accent)); padding: 6px 8px; border-radius: 6px; box-shadow: 0 0 0 1px #00000040, 0 4px 14px #8fd8ff40; }
+h1 { font-size: 18px; margin: 0; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; max-width: 940px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 18px; padding: 0 20px 20px; max-width: 1360px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; }
+.frame { position: relative; border-radius: 14px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px #2e3656, 0 24px 60px #00000090; touch-action: none; }
+#game { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; }
+.caption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; margin-top: 10px; color: var(--dim); font-size: 12px; }
+.caption b { color: var(--text); font-weight: 600; }
+.keys { margin-top: 8px; color: var(--dim); font-size: 12px; }
+.keys kbd { font: 600 11px ui-monospace, Menlo, monospace; background: #1c2033; border: 1px solid #353d5c; border-bottom-width: 2px; border-radius: 4px; padding: 1px 5px; color: var(--text); }
+.pads { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.pads button { flex: 1 1 90px; }
+aside { background: linear-gradient(var(--panel2), var(--panel)); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+section { border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+section:last-of-type { border-bottom: 0; padding-bottom: 0; }
+h2 { margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.row { margin-bottom: 8px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 3px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 5px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--fill), #262c44 var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 15px; height: 15px; border-radius: 50%; background: #f2fbff; box-shadow: 0 0 0 3px #8fd8ff55, 0 2px 6px #000a; cursor: pointer; }
+.seg { display: flex; background: #0d0f1a; border: 1px solid var(--line); border-radius: 8px; padding: 2px; gap: 2px; flex-wrap: wrap; }
+.seg button { flex: 1; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 4px; border-radius: 6px; cursor: pointer; min-width: 0; }
+.seg button[aria-checked=true] { background: #262c44; color: var(--text); box-shadow: inset 0 0 0 1px #46507a; }
+.btn { appearance: none; border: 1px solid #353d5c; background: #1a1e30; color: var(--text); border-radius: 9px; padding: 10px 10px; font: 600 12.5px/1 inherit; cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: none; }
+.btn:active, .btn.on { transform: scale(.98); border-color: var(--accent); color: var(--accent); }
+.btn.big { background: linear-gradient(#22324f, #182238); border-color: #4a6aa0; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips button { appearance: none; border: 1px solid #353d5c; background: #171a2a; color: var(--text); border-radius: 999px; padding: 5px 10px; font: 600 12px/1 inherit; cursor: pointer; }
+.chips button.on { border-color: var(--accent); color: var(--accent); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.note { color: var(--dim); font-size: 11.5px; margin: 4px 0 0; }
+.stat { font: 11.5px/1.6 ui-monospace, Menlo, monospace; color: var(--dim); }
+.stat b { color: var(--text); font-weight: 600; }
+@media (max-width: 1040px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 680px; width: 100%; margin: 0 auto; } }
+@media (max-width: 560px) { header { padding: 12px 16px 8px; } main { padding: 0 16px 16px; gap: 12px; } .frame { border-radius: 10px; } .two { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">E-16</span>
+  <div><h1>Time rewind</h1><p>Hold <b>R</b> and the world runs backwards: every step the game's state is copied into a ring buffer, and while the key is held older copies come back, up to 3&times; as fast. Let go and play continues from that moment, with what you now know. The bolt that hit the swordsman flies back into the imp; on the second take he raises his shield. Characters keep facing where they faced: walking backwards in time is not turning around.</p></div>
+</header>
+<main>
+  <div id="stage">
+    <div class="frame"><canvas id="game" width="960" height="540"></canvas></div>
+    <div class="caption">
+      <span id="cap-take">take <b>1</b></span>
+      <span id="cap-time">world <b>0.00 s</b></span>
+      <span id="cap-hist">history <b>0.0 s</b></span>
+      <span id="cap-mem">memory <b>0 KB</b></span>
+    </div>
+    <div class="pads">
+      <button class="btn big" id="b-rewind">&#9664;&#9664; Hold to rewind (R)</button>
+      <button class="btn" id="b-pause">Pause (P)</button>
+      <button class="btn" id="b-restart">Restart</button>
+    </div>
+    <p class="keys"><kbd>R</kbd> hold to rewind &middot; <kbd>&larr;</kbd><kbd>&rarr;</kbd> walk &middot; <kbd>Z</kbd> jump &middot; <kbd>X</kbd> sword &middot; <kbd>C</kbd> shield &middot; <kbd>P</kbd> pause (nothing is recorded while paused). A move key takes over from the script; &ldquo;Script&rdquo; gives it back.</p>
+  </div>
+  <aside>
+    <section>
+      <h2>Playback</h2>
+      <div class="two">
+        <div class="row"><label>Drive</label><div class="seg" id="drive"><button data-v="script" aria-checked="true">Script</button><button data-v="play" aria-checked="false">Play</button></div></div>
+        <div class="row"><label>Scene</label><div class="seg" id="scene"><button data-v="meadow-dusk" aria-checked="true">Dusk</button><button data-v="ruins-night" aria-checked="false">Night</button></div></div>
+      </div>
+    </section>
+    <section>
+      <h2>Presets</h2>
+      <div class="chips" id="variants"></div>
+    </section>
+    <section>
+      <h2>Rewind</h2>
+      <div id="params"></div>
+      <div class="row"><label>Energy</label><div class="seg" id="energy"><button data-v="meter">meter</button><button data-v="charges">charges</button><button data-v="free">free</button></div></div>
+      <div class="row"><label>Filter</label><div class="seg" id="filter"><button data-v="full">full</button><button data-v="light">light</button><button data-v="off">off</button></div></div>
+      <div class="row"><label>Tint</label><div class="seg" id="tint"><button data-v="cool">cool</button><button data-v="sepia">sepia</button><button data-v="violet">violet</button><button data-v="mono">mono</button></div></div>
+      <div class="two">
+        <div class="row"><label>Render</label><div class="seg" id="render"><button data-v="auto">auto</button><button data-v="pixel">pixel</button></div></div>
+        <div class="row"><label>Touch button</label><div class="seg" id="touch"><button data-v="auto">auto</button><button data-v="on">on</button><button data-v="off">off</button></div></div>
+      </div>
+      <div class="row"><label>Reduced motion</label><div class="seg" id="reduced"><button data-v="system">system</button><button data-v="on">on</button><button data-v="off">off</button></div></div>
+    </section>
+    <section>
+      <h2>History</h2>
+      <div class="stat" id="stat"></div>
+      <p class="note">The module copies the whole game state once per fixed step (here about 5 KB, roughly 280 KB per second) and keeps the last <i>History</i> seconds. Facing, animation phase and every timer are part of that state, so a rewound frame is exactly the frame that was played; <code>?t=&amp;freeze=1</code> stills repeat byte for byte.</p>
+    </section>
+  </aside>
+</main>
+<script src="../module/time-rewind.js"></script>
+<script src="../../../demo-kit/kit-art.js"></script>
+<script src="../../cutout-characters/module/cutout-characters.js"></script>
+<script src="../../cutout-characters/assets/pack.js"></script>
+<script src="../../../demo-kit/kit.js"></script>
+<script>
+"use strict";
+(() => {
+  const TR = window.GameDNA_TimeRewind, Kit = window.GameDNA_DemoKit;
+  const qs = new URLSearchParams(location.search);
+  const LW = 960, LH = 540, STEP = 1000 / 60, LOOP = 13500, GROUND = 452, HH = 150;
+  const PARAMS = [
+    { key: 'speed', label: 'Rewind speed', min: 1, max: 3, step: 0.25, fmt: v => '×' + v },
+    { key: 'seconds', label: 'History (s)', min: 1, max: 20, step: 1 },
+    { key: 'meter', label: 'Meter (s of rewind)', min: 0.5, max: 8, step: 0.5 },
+    { key: 'charges', label: 'Charges', min: 1, max: 6, step: 1 },
+    { key: 'recharge', label: 'Recharge (s)', min: 1, max: 20, step: 1 },
+    { key: 'ripple', label: 'Ripple', min: 0, max: 1, step: 0.05 },
+    { key: 'scanlines', label: 'Scanlines', min: 0, max: 1, step: 0.05 },
+  ];
+  const DEF = Object.assign({}, TR.defaults);
+  const VARIANTS = [
+    ['Classic (default)', {}],
+    ['Sands of time', { tint: 'sepia', speed: 1.5, energy: 'meter', meter: 4 }],
+    ['Three charges', { energy: 'charges', charges: 3, speed: 2.5 }],
+    ['Fast scrub', { speed: 3, seconds: 10, ripple: 0.8 }],
+    ['Quiet', { filter: 'light', ripple: 0, scanlines: 0.25, tint: 'mono' }],
+    ['Calm (reduced)', { reduced: 'on' }],
+  ];
+  const P = Object.assign({}, DEF);
+  for (const k in DEF) if (qs.has(k)) P[k] = typeof DEF[k] === 'number' ? Number(qs.get(k)) : qs.get(k);
+  let drive = qs.get('drive') === 'play' ? 'play' : 'script', sceneId = qs.get('scene') === 'ruins-night' ? 'ruins-night' : 'meadow-dusk';
+  const FREEZE = qs.get('freeze') === '1', T0 = qs.has('t') ? Math.max(0, Number(qs.get('t')) || 0) : null;
+  const MUT = qs.get('mutant') || '';   // test mutants of the DEMO (checks/demo-check.py): facing from screen motion
+
+  // ---------------------------------------------------------------- canvas (backing store at device resolution)
+  const cv = document.getElementById('game'), ctx = cv.getContext('2d');
+  function fit() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1), w = Math.round(LW * dpr), h = Math.round(LH * dpr);
+    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+  }
+  fit();
+  const hash = (x, y, s) => { let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177 | 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+
+  // ---------------------------------------------------------------- world: everything here is rewound
+  const HUD = { x: 14, y: 14, w: 196, h: 46, r: 14 };
+  let W;
+  function newWorld() {
+    return {
+      t: 0, f: 0, seed: 77,
+      hero: { x: 110, y: 0, vx: 0, vy: 0, facing: 1, onGround: true, walkK: 0, atkT: 0, atkHit: false, guardT: 0, hurtT: 0, kbT: 0, inv: 0, hp: 3, cheer: 0 },
+      foes: [
+        { id: 'slime', kind: 'slime', x: 395, vx: -46, facing: -1, hp: 1, hurtT: 0, deadT: 0, home: 395 },
+        { id: 'skeleton', kind: 'skeleton', x: 600, vx: 0, facing: -1, hp: 2, hurtT: 0, deadT: 0 },
+        { id: 'imp', kind: 'imp', x: 770, vx: 0, facing: -1, hp: 2, hurtT: 0, deadT: 0, castT: 0, castCd: 0, awake: 0 },
+      ],
+      bolts: [], boltN: 0,
+      gems: [{ id: 'g1', x: 250, taken: 0 }, { id: 'g2', x: 420, taken: 0 }, { id: 'g3', x: 560, taken: 0 }, { id: 'g4', x: 716, taken: 0 }],
+      parts: [], score: 0, rng: 991,
+    };
+  }
+  function rnd() { W.rng = (W.rng + 0x6D2B79F5) >>> 0; let t = W.rng; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }
+  const foe = id => W.foes.find(f => f.id === id);
+  const alive = f => f && f.hp > 0;
+  function burst(x, y, n, col, sp, up) {
+    for (let i = 0; i < n; i++) { const a = rnd() * Math.PI * 2, v = sp * (0.35 + rnd() * 0.65); W.parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - (up || 0), life: 0, max: 0.35 + rnd() * 0.4, c: col, s: 2 + rnd() * 3 }); }
+  }
+
+  // ---------------------------------------------------------------- the module
+  let rw = null;
+  function makeRewind() {
+    if (rw) rw.destroy();
+    rw = TR.create({
+      snapshot: () => W,                     // the whole world: the module deep-copies it every step
+      restore: s => { W = s; },              // s is a fresh copy, kept as the live world
+      canRecord: () => !D.paused,            // nothing is recorded while paused
+      view: { w: LW, h: LH }, canvas: cv,
+      uiRects: () => (MUT === 'no-ui' ? [] : [HUD]),
+      params: Object.assign({}, P),
+      onEnd: info => { D.lastRelease = info; },
+    });
+  }
+
+  // ---------------------------------------------------------------- director: NOT rewound (the player's memory)
+  const D = { clock: 0, loopT: 0, take: 1, paused: false, holdBtn: false, lastRelease: null, scriptHold: false };
+  const SCRIPT_HOLD = [5850, 7300];   // loop ms: the scripted rewind (take 1 -> take 2)
+  function restart() { W = newWorld(); D.loopT = 0; D.take = 1; D.lastRelease = null; if (rw) rw.clear(); }
+
+  // ---------------------------------------------------------------- input
+  const held = new Set(), taps = new Set();
+  const KEYS = { ArrowLeft: 'left', ArrowRight: 'right', KeyZ: 'jump', Space: 'jump', KeyX: 'attack', KeyC: 'guard', ArrowUp: 'jump' };
+  addEventListener('keydown', e => {
+    if (e.code === 'KeyP') { D.paused = !D.paused; syncPause(); e.preventDefault(); return; }
+    const k = KEYS[e.code]; if (!k) return;
+    e.preventDefault();
+    if (drive !== 'play') setDrive('play');
+    if (!e.repeat) taps.add(k); held.add(k);
+  });
+  addEventListener('keyup', e => { const k = KEYS[e.code]; if (k) held.delete(k); });
+  addEventListener('blur', () => held.clear());
+  function humanInput() { const i = { left: held.has('left'), right: held.has('right'), jump: taps.has('jump'), attack: taps.has('attack'), guard: held.has('guard') || taps.has('guard') }; taps.clear(); return i; }
+
+  // the script's player: walks right, jumps the slime, fights; on the second take it knows the bolt is coming
+  function pilot() {
+    const h = W.hero, i = { left: false, right: false, jump: false, attack: false, guard: false };
+    const sl = foe('slime'), sk = foe('skeleton'), im = foe('imp');
+    if (!alive(sk) && !alive(im)) { if (h.x < 830 && !W.gems[3].taken) i.right = true; else i.cheer = true; return i; }
+    if (alive(sl) && sl.x - h.x > -10 && sl.x - h.x < 74 && h.onGround) i.jump = true;
+    if (alive(sk)) {
+      if (sk.x - h.x < 118) { if (h.atkT <= 0) i.attack = true; } else i.right = true;
+      return i;
+    }
+    const threat = W.bolts.find(b => !b.deflected && b.vx < 0 && b.x > h.x && b.x - h.x < 150);
+    if (threat && D.take > 1) { i.guard = true; return i; }
+    if (alive(im)) { if (im.x - h.x < 112) { if (h.atkT <= 0 && h.hurtT <= 0) i.attack = true; } else i.right = true; }
+    return i;
+  }
+
+  // ---------------------------------------------------------------- world step (only when the module did not rewind)
+  const ATK = 0.42, GUARD = 0.5, HURT = 0.34;
+  function worldStep(inp) {
+    const dt = STEP / 1000, h = W.hero;
+    W.t += STEP; W.f++;
+    // hero
+    if (h.hurtT > 0) h.hurtT = Math.max(0, h.hurtT - dt);
+    if (h.inv > 0) h.inv = Math.max(0, h.inv - dt);
+    if (h.atkT > 0) { h.atkT -= dt; if (h.atkT <= 0) h.atkT = 0; }
+    let want = 0;
+    if (h.kbT > 0) { h.kbT -= dt; want = h.vx; }
+    else if (h.atkT > 0 || (inp.guard && h.onGround) || inp.cheer) want = 0;
+    else want = ((inp.right ? 1 : 0) - (inp.left ? 1 : 0)) * 170;
+    h.vx += (want - h.vx) * (h.kbT > 0 ? 0.08 : h.onGround ? 0.22 : 0.1);
+    if (h.kbT <= 0 && h.atkT <= 0) { if (inp.right && !inp.left) h.facing = 1; else if (inp.left && !inp.right) h.facing = -1; }
+    if (inp.jump && h.onGround && h.atkT <= 0) { h.vy = -760; h.onGround = false; }
+    h.guardT = inp.guard && h.onGround ? Math.min(GUARD, h.guardT + dt) : Math.max(0, h.guardT - dt * 2);
+    if (inp.attack && h.atkT <= 0 && h.hurtT <= 0) { h.atkT = ATK; h.atkHit = false; }
+    h.cheer = inp.cheer ? h.cheer + dt : 0;
+    h.vy += 2300 * dt; h.y += h.vy * dt;
+    if (h.y >= 0) { h.y = 0; h.vy = 0; h.onGround = true; }
+    const ox = h.x; h.x = Math.max(60, Math.min(LW - 50, h.x + h.vx * dt));
+    if (h.onGround) h.walkK = (h.walkK + Math.abs(h.x - ox) / (STRIDE * HH)) % 1;
+    // the sword lands at 40% of the swing
+    if (h.atkT > 0 && !h.atkHit && (ATK - h.atkT) / ATK >= 0.4) {
+      h.atkHit = true;
+      for (const f of W.foes) if (alive(f) && f.kind !== 'slime' && (f.x - h.x) * h.facing > 0 && Math.abs(f.x - h.x) < 135) {
+        f.hp--; f.hurtT = 0.3; burst(f.x - h.facing * 18, GROUND - (f.kind === 'imp' ? 50 : 80), 12, '#fff2c4', 260, 60);
+        if (f.hp <= 0) { f.deadT = 0.0001; W.score += 10; }
+      }
+    }
+    // foes
+    for (const f of W.foes) {
+      if (f.hurtT > 0) f.hurtT = Math.max(0, f.hurtT - dt);
+      if (f.hp <= 0) { f.deadT = Math.min(1, f.deadT + dt / 0.7); continue; }
+      if (f.kind === 'slime') {
+        f.x += f.vx * dt;
+        if (Math.abs(f.x - f.home) > 64) { f.vx = -f.vx; f.x = f.home + Math.sign(f.x - f.home) * 64; }
+        f.facing = f.vx > 0 ? 1 : -1;
+        if (Math.abs(f.x - h.x) < 30 && h.y > -14 && h.inv <= 0) hurt(f.x);
+      } else {
+        f.facing = h.x < f.x ? -1 : 1;
+        if (f.kind === 'imp') {
+          if (!alive(foe('skeleton'))) f.awake += dt;
+          if (f.castT > 0) {
+            f.castT -= dt;
+            if (f.castT <= 0) {
+              f.castT = 0;
+              const sx = f.x - 30, sy = GROUND - 62, tx = h.x, ty = GROUND - HH * 0.56, d = Math.hypot(tx - sx, ty - sy) || 1;
+              W.bolts.push({ id: 'bolt' + (++W.boltN), x: sx, y: sy, vx: (tx - sx) / d * 380, vy: (ty - sy) / d * 380, age: 0, deflected: false, life: 3 });
+              burst(sx, sy, 8, '#ffb35c', 140);
+            }
+          } else if (f.awake > 0.6) {
+            f.castCd -= dt;
+            if (f.castCd <= 0 && h.hp > 0) { f.castT = 0.42; f.castCd = 2.1; }
+          }
+        }
+      }
+    }
+    // bolts
+    for (const b of W.bolts) {
+      b.age += dt; b.x += b.vx * dt; b.y += b.vy * dt; b.life -= dt;
+      if (b.deflected) { b.vy += 900 * dt; continue; }
+      const hx = h.x, hy = GROUND + h.y - HH * 0.55;
+      if (Math.abs(b.x - hx) < 30 && Math.abs(b.y - hy) < 60) {
+        if (h.guardT > 0.08 && (b.x - h.x) * h.facing > 0) {
+          b.deflected = true; b.vx = 220 * h.facing; b.vy = -420; b.life = 0.7; burst(b.x, b.y, 16, '#bfe9ff', 320, 80);
+        } else if (h.inv <= 0) { hurt(b.x); b.life = 0; burst(b.x, b.y, 22, '#ffb35c', 380, 40); }
+      }
+    }
+    W.bolts = W.bolts.filter(b => b.life > 0 && b.x > -40);
+    // gems
+    for (const g of W.gems) {
+      if (!g.taken && Math.abs(g.x - h.x) < 34 && h.y > -110) { g.taken = W.t; W.score++; burst(g.x, GROUND - 58 + h.y * 0.2, 14, '#9ff7ff', 220, 120); }
+    }
+    for (const p of W.parts) { p.life += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 520 * dt; p.vx *= 0.97; }
+    W.parts = W.parts.filter(p => p.life < p.max);
+  }
+  function hurt(fromX) {
+    const h = W.hero; if (h.inv > 0) return;
+    h.hp = Math.max(0, h.hp - 1); h.hurtT = HURT; h.inv = 1.0; h.kbT = 0.28; h.vx = (h.x < fromX ? -1 : 1) * 260; h.atkT = 0;
+  }
+  let STRIDE = 0.56;   // one walk cycle in hero heights (read from the rig once the art is loaded)
+
+  // ---------------------------------------------------------------- demo step: the module gates the world
+  function demoStep() {
+    D.clock += STEP;
+    if (drive === 'script' && !D.paused) {
+      D.loopT += STEP;
+      if (D.loopT >= LOOP) restart();
+      D.scriptHold = D.loopT >= SCRIPT_HOLD[0] && D.loopT < SCRIPT_HOLD[1];
+      if (D.scriptHold) D.take = 2;
+    } else D.scriptHold = false;
+    rw.hold(D.holdBtn || D.scriptHold);
+    if (D.paused) { rw.step(STEP); return; }               // canRecord() is false: nothing recorded, no rewind
+    if (rw.step(STEP)) { trackMotion(); return; }           // a rewind step: the world was restored, do not run it
+    worldStep(drive === 'script' ? pilot() : humanInput());
+    trackMotion();
+  }
+
+  // ---------------------------------------------------------------- drawing
+  let cut = null;
+  function heroPose(h) {
+    if (h.hurtT > 0) return ['hurt', 1 - h.hurtT / HURT];
+    if (h.atkT > 0) return ['attack', 1 - h.atkT / ATK];
+    if (!h.onGround) return ['jump', Math.max(0, Math.min(1, 0.5 + h.vy / 1500))];
+    if (h.guardT > 0) return ['guard', Math.min(0.5, h.guardT / GUARD * 0.5)];
+    if (h.cheer > 0) return ['cheer', (h.cheer / 0.9) % 1];
+    if (Math.abs(h.vx) > 12) return ['walk', h.walkK];
+    return ['idle', 0];
+  }
+  function drawHero(g) {
+    const h = W.hero, [anim, k] = heroPose(h), fx = facingOf(h);
+    const flash = h.hurtT > 0 ? Math.max(0, 1 - (HURT - h.hurtT) / 0.14) * 0.8 : 0;
+    const alpha = h.inv > 0 && h.hurtT <= 0 ? (Math.floor(h.inv * 14) % 2 ? 0.55 : 1) : 1;
+    if (window.__spriteTrace) window.__spriteTrace.push({ id: 'sword', x: h.x, footY: GROUND + h.y, h: HH, facing: fx > 0 ? 'right' : 'left', native: 'right', flipX: fx < 0, variant: null, rig: true });
+    if (cut) cut.drawPose(g, 'sword', h.x, GROUND + h.y, { anim, k, t: W.t / 1000, h: HH, facing: fx, flash, alpha, light: 'left' });
+  }
+  // the facing the hero is DRAWN with: the recorded facing (state). Mutant 'screen-facing' derives it from on-screen motion,
+  // which flips the hero to face backwards while the world rewinds (checks/demo-check.py must fail on it).
+  let prevX = null, mutFace = 1;
+  function trackMotion() { const x = W.hero.x; if (prevX != null && Math.abs(x - prevX) > 0.3) mutFace = x > prevX ? 1 : -1; prevX = x; }
+  function facingOf(h) { return MUT === 'screen-facing' ? mutFace : h.facing; }
+  function drawFoe(g, f) {
+    const t = W.t, k = f.deadT > 0 ? f.deadT : 0;
+    if (k >= 1) return;
+    const flash = f.hurtT > 0 ? Math.min(1, f.hurtT / 0.3) * 0.9 : 0, face = f.facing > 0 ? 'right' : 'left';
+    const rec = f.hurtT > 0 ? Math.sin((0.3 - f.hurtT) / 0.3 * Math.PI) * 10 : 0;
+    if (f.kind === 'slime') Kit.sprite(g, 'slime', f.x, GROUND + 2, { h: HH * 0.46, facing: face, squash: Math.sin(t / 120) * 0.06, flash, alpha: 1 - k });
+    else if (f.kind === 'skeleton') {   // defeat: slumps down onto its feet and fades (scaled about the foot point), one flat ground shadow
+      const sx = f.x - f.facing * rec, e = k * k * (3 - 2 * k);
+      Kit.shadow(g, sx, GROUND + 3, 44 * (1 + e * 0.25), 7, 0.42 * (1 - e));
+      Kit.sprite(g, 'skeleton', sx, GROUND + 2, { h: HH * (1 - e * 0.45), facing: face, flash, alpha: 1 - e, squash: -e * 0.18 - (f.hurtT > 0 ? 0.03 : 0), rot: -f.facing * e * 0.08, shadow: false });
+    }
+    else {
+      const e = k * k * (3 - 2 * k), cast = f.castT > 0 ? Math.sin((0.42 - f.castT) / 0.42 * Math.PI) : 0;
+      if (cast > 0) { g.save(); g.globalCompositeOperation = 'lighter'; const r = 40 + cast * 26, gx = f.x - 30, gy = GROUND - 62; const rg = g.createRadialGradient(gx, gy, 0, gx, gy, r); rg.addColorStop(0, 'rgba(255,190,110,' + 0.75 * cast + ')'); rg.addColorStop(1, 'rgba(255,90,40,0)'); g.fillStyle = rg; g.beginPath(); g.arc(gx, gy, r, 0, Math.PI * 2); g.fill(); g.restore(); }
+      Kit.shadow(g, f.x - f.facing * rec, GROUND + 3, 34 * (1 + e * 0.25), 6, 0.42 * (1 - e));
+      Kit.sprite(g, 'imp', f.x - f.facing * rec, GROUND + 2, { h: HH * 0.62 * (1 - e * 0.45), facing: face, flash, alpha: 1 - e, squash: Math.sin(t / 300) * 0.02 + cast * 0.06 - e * 0.18, shadow: false });
+    }
+  }
+  function drawGem(g, gm) {
+    const t = W.t / 1000, y = GROUND - 62 + Math.sin(t * 2.4 + gm.x * 0.02) * 6, x = gm.x;
+    if (gm.taken) {   // pick-up flash: rises and fades for 0.4 s
+      const a = 1 - (W.t - gm.taken) / 400; if (a <= 0) return;
+      g.save(); g.globalAlpha = a; g.globalCompositeOperation = 'lighter';
+      const rg = g.createRadialGradient(x, y - (1 - a) * 30, 0, x, y - (1 - a) * 30, 40); rg.addColorStop(0, 'rgba(170,250,255,0.9)'); rg.addColorStop(1, 'rgba(80,200,255,0)');
+      g.fillStyle = rg; g.beginPath(); g.arc(x, y - (1 - a) * 30, 40, 0, Math.PI * 2); g.fill(); g.restore(); return;
+    }
+    Kit.shadow(g, x, GROUND + 2, 13, 4, 0.3);
+    g.save(); g.globalCompositeOperation = 'lighter';
+    const halo = g.createRadialGradient(x, y, 0, x, y, 34); halo.addColorStop(0, 'rgba(120,230,255,0.42)'); halo.addColorStop(1, 'rgba(60,160,255,0)');
+    g.fillStyle = halo; g.beginPath(); g.arc(x, y, 34, 0, Math.PI * 2); g.fill(); g.restore();
+    const w = 13, hh = 18, turn = Math.cos(t * 2 + gm.x) ;
+    const facets = [[[0, -hh], [-w, -hh * 0.25], [0, -hh * 0.1]], [[0, -hh], [w, -hh * 0.25], [0, -hh * 0.1]], [[-w, -hh * 0.25], [0, hh], [0, -hh * 0.1]], [[w, -hh * 0.25], [0, hh], [0, -hh * 0.1]]];
+    const cols = ['#e9fdff', '#8fe8ff', '#3fb6e8', '#1f6fb8'];
+    g.save(); g.translate(x, y); g.scale(0.82 + 0.18 * Math.abs(turn), 1);
+    facets.forEach((f, i) => { g.beginPath(); g.moveTo(f[0][0], f[0][1]); g.lineTo(f[1][0], f[1][1]); g.lineTo(f[2][0], f[2][1]); g.closePath(); g.fillStyle = cols[turn > 0 ? i : [1, 0, 3, 2][i]]; g.fill(); });
+    g.beginPath(); g.moveTo(0, -hh); g.lineTo(w, -hh * 0.25); g.lineTo(0, hh); g.lineTo(-w, -hh * 0.25); g.closePath(); g.lineWidth = 1.6; g.strokeStyle = '#0d2a4a'; g.stroke();
+    g.restore();
+    const sp = (Math.sin(t * 3 + gm.x) + 1) / 2;   // sparkle
+    g.save(); g.globalAlpha = sp; g.fillStyle = '#ffffff'; g.translate(x - 5, y - 9); g.beginPath(); g.moveTo(0, -6); g.lineTo(1.2, -1.2); g.lineTo(6, 0); g.lineTo(1.2, 1.2); g.lineTo(0, 6); g.lineTo(-1.2, 1.2); g.lineTo(-6, 0); g.lineTo(-1.2, -1.2); g.closePath(); g.fill(); g.restore();
+  }
+  function drawBolt(g, b) {
+    const a = b.deflected ? Math.max(0, b.life / 0.7) : 1, sp = Math.hypot(b.vx, b.vy) || 1, ux = b.vx / sp, uy = b.vy / sp;
+    g.save(); g.globalCompositeOperation = 'lighter';
+    for (let i = 7; i >= 0; i--) {   // tail: along the path it came from
+      const d = i * 9, r = 15 - i * 1.5, x = b.x - ux * d, y = b.y - uy * d + Math.sin(b.age * 30 + i) * i * 0.6;
+      const rg = g.createRadialGradient(x, y, 0, x, y, r * 1.8);
+      rg.addColorStop(0, `rgba(255,${200 - i * 12},${120 - i * 10},${0.5 * a * (1 - i / 9)})`); rg.addColorStop(1, 'rgba(255,80,30,0)');
+      g.fillStyle = rg; g.beginPath(); g.arc(x, y, r * 1.8, 0, Math.PI * 2); g.fill();
+    }
+    const core = g.createRadialGradient(b.x, b.y, 0, b.x, b.y, 13); core.addColorStop(0, `rgba(255,255,240,${a})`); core.addColorStop(0.45, `rgba(255,210,120,${a})`); core.addColorStop(1, 'rgba(255,120,40,0)');
+    g.fillStyle = core; g.beginPath(); g.arc(b.x, b.y, 13, 0, Math.PI * 2); g.fill();
+    g.restore();
+  }
+  function drawParts(g) {
+    g.save(); g.globalCompositeOperation = 'lighter';
+    for (const p of W.parts) { const a = 1 - p.life / p.max; g.globalAlpha = a; g.fillStyle = p.c; g.beginPath(); g.arc(p.x, p.y, p.s * (0.6 + a * 0.4), 0, Math.PI * 2); g.fill(); }
+    g.restore();
+  }
+  function heart(g, x, y, s, full) {
+    g.beginPath(); g.moveTo(x, y + s * 0.35);
+    g.bezierCurveTo(x, y, x - s * 0.5, y - s * 0.1, x - s * 0.5, y + s * 0.3); g.bezierCurveTo(x - s * 0.5, y + s * 0.6, x - s * 0.1, y + s * 0.8, x, y + s);
+    g.bezierCurveTo(x + s * 0.1, y + s * 0.8, x + s * 0.5, y + s * 0.6, x + s * 0.5, y + s * 0.3); g.bezierCurveTo(x + s * 0.5, y - s * 0.1, x, y, x, y + s * 0.35); g.closePath();
+    if (full) { const gr = g.createLinearGradient(0, y, 0, y + s); gr.addColorStop(0, '#ff8a92'); gr.addColorStop(0.5, '#e8384a'); gr.addColorStop(1, '#9c1c2e'); g.fillStyle = gr; } else g.fillStyle = 'rgba(255,255,255,0.12)';
+    g.fill(); g.lineWidth = 1.6; g.strokeStyle = full ? '#3a0a14' : 'rgba(255,255,255,0.35)'; g.stroke();
+    if (full) { g.fillStyle = 'rgba(255,255,255,0.55)'; g.beginPath(); g.ellipse(x - s * 0.24, y + s * 0.26, s * 0.1, s * 0.07, -0.6, 0, Math.PI * 2); g.fill(); }
+  }
+  function drawHud(g) {
+    const r = HUD;
+    g.save();
+    g.shadowColor = 'rgba(0,0,0,0.45)'; g.shadowBlur = 16; g.shadowOffsetY = 4;
+    g.beginPath(); g.roundRect(r.x, r.y, r.w, r.h, 14);
+    const bg = g.createLinearGradient(0, r.y, 0, r.y + r.h); bg.addColorStop(0, 'rgba(30,34,56,0.86)'); bg.addColorStop(1, 'rgba(12,14,26,0.9)'); g.fillStyle = bg; g.fill();
+    g.shadowColor = 'transparent'; g.lineWidth = 1.5; g.strokeStyle = 'rgba(255,255,255,0.16)'; g.stroke();
+    for (let i = 0; i < 3; i++) heart(g, r.x + 26 + i * 30, r.y + 12, 22, i < W.hero.hp);
+    const gx = r.x + 134, gy = r.y + r.h / 2;
+    g.beginPath(); g.moveTo(gx, gy - 11); g.lineTo(gx + 8, gy - 3); g.lineTo(gx, gy + 11); g.lineTo(gx - 8, gy - 3); g.closePath();
+    const gg = g.createLinearGradient(0, gy - 11, 0, gy + 11); gg.addColorStop(0, '#e9fdff'); gg.addColorStop(0.5, '#6fd8ff'); gg.addColorStop(1, '#1f6fb8'); g.fillStyle = gg; g.fill(); g.lineWidth = 1.4; g.strokeStyle = '#0d2a4a'; g.stroke();
+    g.font = '700 17px system-ui, -apple-system, "Segoe UI", sans-serif'; g.textBaseline = 'middle'; g.textAlign = 'left';
+    g.fillStyle = 'rgba(0,0,0,0.5)'; g.fillText(W.gems.filter(x => x.taken).length + '/4', gx + 15, gy + 1.5);
+    g.fillStyle = '#fff'; g.fillText(W.gems.filter(x => x.taken).length + '/4', gx + 15, gy);
+    g.restore();
+  }
+  function render() {
+    fit();
+    const k = cv.width / LW;
+    ctx.setTransform(k, 0, 0, k, 0, 0);
+    ctx.fillStyle = '#1b2236'; ctx.fillRect(0, 0, LW, LH);
+    Kit.backdrop(ctx, sceneId, { x: 0, y: 0, w: LW, h: LH, groundY: GROUND - 6 });
+    if (sceneId === 'meadow-dusk') { const sun = ctx.createLinearGradient(0, 0, LW, 0); sun.addColorStop(0, 'rgba(255,190,120,0.12)'); sun.addColorStop(1, 'rgba(120,80,160,0.08)'); ctx.fillStyle = sun; ctx.fillRect(0, 0, LW, LH); }
+    for (const gm of W.gems) drawGem(ctx, gm);
+    for (const f of W.foes) drawFoe(ctx, f);
+    drawHero(ctx);
+    for (const b of W.bolts) drawBolt(ctx, b);
+    drawParts(ctx);
+    drawHud(ctx);
+    rw.draw(ctx);                                           // filter, indicator, scrubber, meter: last
+    caption();
+  }
+
+  // ---------------------------------------------------------------- text state for checks and critics
+  window.__state = () => {
+    const h = W.hero, target = alive(foe('skeleton')) && foe('skeleton').x - h.x < 220 ? 'skeleton' : (h.hurtT > 0 || h.kbT > 0 || h.guardT > 0 || (alive(foe('imp')) && foe('imp').x - h.x < 240)) && alive(foe('imp')) ? 'imp' : null;
+    const st = rw.stats();
+    const actors = [{ id: 'hero', x: Math.round(h.x), y: Math.round(GROUND + h.y), facing: facingOf(h) > 0 ? 'right' : 'left', target, vx: Math.round(h.vx), asset: 'sword', hp: h.hp,
+      note: st.rewinding ? 'rewinding: drawn at its recorded facing; vx is the recorded (forward-time) velocity' : undefined }];
+    for (const f of W.foes) {
+      if (f.deadT >= 1) continue;
+      const a = { id: f.id, x: Math.round(f.x), facing: f.facing > 0 ? 'right' : 'left', asset: f.kind, hp: f.hp };
+      if (f.hp <= 0) a.noFace = 'defeated (fading)';
+      else if (f.kind === 'slime') { a.vx = Math.round(f.vx); a.target = null; }
+      else a.target = 'hero';
+      actors.push(a);
+    }
+    return { t: Math.round(D.clock), world: Math.round(W.t), take: D.take, rewinding: st.rewinding, held: st.held, frames: st.frames, cursor: st.cursor, energy: st.energy, actors };
+  };
+  window.__rewind = () => rw;
+  window.__world = () => W;
+
+  // ---------------------------------------------------------------- UI
+  const $ = id => document.getElementById(id);
+  function caption() {
+    const st = rw.stats();
+    $('cap-take').innerHTML = 'take <b>' + D.take + '</b>' + (st.rewinding ? ' &middot; <b style="color:var(--accent)">rewinding</b>' : D.paused ? ' &middot; <b>paused</b>' : '');
+    $('cap-time').innerHTML = 'world <b>' + (W.t / 1000).toFixed(2) + ' s</b>';
+    $('cap-hist').innerHTML = 'history <b>' + st.seconds.toFixed(1) + ' s</b>';
+    $('cap-mem').innerHTML = 'memory <b>' + Math.round(st.bytes / 1024) + ' KB</b>';
+    if ((D.clock / STEP | 0) % 6 === 0 || FREEZE) $('stat').innerHTML =
+      'entries <b>' + st.frames + '</b> / ' + st.capacity + ' &middot; cursor <b>' + st.cursor + '</b><br>' +
+      'per step <b>' + (st.avgBytes / 1024).toFixed(2) + ' KB</b> &middot; per second <b>' + Math.round(st.bytesPerSecond / 1024) + ' KB</b><br>' +
+      'energy <b>' + (st.energyMode === 'charges' ? st.charges + ' charges' : Math.round(st.energy * 100) + '%') + '</b> &middot; restores <b>' + st.restores + '</b><br>' +
+      'last release <b>' + (D.lastRelease ? '-' + (D.lastRelease.ms / 1000).toFixed(2) + ' s (' + D.lastRelease.why + ')' : '-') + '</b>';
+  }
+  function setFill(inp) { const f = (inp.value - inp.min) / (inp.max - inp.min) * 100; inp.style.setProperty('--fill', f + '%'); }
+  function buildParams() {
+    const host = $('params'); host.innerHTML = '';
+    for (const p of PARAMS) {
+      const row = document.createElement('div'); row.className = 'row';
+      row.innerHTML = `<label><span>${p.label}</span><output>${p.fmt ? p.fmt(P[p.key]) : P[p.key]}</output></label><input type="range" min="${p.min}" max="${p.max}" step="${p.step}" value="${P[p.key]}">`;
+      const inp = row.querySelector('input'), out = row.querySelector('output'); setFill(inp);
+      inp.addEventListener('input', () => { P[p.key] = Number(inp.value); out.textContent = p.fmt ? p.fmt(P[p.key]) : P[p.key]; setFill(inp); rw.setParams({ [p.key]: P[p.key] }); });
+      host.appendChild(row);
+    }
+  }
+  function seg(id, get, set) {
+    const el = $(id), sync = () => el.querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', String(b.dataset.v === get())));
+    el.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; set(b.dataset.v); sync(); });
+    sync(); return sync;
+  }
+  const syncs = [];
+  for (const key of ['energy', 'filter', 'tint', 'render', 'touch', 'reduced']) syncs.push(seg(key, () => P[key], v => { P[key] = v; if (key === 'touch' || key === 'reduced') makeRewind(); else rw.setParams({ [key]: v }); }));
+  const syncDrive = seg('drive', () => drive, v => setDrive(v));
+  function setDrive(v) { drive = v; if (v === 'script') restart(); syncDrive(); }
+  seg('scene', () => sceneId, v => { sceneId = v; });
+  const chips = $('variants');
+  VARIANTS.forEach(([name, p], i) => {
+    const b = document.createElement('button'); b.textContent = name; if (i === 0) b.className = 'on';
+    b.addEventListener('click', () => { Object.assign(P, DEF, p); chips.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); makeRewind(); buildParams(); syncs.forEach(s => s()); });
+    chips.appendChild(b);
+  });
+  const rb = $('b-rewind');
+  rb.addEventListener('pointerdown', e => { D.holdBtn = true; rb.classList.add('on'); try { rb.setPointerCapture(e.pointerId); } catch (er) { /* ignore */ } e.preventDefault(); });
+  for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) rb.addEventListener(ev, () => { D.holdBtn = false; rb.classList.remove('on'); });
+  function syncPause() { $('b-pause').classList.toggle('on', D.paused); $('b-pause').textContent = D.paused ? 'Resume (P)' : 'Pause (P)'; }
+  $('b-pause').addEventListener('click', () => { D.paused = !D.paused; syncPause(); });
+  $('b-restart').addEventListener('click', () => restart());
+
+  // ---------------------------------------------------------------- boot
+  W = newWorld();
+  makeRewind();
+  buildParams();
+  Kit.ready(() => {
+    cut = Kit.cutout();
+    try { const R = cut.rigInfo('sword'); if (R && R.set && R.set.stride) STRIDE = R.set.stride * 4; } catch (e) { /* keep default */ }
+    if (T0 != null) {
+      const n = Math.round(T0 / STEP);
+      for (let i = 0; i < n; i++) demoStep();
+      render();
+      if (FREEZE) { window.__frozen = true; return; }
+    }
+    let last = null, acc = 0;
+    function frame(ts) {
+      if (last === null) last = ts;
+      acc += Math.min(200, ts - last); last = ts;
+      while (acc >= STEP) { demoStep(); acc -= STEP; }
+      render();
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  });
+})();
+</script>
+</body>
+</html>

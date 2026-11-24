@@ -1,0 +1,48 @@
+{
+  "id": "dissolve-defeat",
+  "code": "E-03",
+  "name": "Dissolve-out defeat",
+  "kind": "addon",
+  "family": "defeat-feedback",
+  "oneLiner": "A defeated unit blinks white and dissolves from a snapshot of its sprite (dither-noise fade, horizontal slice wipe, pixel crumble with gravity, or flash-then-fade) in about 0.5-1 s, so the game can remove the unit at once and nothing waits for the effect.",
+  "fits": ["turn-based RPG battle", "tactics / strategy RPG", "action RPG", "roguelike", "beat-'em-up", "shoot-'em-up", "monster battler"],
+  "notFor": [
+    "units that stay on the field when down (revivable knocked-out heroes keep their own fallen pose)",
+    "games where the corpse matters to play (looting, raising, blocking)",
+    "non-sprite renderers (3D meshes, DOM elements): the module needs a 2D canvas picture"
+  ],
+  "interfaces": {
+    "time": "realtime",
+    "coords": "side",
+    "layer": "fx",
+    "needs": [
+      "defeat event on the frame HP reaches 0: {target id, sprite rect on screen now, sprite image or a draw callback}",
+      "frame clock in ms (world time that pauses during hit-stop)",
+      "optional: rectangles to keep clear (banner, HUD, windows)"
+    ],
+    "provides": [
+      "promise / busy() per unit for code that chooses to wait",
+      "list of drawn effect rectangles (for other overlays to avoid)"
+    ]
+  },
+  "params": [
+    { "key": "variant", "label": "Variant", "type": "select", "options": ["dither", "slice", "crumble", "flash"], "default": "dither" },
+    { "key": "duration", "label": "Duration (ms)", "type": "range", "min": 300, "max": 1200, "step": 50, "default": 700 },
+    { "key": "flash", "label": "White flash first (ms)", "type": "range", "min": 0, "max": 240, "step": 20, "default": 100 },
+    { "key": "edge", "label": "Edge colour", "type": "select", "options": ["white", "hot", "cold", "crit", "none"], "default": "white" },
+    { "key": "chunk", "label": "Crumble chunk (px)", "type": "select", "options": ["1", "2", "3"], "default": "1" },
+    { "key": "spill", "label": "Spill margin (px)", "type": "range", "min": 0, "max": 8, "step": 1, "default": 3 }
+  ],
+  "variants": [
+    { "name": "Dither fade (default)", "params": { "variant": "dither", "duration": 700, "flash": 100, "edge": "white" } },
+    { "name": "Slice wipe", "params": { "variant": "slice", "duration": 650, "flash": 80, "edge": "cold" } },
+    { "name": "Crumble to dust", "params": { "variant": "crumble", "duration": 900, "flash": 100, "edge": "hot", "chunk": "1" } },
+    { "name": "Quick flash-out", "params": { "variant": "flash", "duration": 450, "flash": 160, "edge": "white" } }
+  ],
+  "assets": [
+    "module/dissolve-defeat.js: the element as one dependency-free script (global GameDNA_DissolveDefeat): snapshot, four variants, clipping, drawing; colours and fade steps through GameDNA_Skin when loaded, built-in pixel16 values otherwise",
+    "no image or audio files"
+  ],
+  "status": "draft",
+  "module": { "file": "module/dissolve-defeat.js", "global": "GameDNA_DissolveDefeat", "version": "1.0.0", "docs": "module/README.md" }
+}

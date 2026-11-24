@@ -1,0 +1,199 @@
+{
+  "id": "procedural-sfx",
+  "code": "F-02",
+  "kind": "addon",
+  "name": "Procedural sound effects",
+  "family": "sound-effects",
+  "oneLiner": "Fourteen game sounds (hit, crit, coin, jump, land, footstep, menu move / confirm / cancel, explosion, laser, power-up, heal, hurt) synthesized live with Web Audio: oscillators, seeded noise, envelopes with attack and release ramps, pitch slides, filters and light FM. Every call is a seeded variation, so repeats never sound copy-pasted; a small mixer caps voices, merges same-frame duplicates, ducks the rest under big sounds and keeps peaks under a soft ceiling. Silent until the player's first click or key, a no-op without Web Audio, and it never touches game state or input. No audio files.",
+  "fits": [
+    "platformer and metroidvania",
+    "action RPG",
+    "turn-based RPG battle",
+    "tactics / strategy RPG",
+    "shoot-em-up and arena shooters",
+    "puzzle and casual games (menus, pickups)",
+    "any game with menus"
+  ],
+  "notFor": [
+    "music (only a duck bus for the game's own music)",
+    "voice or speech",
+    "sample-accurate rhythm games (sounds start ~5 ms after the call)",
+    "realistic foley (this is a stylized 2020s indie palette)"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "fx",
+    "needs": [
+      "the code that decides each event (jump, land, hit, crit, shot, explosion, pickup, heal, hurt, menu move / confirm / cancel)",
+      "a fixed update step in every scene (optional: merge gaps follow game time, ?t= fast-forward stays deterministic)",
+      "distance walked per step and on-ground for footsteps (optional)",
+      "the event's screen x and the screen width for stereo pan (optional)"
+    ],
+    "provides": [
+      "sounds through play(preset, {pan | x + width, volume}) and walk(key, dx, grounded)",
+      "a mixer: master / sfx volume, mute, max voices with priority stealing, merge of same-preset bursts, ducking (and a music input that ducks)",
+      "render(preset, seed) via OfflineAudioContext: the exact samples for tests and waveforms",
+      "event records (recent(), onEvent) and stats() for tests and __state()"
+    ]
+  },
+  "params": [
+    {
+      "key": "master",
+      "label": "Master volume",
+      "type": "range",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.8
+    },
+    {
+      "key": "sfx",
+      "label": "SFX volume",
+      "type": "range",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 1
+    },
+    {
+      "key": "variation",
+      "label": "Variation per call",
+      "type": "range",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.5
+    },
+    {
+      "key": "style",
+      "label": "Style",
+      "type": "select",
+      "options": [
+        "modern",
+        "retro",
+        "soft"
+      ],
+      "default": "modern"
+    },
+    {
+      "key": "pitch",
+      "label": "Pitch (semitones)",
+      "type": "range",
+      "min": -12,
+      "max": 12,
+      "step": 1,
+      "default": 0
+    },
+    {
+      "key": "brightness",
+      "label": "Brightness",
+      "type": "range",
+      "min": 0.4,
+      "max": 1.6,
+      "step": 0.05,
+      "default": 1
+    },
+    {
+      "key": "length",
+      "label": "Length",
+      "type": "range",
+      "min": 0.5,
+      "max": 1.6,
+      "step": 0.05,
+      "default": 1
+    },
+    {
+      "key": "maxVoices",
+      "label": "Max voices",
+      "type": "range",
+      "min": 1,
+      "max": 32,
+      "step": 1,
+      "default": 12
+    },
+    {
+      "key": "duck",
+      "label": "Ducking (dB)",
+      "type": "range",
+      "min": 0,
+      "max": 18,
+      "step": 1,
+      "default": 6
+    },
+    {
+      "key": "stride",
+      "label": "Footstep stride (px)",
+      "type": "range",
+      "min": 4,
+      "max": 200,
+      "step": 1,
+      "default": 22
+    },
+    {
+      "key": "mute",
+      "label": "Mute",
+      "type": "select",
+      "options": [
+        "off",
+        "on"
+      ],
+      "default": "off"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Modern indie (default)",
+      "params": {
+        "style": "modern",
+        "variation": 0.5
+      }
+    },
+    {
+      "name": "Chip retro",
+      "params": {
+        "style": "retro",
+        "brightness": 1.2,
+        "variation": 0.35
+      }
+    },
+    {
+      "name": "Soft and cozy",
+      "params": {
+        "style": "soft",
+        "brightness": 0.8,
+        "length": 1.15,
+        "variation": 0.4
+      }
+    },
+    {
+      "name": "Heavy and low",
+      "params": {
+        "style": "modern",
+        "pitch": -4,
+        "brightness": 0.8,
+        "length": 1.2
+      }
+    },
+    {
+      "name": "Tight and quiet",
+      "params": {
+        "master": 0.6,
+        "length": 0.8,
+        "maxVoices": 8,
+        "duck": 3
+      }
+    }
+  ],
+  "assets": [
+    "module/procedural-sfx.js: the element as one dependency-free script (global GameDNA_Sfx): 14 preset recipes, seeded variation, Web Audio builder for live and offline contexts, mixer (voice limit, merge, ducking, compressor, soft ceiling), gesture unlock",
+    "no audio, image or font files: every sound is synthesized when it plays"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/procedural-sfx.js",
+    "global": "GameDNA_Sfx",
+    "version": "1.0.0",
+    "docs": "module/README.md"
+  }
+}

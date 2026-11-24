@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Spring Water Surface and Splashes</title>
+<style>
+  :root { --bg: #111621; --panel: #1d2533; --ink: #e8eef6; --dim: #9eabbf; --acc: #5fc4ec; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; overflow-x: hidden; }
+  main { max-width: 1100px; margin: 0 auto; padding: 14px 16px 28px; }
+  h1 { font-size: 20px; margin: 0 0 2px; letter-spacing: 0.01em; }
+  .sub { color: var(--dim); margin: 0 0 12px; font-size: 14px; }
+  .stage { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 10px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.45); }
+  #game { display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+  #game.px { image-rendering: pixelated; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-top: 12px; }
+  .seg { display: inline-flex; background: var(--panel); border-radius: 8px; padding: 3px; }
+  .seg button { background: none; border: 0; color: var(--dim); font: inherit; font-size: 14px; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+  .seg button.on { background: #2f3d55; color: var(--ink); }
+  .btn { background: var(--acc); color: #06202c; border: 0; font: inherit; font-weight: 650; font-size: 14px; padding: 8px 14px; border-radius: 8px; cursor: pointer; }
+  .btn.ghost { background: var(--panel); color: var(--ink); font-weight: 500; }
+  label.s { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--dim); min-width: 0; }
+  label.s input { width: 120px; }
+  label.s b { color: var(--ink); font-weight: 600; min-width: 34px; display: inline-block; }
+  select { background: var(--panel); color: var(--ink); border: 0; border-radius: 6px; font: inherit; font-size: 14px; padding: 5px 8px; }
+  .note { color: var(--dim); font-size: 13px; margin-top: 10px; }
+  @media (max-width: 520px) { label.s input { width: 96px; } .seg button { padding: 6px 9px; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Spring water surface and splashes</h1>
+  <p class="sub">The surface is a row of springs: whatever falls in throws a crown of droplets and sends waves to both banks. Floating crates bob on the waves, bodies under the line are tinted by the water, and the bank is mirrored in it. Click or tap the water to drop a stone.</p>
+  <div class="stage"><canvas id="game"></canvas></div>
+  <div class="row">
+    <span class="seg" id="views"><button data-v="pixel">Pixel 384x216</button><button data-v="hd">HD 640x360</button></span>
+    <button class="btn" id="replay">Replay</button>
+    <button class="btn ghost" id="crate">Drop a crate</button>
+    <button class="btn ghost" id="rain">Heavy splashes</button>
+  </div>
+  <div class="row">
+    <label class="s">Waves <input id="pSpr" type="range" min="40" max="300" step="5"><b id="vSpr"></b></label>
+    <label class="s">Damping <input id="pDam" type="range" min="0.3" max="4" step="0.1"><b id="vDam"></b></label>
+    <label class="s">Splash <input id="pSpl" type="range" min="0.2" max="2" step="0.1"><b id="vSpl"></b></label>
+    <label class="s">Droplets <input id="pDro" type="range" min="0" max="2" step="0.1"><b id="vDro"></b></label>
+    <label class="s">Reflection <input id="pRef" type="range" min="0" max="0.6" step="0.05"><b id="vRef"></b></label>
+    <label class="s">Water <select id="pPal"><option>lake</option><option>sea</option><option>swamp</option><option>cave</option></select></label>
+  </div>
+  <p class="note">The scripted scene replays from the same seed; <code>?t=&lt;ms&gt;&amp;freeze=1</code> shows one frame. Nothing here pauses the world: splashes, waves and floaters all run on the game's fixed step.</p>
+</main>
+<script src="../../../pixel-kit/pixel-scene.js"></script>
+<script src="../../../demo-kit/kit-art.js"></script>
+<script src="../../../demo-kit/kit.js"></script>
+<script src="../../pixel-terrain/module/pixel-terrain.js"></script>
+<script src="../module/water-surface.js"></script>
+<script>
+"use strict";
+(function () {
+  var qs = new URLSearchParams(location.search);
+  var VIEW = qs.get('view') === 'hd' ? 'hd' : 'pixel', PX = VIEW === 'pixel';
+  var HAS_T = qs.has('t'), START_T = HAS_T ? Math.max(0, +qs.get('t') || 0) : 0, FREEZE = qs.get('freeze') === '1';
+  var SEED = (+qs.get('seed') || 23) | 0;
+  // ?mut= known-bad demo behaviours for checks/timeline.py: noFish (the fish is left out of the bodies list), walkInPlace
+  var MUT = {}; (qs.get('mut') || '').split(',').forEach(function (k) { if (k) MUT[k] = true; });
+  var NW = PX ? 384 : 640, NH = PX ? 216 : 360, SC = NH / 360, STEP = 1000 / 60;
+  var PXS = window.GameDNA_PixelScene, Kit = window.GameDNA_DemoKit, WS = window.GameDNA_WaterSurface;
+  var cv = document.getElementById('game'), ctx = cv.getContext('2d');
+  cv.className = PX ? 'px' : '';
+  document.querySelectorAll('#views button').forEach(function (b) {
+    b.classList.toggle('on', b.dataset.v === VIEW);
+    b.onclick = function () { var q = new URLSearchParams(location.search); q.delete('t'); q.delete('freeze'); if (b.dataset.v === 'hd') q.set('view', 'hd'); else q.delete('view'); location.search = q.toString(); };
+  });
+
+  /* ------------------------------------------------------------ parameters */
+  var PAR = { spread: 150, damping: 1.5, splash: 1, droplets: 1, reflect: PX ? 0.32 : 0.3, palette: 'lake' };
+  function pushPar() { if (W) W.setParams(PAR); }
+  function bindRange(id, vid, key, fmt) {
+    var el = document.getElementById(id), out = document.getElementById(vid);
+    el.value = PAR[key]; out.textContent = fmt(PAR[key]);
+    el.oninput = function () { PAR[key] = +el.value; out.textContent = fmt(PAR[key]); pushPar(); };
+  }
+
+  /* ------------------------------------------------------------ level shape (world px = native px) */
+  // pixel view: a stone cliff on the left with a waterfall, a lake 96..330 deep at the cliff and shelving to a grass bank
+  var POOL_PX = { x: 96, y: 150, w: 234, h: 26 };
+  function floorPx(x) {
+    if (x < 200) return 172 + Math.round(1.5 * Math.sin(x / 9));
+    if (x < 330) { var u = (x - 200) / 130; return 172 - 27 * (u * u * (3 - 2 * u)); }
+    return 145;
+  }
+  function groundPx(x) {   // walk line (the top of the ground under x); the pool floor inside the lake
+    if (x < 96) return 100;
+    if (x <= 330) return floorPx(x);
+    return 145 - Math.round(Math.max(0, x - 352) * 0.12);
+  }
+  // HD view: the painted lakeside; a near lake fills the bottom of the frame from y 238; the slime starts on the dock
+  // the near lake continues the painted lake toward the viewer: its line sits on the painted lake's near edge and the water body is
+  // dense enough that the painted path and grass below it never show; the quay stones and the archer's rock stand in it
+  var POOL_HD = { x: -8, y: 246, w: 656, h: 114 };
+  // the lake bed (HD), about 60-75 % down the water: a sand and rock floor with stones and weed, seen through the water
+  function bedHd(x) { return Math.round((322 + 7 * Math.sin(x / 61 + 0.8) + 4 * Math.sin(x / 23 + 2.1) - 10 * Math.exp(-Math.pow((x - 560) / 60, 2)) - 8 * Math.exp(-Math.pow((x - 90) / 70, 2))) * 2) / 2; }
+  var DOCK = { x0: 160, x1: 236, y: 204 }, ROCK = { x: 572, y: 221 };
+
+  /* ------------------------------------------------------------ background (cached) */
+  var BG = null;
+  function makeBg() {
+    var c = document.createElement('canvas'); c.width = NW; c.height = NH; var g = c.getContext('2d');
+    if (PX) {
+      var bands = ['#3a6fb0', '#4a80bc', '#5a92c6', '#6ea4d0', '#86b6da', '#a0c8e2', '#bcd8e8'], B = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+      for (var y = 0; y < NH; y++) { var f = y / 150 * (bands.length - 1), i = Math.floor(f), fr = f - i; for (var x = 0; x < NW; x++) { g.fillStyle = bands[Math.min(bands.length - 1, i + (fr * 16 > B[(y & 3) * 4 + (x & 3)] ? 1 : 0))]; g.fillRect(x, y, 1, 1); } }
+      for (var a = -6; a <= 6; a++) { var hw = Math.round(Math.sqrt(42 - a * a)); g.fillStyle = 'rgba(255,244,200,0.25)'; g.fillRect(300 - hw - 3, 28 + a, hw * 2 + 6, 1); g.fillStyle = '#fff4c8'; if (Math.abs(a) < 6) g.fillRect(300 - hw, 28 + a, hw * 2, 1); }
+      [[150, 26, 46], [232, 46, 30], [330, 18, 38]].forEach(function (cl) {
+        var cx = cl[0], cy = cl[1], w = cl[2];
+        g.fillStyle = '#f4f8ff'; g.fillRect(cx, cy, w, 5); g.fillRect(cx + 5, cy - 4, w - 16, 4); g.fillRect(cx + 9, cy - 7, 12, 3); g.fillRect(cx + 3, cy + 5, w - 6, 2);
+        g.fillStyle = '#c4d6ec'; g.fillRect(cx + 2, cy + 6, w - 8, 1); g.fillRect(cx, cy + 4, w, 1);
+      });
+      for (var x2 = 0; x2 < NW; x2++) {
+        var h1 = 96 - 26 * Math.abs(((x2 + 40) % 130) / 65 - 1) - 8 * Math.sin(x2 / 11), h2 = 120 - 14 * Math.sin(x2 / 37 + 1) - 6 * Math.sin(x2 / 9);
+        for (var y2 = Math.round(h1); y2 < NH; y2++) { g.fillStyle = y2 < h1 + 5 && ((x2 + y2) & 1) ? '#c6d6e8' : '#8ea6c4'; g.fillRect(x2, y2, 1, 1); }
+        for (var y3 = Math.round(h2); y3 < NH; y3++) { g.fillStyle = y3 < h2 + 2 ? '#6c88a8' : '#5d7898'; g.fillRect(x2, y3, 1, 1); }
+      }
+      for (var p = 0; p < 30; p++) {
+        var px = (p * 37 + 11) % NW, ph = 16 + (p * 7) % 11, by = 136 + (p * 5) % 6;
+        for (var r = 0; r < ph; r++) { var hw2 = Math.max(0, Math.floor((r + 2) / 3)); g.fillStyle = r % 4 === 3 ? '#2c4a50' : '#36585a'; g.fillRect(px - hw2, by - ph + r, hw2 * 2 + 1, 1); }
+        g.fillStyle = '#2c4a50'; g.fillRect(px - 6, by, 13, NH - by);
+      }
+      g.fillStyle = '#2c4a50'; g.fillRect(0, 142, NW, NH - 142);
+    } else {
+      if (!(Kit && Kit.isReady && Kit.isReady() && Kit.backdrop(g, 'lakeside-day', { x: 0, y: 0, w: NW, h: NH }))) { var gr = g.createLinearGradient(0, 0, 0, NH); gr.addColorStop(0, '#6aa6dc'); gr.addColorStop(1, '#d4e6ee'); g.fillStyle = gr; g.fillRect(0, 0, NW, NH); }
+      // behind the near lake: more of the painted lake's own colour (sampled just above the line), so a deep trough opens onto
+      // water, never onto the painted path; feathered into the painting over 5 px
+      var sm = g.getImageData(260, 236, 200, 6).data, rr = 0, gg = 0, bb = 0, nn = sm.length / 4;
+      for (var q = 0; q < sm.length; q += 4) { rr += sm[q]; gg += sm[q + 1]; bb += sm[q + 2]; }
+      rr = Math.round(rr / nn); gg = Math.round(gg / nn); bb = Math.round(bb / nn);
+      var lg = g.createLinearGradient(0, 238, 0, NH);
+      lg.addColorStop(0, 'rgba(' + rr + ',' + gg + ',' + bb + ',0)'); lg.addColorStop(0.05, 'rgba(' + rr + ',' + gg + ',' + bb + ',1)');
+      lg.addColorStop(0.3, 'rgb(' + Math.round(rr * 0.7) + ',' + Math.round(gg * 0.78) + ',' + Math.round(bb * 0.88) + ')'); lg.addColorStop(1, 'rgb(' + Math.round(rr * 0.35) + ',' + Math.round(gg * 0.45) + ',' + Math.round(bb * 0.6) + ')');
+      g.fillStyle = lg; g.fillRect(140, 238, NW - 140 - 90, NH - 238); g.fillRect(0, 252, NW, NH - 252);
+    }
+    return c;
+  }
+  // pixel view ground: drawn by the E-17 module (meadow art, stone cliff) as scenery only (no blasts)
+  var GROUND = null;
+  function makeGround() {
+    if (!PX || !window.GameDNA_PixelTerrain) return;
+    GROUND = GameDNA_PixelTerrain.create({ w: NW, h: NH, cell: 1, seed: 5, art: 'meadow', scale: 0.6,
+      solid: function (x, y) { return y > groundPx(x) || (x < 96 && y > 100); },
+      hard: function (x, y) { return (x < 96 && y > 104) || y > 206; },
+      outside: { left: true, right: true, top: false, bottom: true }, params: { render: 'pixel' } });
+  }
+
+  /* ------------------------------------------------------------ cast */
+  // pixel fish: 10x5, two tail frames, native facing right (the kit-style flip is computed in one place: drawFish)
+  var FISH = null;
+  function makeFish() {
+    var rows = [[
+      '....ooooo....', '..oowwllloo.o', '.owwlllllloooo', 'olkllllddddoo.', '.oddlllddddoooo', '..oodddddoo..o', '....ooooo....'], [
+      '....ooooo.....', '..oowwllloo...', '.owwlllllloooo', 'olkllllddddoo.', '.oddlllddddooo.', '..oodddddooo..', '....ooooo.....']];
+    var key = { o: '#2a1020', l: '#f08a3c', d: '#c0502a', k: '#1a1024', w: '#ffe6c8' };
+    // rows are drawn head-left; reverse them once so the art's native facing is right (the head leads when it swims right)
+    FISH = rows.map(function (r) { var w = r.reduce(function (m, l) { return Math.max(m, l.length); }, 0); return PXS.strArt(r.map(function (l) { while (l.length < w) l += '.'; return l.split('').reverse().join(''); }), key); });
+  }
+  function drawFish(g, f) {
+    var im = FISH[f.frame & 1], want = f.face > 0 ? 'right' : 'left', flip = want !== 'right';   // native facing: right
+    g.save(); g.translate(Math.round(f.x), Math.round(f.y)); if (flip) g.scale(-1, 1);
+    g.drawImage(im, -Math.round(im.width / 2), -Math.round(im.height / 2)); g.restore();
+  }
+  window.__waterCast = null;
+
+  var W = null, ACT = [], FLT = [], SHOTS = [], EVENTS = [], clock = 0, frame = 0, archerKit = null;
+  function ev(e, id, extra) { var o = { ev: e, id: id, t: Math.round(clock) }; if (extra) for (var k in extra) o[k] = extra[k]; EVENTS.push(o); }
+  function bodies(all) {
+    var out = [];
+    for (var i = 0; i < ACT.length; i++) { var a = ACT[i]; if (a.floatRef || a.noBody) continue; if (MUT.noFish && a.id === 'fish' && !all) continue; out.push({ id: a.id, x: a.x - a.w / 2, y: a.y - a.h, w: a.w, h: a.h }); }
+    for (var j = 0; j < SHOTS.length; j++) { var s = SHOTS[j]; if (!s.dead) out.push({ id: s.id, x: s.x - 2, y: s.y - 2, w: 4, h: 4, kind: 'projectile' }); }
+    return out;
+  }
+  function makeWater() {
+    W = WS.create({ pools: [PX ? { id: 'lake', x: POOL_PX.x, y: POOL_PX.y, w: POOL_PX.w, h: POOL_PX.h, floor: floorPx } : { id: 'lake', x: POOL_HD.x, y: POOL_HD.y, w: POOL_HD.w, h: POOL_HD.h, floor: bedHd }],
+      falls: PX ? [{ x: 96, w: 8, top: 99, strength: 1 }] : [],
+      bodies: bodies, scale: SC, seed: SEED,
+      solid: PX ? function (x, y) { return y > groundPx(x); } : function (x, y) { return (x < 150 && y > 232) || (x > 540 && y > 224); },
+      params: { spread: PAR.spread, damping: PAR.damping, splash: PAR.splash, droplets: PAR.droplets, reflect: PAR.reflect, palette: PAR.palette, render: PX ? 'pixel' : 'smooth', clarity: PX ? 0.42 : 0.8, depthAlpha: PX ? 0.86 : 0.99 },
+      onSplash: function (info) { ev('splash', info.id, { x: Math.round(info.x), kind: info.kind }); },
+      onSound: function (name, info) { if (name === 'exit') ev('exit', String(info.id).replace(/^[bf]:/, ''), { x: Math.round(info.x) }); } });
+  }
+  function actor(id, o) { var a = { id: id, x: o.x, y: o.y, w: o.w, h: o.h, vx: 0, vy: 0, face: o.face || 1, ground: true, kind: o.kind, pal: o.pal, frame: 0, dist: 0, moved: 0, target: null, plan: o.plan || [], wet: 0, mode: 'walk', floatRef: null, noBody: false }; ACT.push(a); return a; }
+  function setup() {
+    ACT = []; FLT = []; SHOTS = []; EVENTS = []; clock = 0; frame = 0;
+    makeWater();
+    if (PX) {
+      actor('hero', { kind: 'walker', pal: 'hero', x: 362, y: groundPx(362), w: 8, h: 15, face: -1, plan: [[0, -26], [3650, 0], [9400, 0]] });
+      actor('guard', { kind: 'walker', pal: 'guard', x: 30, y: 100, w: 8, h: 15, face: 1, plan: [[0, 0], [1900, 26], [4000, 0]] });
+      actor('fish', { kind: 'fish', x: 168, y: 160, w: 12, h: 6, face: 1 });
+      FLT.push(addFloat('barrel', 'barrel', { x: 84, y: 100 - 14, w: 12, h: 14, density: 0.55, onLand: true }));
+      FLT.push(addFloat('crate', 'crate', { x: 236, w: 14, h: 13, density: 0.42 }));
+    } else {
+      actor('slime', { kind: 'slime', x: 176, y: DOCK.y, w: 44, h: 36, face: 1 });
+      actor('archer', { kind: 'archer', x: ROCK.x, y: ROCK.y, w: 30, h: 60, face: -1 });
+      actor('harpy', { kind: 'harpy', x: 720, y: 40, w: 46, h: 54, face: -1 });
+      actor('wisp', { kind: 'wisp', x: 108, y: 196, w: 30, h: 40, face: 1 });
+      ACT[1].noBody = true; ACT[3].noBody = true;
+      FLT.push(addFloat('barrel', 'barrel', { x: -40, y: 140, w: 32, h: 45, density: 0.62, thrown: { vx: 560, vy: -170, at: 2700 } }));
+      FLT.push(addFloat('crate', 'crate', { x: 470, y: -60, w: 36, h: 31, density: 0.42, thrown: { vx: -20, vy: 0, at: 8100 } }));
+    }
+    window.__waterCast = PX ? { hero: { actor: 'hero' }, guard: { actor: 'guard' }, fish: FISH } : null;
+  }
+  // a prop that is not yet in the water (on the cliff, or thrown later) is moved by the demo until it touches the lake;
+  // from then on the module's floater carries it
+  function addFloat(id, kind, o) {
+    var it = { id: id, kind: kind, x: o.x, y: o.y != null ? o.y : null, w: o.w, h: o.h, vx: 0, vy: 0, density: o.density, f: null, pending: !!(o.onLand || o.thrown), thrown: o.thrown || null, onLand: !!o.onLand, shown: !o.thrown };
+    if (!it.pending) it.f = W.addFloater({ id: id, x: o.x, w: o.w, h: o.h, density: o.density, tilt: PX ? 0 : 1, drift: 0.4 });
+    return it;
+  }
+  function planVx(a) { var v = 0; for (var i = 0; i < a.plan.length; i++) if (clock >= a.plan[i][0]) v = a.plan[i][1]; return v; }
+
+  /* ------------------------------------------------------------ step (one clock: ?t= runs the same steps) */
+  function stepPixelWalker(a, dt) {
+    var want = planVx(a), x0 = a.x, depth = W.inWater({ x: a.x - a.w / 2, y: a.y - a.h, w: a.w, h: a.h });
+    if (a.mode === 'walk') {
+      a.vx = want * (depth > 0.5 ? 0.55 : depth > 0.15 ? 0.75 : 1);
+      if (want) a.face = want > 0 ? 1 : -1;
+      var nx = a.x + a.vx * dt, gy = groundPx(nx);
+      if (a.id === 'guard' && clock >= 4500 && a.y <= 100.5 && a.mode === 'walk' && !a.jumped) { a.jumped = true; a.mode = 'air'; a.vx = 95; a.vy = -150; ev('jump', a.id); }
+      else if (false) { a.mode = 'air'; a.vx = 70; a.vy = -150; ev('jump', a.id); }
+      else if (gy - a.y > 3) { a.x = nx; a.mode = 'air'; a.vy = 0; }
+      else if (a.y - gy > 4) { a.vx = 0; }
+      else { a.x = nx; a.y = gy; }
+    } else if (a.mode === 'air') {
+      var drag = depth > 0 ? 5 : 0;
+      a.vy += 620 * dt; a.vy -= a.vy * drag * dt; a.vx -= a.vx * drag * dt * 0.6;
+      a.x += a.vx * dt; a.y += a.vy * dt;
+      var g2 = groundPx(a.x);
+      if (a.y >= g2 && !(MUT.noBedClamp && a.jumped)) { a.y = g2; a.mode = 'walk'; a.vy = 0; ev('land', a.id, { inWater: depth > 0 }); }
+    }
+    if (a.id === 'guard' && a.jumped && a.mode === 'air' && a.vy > 40) a.pose = 'dive';
+    if (a.id === 'guard' && a.jumped && a.mode === 'air' && depth > 0.35) { a.mode = 'swim'; a.pose = 'swim'; ev('swim', a.id); }
+    if (a.mode === 'swim') {
+      // slowed: drag kills the dive, then a level swim 5 px under the line toward the shallows, a slow bob, kick frames by distance
+      var sy0 = W.restY(a.x) || POOL_PX.y, wantY = sy0 + 2.5 + 7.5 + Math.sin(clock / 420) * 1.2;
+      a.vy += (wantY - a.y) * 14 * dt; a.vy *= Math.pow(0.02, dt); a.y += a.vy * dt;
+      a.vx += (16 - a.vx) * Math.min(1, 2 * dt); a.x += a.vx * dt; a.face = 1;
+      if (!MUT.noBedClamp && a.y > groundPx(a.x)) { a.y = groundPx(a.x); if (a.vy > 0) a.vy = 0; }   // never through the lake bed
+      if (floorPx(a.x) - sy0 < 12 && a.x > 230) { a.mode = 'walk'; a.pose = null; a.y = groundPx(a.x); ev('stand', a.id); }
+    }
+    if (a.id === 'guard' && a.mode === 'walk' && a.jumped) { a.vx = (a.x < 292 ? 34 : 0) * (depth > 0.5 ? 0.7 : depth > 0.15 ? 0.85 : 1); a.x = Math.min(292, a.x + a.vx * dt); a.y = groundPx(a.x); if (a.vx) a.face = 1; }
+    a.moved = Math.abs(a.x - x0); a.dist += a.moved;
+    if (a.mode === 'swim') { a.frame = Math.floor(a.dist / 5) % 2; a.anim = 'swim'; a.wet = depth; a.target = null; if (frame % 16 === 0) W.bubble(a.x + 8, a.y - 8, 0.9); return; }
+    a.frame = a.mode === 'walk' && (MUT.walkInPlace || a.moved > 0.05) ? (MUT.walkInPlace ? Math.floor(clock / 160) % 2 : Math.floor(a.dist / 4) % 2) : 0;   // (mutant: walk frames on a timer)
+    a.anim = a.mode === 'air' ? 'air' : a.moved > 0.05 ? 'walk' : 'idle';
+    a.wet = depth;
+    var other = a.id === 'hero' ? ACT[1] : ACT[0];
+    if (a.mode === 'walk' && a.moved < 0.05) { a.target = clock > 9000 ? other.id : (a.id === 'hero' ? 'fish' : null); if (a.target) { var tx = ACT.filter(function (q) { return q.id === a.target; })[0]; if (tx) a.face = tx.x > a.x ? 1 : -1; } }
+    else a.target = null;
+    // bubbles rise from a body that is fully under water (its breath)
+    if (depth >= 0.95 && frame % 14 === 0) W.bubble(a.x + a.face * 3, a.y - a.h + 3, 0.9);
+  }
+  var fishPlan = [[1880, 'jump', 62, -200], [7550, 'jump', -60, -190]];
+  function stepFish(a, dt) {
+    var sy = W.surfaceY(a.x), x0 = a.x;
+    if (a.mode === 'walk') {   // swims back and forth a few px under the surface
+      for (var i = 0; i < fishPlan.length; i++) if (!fishPlan[i].done && clock >= fishPlan[i][0]) { fishPlan[i].done = true; a.mode = 'air'; a.vx = fishPlan[i][2]; a.vy = fishPlan[i][3]; a.face = a.vx > 0 ? 1 : -1; ev('leap', a.id); }
+      if (a.mode === 'walk') { a.vx = a.face * 14; a.x += a.vx * dt; if (a.x > 225) a.face = -1; if (a.x < 130) a.face = 1; a.y += ((sy != null ? sy + 9 : 160) - a.y) * Math.min(1, 3 * dt); }
+    } else {
+      a.vy += 620 * dt; a.x += a.vx * dt; a.y += a.vy * dt;
+      if (a.vy > 0 && sy != null && a.y > sy + 9) { a.mode = 'walk'; a.vx = a.face * 14; }
+    }
+    a.frame = Math.floor(clock / (a.mode === 'air' ? 90 : 220)) % 2;
+    a.moved = Math.abs(a.x - x0); a.anim = a.mode === 'air' ? 'leap' : 'swim'; a.target = null;
+  }
+  function stepFloatProp(it, dt) {
+    if (it.f) return;
+    if (PX) {   // the barrel on the cliff edge: the guard walks into it and it rolls off
+      var gd = ACT[1];
+      if (it.vx === 0 && gd.x + gd.w / 2 >= it.x - it.w / 2 - 1 && gd.y <= 101) { it.vx = 40; ev('push', it.id); }
+      if (it.vx) { it.x += it.vx * dt; if (it.x - it.w / 2 > 96 || it.vy) { it.vy += 620 * dt; it.y += it.vy * dt; } }
+      if (it.y + it.h > POOL_PX.y - 20 && it.x > 98) { it.f = W.addFloater({ id: it.id, x: Math.max(it.x, 96 + it.w / 2 + 1), y: it.y, w: it.w, h: it.h, density: it.density, vy: it.vy, vx: 10, tilt: 0, drift: 0.5 }); ev('fall', it.id); }
+    } else {
+      var th = it.thrown; if (clock < th.at) return;
+      if (!it.shown) { it.shown = true; it.vx = th.vx; it.vy = th.vy; ev('thrown', it.id); }
+      it.vy += 900 * dt; it.x += it.vx * dt; it.y += it.vy * dt;
+      if (it.y + it.h > POOL_HD.y - 30) { it.f = W.addFloater({ id: it.id, x: it.x, y: it.y, w: it.w, h: it.h, density: it.density, vy: it.vy, vx: it.vx * 0.15, tilt: 1, drift: 0.4 }); }
+    }
+  }
+  // HD cast
+  function stepSlime(a, dt) {
+    if (a.floatRef) { var f = a.floatRef; a.x = f.x; a.y = f.y + f.h; a.vx = 0; a.anim = 'float'; a.target = 'wisp'; a.face = -1; return; }
+    if (a.mode === 'walk') {   // hops along the dock: moves only while in the air
+      a.vx = 0; a.anim = 'idle';
+      if (clock > 300 && Math.floor((clock - 300) / 560) !== a.hops && clock < 2200) {
+        a.hops = Math.floor((clock - 300) / 560); a.mode = 'air'; a.vy = -260; a.vx = a.x > 214 ? 120 : 70; ev(a.x > 214 ? 'leap' : 'hop', a.id);
+      }
+    } else {
+      a.vy += 900 * dt; a.x += a.vx * dt; a.y += a.vy * dt; a.anim = 'hop';
+      if (a.x < DOCK.x1 + 6 && a.y >= DOCK.y && a.vy > 0) { a.y = DOCK.y; a.mode = 'walk'; }
+      else if (a.y > POOL_HD.y - a.h * 0.7 && a.x > DOCK.x1) {
+        a.floatRef = W.addFloater({ id: 'slime-f', x: a.x, y: a.y - a.h, w: a.w, h: a.h, density: 0.62, vy: a.vy, vx: a.vx * 0.2, tilt: 0 });
+        a.mode = 'float';
+      }
+    }
+    a.face = 1; a.target = null;
+  }
+  var ARROWS = [[3700, 470], [4250, 420], [4800, 505]];
+  function stepArcher(a, dt) {
+    for (var i = 0; i < ARROWS.length; i++) {
+      var q = ARROWS[i];
+      if (!q.fired && clock >= q[0] - 380) { q.fired = true; }
+      if (!q.loosed && clock >= q[0]) {
+        q.loosed = true;
+        var sx = a.x - 22, sy = a.y - 40, tx = q[1], ty = POOL_HD.y, T = 0.42, vx = (tx - sx) / T, vy = (ty - sy - 0.5 * 900 * T * T) / T;
+        SHOTS.push({ id: 'arrow' + (i + 1), x: sx, y: sy, vx: vx, vy: vy, wet: false, life: 0, dead: false, a: 1 });
+        ev('shoot', 'arrow' + (i + 1));
+      }
+    }
+    var aim = null; for (var j = 0; j < ARROWS.length; j++) if (clock < ARROWS[j][0] + 400) { aim = ARROWS[j][1]; break; }
+    a.face = -1; a.target = aim != null ? aim : 'slime'; a.vx = 0; a.anim = 'shoot';
+  }
+  function stepHarpy(a, dt) {
+    // glides in, dives into the lake, bursts out and climbs away (keyframed path, one clock)
+    var K = [[0, 720, 40], [5400, 720, 40], [5950, 520, 150], [6250, 430, 290], [6700, 410, 300], [7000, 384, 214], [7600, 230, 90], [8400, 60, -60], [99999, 60, -60]];
+    var t = clock, i = 0; while (i < K.length - 2 && t > K[i + 1][0]) i++;
+    var k0 = K[i], k1 = K[i + 1], u = Math.min(1, Math.max(0, (t - k0[0]) / (k1[0] - k0[0]))), e = u * u * (3 - 2 * u);
+    if (i === 3 || i === 2) e = u;   // straight dive
+    var nx = k0[1] + (k1[1] - k0[1]) * e, ny = k0[2] + (k1[2] - k0[2]) * e;
+    a.vx = (nx - a.x) / dt; a.vy = (ny - a.y) / dt; a.x = nx; a.y = ny;
+    if (Math.abs(a.vx) > 1) a.face = a.vx > 0 ? 1 : -1;
+    a.anim = clock < 5400 ? 'away' : i === 2 || i === 3 ? 'dive' : i === 4 ? 'under' : 'fly'; a.target = null; a.noBody = clock < 5400 || clock > 8400;
+    // pose: along the path while diving (head first, wings tucked), level and slow under water, beating wings on the way up
+    var ang = Math.atan2(a.vy, a.vx) - (a.face < 0 ? Math.PI : 0); while (ang > Math.PI) ang -= 2 * Math.PI; while (ang < -Math.PI) ang += 2 * Math.PI;
+    if (a.anim === 'dive') { a.rot = Math.max(-1.35, Math.min(1.35, ang)); a.sq = 0.22; }
+    else if (a.anim === 'under') { a.rot = a.rot * 0.9; a.sq = 0.18; }
+    else { a.rot = Math.max(-0.6, Math.min(0.6, ang)) * 0.7; a.sq = -0.14 * Math.sin(clock / 1000 * 2 * Math.PI * 5.5); }
+  }
+  function stepWisp(a) {
+    var sl = ACT[0];
+    a.x = 108 + Math.sin(clock / 1500) * 16; a.y = 192 + Math.sin(clock / 640) * 6;
+    a.face = sl.x > a.x ? 1 : -1; a.target = 'slime'; a.vx = 0; a.anim = 'float';
+  }
+  function stepShot(s, dt) {
+    if (s.dead) return;
+    if (s.stone) {
+      var sy1 = W.surfaceY(s.x), fl = W.floorY(s.x);
+      if (s.rest != null) { s.rest += dt; if (s.rest > 1.6) s.a -= dt * 1.5; if (s.a <= 0) s.dead = true; return; }
+      if (sy1 != null && s.y > sy1) { s.wet = true; s.vy = s.vy * Math.pow(0.03, dt) + 120 * dt; } else s.vy += 900 * SC * dt;
+      s.y += s.vy * dt;
+      if (fl != null && s.y + s.r > fl) { s.y = fl - s.r; s.rest = 0; }
+      return;
+    }
+    s.life += dt;
+    var sy = W.surfaceY(s.x);
+    if (!s.wet && sy != null && s.y > sy) { s.wet = true; }
+    if (s.wet) { s.vx *= Math.pow(0.08, dt); s.vy = s.vy * Math.pow(0.05, dt) + 30 * dt; s.a -= dt * 0.7; if (s.a <= 0) s.dead = true; }
+    else s.vy += 900 * dt;
+    s.x += s.vx * dt; s.y += s.vy * dt;
+    (s.trail || (s.trail = [])).push([s.x - Math.cos(Math.atan2(s.vy, s.vx)) * 22, s.y - Math.sin(Math.atan2(s.vy, s.vx)) * 22]); if (s.trail.length > 7) s.trail.shift();
+    if (Math.abs(s.vx) + Math.abs(s.vy) > 1) s.ang = Math.atan2(s.vy, s.vx);
+    var fb = W.floorY(s.x); if (fb != null && s.y > fb - 1) { s.y = fb - 1; s.vy = 0; s.vx = 0; }
+  }
+  function step() {
+    frame++; clock += STEP;
+    var dt = STEP / 1000;
+    if (PX) { stepPixelWalker(ACT[0], dt); stepPixelWalker(ACT[1], dt); stepFish(ACT[2], dt); }
+    else { stepSlime(ACT[0], dt); stepArcher(ACT[1], dt); stepHarpy(ACT[2], dt); stepWisp(ACT[3]); }
+    FLT.forEach(function (it) { stepFloatProp(it, dt); });
+    SHOTS.forEach(function (s) { stepShot(s, dt); });
+    W.update(STEP);
+  }
+
+  /* ------------------------------------------------------------ draw */
+  function drawBarrelHD(g, cx, top, w, h, ang) {
+    g.save(); g.translate(cx, top + h / 2); g.rotate(ang);
+    var x = -w / 2, y = -h / 2, r = w * 0.18;
+    var gr = g.createLinearGradient(x, 0, x + w, 0);
+    gr.addColorStop(0, '#5a3418'); gr.addColorStop(0.28, '#b97a40'); gr.addColorStop(0.5, '#a0662f'); gr.addColorStop(1, '#4a2a12');
+    g.beginPath(); g.moveTo(x + r, y); g.quadraticCurveTo(x - 2.5, 0, x + r, y + h); g.lineTo(x + w - r, y + h); g.quadraticCurveTo(x + w + 2.5, 0, x + w - r, y); g.closePath();
+    g.fillStyle = gr; g.fill();
+    g.strokeStyle = 'rgba(52,26,10,0.55)'; g.lineWidth = 1;
+    for (var k = 1; k < 5; k++) { var sx = x + w * k / 5; g.beginPath(); g.moveTo(sx + (k - 2.5) * 0.4, y + 1); g.quadraticCurveTo(sx + (k - 2.5) * 1.3, 0, sx + (k - 2.5) * 0.4, y + h - 1); g.stroke(); }
+    [y + h * 0.2, y + h * 0.78].forEach(function (hy) {
+      var hg = g.createLinearGradient(0, hy - 2, 0, hy + 3); hg.addColorStop(0, '#9aa2ae'); hg.addColorStop(0.5, '#555c68'); hg.addColorStop(1, '#2e333c');
+      g.fillStyle = hg; g.beginPath(); g.moveTo(x + r * 0.55, hy - 2); g.lineTo(x + w - r * 0.55, hy - 2); g.lineTo(x + w - r * 0.45, hy + 2.5); g.lineTo(x + r * 0.45, hy + 2.5); g.closePath(); g.fill();
+      g.fillStyle = 'rgba(255,255,255,0.35)'; g.fillRect(x + w * 0.2, hy - 1.6, w * 0.22, 0.9);
+    });
+    g.fillStyle = 'rgba(255,226,170,0.25)'; g.beginPath(); g.ellipse(x + w * 0.3, y + h * 0.48, w * 0.06, h * 0.26, 0, 0, 6.283); g.fill();
+    g.beginPath(); g.moveTo(x + r, y); g.quadraticCurveTo(x - 2.5, 0, x + r, y + h); g.lineTo(x + w - r, y + h); g.quadraticCurveTo(x + w + 2.5, 0, x + w - r, y); g.closePath();
+    g.strokeStyle = '#2a170a'; g.lineWidth = 1.6; g.stroke();
+    g.restore();
+  }
+  function drawCrateHD(g, cx, top, w, h, ang) {
+    g.save(); g.translate(cx, top + h / 2); g.rotate(ang);
+    var x = -w / 2, y = -h / 2, b = Math.max(3, w * 0.14);
+    var gr = g.createLinearGradient(x, y, x + w, y + h); gr.addColorStop(0, '#c48a4c'); gr.addColorStop(1, '#7e4f26');
+    g.fillStyle = gr; g.fillRect(x, y, w, h);
+    g.strokeStyle = 'rgba(70,38,14,0.6)'; g.lineWidth = 1;
+    for (var k = 1; k < 4; k++) { g.beginPath(); g.moveTo(x + b, y + h * k / 4); g.lineTo(x + w - b, y + h * k / 4); g.stroke(); }
+    var fr = g.createLinearGradient(x, y, x, y + h); fr.addColorStop(0, '#d9a066'); fr.addColorStop(1, '#8c5a2c');
+    g.fillStyle = fr; g.fillRect(x, y, w, b); g.fillRect(x, y + h - b, w, b); g.fillRect(x, y, b, h); g.fillRect(x + w - b, y, b, h);
+    g.save(); g.beginPath(); g.rect(x + b, y + b, w - 2 * b, h - 2 * b); g.clip();
+    g.strokeStyle = '#a56f3a'; g.lineWidth = b * 0.9; g.beginPath(); g.moveTo(x + b, y + h - b); g.lineTo(x + w - b, y + b); g.stroke();
+    g.strokeStyle = 'rgba(60,32,12,0.6)'; g.lineWidth = 1; g.beginPath(); g.moveTo(x + b, y + h - b + b * 0.45); g.lineTo(x + w - b + b * 0.45, y + b); g.stroke();
+    g.restore();
+    g.fillStyle = '#3a2a1e'; [[x + b / 2, y + b / 2], [x + w - b / 2, y + b / 2], [x + b / 2, y + h - b / 2], [x + w - b / 2, y + h - b / 2]].forEach(function (n) { g.beginPath(); g.arc(n[0], n[1], 1.1, 0, 6.283); g.fill(); });
+    g.fillStyle = 'rgba(255,236,190,0.28)'; g.fillRect(x + 1, y + 1, w - 2, 1.2);
+    g.strokeStyle = '#2a170a'; g.lineWidth = 1.6; g.strokeRect(x, y, w, h);
+    g.restore();
+  }
+  var PAINT = { crate: null, barrel: null }, STONE = null, BEDIMG = null;
+  // painted props for the HD floaters, cut from the demo kit's painted crate stack (no new art): the upper crate, and the barrel
+  // with the sack in front of its lower left removed by mirroring the barrel's right half (that part floats under water)
+  function loadPaint(done) {
+    var A = window.GameDNA_DemoKitArt && GameDNA_DemoKitArt.sprites.crates, n = 3, SC0 = window.GameDNA_DemoKitArt && GameDNA_DemoKitArt.scenes['lakeside-day'];
+    function fin() { if (--n === 0) done(); }
+    var bi = new Image(); bi.onload = function () { BEDIMG = bi; fin(); }; bi.onerror = fin; if (SC0) bi.src = SC0.src; else fin();
+    var st = new Image(); st.onload = function () { STONE = st; fin(); }; st.onerror = fin; st.src = '../../../skins/painted-impasto/assets/pack/prop-stone.webp';
+    if (!A) { fin(); return; }
+    var im = new Image(); im.onload = function () {
+      var k = im.width / 341;
+      var c = document.createElement('canvas'); c.width = Math.round(144 * k); c.height = Math.round(122 * k); c.getContext('2d').drawImage(im, 38 * k, 2 * k, 144 * k, 122 * k, 0, 0, c.width, c.height); PAINT.crate = c;
+      var b = document.createElement('canvas'), bw = Math.round(156 * k), bh = Math.round(222 * k); b.width = bw; b.height = bh; var bg = b.getContext('2d');
+      bg.drawImage(im, 181 * k, 44 * k, 156 * k, 222 * k, 0, 0, bw, bh);
+      var cut = Math.round(66 * k), half = Math.round(78 * k);   // below the barrel's top band, the left half mirrored from the right
+      bg.clearRect(0, cut, half, bh - cut);
+      bg.save(); bg.translate(bw, 0); bg.scale(-1, 1); bg.drawImage(b, bw - half, cut, half, bh - cut, bw - half, cut, half, bh - cut); bg.restore();
+      PAINT.barrel = b; fin();
+    }; im.onerror = fin; im.src = A.src;
+  }
+  // HD shore: varied pieces cut from one painted stone prop (the big mossy stone and its three loose rocks), different sizes, a few
+  // degrees of turn, set into the water line, some half or fully under it (drawn before the water, so the water covers them)
+  var SHORE = [ // [piece, x, baseY, height, rot]
+    ['r2', 82, 251, 15, 0.05], ['big', 122, 262, 38, -0.06], ['r1', 152, 251, 13, 0.18], ['r3', 101, 250, 9, -0.2], ['r2', 176, 258, 16, 0.1],
+    ['r3', 509, 249, 8, 0.12], ['r1', 530, 253, 17, -0.12], ['big', 592, 268, 44, 0.04], ['r2', 627, 251, 15, -0.08], ['r3', 558, 252, 11, 0.25]];
+  var PIECES = { big: [0, 0, 97, 112], r1: [3, 84, 24, 20], r2: [55, 75, 30, 29], r3: [39, 95, 19, 12] };
+  var PIECEC = null;
+  function pieces() {   // each loose rock cut out with a feathered oval mask, so no straight crop edge shows
+    if (PIECEC || !STONE) return PIECEC;
+    var k = STONE.width / 97; PIECEC = {};
+    Object.keys(PIECES).forEach(function (id) {
+      var P = PIECES[id], c = document.createElement('canvas'); c.width = Math.round(P[2] * k); c.height = Math.round(P[3] * k);
+      var q = c.getContext('2d'); q.drawImage(STONE, P[0] * k, P[1] * k, P[2] * k, P[3] * k, 0, 0, c.width, c.height);
+      if (id !== 'big') {
+        q.globalCompositeOperation = 'destination-in';
+        var gr = q.createRadialGradient(c.width / 2, c.height * 0.55, 0, c.width / 2, c.height * 0.55, c.width / 2);
+        gr.addColorStop(0, 'rgba(0,0,0,1)'); gr.addColorStop(0.82, 'rgba(0,0,0,1)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+        q.save(); q.translate(0, 0); q.scale(1, c.height / c.width * 1.05); q.fillStyle = gr; q.fillRect(0, 0, c.width, c.width * 2); q.restore();
+      }
+      PIECEC[id] = c;
+    });
+    return PIECEC;
+  }
+  function drawBanks(g) {
+    if (PX || !pieces()) return;
+    SHORE.forEach(function (q) {
+      var c = PIECEC[q[0]], h = q[3], w = h * c.width / c.height;
+      g.save(); g.translate(q[1], q[2]); g.rotate(q[4]); g.drawImage(c, -w / 2, -h, w, h); g.restore();
+    });
+  }
+  // HD lake bed, built from the painted art already in the scene: the backdrop's own painted dirt path (sampled once, tinted to
+  // the water's colour) as the floor, the painted shore rocks (tinted, sunk into it) as stones, a soft depth fade and slow caustic
+  // light bands; the top edge is feathered into the water
+  var BED = null;
+  function makeBed() {
+    var A = window.GameDNA_DemoKitArt && GameDNA_DemoKitArt.scenes['lakeside-day'];
+    if (!A || !BEDIMG || !pieces()) return null;
+    var k = BEDIMG.width / 1440, c = document.createElement('canvas'), dpr = 2; c.width = 656 * dpr; c.height = 100 * dpr; var q = c.getContext('2d');
+    q.drawImage(BEDIMG, 120 * k, 600 * k, 980 * k, 110 * k, 0, 0, c.width, c.height);              // painted path: dirt, pebbles, grass edges
+    q.globalCompositeOperation = 'source-atop'; q.fillStyle = 'rgba(18,66,96,0.46)'; q.fillRect(0, 0, c.width, c.height);   // seen through water
+    q.globalCompositeOperation = 'source-over';
+    // painted stones (the shore pieces, tinted the same way), varied sizes and turns, half sunk into the floor
+    var r = 11, rn = function () { r = (r * 16807) % 2147483647; return r / 2147483647; }, ids = ['big', 'r3', 'r2', 'r1', 'big', 'r3', 'r2'];
+    var rocks = [];
+    ids.forEach(function (id, i) {
+      var src = PIECEC[id], t = document.createElement('canvas'); t.width = src.width; t.height = src.height; var tg = t.getContext('2d');
+      tg.drawImage(src, 0, 0); tg.globalCompositeOperation = 'source-atop'; tg.fillStyle = 'rgba(14,58,88,' + (0.5 + rn() * 0.15).toFixed(2) + ')'; tg.fillRect(0, 0, t.width, t.height);
+      var h = id === 'big' ? 18 + rn() * 12 : 6 + rn() * 7;
+      rocks.push({ c: t, x: [44, 63, 210, 236, 452, 470, 598][i] + rn() * 10, h: h, w: h * t.width / t.height, rot: (rn() - 0.5) * 0.5, sink: id === "big" ? 0.2 + rn() * 0.15 : 0.5 + rn() * 0.15 });
+    });
+    return { tex: c, rocks: rocks };
+  }
+  function drawBed(g) {
+    if (PX) return;
+    if (!BED) BED = makeBed();
+    if (!BED) return;
+    var t = clock / 1000;
+    g.save();
+    g.beginPath(); g.moveTo(-8, 360); for (var x = -8; x <= 648; x += 4) g.lineTo(x, bedHd(x)); g.lineTo(648, 360); g.closePath(); g.clip();
+    g.drawImage(BED.tex, -8, 300, 656, 60);
+    // caustics: slow wavy light bands on the floor
+    g.filter = 'blur(2.5px)'; g.strokeStyle = 'rgba(160,220,230,0.16)'; g.lineWidth = 3.2;
+    for (var b = 0; b < 5; b++) {
+      g.beginPath();
+      for (var x2 = -8; x2 <= 648; x2 += 8) { var y2 = bedHd(x2) + 4 + b * 5 + 2.2 * Math.sin(x2 / 23 + t * 1.1 + b * 1.9) + 1.5 * Math.sin(x2 / 9 - t * 0.7 + b); if (x2 === -8) g.moveTo(x2, y2); else g.lineTo(x2, y2); }
+      g.stroke();
+    }
+    g.filter = 'none';
+    var dg = g.createLinearGradient(0, 300, 0, 360); dg.addColorStop(0, 'rgba(12,40,70,0.05)'); dg.addColorStop(1, 'rgba(8,24,48,0.75)'); g.fillStyle = dg; g.fillRect(-8, 296, 656, 64);
+    g.restore();
+    BED.rocks.forEach(function (o) {
+      var y = bedHd(o.x) + o.h * o.sink;
+      g.save(); g.translate(o.x, y); g.rotate(o.rot); g.drawImage(o.c, -o.w / 2, -o.h, o.w, o.h); g.restore();
+    });
+    // the floor's top edge fades into the water instead of a hard line
+    g.save(); g.filter = 'blur(3px)'; g.strokeStyle = 'rgba(26,82,116,0.6)'; g.lineWidth = 7;
+    g.beginPath(); for (var x3 = -16; x3 <= 656; x3 += 4) { if (x3 === -16) g.moveTo(x3, bedHd(x3) + 1); else g.lineTo(x3, bedHd(x3) + 1); } g.stroke(); g.restore();
+  }
+  function drawFloat(g, it) {
+    var cx, top, ang = 0;
+    if (it.f) { cx = it.f.x; top = it.f.y; ang = it.f.angle; } else { if (!it.shown) return; cx = it.x; top = it.y; }
+    if (PX) PXS.drawProp(g, it.kind, cx, top + it.h, {}, 0);
+    else {
+      var P = PAINT[it.kind === 'barrel' ? 'barrel' : 'crate'];
+      if (P) { g.save(); g.translate(cx, top + it.h / 2); g.rotate(ang); g.drawImage(P, -it.w / 2, -it.h / 2, it.w, it.h); g.restore(); }
+      else if (it.kind === 'barrel') drawBarrelHD(g, cx, top, it.w, it.h, ang); else drawCrateHD(g, cx, top, it.w, it.h, ang);
+    }
+  }
+  function drawPier(g) { }
+  function drawShot(g, s) {
+    if (s.dead) return;
+    if (s.stone) {
+      g.save(); g.globalAlpha = Math.max(0, Math.min(1, s.a));
+      if (PX) { var X = Math.round(s.x), Y = Math.round(s.y); g.fillStyle = '#1a1024'; g.fillRect(X - 2, Y - 1, 5, 3); g.fillRect(X - 1, Y - 2, 3, 5); g.fillStyle = '#7a7088'; g.fillRect(X - 1, Y - 1, 3, 3); g.fillStyle = '#c4bccc'; g.fillRect(X - 1, Y - 1, 1, 1); g.fillStyle = '#58506a'; g.fillRect(X + 1, Y + 1, 1, 1); }
+      else if (STONE) g.drawImage(STONE, s.x - s.r * 1.1, s.y - s.r * 1.25, s.r * 2.2, s.r * 2.5);
+      g.restore(); return;
+    }
+    if (Math.abs(s.vx) + Math.abs(s.vy) > 1) s.ang = Math.atan2(s.vy, s.vx);   // at rest on the bed it keeps the angle it sank with
+    var ang = s.ang != null ? s.ang : Math.atan2(s.vy, s.vx), al = Math.max(0, Math.min(1, s.a));
+    if (s.trail && !s.wet && s.trail.length > 1) {   // a short motion trail behind the arrow, fading
+      for (var i = 1; i < s.trail.length; i++) { var p0 = s.trail[i - 1], p1 = s.trail[i]; g.strokeStyle = 'rgba(255,248,230,' + (0.32 * i / s.trail.length * al).toFixed(3) + ')'; g.lineWidth = 0.6 + 1.6 * i / s.trail.length; g.beginPath(); g.moveTo(p0[0], p0[1]); g.lineTo(p1[0], p1[1]); g.stroke(); }
+    }
+    g.save(); g.translate(s.x, s.y); g.rotate(ang); g.globalAlpha = al; g.lineCap = 'round';
+    g.strokeStyle = '#2a170a'; g.lineWidth = 2.6; g.beginPath(); g.moveTo(-23, 0); g.lineTo(-1, 0); g.stroke();          // shaft outline
+    g.strokeStyle = '#b07c42'; g.lineWidth = 1.3; g.beginPath(); g.moveTo(-22.5, -0.2); g.lineTo(-1.5, -0.2); g.stroke(); // wood
+    g.strokeStyle = 'rgba(240,206,150,0.8)'; g.lineWidth = 0.5; g.beginPath(); g.moveTo(-20, -0.7); g.lineTo(-4, -0.7); g.stroke();
+    g.fillStyle = '#7a1e1c'; g.beginPath(); g.moveTo(-24, 0); g.lineTo(-19.5, -4); g.lineTo(-15, -4); g.lineTo(-17.5, 0); g.closePath(); g.fill();   // fletching
+    g.beginPath(); g.moveTo(-24, 0); g.lineTo(-19.5, 4); g.lineTo(-15, 4); g.lineTo(-17.5, 0); g.closePath(); g.fill();
+    g.fillStyle = '#d24a3a'; g.beginPath(); g.moveTo(-23, -0.4); g.lineTo(-19.5, -3.3); g.lineTo(-16.5, -3.3); g.lineTo(-18.3, -0.4); g.closePath(); g.fill();
+    g.fillStyle = '#e8e2d4'; g.fillRect(-21.5, -0.6, 1.2, 1.2);
+    g.fillStyle = '#23262c'; g.beginPath(); g.moveTo(5, 0); g.lineTo(-1.5, -2.8); g.lineTo(-0.5, 0); g.lineTo(-1.5, 2.8); g.closePath(); g.fill();          // iron head
+    g.strokeStyle = '#11131a'; g.lineWidth = 0.6; g.stroke();
+    g.fillStyle = 'rgba(210,220,230,0.85)'; g.beginPath(); g.moveTo(4.2, -0.2); g.lineTo(-0.8, -2.2); g.lineTo(-0.2, -0.4); g.closePath(); g.fill();
+    g.lineCap = 'butt';
+    g.restore();
+  }
+  function drawActor(g, a) {
+    if (PX) {
+      if (a.kind === 'fish') { drawFish(g, a); return; }
+      if (a.pose === 'dive' || a.pose === 'swim') {   // the side frame turned a quarter (pixel-exact): head first, body level
+        var im = PXS.actorSprite(a.pal, a.face > 0 ? 'right' : 'left', a.frame), cx = Math.round(a.x), cy = Math.round(a.y - 7.5);
+        g.save(); g.translate(cx, cy); g.rotate(a.face > 0 ? Math.PI / 2 : -Math.PI / 2); g.drawImage(im, -7, -8); g.restore();
+        return;
+      }
+      PXS.actor(g, a.x, a.y, { pal: a.pal, dir: a.face > 0 ? 'right' : 'left', frame: a.frame, noShadow: a.mode !== 'walk' || a.wet > 0 });
+      return;
+    }
+    if (a.kind === 'slime') { var sq = a.mode === 'air' ? (a.vy < 0 ? -0.1 : 0.06) : 0; Kit.sprite(g, 'slime', a.x, a.y, { h: 40, facing: a.face > 0 ? 'right' : 'left', shadow: a.mode === 'walk', t: clock, squash: sq }); }
+    else if (a.kind === 'archer') Kit.sprite(g, 'archer', a.x, a.y, { h: 64, facing: 'left', shadow: true });   // planted on the rock: no lunge, no slide
+    else if (a.kind === 'harpy') { if (clock > 5400 && clock < 8400) { var hc = a.h / 2; g.save(); g.translate(a.x, a.y - hc); g.rotate(a.rot || 0); Kit.sprite(g, 'harpy', 0, hc, { h: 58, facing: a.face > 0 ? 'right' : 'left', shadow: false, t: clock, squash: a.sq || 0 }); g.restore(); } }
+    else Kit.sprite(g, 'wisp', a.x, a.y, { h: 50, facing: a.face > 0 ? 'right' : 'left', t: clock, shadow: false });
+  }
+  function render() {
+    if (cv.width !== NW || cv.height !== NH) { cv.width = NW; cv.height = NH; }
+    if (!PX) { var r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1, w = Math.max(NW, Math.round(r.width * dpr)), h = Math.round(w * NH / NW); if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; } }
+    var k = cv.width / NW;
+    ctx.setTransform(k, 0, 0, k, 0, 0);
+    ctx.imageSmoothingEnabled = !PX;
+    if (!BG) BG = makeBg();
+    ctx.drawImage(BG, 0, 0, NW, NH);
+    if (GROUND) GROUND.draw(ctx, 0, 0);
+    drawBanks(ctx);
+    FLT.forEach(function (it) { drawFloat(ctx, it); });
+    ACT.forEach(function (a) { drawActor(ctx, a); });
+    SHOTS.forEach(function (s) { if (!s.wet && s.rest == null) drawShot(ctx, s); });
+    W.draw(ctx, 0, 0);
+    drawBed(ctx);
+    // what has sunk (arrows, stones) is drawn after the bed, faded into the water's colour, so it is seen lying on the bottom
+    SHOTS.forEach(function (s) { if (s.wet || s.rest != null) { ctx.save(); ctx.globalAlpha = PX ? 0.75 : 0.6; drawShot(ctx, s); ctx.restore(); } });
+  }
+
+  /* ------------------------------------------------------------ text state */
+  window.__water = function () { return W; };
+  // for checks/timeline.py: advance the scripted scene without drawing, and the boxes the water sees this step
+  window.__step = function (n) { for (var i = 0; i < (n || 1); i++) step(); return Math.round(clock); };
+  window.__bodies = function () { return bodies(true).concat(W.floaters().map(function (f) { return { id: f.id, x: f.x - f.w / 2, y: f.y, w: f.w, h: f.h, floater: true }; })); };
+  window.__ground = function (x) { return PX ? groundPx(x) : W.floorY(x); };
+  window.__walkers = function () { return ACT.filter(function (a) { return a.kind === 'walker'; }).map(function (a) { return { id: a.id, frame: a.frame, moved: a.moved, mode: a.mode }; }); };
+  window.__state = function () {
+    var st = W.stats();
+    return { t: Math.round(clock), view: VIEW,
+      actors: ACT.filter(function (a) { return !(a.kind === 'harpy' && (clock <= 5400 || clock >= 8400)); }).map(function (a) {
+        var o = { id: a.id, x: Math.round(a.x), y: Math.round(a.y), facing: a.face > 0 ? 'right' : 'left', target: a.target, vx: Math.round(a.vx), anim: a.anim, inWater: +(W.inWater({ x: a.x - a.w / 2, y: a.y - a.h, w: a.w, h: a.h })).toFixed(2) };
+        if (!PX) o.asset = a.kind;
+        if (a.floatRef) { o.floating = true; o.noFace = 'floats and looks at the viewer side it was drawn with'; delete o.target; }
+        if (a.kind === 'archer') o.facing = 'left';
+        return o;
+      }).concat(FLT.map(function (it) { var f = it.f; return { id: it.id, x: Math.round(f ? f.x : it.x), y: Math.round(f ? f.y + f.h : it.y + it.h), noFace: 'prop (a crate or barrel), no side', floating: !!f, angle: f ? +f.angle.toFixed(3) : 0 }; })),
+      floaters: W.floaters().map(function (f) { var sy = W.surfaceY(f.x); return { id: f.id, x: +f.x.toFixed(1), top: +f.y.toFixed(1), bottom: +(f.y + f.h).toFixed(1), surface: sy == null ? null : +sy.toFixed(1), sub: sy == null ? 0 : +Math.max(0, Math.min(1, (f.y + f.h - sy) / f.h)).toFixed(2), angle: +f.angle.toFixed(3) }; }),
+      events: EVENTS.slice(), water: { splashes: st.splashes, entries: st.entries, exits: st.exits, drops: st.drops, bubbles: st.bubbles, peakAmp: st.peakAmp, maxAmp: +W.maxAmp().toFixed(2), energy: +W.energy().toFixed(2), hash: W.hash() } };
+  };
+
+  /* ------------------------------------------------------------ input */
+  var STONES = 0;
+  cv.addEventListener('pointerdown', function (e) {
+    var r = cv.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * NW;
+    if (W.surfaceY(x) == null && !PX) return;
+    var p0 = PX ? POOL_PX : POOL_HD; x = Math.max(p0.x + 12 * SC, Math.min(p0.x + p0.w - 12 * SC, x));
+    SHOTS.push({ id: 'stone' + (++STONES), x: x, y: -10, vx: 0, vy: 260 * SC, wet: false, life: 0, dead: false, a: 1, stone: true, r: PX ? 2 : 5, rest: null });
+  });
+  document.getElementById('replay').onclick = function () { fishPlan.forEach(function (q) { q.done = false; }); ARROWS.forEach(function (q) { q.fired = q.loosed = false; }); setup(); };
+  document.getElementById('crate').onclick = function () {
+    var x = PX ? 140 + (clock % 100) : 230 + (clock % 230);
+    FLT.push(addFloat('crate' + FLT.length, 'crate', { x: x, y: PX ? 40 : -40, w: PX ? 14 : 34, h: PX ? 13 : 32, density: 0.42, thrown: { vx: 0, vy: 0, at: clock }, onLand: PX }));
+  };
+  document.getElementById('rain').onclick = function () { for (var i = 0; i < 10; i++) W.splash(PX ? 108 + i * 19 : 196 + i * 34, 500 * SC, { w: 14 * SC, id: 'rain' }); };   // only over open water
+  document.getElementById('pPal').onchange = function (e) { PAR.palette = e.target.value; pushPar(); };
+
+  /* ------------------------------------------------------------ boot */
+  function boot() {
+    bindRange('pSpr', 'vSpr', 'spread', function (v) { return v; });
+    bindRange('pDam', 'vDam', 'damping', function (v) { return (+v).toFixed(1); });
+    bindRange('pSpl', 'vSpl', 'splash', function (v) { return (+v).toFixed(1); });
+    bindRange('pDro', 'vDro', 'droplets', function (v) { return (+v).toFixed(1); });
+    bindRange('pRef', 'vRef', 'reflect', function (v) { return (+v).toFixed(2); });
+    if (PX) makeFish();
+    makeGround();
+    setup();
+    if (HAS_T) {
+      var n = Math.floor(START_T / STEP);
+      for (var i = 0; i < n; i++) step();
+      render();
+      if (FREEZE) { window.__frozen = true; return; }
+    }
+    var acc = 0, last = null;
+    function loop(ts) {
+      if (last === null) last = ts;
+      acc += Math.min(250, ts - last); last = ts;
+      while (acc >= STEP) { step(); acc -= STEP; }
+      if (clock > 13000) document.getElementById('replay').onclick();
+      render();
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  }
+  if (PX) boot(); else Kit.ready(function () { loadPaint(boot); });
+})();
+</script>
+</body>
+</html>

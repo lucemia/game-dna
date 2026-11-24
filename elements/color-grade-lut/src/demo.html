@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Colour Grading LUT</title>
+<style>
+:root {
+  --bg: #0b0a12; --panel: #14121d; --panel2: #1b1827; --line: #2a2640; --text: #ece8f6; --dim: #958fb0; --accent: #ffb86b; --accent2: #7fd4ff; --ok: #6ee7a8; --off: #ff7a8a;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1100px 560px at 28% -12%, #2a1f45 0%, var(--bg) 62%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 16px 20px 10px; max-width: 1340px; margin: 0 auto; }
+.code { white-space: nowrap; font: 700 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #1d1206; background: linear-gradient(#ffd29a, var(--accent)); padding: 6px 8px; border-radius: 6px; box-shadow: 0 0 0 1px #00000040, 0 4px 14px #ffb86b40; }
+h1 { font-size: 18px; margin: 0; letter-spacing: .01em; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; max-width: 920px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 350px; gap: 18px; padding: 0 20px 20px; max-width: 1340px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; }
+.frame { position: relative; border-radius: 14px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px #3a3352, 0 24px 60px #00000090; touch-action: none; }
+#game { display: block; width: 100%; height: auto; }
+.tag { position: absolute; top: 10px; font: 700 10px/1 ui-monospace, Menlo, monospace; letter-spacing: .12em; background: #000b; color: #fff; padding: 5px 7px; border-radius: 5px; pointer-events: none; display: none; z-index: 5; }
+.tag.on { display: block; }
+.caption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; margin-top: 10px; color: var(--dim); font-size: 12px; }
+.caption b { color: var(--text); font-weight: 600; }
+#mode::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--ok); margin-right: 6px; box-shadow: 0 0 8px var(--ok); vertical-align: 1px; }
+#mode.off::before { background: var(--off); box-shadow: 0 0 8px var(--off); }
+.beats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-top: 12px; }
+.beat { appearance: none; border: 1px solid var(--line); border-radius: 10px; background: #12101b; color: var(--dim); padding: 0 0 7px; cursor: pointer; font: 600 11.5px/1.2 inherit; overflow: hidden; transition: border-color .2s, color .2s, transform .1s; }
+.beat canvas { display: block; width: 100%; height: 22px; margin-bottom: 6px; image-rendering: auto; }
+.beat[aria-pressed=true] { border-color: var(--accent); color: var(--text); box-shadow: 0 0 0 1px var(--accent), 0 6px 18px #ffb86b30; }
+.beat:active { transform: scale(.97); }
+aside { background: linear-gradient(var(--panel2), var(--panel)); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+section { border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+section:last-of-type { border-bottom: 0; padding-bottom: 0; }
+h2 { display: flex; align-items: center; justify-content: space-between; margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.row { margin-bottom: 8px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 3px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 5px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--fill), #2c2742 var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 15px; height: 15px; border-radius: 50%; background: #fff4e2; border: 0; box-shadow: 0 0 0 3px #ffb86b55, 0 2px 6px #000a; cursor: pointer; }
+.sw { position: relative; width: 34px; height: 19px; flex: none; }
+.sw input { opacity: 0; width: 0; height: 0; position: absolute; }
+.sw i { position: absolute; inset: 0; border-radius: 10px; background: #2c2742; transition: background .2s; cursor: pointer; }
+.sw i::after { content: ""; position: absolute; left: 3px; top: 3px; width: 13px; height: 13px; border-radius: 50%; background: #cfc8e6; transition: transform .22s cubic-bezier(.3, 1.6, .5, 1); }
+.sw input:checked + i { background: linear-gradient(90deg, #ff9b52, var(--accent)); }
+.sw input:checked + i::after { transform: translateX(15px); background: #fff; }
+.line { display: flex; align-items: center; justify-content: space-between; font-size: 12.5px; margin-bottom: 8px; }
+.seg { display: flex; background: #0e0c16; border: 1px solid var(--line); border-radius: 8px; padding: 2px; gap: 2px; }
+.seg button { flex: 1; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 4px; border-radius: 6px; cursor: pointer; }
+.seg button[aria-checked=true] { background: #2c2546; color: var(--text); box-shadow: inset 0 0 0 1px #4a4068; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.note { color: var(--dim); font-size: 11.5px; margin: 4px 0 0; }
+.note code { color: #d8cff5; }
+.lutbox { background: #0e0c16; border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+.lutbox canvas { display: block; width: 100%; height: 16px; border-radius: 3px; image-rendering: pixelated; }
+.lutbox .lbl { display: flex; justify-content: space-between; font: 11px ui-monospace, Menlo, monospace; color: var(--dim); margin: 6px 0 3px; }
+.lutbox .lbl:first-child { margin-top: 0; }
+.mixbar { height: 4px; border-radius: 2px; background: #2c2742; overflow: hidden; margin-top: 6px; }
+.mixbar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--accent2), var(--accent)); }
+.btns { display: flex; gap: 6px; margin-top: 8px; }
+.btn { flex: 1; appearance: none; border: 1px solid var(--line); background: #1f1b2e; color: var(--text); border-radius: 8px; padding: 8px 6px; font: 600 12px/1 inherit; cursor: pointer; text-align: center; }
+.btn:hover { border-color: #4a4068; }
+section.dim, .beats.dim { opacity: .45; pointer-events: none; }
+#offnote { display: none; color: var(--off); font-size: 11.5px; margin: 6px 0 0; }
+#offnote.on { display: block; }
+.sw input:disabled + i { opacity: .5; cursor: not-allowed; }
+.stat { font: 11.5px/1.5 ui-monospace, Menlo, monospace; color: var(--dim); }
+.stat b { color: var(--text); font-weight: 600; }
+@media (max-width: 1040px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 680px; width: 100%; margin: 0 auto; } }
+@media (max-width: 560px) { header { padding: 12px 16px 8px; flex-direction: column; align-items: flex-start; gap: 8px; } main { padding: 0 16px 16px; gap: 12px; } .frame { border-radius: 10px; } .beats { grid-template-columns: repeat(3, 1fr); } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">J-06</span>
+  <div><h1>Colour grading LUT</h1><p>One 32&sup3; lookup table per mood, generated in code and stored as a strip texture. Zones and story beats blend between tables over game time; a lens pass adds vignette and film grain. The HUD stays exactly as drawn. Built on the I-08 WebGL post pipeline: without WebGL the game shows as plain 2D.</p></div>
+</header>
+<main>
+  <div id="stage">
+    <div class="frame" id="frame">
+      <canvas id="game" width="640" height="360"></canvas>
+      <span class="tag" id="tagL" style="left:10px">BEFORE</span>
+      <span class="tag" id="tagR" style="right:10px">AFTER</span>
+    </div>
+    <div class="caption">
+      <span id="mode">WebGL2</span>
+      <span id="now">look <b>-</b></span>
+      <span id="cost">frame <b>-</b></span>
+    </div>
+    <div class="beats" id="beats"></div>
+  </div>
+  <aside>
+    <section>
+      <h2>Pipeline <label class="sw" title="WebGL on / off"><input type="checkbox" id="webgl" checked><i></i></label></h2>
+      <div class="line"><span>Before / after split (drag on the picture)</span><label class="sw"><input type="checkbox" id="cmp"><i></i></label></div>
+      <div class="row"><label>Split position <output id="o-split"></output></label><input type="range" id="split" min="0.05" max="0.95" step="0.01" value="0.5"></div>
+      <div class="line"><span>Story tour (zones blend in game time)</span><label class="sw"><input type="checkbox" id="tour" checked><i></i></label></div>
+      <p id="offnote">Pipeline off: the game shows as plain 2D, so the LUT and lens controls have no effect.</p>
+    </section>
+    <section id="sec-lut">
+      <h2>LUT</h2>
+      <div class="two">
+        <div class="row"><label>Strength <output></output></label><input type="range" data-k="strength" min="0" max="1" step="0.01"></div>
+        <div class="row"><label>Blend ms <output></output></label><input type="range" data-k="blend" min="0" max="3000" step="50"></div>
+      </div>
+      <div class="lutbox">
+        <div class="lbl"><span>from</span><span id="fromN">-</span></div><canvas id="stripA" width="1024" height="32"></canvas>
+        <div class="lbl"><span>to</span><span id="toN">-</span></div><canvas id="stripB" width="1024" height="32"></canvas>
+        <div class="mixbar"><i id="mix"></i></div>
+      </div>
+      <div class="btns"><label class="btn" for="file">Load .cube / PNG strip</label><a class="btn" id="save" download="lut-strip.png" href="#">Save strip PNG</a></div>
+      <input type="file" id="file" accept=".cube,.png,image/png" hidden>
+      <p class="note">Strip: 32 tiles of 32&times;32 (blue = tile, red = x, green = y). Edit a saved <code>neutral</code> strip in any paint program and load it back.</p>
+    </section>
+    <section id="sec-lens">
+      <h2>Lens (vignette &amp; grain)</h2>
+      <div class="two">
+        <div class="row"><label>Vignette <output></output></label><input type="range" data-k="vignette" min="0" max="1" step="0.01"></div>
+        <div class="row"><label>Grain <output></output></label><input type="range" data-k="grain" min="0" max="0.2" step="0.005"></div>
+      </div>
+      <div class="row"><label>Grain size (CSS px) <output></output></label><input type="range" data-k="grainSize" min="0.5" max="4" step="0.1"></div>
+    </section>
+    <section id="sec-hud">
+      <h2>HUD and the I-08 grade</h2>
+      <div class="line"><span>Protect HUD (uiMask)</span><label class="sw"><input type="checkbox" id="hud" checked><i></i></label></div>
+      <div class="row"><label>I-08 built-in grade</label><div class="seg" id="builtin"><button data-v="replace" aria-checked="true">replace (default)</button><button data-v="keep" aria-checked="false">keep after LUT</button></div></div>
+      <p class="note">Replace: the LUT is the only grade and the lens pass the only vignette. Keep: the built-in filmic grade runs after the LUT with its vignette at 0.</p>
+    </section>
+    <section class="stat" id="stat">-</section>
+  </aside>
+</main>
+<script>
+/*POST*/
+</script>
+<script>
+/*MODULE*/
+</script>
+<script src="../../../demo-kit/kit-art.js"></script>
+<script src="../../cutout-characters/module/cutout-characters.js"></script>
+<script src="../../cutout-characters/assets/pack.js"></script>
+<script src="../../../demo-kit/kit.js"></script>
+<script>
+/*MAIN*/
+</script>
+</body>
+</html>

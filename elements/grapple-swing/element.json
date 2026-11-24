@@ -1,0 +1,210 @@
+{
+ "id": "grapple-swing",
+ "code": "B-16",
+ "name": "Grappling hook & swing",
+ "kind": "addon",
+ "family": "grapple",
+ "oneLiner": "Fire a hook at iron rings (aim assist) or any rock surface, hang on a rope of fixed length and swing like a pendulum, pump with left / right, reel in and out, jump off or let go keeping the swing's momentum; the rope wraps around corners and unwraps on the way back. The game keeps its own collision: the module only proposes the swing's velocity (capped under half a tile per step) and the game moves the hero with its own wall tests. Pixel braided rope or smooth rope, a claw hook, glowing rings, aim reticle, sparks. Deterministic, inert until the grapple button is pressed.",
+ "fits": [
+  "side-scrolling platformer",
+  "metroidvania",
+  "action platformer",
+  "precision platformer",
+  "side-view adventure"
+ ],
+ "notFor": [
+  "top-down games (no gravity to swing in)",
+  "turn-based games",
+  "games whose hero has no velocity / per-step movement code (it needs a body with vx, vy)"
+ ],
+ "interfaces": {
+  "time": "realtime",
+  "coords": "side",
+  "layer": "actor",
+  "needs": [
+   "a fixed update step where the hero's velocity code runs (also run by ?t= fast-forward and ?auto=1)",
+   "the hero's box and velocity {x, y, w, h, vx, vy, onGround, facing} in world px and the game's own units",
+   "the game's wall test solid(x, y) in world px, its tile size and gravity",
+   "a grapple button (pressed / held), left / right, reel in / out, jump pressed",
+   "the draw pass inside the camera transform, next to the hero",
+   "reset on new run, respawn, life lost"
+  ],
+  "provides": [
+   "update() -> {active, flying, vx, vy}: the swing's velocity while on the rope, the carried momentum after letting go",
+   "ring anchors and surface hooks with aim assist and a reticle",
+   "rope wrap / unwrap around corners, snag release",
+   "events fire, attach, release, miss, snag, wrap, unwrap, reel (onEvent)",
+   "state(), stats(), ropePath(), hash() for tests and judges"
+  ]
+ },
+ "params": [
+  {
+   "key": "range",
+   "label": "Hook range (px at scale 1)",
+   "type": "range",
+   "min": 60,
+   "max": 200,
+   "step": 5,
+   "default": 120
+  },
+  {
+   "key": "hookSpeed",
+   "label": "Hook speed (px/s)",
+   "type": "range",
+   "min": 300,
+   "max": 1600,
+   "step": 20,
+   "default": 720
+  },
+  {
+   "key": "reelSpeed",
+   "label": "Reel speed (px/s)",
+   "type": "range",
+   "min": 20,
+   "max": 200,
+   "step": 5,
+   "default": 70
+  },
+  {
+   "key": "swingForce",
+   "label": "Pump force (px/s^2)",
+   "type": "range",
+   "min": 0,
+   "max": 600,
+   "step": 10,
+   "default": 240
+  },
+  {
+   "key": "tighten",
+   "label": "Yank on attach (rope fraction)",
+   "type": "range",
+   "min": 0.6,
+   "max": 1,
+   "step": 0.02,
+   "default": 0.9
+  },
+  {
+   "key": "jumpBoost",
+   "label": "Jump-off boost (px/s)",
+   "type": "range",
+   "min": 0,
+   "max": 300,
+   "step": 10,
+   "default": 150
+  },
+  {
+   "key": "releaseBoost",
+   "label": "Release momentum x",
+   "type": "range",
+   "min": 0.8,
+   "max": 1.5,
+   "step": 0.05,
+   "default": 1.1
+  },
+  {
+   "key": "carryMs",
+   "label": "Momentum carry (ms)",
+   "type": "range",
+   "min": 0,
+   "max": 2000,
+   "step": 50,
+   "default": 1100
+  },
+  {
+   "key": "aimAssist",
+   "label": "Ring aim assist (deg)",
+   "type": "range",
+   "min": 0,
+   "max": 60,
+   "step": 2,
+   "default": 32
+  },
+  {
+   "key": "mode",
+   "label": "Button",
+   "type": "select",
+   "options": [
+    "hold",
+    "toggle"
+   ],
+   "default": "hold"
+  },
+  {
+   "key": "wrap",
+   "label": "Rope wraps corners",
+   "type": "select",
+   "options": [
+    "1",
+    "0"
+   ],
+   "default": "1"
+  },
+  {
+   "key": "surfaces",
+   "label": "Hook bites rock",
+   "type": "select",
+   "options": [
+    "1",
+    "0"
+   ],
+   "default": "1"
+  },
+  {
+   "key": "render",
+   "label": "Render",
+   "type": "select",
+   "options": [
+    "auto",
+    "pixel",
+    "smooth"
+   ],
+   "default": "auto"
+  }
+ ],
+ "variants": [
+  {
+   "name": "Default",
+   "params": {}
+  },
+  {
+   "name": "Snappy",
+   "params": {
+    "hookSpeed": 1300,
+    "tighten": 0.8,
+    "swingForce": 360,
+    "releaseBoost": 1.25,
+    "jumpBoost": 210
+   }
+  },
+  {
+   "name": "Heavy rope",
+   "params": {
+    "hookSpeed": 520,
+    "reelSpeed": 45,
+    "swingForce": 160,
+    "releaseBoost": 1.0,
+    "tighten": 0.96,
+    "carryMs": 700
+   }
+  },
+  {
+   "name": "Rings only",
+   "params": {
+    "surfaces": "0",
+    "aimAssist": 44
+   }
+  }
+ ],
+ "assets": [
+  "module/grapple-swing.js: the element as one dependency-free script (global GameDNA_Grapple): hook flight and target pick, rope constraint and pendulum, reel, wrap / unwrap around convex tile corners, momentum carry, rope / hook / ring / reticle / spark drawing in pixel and smooth modes",
+  "demo/world.js: the demo's little platformer and bot tour (pure logic, also used by node checks); the climber hero is drawn in code in demo/index.html",
+  "no image, font or audio files"
+ ],
+ "status": "draft",
+ "module": {
+  "file": "module/grapple-swing.js",
+  "global": "GameDNA_Grapple",
+  "version": "1.1.0",
+  "docs": "module/README.md"
+ }
+}

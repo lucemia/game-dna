@@ -1,0 +1,222 @@
+{
+  "id": "painted-portraits",
+  "code": "L-02",
+  "kind": "addon",
+  "name": "Portrait set with expressions",
+  "family": "generated-art",
+  "oneLiner": "Painted bust portraits for dialogue, generated once: a neutral base per character and each expression made as an edit of that base with the base as the reference image, aligned onto one canvas so only the face changes. Beside the dialogue box the speaker slides in, cross-fades to each line's expr tag, breathes, blinks and dims while someone else talks. Same presenter hooks as D-04, so the H-01 dialogue box drives either; the game's own text box works through a two-line adapter.",
+  "fits": [
+    "top-down adventure / action RPG (villagers, quest givers, shopkeepers)",
+    "turn-based and tactics RPG (conversations before and after battles)",
+    "visual-novel style scenes inside an HD game",
+    "side-scrolling platformer with story beats",
+    "any HD game that uses the H-01 dialogue box or has its own text box"
+  ],
+  "notFor": [
+    "pixel-art styles on a fixed low-resolution canvas (pixel8, pixel16, handheld4): use D-04 expressive-portraits there",
+    "lip sync or talking mouths (whole-image art has no mouth frames; the bust bobs while text types)",
+    "expressions that change in the middle of a line (one expression per line)",
+    "art generated at runtime (the game only loads files)"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "for conversations: an H-01 dialogue box (GameDNA_DialogueBox) whose lines carry speaker / who and expr, or the game's own text box through attach({rect})",
+      "a fixed 60 Hz update step, also while the dialogue box is busy",
+      "the play field the dialogue box uses, in the units it is drawn in",
+      "the game's boot moved into onReady (images loaded before the first step)",
+      "the portrait image files: the shipped sample cast, or the designer's own set made with prompt.md",
+      "optional: rectangles of UI to keep clear (HUD, menus)"
+    ],
+    "provides": [
+      "the speaker's painted bust standing on (or beside) the dialogue box, with the expression from each line's expr field, cross-faded between lines",
+      "slide / fade enter and exit, idle breathing, a blink on the neutral face, a gentle bob while letters type, listener dimming",
+      "portraits on their own for status, party and shop screens (drawPanel)",
+      "the drawn portrait rects, for other overlays to avoid",
+      "assets.json manifest with prompt, GEN.md, model, date, alignment transform and sha256 of every shipped file",
+      "tools/portraitset.py: align expression edits onto their base, one crop, clean alpha, WebP; assetcheck.py portrait-set check"
+    ]
+  },
+  "params": [
+    {
+      "key": "layout",
+      "label": "Where portraits sit",
+      "type": "select",
+      "options": [
+        "two",
+        "left",
+        "right"
+      ],
+      "default": "two"
+    },
+    {
+      "key": "place",
+      "label": "Bust placement",
+      "type": "select",
+      "options": [
+        "stand",
+        "beside"
+      ],
+      "default": "stand"
+    },
+    {
+      "key": "height",
+      "label": "Drawn height (field px; 0 = 46 % of the field)",
+      "type": "range",
+      "min": 0,
+      "max": 400,
+      "step": 2,
+      "default": 0
+    },
+    {
+      "key": "enter",
+      "label": "Enter / exit",
+      "type": "select",
+      "options": [
+        "slide",
+        "fade",
+        "none"
+      ],
+      "default": "slide"
+    },
+    {
+      "key": "enterMs",
+      "label": "Enter time (ms; exit is 3/4 of it)",
+      "type": "range",
+      "min": 0,
+      "max": 800,
+      "step": 20,
+      "default": 260
+    },
+    {
+      "key": "fadeMs",
+      "label": "Expression cross-fade (ms)",
+      "type": "range",
+      "min": 0,
+      "max": 600,
+      "step": 20,
+      "default": 180
+    },
+    {
+      "key": "listener",
+      "label": "Other portrait while someone talks",
+      "type": "select",
+      "options": [
+        "dim",
+        "hide"
+      ],
+      "default": "dim"
+    },
+    {
+      "key": "dim",
+      "label": "Listener dim amount",
+      "type": "range",
+      "min": 0,
+      "max": 0.8,
+      "step": 0.05,
+      "default": 0.45
+    },
+    {
+      "key": "breathe",
+      "label": "Idle breathing (0 = off)",
+      "type": "range",
+      "min": 0,
+      "max": 2,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "blinkMs",
+      "label": "Blink about every (ms; 0 = off)",
+      "type": "range",
+      "min": 0,
+      "max": 9000,
+      "step": 200,
+      "default": 4200
+    }
+  ],
+  "promptParams": [
+    {
+      "key": "characters",
+      "default": "every character who speaks in the game (2-4)"
+    },
+    {
+      "key": "expressions",
+      "default": "neutral, happy, angry, sad, surprised, determined, blink"
+    },
+    {
+      "key": "style",
+      "default": "modern hand-painted 2D character portrait"
+    },
+    {
+      "key": "light",
+      "default": "TOP-LEFT"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Two-sided conversation",
+      "params": {
+        "layout": "two",
+        "place": "stand",
+        "listener": "dim"
+      }
+    },
+    {
+      "name": "Single speaker, quiet",
+      "params": {
+        "layout": "left",
+        "enter": "fade",
+        "enterMs": 400,
+        "listener": "hide",
+        "breathe": 0.6
+      }
+    },
+    {
+      "name": "Beside the box (D-04 style)",
+      "params": {
+        "layout": "left",
+        "place": "beside",
+        "height": 0
+      }
+    },
+    {
+      "name": "Snappy cuts",
+      "params": {
+        "enter": "none",
+        "fadeMs": 0,
+        "breathe": 0,
+        "blinkMs": 0
+      }
+    }
+  ],
+  "assets": [
+    "module/painted-portraits.js: the presenter as one dependency-free script (global GameDNA_PaintedPortraits), loads the cast's files once and draws them",
+    "assets/assets.json: manifest of 28 generated files (4 characters x neutral + 5 expressions + blink, WebP with alpha), with prompts, GEN.md, meta (model, effort, which reference each edit received, by sha256), alignment transform and sha256 per file",
+    "assets/prompts/: style lock, base and edit briefs, templates.md",
+    "tools/portraitset.py (align, crop, alpha, export) and tools/make-manifest.py; shared tools/assets (gen.sh, genmeta.py, namecheck.py, postproc.py, assetcheck.py with the portrait-set check)"
+  ],
+  "assetPack": {
+    "manifest": "assets/assets.json",
+    "generated": true,
+    "tool": "codex image_gen.imagegen (built-in)",
+    "date": "2026-11-16",
+    "budgetBytes": 600000,
+    "styles": "hd (non-pixel skins)",
+    "check": "tools/assets/assetcheck.py assets/assets.json (incl. portrait-set)",
+    "regenerate": "prompt.md + assets/prompts/templates.md + tools/portraitset.py + tools/assets"
+  },
+  "status": "draft",
+  "module": {
+    "file": "module/painted-portraits.js",
+    "global": "GameDNA_PaintedPortraits",
+    "version": "1.1.1",
+    "docs": "module/README.md"
+  },
+  "related": {
+    "dialogue-box": "H-01 drives it through create({onLine}), bounds: () => por.reserve(FIELD), attach(dlg) — the same hooks as D-04",
+    "expressive-portraits": "D-04 is the procedural pixel alternative with the same presenter API (talking mouth, any expression, no files); use it on pixel canvases"
+  }
+}

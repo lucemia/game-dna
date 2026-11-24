@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B-12 Procedural dungeon floors</title>
+<style>
+:root { --bg: #0b0810; --ink: #f0e6d8; --dim: #a898b8; --line: #3a2e4a; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font: 13px/1.45 "Trebuchet MS", "Segoe UI", system-ui, sans-serif; }
+#wrap { display: flex; flex-wrap: wrap; gap: 14px; padding: 12px; justify-content: center; align-items: flex-start; }
+#left { display: flex; flex-direction: column; gap: 8px; align-items: center; flex: 1 1 560px; max-width: 1100px; min-width: 0; }
+#stage { width: 100%; display: flex; justify-content: center; }
+#screen { display: block; image-rendering: pixelated; touch-action: none; background: #08060d; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
+#panel { flex: 0 1 300px; min-width: 260px; max-width: 100%; background: #160f20; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+#panel h1 { font-size: 15px; margin: 0 0 4px; color: #ffd070; } #panel p { margin: 0 0 8px; color: var(--dim); font-size: 12px; }
+.row { display: grid; grid-template-columns: 112px 1fr 40px; gap: 6px; align-items: center; margin: 4px 0; font-size: 12px; }
+.row output { color: #ffe6a0; text-align: right; } select, input[type=range] { width: 100%; }
+select { background: #241a30; color: var(--ink); border: 1px solid #54426c; border-radius: 4px; }
+.btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.btns button { background: #241a30; color: var(--ink); border: 1px solid #54426c; border-radius: 6px; padding: 6px 10px; font: inherit; }
+.btns button.on { background: #5a3a7a; border-color: #c8a0ff; }
+#read { margin-top: 8px; font: 12px/1.5 ui-monospace, Menlo, monospace; color: #d8cce8; white-space: pre-wrap; }
+#legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--dim); }
+#legend i { display: inline-block; width: 10px; height: 10px; margin-right: 4px; vertical-align: -1px; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="left">
+    <div id="stage"><canvas id="screen" width="400" height="240"></canvas></div>
+    <div id="legend"></div>
+  </div>
+  <div id="panel">
+    <h1>Procedural dungeon floors</h1>
+    <p>Seeded rooms joined by a spanning tree of corridors plus a few loops, autotiled walls, doors, stairs, chests and monsters by room budget. The hero is played by the built-in bot; arrows take over, tap a tile to walk.</p>
+    <div id="ctl"></div>
+    <div class="btns"><button id="bView">Whole floor + graph</button><button id="bNew">New seed</button><button id="bFloor">Next floor</button><button id="bAuto" class="on">Bot plays</button></div>
+    <div id="read"></div>
+  </div>
+</div>
+<script>
+/*@@MODULE@@*/
+</script>
+<script>
+/*@@DEMO@@*/
+</script>
+</body>
+</html>

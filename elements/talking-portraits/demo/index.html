@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Talking Portraits</title>
+<style>
+  :root { --bg: #0e0c16; --panel: #1a1626; --line: #342a48; --ink: #efe9f7; --dim: #a69bbb; --acc: #ffcf6a; --acc2: #ff9a6a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; overflow-x: hidden; }
+  main { max-width: 1000px; margin: 0 auto; padding: 14px 16px 28px; }
+  .head { display: flex; gap: 12px; align-items: flex-start; }
+  .code { flex: none; font: 700 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #2a1008; background: var(--acc2); padding: 6px 8px; border-radius: 4px; margin-top: 3px; }
+  h1 { font-size: 20px; margin: 0 0 2px; }
+  .sub { color: var(--dim); margin: 0 0 12px; font-size: 13.5px; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 8px; }
+  .tabs button { flex: 1; }
+  #stage { position: relative; background: #07060c; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; display: flex; justify-content: center; padding: 6px 0; }
+  @media (max-width: 560px) { #stage { margin: 0 -16px; border-radius: 0; border-left: 0; border-right: 0; } }
+  canvas#game { display: block; touch-action: manipulation; image-rendering: pixelated; image-rendering: crisp-edges; cursor: pointer; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0 6px; }
+  .bar input[type=range] { flex: 1 1 160px; min-width: 120px; accent-color: var(--acc); }
+  .time { font-variant-numeric: tabular-nums; color: var(--dim); min-width: 56px; }
+  button { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 7px; padding: 7px 12px; font: inherit; cursor: pointer; min-height: 34px; }
+  button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+  button.on, button[aria-pressed=true], button[aria-selected=true] { background: var(--acc); color: #2a1606; border-color: var(--acc); font-weight: 600; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 12px; }
+  .grid label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--dim); }
+  .grid label span { display: flex; justify-content: space-between; gap: 6px; }
+  .grid label output { color: var(--acc); font: 12px ui-monospace, Menlo, monospace; }
+  .grid select, .grid input[type=range] { font: inherit; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 5px; padding: 3px; accent-color: var(--acc); }
+  .lab[hidden] { display: none; }
+  .lab { margin-top: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 12px; display: grid; gap: 10px; }
+  .lab .emos { display: flex; flex-wrap: wrap; gap: 6px; }
+  .lab .say { display: flex; gap: 8px; flex-wrap: wrap; }
+  .lab .say input { flex: 1 1 220px; min-width: 0; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; font: inherit; }
+  .lab h2 { margin: 0; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+  .note { color: var(--dim); font-size: 12.5px; margin: 8px 0 0; }
+  kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; font: 12px ui-monospace, monospace; color: var(--ink); }
+  code { font: 12px ui-monospace, Menlo, monospace; overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+<main>
+  <div class="head"><span class="code">D-05</span><div>
+    <h1>Talking portraits</h1>
+    <p class="sub">Pixel portraits that talk with the text: the mouth moves only while a letter is typed and shuts on spaces, commas, full stops and when the line ends. They blink at random, breathe, and change expression per line (or mid-line) through a short blink with a one-pixel nod, never a jump.</p>
+  </div></div>
+  <div class="tabs" role="tablist" aria-label="Demo view">
+    <button role="tab" id="tab-talk" aria-selected="true" aria-controls="stage">Conversation</button>
+    <button role="tab" id="tab-lab" aria-selected="false" aria-controls="stage">Face lab</button>
+  </div>
+  <div id="stage"><canvas id="game" width="256" height="224" tabindex="0" aria-label="Talking portraits demo. Z, Enter or a tap finishes the line, then goes to the next one."></canvas></div>
+  <div class="bar">
+    <button id="next" title="Z / Enter / tap the picture">Next line (Z)</button><button id="play" aria-pressed="false">Pause</button><button id="again">Replay</button>
+    <input id="scrub" type="range" min="0" max="30000" step="50" value="0" aria-label="Timeline"><span class="time" id="time">0.0 s</span>
+  </div>
+  <div class="grid" id="ctl"></div>
+  <div class="lab" id="lab" hidden>
+    <h2>Face lab: pick a face and an emotion, or type a line with tags</h2>
+    <div class="grid" style="padding:0;border:0;background:none" id="labctl"></div>
+    <div class="emos" id="emos" role="group" aria-label="Emotion"></div>
+    <div class="say"><input id="line" type="text" maxlength="90" value="[happy] Hello there! [surprised] Oh... [sad] you forgot the bread." aria-label="A line to say, with [emotion] tags"><button id="sayit">Say it</button></div>
+  </div>
+  <p class="note"><kbd>Z</kbd> / <kbd>Enter</kbd> / tap: finish the line, then the next one &middot; <kbd>1</kbd>&ndash;<kbd>7</kbd> set the speaker's emotion &middot; <kbd>Tab</kbd> reaches every control. <code>?view=lab&amp;t=&lt;ms&gt;&amp;freeze=1</code> gives the same still every time.</p>
+</main>
+<script src="../../../skins/skin-api.js"></script>
+<script src="../../../skins/pixel16.js"></script>
+<script src="../../../pixel-kit/pixel-scene.js"></script>
+<script src="../../pixel-font/module/pixel-font.js"></script>
+<script src="../../expressive-portraits/module/expressive-portraits.js"></script>
+<script src="../module/talking-portraits.js"></script>
+<script>
+/* D-05 talking-portraits demo. One clock: sim.step() at 60 Hz (play, ?t= replay and scrubbing all call it). The picture is
+   drawn at 256x224 native and CSS-scaled so one native pixel is a whole number of device pixels. */
+(function () {
+  'use strict';
+  var STEP = 1000 / 60, W = 256, H = 224;
+  var Q = new URLSearchParams(location.search), qn = function (k, d) { var v = Q.get(k); return v == null || v === '' || isNaN(+v) ? d : +v; };
+  var T0 = Q.has('t') ? Math.max(0, qn('t', 0)) : null, FREEZE = Q.get('freeze') === '1';
+  var TP = GameDNA_TalkingPortraits, PXS = GameDNA_PixelScene, SK = GameDNA_Skin.resolve('pixel16');
+  var PF = GameDNA_PixelFont.create({ params: { font: 'regular', shadow: 'drop', color: 'white' } });
+  var cv = document.getElementById('game'), g = cv.getContext('2d'), stage = document.getElementById('stage');
+  var view = Q.get('view') === 'lab' ? 'lab' : 'talk';
+
+  /* ---------- sizing: whole device pixels per native pixel ---------- */
+  var K = 1;
+  function fit() {
+    var dpr = window.devicePixelRatio || 1, avail = Math.max(200, Math.min(stage.clientWidth - 4, 1000));
+    var k = Math.max(1, Math.floor(Math.min(avail * dpr / W, 4 * dpr))); K = k / dpr;
+    cv.style.width = (W * k / dpr) + 'px'; cv.style.height = (H * k / dpr) + 'px';
+  }
+  fit();
+
+  /* ---------- parameters ---------- */
+  var params = {};
+  Object.keys(TP.DEFAULTS).forEach(function (k) { params[k] = TP.DEFAULTS[k]; });
+  Object.keys(params).forEach(function (k) { if (Q.has(k)) params[k] = typeof params[k] === 'number' ? qn(k, params[k]) : Q.get(k); });
+
+  /* ---------- cast: D-04 specs matched to the room sprites ---------- */
+  var CAST = {
+    Elder: { seed: 3, age: 'elder', gender: 'male', skin: 'pale', head: 'oval', hair: 'swept', hairColor: 'platinum', facial: 'none', eyes: 'heavy', eyeColor: 'grey', brows: 'thick', nose: 'broad', mouth: 'wide', ears: 'round', headgear: 'none', mark: 'none', collar: 'robe', cloth: 'plum', trim: 'ochre', bg: 'dusk', side: 'left' },
+    Mira: { seed: 77, age: 'young', gender: 'female', skin: 'fair', head: 'heart', hair: 'ponytail', hairColor: 'blonde', eyes: 'large', eyeColor: 'green', brows: 'arched', nose: 'button', mouth: 'small', ears: 'round', facial: 'none', headgear: 'none', mark: 'freckles', collar: 'cloak', cloth: 'crimson', trim: 'cream', bg: 'rose', side: 'right' },
+    Brann: { seed: 41, age: 'adult', gender: 'male', skin: 'bronze', head: 'oval', hair: 'crop', hairColor: 'darkbrown', eyes: 'almond', eyeColor: 'brown', brows: 'thick', nose: 'straight', mouth: 'wide', ears: 'round', facial: 'stubble', headgear: 'hood', hood: 'trim', mark: 'none', collar: 'armor', cloth: 'crimson', trim: '#a8b4d0', bg: 'slate', side: 'right' }
+  };
+  var SPRITE = { Elder: 'elder', Mira: 'girl', Brann: 'guard' };
+  var TALK = [
+    { who: 'Elder', text: '[neutral] Sit, sit. The storm will not pass before dawn, I think.' },
+    { who: 'Mira', text: '[surprised] Dawn? But the caravan leaves at first light! [sad] We will never reach the pass.' },
+    { who: 'Brann', text: '[determined] Then we take the old mine tunnel. It cuts the road in half.' },
+    { who: 'Elder', text: '[angry] The mine? Nobody has walked it in twenty years, boy.' },
+    { who: 'Brann', text: '[hurt] Ow, my ears. [neutral] I only meant it is dry in there.' },
+    { who: 'Mira', text: '[happy] Dry sounds wonderful. I will pack the lanterns!' },
+    { who: 'Elder', text: '[sad] Hmm... [determined] Fine. But I lead the way.' },
+    { who: 'Brann', text: '[happy] Aye, Elder' }
+  ];
+  var LAB = [
+    '[neutral] Every face here is drawn in code. [happy] It can smile, [angry] scowl, [sad] sulk,',
+    '[surprised] gasp, [determined] steel itself, [hurt] or wince. [neutral] Then it rests.',
+    '[happy] Type your own line below. Tags like [neutral] neutral or [sad] sad change the face.'
+  ];
+  var HOLD = 1500, GAP = 1600;
+
+  /* ---------- the room (pixel-kit interior, demo only) ---------- */
+  var ROOM = PXS.room({ cols: 16, rows: 9, h: 146, wallH: 46, wall: 'wood', floor: 'wood', seed: 5, bottom: false, rugs: [{ x: 76, y: 92, w: 104, h: 40, color: 'red' }],
+    props: [{ k: 'window', x: 70, y: 38, o: { night: true } }, { k: 'fireplace', x: 128, y: 45 }, { k: 'window', x: 186, y: 38, o: { night: true } }, { k: 'bookshelf', x: 26, y: 62 },
+      { k: 'shelf', x: 222, y: 30 }, { k: 'counter', x: 214, y: 92, o: { w: 52 } }, { k: 'pot', x: 200, y: 76 }, { k: 'table', x: 128, y: 112, o: { w: 34 } }, { k: 'stool', x: 106, y: 120 }, { k: 'stool', x: 150, y: 121 }, { k: 'barrel', x: 244, y: 70 },
+      { k: 'plant', x: 18, y: 134 }, { k: 'sack', x: 236, y: 132 }, { k: 'pot', x: 46, y: 70 }] });
+  var ACTORS = { Elder: { x: 96, y: 112 }, Mira: { x: 162, y: 113 }, Brann: { x: 206, y: 104 } };
+  var BOX = { x: 6, y: 152, w: 244, h: 66 };
+
+  /* ---------- the simulation (all state comes from step()) ---------- */
+  var sim = null;
+  function build() {
+    var tp = TP.create({ cast: CAST, params: params, skin: 'pixel16' });
+    sim = { t: 0, prev: null, cur: null, tp: tp, i: -1, doneAt: -1, closedAt: -1, hist: [], marks: [], manual: false, userLine: null, labWho: sim && sim.labWho || 'Mira' };
+    return sim;
+  }
+  function script() { return view === 'lab' ? LAB.map(function (s) { return { who: sim.labWho, text: s }; }) : TALK; }
+  function next() {
+    var S = script();
+    sim.i++; sim.doneAt = -1; sim.marks = [];
+    if (sim.i >= S.length) { sim.tp.close(); sim.closedAt = sim.t; sim.i = S.length; return; }
+    var ln = sim.userLine && sim.i === 0 ? sim.userLine : S[sim.i];
+    if (sim.cur && sim.cur !== ln.who) sim.prev = sim.cur; sim.cur = ln.who;
+    sim.tp.say(ln.text, { who: ln.who });
+  }
+  function step() {
+    var S = script(), tp = sim.tp;
+    if (sim.i < 0 && sim.t >= 500) next();
+    else if (sim.i >= S.length) { if (sim.t - sim.closedAt >= GAP) { sim.i = -1; sim.t = 0; sim.userLine = null; sim.prev = sim.cur = null; Object.keys(CAST).forEach(function (k) { tp.setEmotion(k, 'neutral'); }); } }
+    else if (sim.i >= 0 && tp.done()) { if (sim.doneAt < 0) sim.doneAt = sim.t; else if (!sim.manual && sim.t - sim.doneAt >= HOLD) next(); }
+    tp.update(STEP);
+    sim.t += STEP;
+    // history for the face lab's tracks (derived from the step, so frozen stills match play)
+    var st = tp.state(), key = String(sim.labWho).toLowerCase(), fc = st.faces[key];
+    if (fc) { sim.hist.push({ m: fc.mouth, e: fc.eyes, s: fc.shown, tr: fc.trans >= 0 }); if (sim.hist.length > 150) sim.hist.shift(); }
+    if (st.line && st.line.key === key && st.line.shown > 0 && sim.marks.length < st.line.shown) {
+      while (sim.marks.length < st.line.shown) sim.marks.push(fc ? fc.mouth : 0);
+      // the mark for the last letter shows the shape it is said with (first voiced frame); spaces and punctuation stay closed
+    }
+  }
+  function runTo(ms) { build(); var n = Math.floor(ms / STEP); for (var i = 0; i < n; i++) step(); }
+  function press() { if (!sim.tp.press()) { if (sim.i >= 0 && sim.i < script().length) next(); } }
+
+  /* ---------- drawing ---------- */
+  var EMO_COL = { neutral: '#9aa4c8', happy: '#ffd25a', angry: '#ff5a4a', sad: '#5a9aff', surprised: '#ff9ae0', determined: '#5ad88a', hurt: '#c08aff' };
+  function frameBox(r) { SK.frame(g, r, { role: 'window', team: 'n' }); }
+  function speakerKey() { var st = sim.tp.state(); return st.line && st.line.open ? st.line.who : null; }
+  function facingOf(id) {
+    var who = speakerKey(), a = ACTORS[id], DEF = { Elder: 'Mira', Mira: 'Elder', Brann: 'Mira' }, tgt;
+    if (who === id) tgt = sim.prev && sim.prev !== id ? sim.prev : DEF[id];
+    else tgt = who && ACTORS[who] ? who : DEF[id];
+    return { target: tgt, dir: ACTORS[tgt].x < a.x ? 'left' : 'right' };
+  }
+  function drawRoom() {
+    var t = sim.t, ex = [];
+    Object.keys(ACTORS).forEach(function (id) {
+      var a = ACTORS[id], f = facingOf(id);
+      ex.push({ y: a.y, draw: function (gg) { PXS.actor(gg, a.x, a.y, { pal: SPRITE[id], dir: f.dir, frame: 0 }); } });
+    });
+    ROOM.draw(g, t, ex, 0, 0);
+    // warm light from the fire, a cool vignette at the edges
+    var rg = g.createRadialGradient(128, 60, 10, 128, 80, 150); rg.addColorStop(0, 'rgba(255,170,80,0.10)'); rg.addColorStop(1, 'rgba(10,6,30,0.30)');
+    g.fillStyle = rg; g.fillRect(0, 0, W, 146);
+    // who is talking: a small bobbing pointer over the speaker's head
+    var who = speakerKey();
+    if (who && ACTORS[who]) {
+      var a = ACTORS[who], bob = Math.floor(sim.t / 260) % 2, px = a.x, py = a.y - 26 - bob;
+      g.fillStyle = '#1a1024'; g.fillRect(px - 4, py - 1, 9, 1); g.fillRect(px - 4, py, 9, 2); g.fillRect(px - 3, py + 2, 7, 1); g.fillRect(px - 2, py + 3, 5, 1); g.fillRect(px - 1, py + 4, 3, 1);
+      g.fillStyle = '#ffe070'; g.fillRect(px - 3, py, 7, 1); g.fillRect(px - 2, py + 1, 5, 1); g.fillRect(px - 1, py + 2, 3, 1); g.fillRect(px, py + 3, 1, 1);
+      g.fillStyle = '#fff8c8'; g.fillRect(px - 3, py, 3, 1);
+    }
+  }
+  var lastText = [];
+  function drawDialogue() {
+    var tp = sim.tp, st = tp.state();
+    lastText = [];
+    if (!st.line || !st.line.open) return null;
+    frameBox(BOX);
+    var lay = tp.drawSpeaker(g, BOX);
+    if (!lay) return null;
+    var tr = lay.text, rows = tp.rows(function (s) { return PF.measure(s); }, tr.w);
+    rows.forEach(function (r, i) { if (!r) return; var b = PF.draw(g, r, tr.x, tr.y + i * 10, { color: 'white' }); lastText.push({ x: b.x, y: b.y, w: b.w, h: b.h }); });
+    if (st.line.done) { // advance arrow, bottom right of the text column
+      var ax = tr.x + tr.w - 7, ay = BOX.y + BOX.h - 11 + (Math.floor(sim.t / 300) % 2);
+      g.fillStyle = '#1a1024'; g.fillRect(ax - 1, ay, 7, 1); g.fillStyle = '#ffe070'; g.fillRect(ax, ay, 5, 1); g.fillRect(ax + 1, ay + 1, 3, 1); g.fillRect(ax + 2, ay + 2, 1, 1);
+      lastText.push({ x: ax - 1, y: ay, w: 7, h: 3, arrow: true });
+    }
+    return lay;
+  }
+  function label(s, x, y, col) { return PF.draw(g, s, x, y, { color: col || '#ece6ff' }); }
+  function drawLab() {
+    // backdrop: a dark stage with a soft spotlight
+    g.fillStyle = '#120e1e'; g.fillRect(0, 0, W, H);
+    for (var y = 0; y < H; y += 2) { g.fillStyle = y % 4 ? '#15112a' : '#100c1c'; g.fillRect(0, y, W, 1); }
+    var tp = sim.tp, key = sim.labWho, f = tp.face(key), big = { x: 10, y: 14 };
+    var rg = g.createRadialGradient(46, 50, 4, 46, 50, 70); rg.addColorStop(0, 'rgba(255,220,160,0.16)'); rg.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = rg; g.fillRect(0, 0, 120, 120);
+    var r = tp.drawFace(g, key, big.x, big.y);
+    if (r) { SK.frame(g, { x: r.x, y: r.y + r.h + 3, w: r.w, h: 13 }, { role: 'plate', team: 'n' }); SK.text(g, key.toUpperCase(), r.x + Math.floor(r.w / 2), r.y + r.h + 6, { font: 'ui', align: 'center', color: '#ffe08a' }); }
+    // state readout (right column)
+    var X = 96, Y = 16;
+    if (f) {
+      label('MOOD', X, Y); var ec = EMO_COL[f.shown] || '#fff';
+      g.fillStyle = '#1a1024'; g.fillRect(X + 37, Y - 1, 113, 11); g.fillStyle = ec; g.fillRect(X + 38, Y, f.trans >= 0 ? Math.max(2, Math.round(111 * f.trans / params.transMs)) : 111, 9);
+      PF.draw(g, (f.trans >= 0 ? f.from + ' > ' + f.emotion : f.emotion).toUpperCase(), X + 41, Y + 1, { color: '#140c1c', shadow: 'none' });
+      label('EYES', X, Y + 16); ['open', 'half', 'closed'].forEach(function (e, i) { var on = f.eyes === e; g.fillStyle = on ? '#ffe070' : '#2a2440'; g.fillRect(X + 38 + i * 38, Y + 15, 36, 9); PF.draw(g, e.toUpperCase(), X + 40 + i * 38, Y + 16, { color: on ? '#140c1c' : '#8a80a8', shadow: 'none' }); });
+      label('MOUTH', X, Y + 32); ['shut', 'half', 'open'].forEach(function (e, i) { var on = f.mouth === i; g.fillStyle = on ? '#ff9a6a' : '#2a2440'; g.fillRect(X + 38 + i * 38, Y + 31, 36, 9); PF.draw(g, e.toUpperCase(), X + 40 + i * 38, Y + 32, { color: on ? '#140c1c' : '#8a80a8', shadow: 'none' }); });
+      label('BREATH', X, Y + 48); g.fillStyle = '#2a2440'; g.fillRect(X + 38, Y + 47, 112, 9); g.fillStyle = '#5ad88a'; g.fillRect(X + 38, Y + 47, f.breath ? 112 : 56, 9);
+      PF.draw(g, f.breath ? 'IN (1 PX UP)' : 'OUT', X + 41, Y + 48, { color: '#140c1c', shadow: 'none' });
+    }
+    // the line as a lip track: each typed letter underlined with the mouth shape it was said with
+    var st = tp.state(), LT = { x: 8, y: 100, w: 240, h: 54 };
+    SK.frame(g, LT, { role: 'window', team: 'n' });
+    label('LIP TRACK', LT.x + 6, LT.y + 5, '#d8d0f0');
+    if (st.line && st.line.key === key.toLowerCase()) {
+      var rows = tp.rows(function (s) { return PF.measure(s, { font: 'mono' }); }, LT.w - 14), at = 0, full = st.line.text;
+      rows.forEach(function (row, ri) {
+        var x0 = LT.x + 7, y0 = LT.y + 15 + ri * 12;
+        var start = full.indexOf(row, at); if (start < 0) start = at; at = start + row.length;
+        for (var i = 0; i < row.length; i++) {
+          var ci = start + i, m = sim.marks[ci], cls = TP.charClass(row[i]), x = x0 + i * 6;
+          g.fillStyle = cls !== 'voice' ? '#3a3456' : m === 2 ? '#ff9a6a' : m === 1 ? '#ffd8a0' : '#5a5478';
+          if (row[i] !== ' ') g.fillRect(x, y0 + 9, 5, 2);
+        }
+        PF.draw(g, row, x0, y0, { font: 'mono', color: 'white' });
+      });
+    } else label('(waiting for the next line)', LT.x + 7, LT.y + 22, '#6a6088');
+    [['#ff9a6a', 'OPEN'], ['#ffd8a0', 'HALF'], ['#3a3456', 'SHUT (SPACE, PUNCT.)']].forEach(function (lg, i) {
+      var lx = LT.x + 7 + [0, 44, 88][i], ly = LT.y + LT.h - 12; g.fillStyle = lg[0]; g.fillRect(lx, ly + 2, 5, 2); label(lg[1], lx + 8, ly, '#d8d0f0');
+    });
+    // tracks: the last 2.5 s, one column per frame
+    var TR = { x: 8, y: 158, w: 240, h: 60 };
+    SK.frame(g, TR, { role: 'window', team: 'n' });
+    var names = ['MOUTH', 'EYES', 'MOOD'], x1 = TR.x + 46, n = sim.hist.length;
+    names.forEach(function (nm, ri) { label(nm, TR.x + 6, TR.y + 7 + ri * 16, '#d8d0f0'); g.fillStyle = '#0c0a18'; g.fillRect(x1 - 1, TR.y + 5 + ri * 16, 152, 12); });
+    for (var j = 0; j < n; j++) {
+      var h = sim.hist[j], x = x1 + j;
+      g.fillStyle = '#ff9a6a'; if (h.m) g.fillRect(x, TR.y + 15 - h.m * 4, 1, h.m * 4);
+      g.fillStyle = h.e === 'open' ? '#e8e4ff' : h.e === 'half' ? '#8a84b0' : '#2a2440'; g.fillRect(x, TR.y + 26, 1, 6);
+      g.fillStyle = EMO_COL[h.s] || '#fff'; g.fillRect(x, TR.y + 37, 1, 10); if (h.tr && j % 2 === 0) { g.fillStyle = '#ffffff'; g.fillRect(x, TR.y + 37, 1, 10); }
+    }
+    g.fillStyle = '#ffe070'; g.fillRect(x1 + n, TR.y + 4, 1, 46);
+    return null;
+  }
+  function render() {
+    fit();
+    g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = false;
+    g.fillStyle = '#07060c'; g.fillRect(0, 0, W, H);
+    if (view === 'lab') drawLab();
+    else { drawRoom(); g.fillStyle = '#0c0a14'; g.fillRect(0, 146, W, H - 146); for (var x = 0; x < W; x += 4) { g.fillStyle = '#16101e'; g.fillRect(x, 146, 2, 1); } drawDialogue(); }
+    document.getElementById('time').textContent = (sim.t / 1000).toFixed(1) + ' s';
+    if (!dragging) document.getElementById('scrub').value = Math.min(+document.getElementById('scrub').max, sim.t);
+  }
+
+  /* ---------- text state for checks and critics ---------- */
+  window.__state = function () {
+    var st = sim.tp.state(), who = speakerKey();
+    var actors = view === 'lab' ? [] : Object.keys(ACTORS).map(function (id) { var a = ACTORS[id], f = facingOf(id); return { id: id.toLowerCase(), x: a.x, y: a.y, facing: f.dir, target: f.target.toLowerCase(), sprite: 'pixel-kit actor ' + SPRITE[id] }; });
+    return { t: Math.round(sim.t), view: view, actors: actors, speaker: who, line: st.line, faces: st.faces, panel: st.panel, note: view === 'lab' ? 'face lab: one frontal bust portrait, no field characters' : undefined };
+  };
+  // rectangles on screen for the overlap scan (portrait panel, name plate, typed rows, arrow, actors, speaker pointer)
+  window.__layout = function () {
+    var lay = sim.tp.lastLayout(), dr = sim.tp.lastDrawn(), out = { view: view, box: view === 'talk' && sim.tp.state().line && sim.tp.state().line.open ? BOX : null, drawn: dr, text: lastText.slice(), actors: [] };
+    if (view === 'talk') Object.keys(ACTORS).forEach(function (id) { var a = ACTORS[id]; out.actors.push({ id: id, x: a.x - 7, y: a.y - 17, w: 14, h: 18 }); });
+    out.layoutText = lay && lay.text; return out;
+  };
+  window.__seek = function (ms) { runTo(ms); render(); return window.__state(); };
+  window.__advance = function (frames) { for (var i = 0; i < frames; i++) step(); render(); return window.__state(); };
+  window.__tp = function () { return sim.tp; };
+
+  /* ---------- controls ---------- */
+  var ctl = document.getElementById('ctl'), labctl = document.getElementById('labctl');
+  function rebuildKeep() { var t = sim.t; runTo(t); render(); }
+  function addRange(parent, key, label, min, max, stp, fmt) {
+    var l = document.createElement('label'), sp = document.createElement('span'), out = document.createElement('output'), i = document.createElement('input');
+    sp.textContent = label; sp.appendChild(out); i.type = 'range'; i.min = min; i.max = max; i.step = stp; i.value = params[key]; i.setAttribute('aria-label', label);
+    var show = function () { out.textContent = fmt ? fmt(+i.value) : i.value; }; show();
+    i.oninput = function () { params[key] = +i.value; if (key === 'blinkMin' && params.blinkMax < params.blinkMin) params.blinkMax = params.blinkMin; sim.tp.setParams(params); show(); };
+    i.onchange = rebuildKeep;
+    l.appendChild(sp); l.appendChild(i); parent.appendChild(l); return i;
+  }
+  function addSel(parent, label, opts, val, fn) {
+    var l = document.createElement('label'), s = document.createElement('select'); l.textContent = label;
+    opts.forEach(function (o) { var op = document.createElement('option'); op.value = o[0]; op.textContent = o[1]; s.appendChild(op); }); s.value = val; s.onchange = function () { fn(s.value); };
+    l.appendChild(s); parent.appendChild(l); return s;
+  }
+  addRange(ctl, 'cps', 'Typing speed (chars/s)', 10, 90, 5);
+  addRange(ctl, 'mouthMs', 'Mouth frame (ms)', 50, 160, 10);
+  addRange(ctl, 'transMs', 'Expression change (ms)', 120, 400, 20);
+  addRange(ctl, 'blinkMin', 'Blink gap min (ms)', 1000, 5000, 100);
+  addRange(ctl, 'blinkMax', 'Blink gap max (ms)', 2000, 9000, 100);
+  addSel(ctl, 'Breathing', [['3600', 'Slow (3.6 s)'], ['2400', 'Quick (2.4 s)'], ['0', 'Off']], String(params.breathMs), function (v) { params.breathMs = +v; rebuildKeep(); });
+  addSel(ctl, 'Portrait size', [['48', '48 px'], ['64', '64 px']], String(params.size), function (v) { params.size = +v; rebuildKeep(); });
+  addSel(ctl, 'Frame', [['window', 'Window'], ['plate', 'Plate'], ['none', 'None']], params.frame, function (v) { params.frame = v; rebuildKeep(); });
+  addSel(ctl, 'Name tag', [['on', 'On'], ['off', 'Off']], params.nameTag, function (v) { params.nameTag = v; rebuildKeep(); });
+  addSel(labctl, 'Face', [['Mira', 'Mira'], ['Elder', 'Elder'], ['Brann', 'Brann']], 'Mira', function (v) { sim.labWho = v; runTo(0); render(); });
+  var emos = document.getElementById('emos');
+  TP.EMOTIONS.forEach(function (e, i) {
+    var b = document.createElement('button'); b.textContent = (i + 1) + ' ' + e; b.setAttribute('aria-label', 'Set emotion ' + e); b.onclick = function () { setEmo(e); }; emos.appendChild(b);
+  });
+  function setEmo(e) { var who = view === 'lab' ? sim.labWho : speakerKey() || 'Mira'; sim.tp.setEmotion(who, e); }
+  document.getElementById('sayit').onclick = function () {
+    var txt = document.getElementById('line').value || '...';
+    runTo(0); sim.userLine = { who: sim.labWho, text: txt }; sim.t = 500; next(); render();
+  };
+  function setView(v) {
+    view = v; document.getElementById('tab-talk').setAttribute('aria-selected', v === 'talk'); document.getElementById('tab-lab').setAttribute('aria-selected', v === 'lab');
+    document.getElementById('lab').hidden = v !== 'lab'; runTo(0); render();
+  }
+  document.getElementById('tab-talk').onclick = function () { setView('talk'); };
+  document.getElementById('tab-lab').onclick = function () { setView('lab'); };
+  document.getElementById('lab').hidden = view !== 'lab';
+  document.getElementById('tab-talk').setAttribute('aria-selected', view === 'talk'); document.getElementById('tab-lab').setAttribute('aria-selected', view === 'lab');
+  var running = true, dragging = false;
+  document.getElementById('next').onclick = function () { press(); render(); };
+  document.getElementById('play').onclick = function () { running = !running; this.textContent = running ? 'Pause' : 'Play'; this.setAttribute('aria-pressed', String(!running)); };
+  document.getElementById('again').onclick = function () { runTo(0); running = true; var p = document.getElementById('play'); p.textContent = 'Pause'; p.setAttribute('aria-pressed', 'false'); render(); };
+  var scrub = document.getElementById('scrub');
+  scrub.oninput = function () { dragging = true; runTo(+scrub.value); render(); };
+  scrub.onchange = function () { dragging = false; };
+  cv.addEventListener('pointerdown', function (e) { e.preventDefault(); cv.focus(); press(); render(); });
+  addEventListener('keydown', function (e) {
+    var tag = e.target && e.target.tagName;
+    if (tag === 'INPUT' && e.target.type === 'text') { if (e.key === 'Enter') document.getElementById('sayit').click(); return; }
+    if (tag === 'SELECT' || tag === 'INPUT') return;
+    if ((e.key === 'z' || e.key === 'Z' || ((e.key === 'Enter' || e.key === ' ') && (tag !== 'BUTTON'))) && !e.repeat) { e.preventDefault(); press(); render(); }
+    else if (/^[1-7]$/.test(e.key)) { setEmo(TP.EMOTIONS[+e.key - 1]); }
+  });
+
+  /* ---------- run ---------- */
+  build();
+  if (T0 != null) { runTo(T0); render(); if (FREEZE) { window.__frozen = true; return; } }
+  else render();
+  var acc = 0, prev = null;
+  function frame(now) {
+    if (prev === null) prev = now;
+    var dt = Math.min(250, now - prev); prev = now;
+    if (running && !dragging) { acc += dt; while (acc >= STEP) { step(); acc -= STEP; } }
+    render();
+    requestAnimationFrame(frame);
+  }
+  addEventListener('resize', render);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

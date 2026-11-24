@@ -1,0 +1,45 @@
+<body>
+<header>
+  <span class="code">E-03</span>
+  <div><h1>Dissolve-out defeat</h1><p>A defeated unit dissolves from a snapshot of its sprite: the game removes it at once, and the battle never waits.</p></div>
+</header>
+<main>
+  <section id="stage">
+    <div class="frame"><canvas id="cv" width="256" height="224" aria-label="Battle scene: defeated monsters dissolve"></canvas></div>
+    <div class="caption"><span id="status">Auto-loop</span><span><span id="scaleinfo">256×224 native</span> · click a monster or press <b>1–4</b></span></div>
+  </section>
+  <aside>
+    <div>
+      <h2>Defeat</h2>
+      <div class="triggers">
+        <button data-act="golem" style="--c:var(--crit)"><i>GOL</i>Golem<kbd>1</kbd></button>
+        <button data-act="wisp" style="--c:var(--heal)"><i>WSP</i>Wisp<kbd>2</kbd></button>
+        <button data-act="slime" style="--c:var(--mp)"><i>SLM</i>Slime<kbd>3</kbd></button>
+        <button data-act="bat" style="--c:var(--status)"><i>BAT</i>Bat<kbd>4</kbd></button>
+        <button data-act="all" class="wide" style="--c:var(--multi)"><i>ALL</i>Defeat all<kbd>A</kbd></button>
+        <button data-act="replay" class="wide" style="--c:var(--hit)"><i>&#8634;</i>Replay loop<kbd>R</kbd></button>
+      </div>
+    </div>
+    <div class="two">
+      <div><h2>Speed</h2><div class="seg"><button data-speed="1" aria-checked="true">1×</button><button data-speed="0.5" aria-checked="false">½×</button><button data-speed="0.25" aria-checked="false">¼×</button></div></div>
+      <div><h2>Battle end</h2><div class="seg" id="endseg"><button data-end="now" aria-checked="true">Now</button><button data-end="await" aria-checked="false">Await</button></div></div>
+    </div>
+    <div><h2>Parameters</h2><div id="params"></div></div>
+    <div class="foot"><span>Changes apply live and are kept in the URL.</span><button id="reset" type="button">Reset</button></div>
+  </aside>
+</main>
+<script>
+/*SKINAPI*/
+</script>
+<script>
+/*PIXEL16*/
+</script>
+<script>
+/*MODULE*/
+</script>
+<script>
+/*COMMON*/
+/*MAIN*/
+</script>
+</body>
+</html>

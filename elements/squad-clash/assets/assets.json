@@ -1,0 +1,479 @@
+{
+ "format": "gamedna-assets/1",
+ "pack": "squad-clash starter art: 13 original classes as painted pose sprites (ready, attack / draw / loose), the 8 enemy-side classes also painted looking left (<class>-left.webp, 4 calls with the native sheet as the only reference), and one meadow at four times of day",
+ "generated": {
+  "tool": "codex image_gen.imagegen (built-in)",
+  "model": "image generator",
+  "effort": "high",
+  "date": "2026-11-17"
+ },
+ "styleLock": {
+  "reference": "elements/cutout-characters/assets/gen/mother/lineup.png (our own L-10 line-up: rendering reference for every character sheet; the vanguard sheet redraws its three characters)",
+  "note": "the dusk, night and dawn backdrops were generated with the day backdrop as the only reference"
+ },
+ "imagegenCalls": 13,
+ "imagegenBudget": 10,
+ "imagegenBudgetVariants": 6,
+ "bytes": 2423620,
+ "generations": [
+  {
+   "run": "gen/field-dawn",
+   "file": "field-dawn.png",
+   "prompt": "prompts/field-dawn.md",
+   "sha256": "4beefd81d47b4c10f846784cd8900edfc81cbbdca9dc461fe90ae82af2e8ea0e",
+   "w": 1672,
+   "h": 941,
+   "fromGenerator": true,
+   "generationId": "d1bc01f4-6e1c-42ed-8715-9082ed27bca1",
+   "revisedPrompt": "Repaint the attached reference picture as the SAME place at a different time of day: exactly the same composition and the same wide landscape format, with the horizon, the dry-stone wall, the hedgerow, the poplar trees, the hills, the ruined watchtower, the dirt cart track and the stones and flowers at the bottom edge all in exactly the same positions and sizes as in the reference; the lower 55% stays an empty, clear, nearly flat meadow stage. Change only the light, the sky and the colours: early dawn. The sun has not yet cleared the hills on the right: the sky is pale peach and soft pink near the horizon rising to a cool lavender-blue at the top, with thin high clouds touched with pink; low white mist lies in the valleys between the hills and thinly along the far wall; the trees and hedgerow are cool grey-green with a faint pink rim on the right side; the meadow is a cool dewy sage green, soft and clearly readable, a little paler along the cart track.\nPainted HD 2D game background art in a hand-painted storybook style with soft brushwork, gentle atmospheric perspective and clear large shapes. No characters, no animals, no people, no user interface, no frame, no border. Original, no resemblance to any existing game, film or franchise location, no text, no logo, no watermark.",
+   "transparentBackground": false,
+   "inputImages": [
+    {
+     "name": "field-day.png",
+     "sha256": "e4d4b6de22f1ee7eabb6e6b21a57427b90448a2c4339f358e663e3d052dd16fb"
+    }
+   ],
+   "model": "image generator",
+   "effort": "high",
+   "date": "2026-11-17 17:20 CST",
+   "verified": true
+  },
+  {
+   "run": "gen/field-day",
+   "file": "field-day.png",
+   "prompt": "prompts/field-day.md",
+   "sha256": "e4d4b6de22f1ee7eabb6e6b21a57427b90448a2c4339f358e663e3d052dd16fb",
+   "w": 1672,
+   "h": 941,
+   "fromGenerator": true,
+   "generationId": "fdebb3be-c871-4b9b-9a26-2d3816fd0996",
+   "revisedPrompt": "Wide landscape background for the battle screen of an original side-view fantasy tactics game: an open mountain-valley meadow seen from a slightly raised side view, as an empty stage. The LOWER 55% of the picture is the stage floor: a broad, nearly flat field of short trampled grass with a pale worn dirt cart track running straight across it from the left edge to the right edge, a few small wild flowers and low stones only near the very bottom edge, otherwise clear and uncluttered so that characters can be placed anywhere on it; the ground is evenly lit and gets slightly lighter toward the horizon. The UPPER 45%: a line of dark-green hedgerow and a low dry-stone field wall at the far edge of the meadow, behind it rolling hills fading into blue haze, a small ruined round watchtower far away on a hill slightly right of centre, tall poplar trees framing the far left and far right edges, a bright midday sky with large soft cumulus clouds and the sun high and out of frame, light coming from the upper left. Calm, fresh, late-spring colours: sage and yellow-green grass, blue-grey hills, cream clouds.\nPainted HD 2D game background art in a hand-painted storybook style with soft brushwork, gentle atmospheric perspective and clear large shapes; muted warm palette. No characters, no animals, no people, no buildings in the foreground, no user interface, no frame, no border. Original, no resemblance to any existing game, film or franchise location, no text, no logo, no watermark.",
+   "transparentBackground": false,
+   "inputImages": [],
+   "model": "image generator",
+   "effort": "high",
+   "date": "2026-11-17 17:15 CST",
+   "verified": true
+  },
+  {
+   "run": "gen/field-dusk",
+   "file": "field-dusk.png",
+   "prompt": "prompts/field-dusk.md",
+   "sha256": "3ed3deb7ca142befe4491f0396c1a470ba4c97de3d44dc9418982a2489d78061",
+   "w": 1672,
+   "h": 941,
+   "fromGenerator": true,
+   "generationId": "02cf7104-008c-4cc8-9f6c-4b9872d938c7",
+   "revisedPrompt": "Repaint the attached reference picture as the SAME place at a different time of day: exactly the same composition and the same wide landscape format, with the horizon, the dry-stone wall, the hedgerow, the poplar trees, the hills, the ruined watchtower, the dirt cart track and the stones and flowers at the bottom edge all in exactly the same positions and sizes as in the reference; the lower 55% stays an empty, clear, nearly flat meadow stage. Change only the light, the sky and the colours: sunset. The sun is a low orange disc just above the hills left of centre, the sky glows amber and rose near the horizon and deepens to dusty violet at the top, with long purple-pink clouds lit gold underneath; the hills are violet silhouettes in warm haze; the trees and hedgerow are dark olive with orange rim light; the meadow is warm olive-gold with long soft shadows and stays clearly readable, a little lighter along the cart track.\nPainted HD 2D game background art in a hand-painted storybook style with soft brushwork, gentle atmospheric perspective and clear large shapes. No characters, no animals, no people, no user interface, no frame, no border. Original, no resemblance to any existing game, film or franchise location, no text, no logo, no watermark.",
+   "transparentBackground": false,
+   "inputImages": [
+    {
+     "name": "field-day.png",
+     "sha256": "e4d4b6de22f1ee7eabb6e6b21a57427b90448a2c4339f358e663e3d052dd16fb"
+    }
+   ],
+   "model": "image generator",
+   "effort": "high",
+   "date": "2026-11-17 17:18 CST",
+   "verified": true
+  },
+  {
+   "run": "gen/field-night",
+   "file": "field-night.png",
+   "prompt": "prompts/field-night.md",
+   "sha256": "4930c8d11b344959f721112b5ed0742511b0cbd6d90996c23b98f5d53edcd254",
+   "w": 1672,
+   "h": 941,
+   "fromGenerator": true,
+   "generationId": "63e654fc-cb11-4be3-8293-9e7d1067eec9",
+   "revisedPrompt": "Repaint the attached reference picture as the SAME place at a different time of day: exactly the same composition and the same wide landscape format, with the horizon, the dry-stone wall, the hedgerow, the poplar trees, the hills, the ruined watchtower, the dirt cart track and the stones and flowers at the bottom edge all in exactly the same positions and sizes as in the reference; the lower 55% stays an empty, clear, nearly flat meadow stage. Change only the light, the sky and the colours: a clear moonlit night. A large pale full moon hangs in the upper right of a deep indigo-blue sky with many small stars and a few thin silver-edged clouds; the hills are dark blue layers with pale mist in the valleys; a tiny warm light glows in the window of the watchtower; the trees and hedgerow are near-black blue-green with a cool silver rim; the meadow is a cool blue-green, moonlit and clearly readable (mid-dark, not black), a little paler along the cart track, with a few tiny pale fireflies low over the grass near the bottom corners.\nPainted HD 2D game background art in a hand-painted storybook style with soft brushwork, gentle atmospheric perspective and clear large shapes. No characters, no animals, no people, no user interface, no frame, no border. Original, no resemblance to any existing game, film or franchise location, no text, no logo, no watermark.",
+   "transparentBackground": false,
+   "inputImages": [
+    {
+     "name": "field-day.png",
+     "sha256": "e4d4b6de22f1ee7eabb6e6b21a57427b90448a2c4339f358e663e3d052dd16fb"
+    }
+   ],
+   "model": "image generator",
+   "effort": "high",
+   "date": "2026-11-17 17:18 CST",
+   "verified": true
+  },
+  {
+   "run": "gen/sheet-archers-left",
+   "file": "sheet-archers-left.png",
+   "prompt": "prompts/sheet-archers-left.md",
+   "sha256": "37f33a860a0ea14fed605ec125ddbdccca71f7f1468c7aaa422ba3bda1e78c28",
+   "w": 1536,
+   "h": 1024,
+   "fromGenerator": true,
+   "generationId": "e5fef889-23e0-481f-a5ba-bfda446e3e8c",
+   "revisedPrompt": "The same figures as the reference image, in the same grid cells and the same poses, each one turned around on the spot to face the OTHER way: this is a new painting of the same characters seen from their other side, not a mirror image. Every one keeps the same design, colours, proportions and size, and keeps each weapon, shield or staff in the SAME hand of its own body as in the reference. The light has not moved: it still comes from the upper LEFT of the canvas, so faces and fronts are now on the lit side. Sprite sheet for an original side-view fantasy tactics game on a wide landscape canvas: 6 full-body figures arranged in a neat grid of 3 columns and 2 rows, every figure inside its own cell, separated from every other figure by clear transparent space on all sides (no figure, weapon or cloak touches or overlaps another figure), all figures at the same scale, every figure complete from head to feet with nothing cropped by the canvas edge, the feet of each row on one common baseline. Every figure is seen in the same three-quarter side view turned toward the viewer's LEFT and looks to the left. Two different original characters, each drawn three times: the SAME person, costume and colours in all three of its poses.\nTOP ROW, the heroes' archer: a wiry woman in her twenties with tan skin and short-cropped black hair under a folded ochre headscarf, a rust-red quilted sleeveless jerkin over a pale linen shirt with rolled sleeves, a grey-blue half-cloak pinned on her far shoulder, a leather bracer on her bow arm, dark olive trousers, tall laced soft boots, a quiver of white-fletched arrows at her hip; a short recurve bow of dark horn and pale wood. Pose 1 (left cell), ready: standing low and alert, bow held down in front of her with an arrow resting on the string, not drawn. Pose 2 (middle cell), full draw: bow raised and aimed level to the left, string drawn back to her cheek, an arrow on the string, back straight, feet apart. Pose 3 (right cell), just released: bow arm still extended to the left, the string straight, NO arrow anywhere on the bow, her drawing hand open beside her ear, leaning slightly back.\nBOTTOM ROW, an outlaw slinger: a lean sunburnt young man with a shaved head and a short sandy beard, a hooded sand-brown poncho with a frayed hem and a faded dark-red stripe, bare forearms wrapped in cloth strips, a bulging stone pouch on a rope belt, patched brown trousers, worn sandals with leg wraps; a long braided leather sling. Pose 1 (left cell), ready: crouched and wary, the loaded sling hanging from his near hand, his far hand holding a spare stone. Pose 2 (middle cell), wind-up: body coiled back, the sling whirling in one clean loop above and behind his head, front foot stepping forward. Pose 3 (right cell), just released: throwing arm fully extended forward to the left, the empty sling cords trailing from his hand, body leaning forward on the front foot.\nSlender heroic figures about 6.5 to 7 heads tall. Painted HD 2D game character art with a visible thin dark warm-brown outline around every shape and along inner folds (about 1/150 of the figure's height, never black, never missing, like inked line art under the paint); soft hand-painted gradients with only 2 to 3 value steps per material; clearly distinct materials (cloth, leather, brass, steel, wood, fur); strong warm key light from the upper LEFT like a low sun, cool soft shade on the right side of every form, a thin bright rim of light on metal edges; muted warm palette with one accent colour per character. Fully transparent background (real alpha), no ground, no shadow on the ground, no backdrop, no frame, no labels, no captions, no numbers, no guide lines, no colour swatches, no motion lines, no magic glow effects, no flying projectiles. Original, no resemblance to any existing game, film or franchise character, no text, no logo, no watermark.",
+   "transparentBackground": true,
+   "inputImages": [
+    {
+     "name": "sheet-archers.png",
+     "sha256": "a1bd0623df9d9c524ca18bac53a3bd2bcddfe64b929c2e22f6ec6f572ad68cbb"
+    }
+   ],
+   "model": "image generator",
+   "effort": "high",
+   "date": "2026-11-17 22:47 CST",
+   "verified": true
+  },
+  {
+   "run": "gen/sheet-archers",
+   "file": "sheet-archers.png",
+   "prompt": "prompts/sheet-archers.md",
+   "sha256": "a1bd0623df9d9c524ca18bac53a3bd2bcddfe64b929c2e22f6ec6f572ad68cbb",
+   "w": 1536,
+   "h": 1024,
+   "fromGenerator": true,
+   "generationId": "c7b76329-bcff-4e21-87bb-1e750573c6d9",
+   "revisedPrompt": "Sprite sheet for an original side-view fantasy tactics game on a wide landscape canvas: 6 full-body figures arranged in a neat grid of 3 columns and 2 rows, every figure inside its own cell, separated from every other figure by clear transparent space on all sides (no figure, weapon or cloak touches or overlaps another figure), all figures at the same scale, every figure complete from head to feet with nothing cropped by the canvas edge, the feet of each row on one common baseline. Every figure is seen in the same three-quarter side view turned toward the viewer's RIGHT and looks to the right. Two different original characters, each drawn three times: the SAME person, costume and colours in all three of its poses.\nTOP ROW, the heroes' archer: a wiry woman in her twenties with tan skin and short-cropped black hair under a folded ochre headscarf, a rust-red quilted sleeveless jerkin over a pale linen shirt with rolled sleeves, a grey-blue half-cloak pinned on her far shoulder, a leather bracer on her bow arm, dark olive trousers, tall laced soft boots, a quiver of white-fletched arrows at her hip; a short recurve bow of dark horn and pale wood. Pose 1 (left cell), ready: standing low and alert, bow held down in front of her with an arrow resting on the string, not drawn. Pose 2 (middle cell), full draw: bow raised and aimed level to the right, string drawn back to her cheek, an arrow on the string, back straight, feet apart. Pose 3 (right cell), just released: bow arm still extended to the right, the string straight, NO arrow anywhere on the bow, her drawing hand open beside her ear, leaning slightly back.\nBOTTOM ROW, an outlaw slinger: a lean sunburnt young man with a shaved head and a short sandy beard, a hooded sand-brown poncho with a frayed hem and a faded dark-red stripe, bare forearms wrapped in cloth strips, a bulging stone pouch on a rope belt, patched brown trousers, worn sandals with leg wraps; a long braided leather sling. Pose 1 (left cell), ready: crouched and wary, the loaded sling hanging from his near hand, his far hand holding a spare stone. Pose 2 (middle cell), wind-up: body coiled back, the sling whirling in one clean loop above and behind his head, front foot stepping forward. Pose 3 (right cell), just released: throwing arm fully extended forward to the right, the empty sling cords trailing from his hand, body leaning forward on the front foot.\nSlender heroic figures about 6.5 to 7 heads tall. Painted HD 2D game character art with a visible thin dark warm-brown outline around every shape and along inner folds (about 1/150 of the figure's height, never black, never missing, like inked line art under the paint); soft hand-painted gradients with only 2 to 3 value steps per material; clearly distinct materials (cloth, leather, brass, steel, wood, fur); strong warm key light from the upper LEFT like a low sun, cool soft shade on the right side of every form, a thin bright rim of light on metal edges; muted warm palette with one accent colour per character. Fully transparent background (real alpha), no ground, no shadow on the ground, no backdrop, no frame, no labels, no captions, no numbers, no guide lines, no colour swatches, no motion lines, no magic glow effects, no flying projectiles. Original, no resemblance to any existing game, film or franchise character, no text, no logo, no watermark.",
+   "transparentBackground": true,
+   "inputImages": [
+    {
+     "name": "lineup.png",
+     "sha256": "0a414bd68475293bb7e6df862f52e8171f5e7023a6f1055464620ca07791411c"
+    }
+   ],
+   "model": "image generator",
+   "effort": "high",
+   "date": "2026-11-17 17:16 CST",
+   "verified": true
+  },
+  {
+   "run": "gen/sheet-beasts-left",
+   "file": "sheet-beasts-left.png",
+   "prompt": "prompts/sheet-beasts-left.md",
+   "sha256": "97200f7138fd12d1a03e5580bba4060906752c9f6e74ab95b82cad22ccbaa846",
+   "w": 1536,
+   "h": 1024,
+   "fromGenerator": true,
+   "generationId": "f41c4e47-41d6-4ef6-bf80-77c9ee3aa00c",
+   "revisedPrompt": "The same figures as the reference image, in the same grid cells and the same poses, each one turned around on the spot to face the OTHER way: this is a new painting of the same characters seen from their other side, not a mirror image. Every one keeps the same design, colours, proportions and size, and keeps each weapon, shield or staff in the SAME hand of its own body as in the reference. The light has not moved: it still comes from the upper LEFT of the canvas, so faces and fronts are now on the lit side. Sprite sheet for an original side-view fantasy tactics game on a wide landscape canvas: 4 full-body creatures arranged in a neat grid of 2 columns and 2 rows, every creature inside its own cell, separated from every other creature by clear transparent space on all sides (nothing touches or overlaps), every creature complete with nothing cropped by the canvas edge. Every creature is seen in side view facing the viewer's LEFT. Two different original creatures, each drawn twice: the SAME animal with the same markings and gear in both of its poses.\nTOP ROW, an outlaw's war hound: a big rangy shaggy hunting dog with a brindled grey-brown coat, a pale chest, one torn ear, amber eyes, a wide studded dark-red leather collar and a rough leather chest strap. Left cell, ready: standing braced on all four legs, head low, hackles up, teeth bared in a snarl. Right cell, attack: in full leap to the left, body stretched out, forelegs reaching forward, jaws wide open.\nBOTTOM ROW, a raider's hunting raptor: a large flightless-looking but winged bird of prey about as tall as a man's chest, slate-blue back and wings with rust-orange barring, a cream belly, a heavy hooked yellow beak, long powerful scaly legs with big talons, a small crest of dark feathers, a thin red leather jess strap round one leg. Left cell, ready: hovering low with wings half-spread and raised, legs dangling, head forward, beak slightly open. Right cell, attack: diving to the left with wings swept back, both taloned feet thrust forward, beak wide open in a screech.\nPainted HD 2D game creature art with a visible thin dark warm-brown outline around every shape and along inner folds (about 1/150 of the figure's height, never black, never missing, like inked line art under the paint); soft hand-painted gradients with only 2 to 3 value steps per material; clearly distinct materials (cloth, leather, brass, steel, wood, fur); strong warm key light from the upper LEFT like a low sun, cool soft shade on the right side of every form, a thin bright rim of light on metal edges; muted warm palette with one accent colour per creature. Fully transparent background (real alpha), no ground, no shadow on the ground, no backdrop, no frame, no labels, no captions, no numbers, no guide lines, no colour swatches, no motion lines, no magic glow effects, no flying projectiles. Original, no resemblance to any existing game, film or franchise character, no text, no logo, no watermark.",
+   "transparentBackground": true,
+   "inputImages": [
+    {
+     "name": "sheet-beasts.png",
+     "sha256": "c2df96011de2ebce32f6c9ad086d14606ef4220a7fe9413c36769927acb3d86b"
+    }
+   ],
+   "model": "image generator",
+   "effort": "high",
+   "date": "2026-11-17 22:42 CST",
+   "verified": true
+  },
+  {
+   "run": "gen/sheet-beasts",
+   "file": "sheet-beasts.png",
+   "prompt": "prompts/sheet-beasts.md",
+   "sha256": "c2df96011de2ebce32f6c9ad086d14606ef4220a7fe9413c36769927acb3d86b",
+   "w": 1536,
+   "h": 1024,
+   "fromGenerator": true,
+   "generationId": "7e047358-4436-40b7-84c2-f8932a414150",
+   "revisedPrompt": "Sprite sheet for an original side-view fantasy tactics game on a wide landscape canvas: 4 full-body creatures arranged in a neat grid of 2 columns and 2 rows, every creature inside its own cell, separated from every other creature by clear transparent space on all sides (nothing touches or overlaps), every creature complete with nothing cropped by the canvas edge. Every creature is seen in side view facing the viewer's RIGHT. Two different original creatures, each drawn twice: the SAME animal with the same markings and gear in both of its poses.\nTOP ROW, an outlaw's war hound: a big rangy shaggy hunting dog with a brindled grey-brown coat, a pale chest, one torn ear, amber eyes, a wide studded dark-red leather collar and a rough leather chest strap. Left cell, ready: standing braced on all four legs, head low, hackles up, teeth bared in a snarl. Right cell, attack: in full leap to the right, body stretched out, forelegs reaching forward, jaws wide open.\nBOTTOM ROW, a raider's hunting raptor: a large flightless-looking but winged bird of prey about as tall as a man's chest, slate-blue back and wings with rust-orange barring, a cream belly, a heavy hooked yellow beak, long powerful scaly legs with big talons, a small crest of dark feathers, a thin red leather jess strap round one leg. Left cell, ready: hovering low with wings half-spread and raised, legs dangling, head forward, beak slightly open. Right cell, attack: diving to the right with wings swept back, both taloned feet thrust forward, beak wide open in a screech.\nPainted HD 2D game creature art with a visible thin dark warm-brown outline around every shape and along inner folds (about 1/150 of the figure's height, never black, never missing, like inked line art under the paint); soft hand-painted gradients with only 2 to 3 value steps per material; clearly distinct materials (cloth, leather, brass, steel, wood, fur); strong warm key light from the upper LEFT like a low sun, cool soft shade on the right side of every form, a thin bright rim of light on metal edges; muted warm palette with one accent colour per creature. Fully transparent background (real alpha), no ground, no shadow on the ground, no backdrop, no frame, no labels, no captions, no numbers, no guide lines, no colour swatches, no motion lines, no magic glow effects, no flying projectiles. Original, no resemblance to any existing game, film or franchise character, no text, no logo, no watermark.",
+   "transparentBackground": true,
+   "inputImages": [
+    {
+     "name": "lineup.png",
+     "sha256": "0a414bd68475293bb7e6df862f52e8171f5e7023a6f1055464620ca07791411c"
+    }
+   ],
+   "model": "image generator",
+   "effort": "high",
+   "date": "2026-11-17 17:16 CST",
+   "verified": true
+  },
+  {
+   "run": "gen/sheet-bruisers-left",
+   "file": "sheet-bruisers-left.png",
+   "prompt": "prompts/sheet-bruisers-left.md",
+   "sha256": "07866d7b2e42c033d1a21d0e3a5d40db8053f90c05347a0b79496b6ba9ad2571",
+   "w": 1536,
+   "h": 1024,
+   "fromGenerator": true,
+   "generationId": "470074d4-415e-4034-869a-3bc9a1943c19",
+   "revisedPrompt": "The same figures as the reference image, in the same grid cells and the same poses, each one turned around on the spot to face the OTHER way: this is a new painting of the same characters seen from their other side, not a mirror image. Every one keeps the same design, colours, proportions and size, and keeps each weapon, shield or staff in the SAME hand of its own body as in the reference. The light has not moved: it still comes from the upper LEFT of the canvas, so faces and fronts are now on the lit side. Sprite sheet for an original side-view fantasy tactics game on a wide landscape canvas: 6 full-body figures arranged in a neat grid of 3 columns and 2 rows, every figure inside its own cell, separated from every other figure by clear transparent space on all sides (no figure, weapon or cloak touches or overlaps another figure), all figures at the same scale, every figure complete from head to feet with nothing cropped by the canvas edge, the feet of each row on one common baseline. Every figure is seen in the same three-quarter side view turned toward the viewer's LEFT and looks to the left. Three different original enemy characters, each drawn twice: the SAME person, costume, colours and weapon in both of its poses.\nColumn 1, a road brigand: a broad-shouldered man in his thirties with weathered light-brown skin, a shaggy dark topknot and stubble, a patched rust-brown leather vest over a bare chest with a diagonal rope strap, one mismatched iron shoulder plate, a dull red rag tied round his upper arm, baggy grey-brown trousers tucked into fur-topped boots; a heavy one-handed woodcutter's hatchet with a notched blade. Column 2, an ironclad soldier of a marching column: a heavyset figure fully enclosed in riveted dull-grey plate armour with a flat-topped barrel helmet with a narrow eye slit and no face visible, dark-red cloth tabard strips hanging from the belt, thick gauntlets and sabatons; a tall rectangular iron tower shield with a plain raised chevron on his far arm and a short heavy flanged mace in his near hand. Column 3, a warlord: a towering, powerfully built woman in her forties with a scarred face, deep-bronze skin and iron-grey hair in thick ropes tied back, a blackened steel cuirass with gilt edges over a dark crimson padded coat, a heavy wolf-grey fur mantle over one shoulder, a long crimson waist cloth, armoured greaves; a huge two-handed crescent-bladed war axe on a long dark haft.\nTOP ROW, ready stance: knees slightly bent, feet apart, weight low, weapon held ready in front of the body (the ironclad with the tower shield planted forward covering most of his body; the warlord with the great axe held across her body in both hands).\nBOTTOM ROW, the moment of the attack: a long forward lunge to the left with the front knee deeply bent; the brigand's hatchet arm fully extended in a downward chop in front of him; the ironclad's mace swung forward to the left at shoulder height past the edge of his shield; the warlord's great axe at the end of a wide two-handed horizontal sweep, the blade far out in front of her to the left, mantle swinging.\nFigures about 6.5 to 7 heads tall, the ironclad and the warlord noticeably bigger and heavier than the brigand. Painted HD 2D game character art with a visible thin dark warm-brown outline around every shape and along inner folds (about 1/150 of the figure's height, never black, never missing, like inked line art under the paint); soft hand-painted gradients with only 2 to 3 value steps per material; clearly distinct materials (cloth, leather, brass, steel, wood, fur); strong warm key light from the upper LEFT like a low sun, cool soft shade on the right side of every form, a thin bright rim of light on metal edges; muted warm palette with one accent colour per character. Fully transparent background (real alpha), no ground, no shadow on the ground, no backdrop, no frame, no labels, no captions, no numbers, no guide lines, no colour swatches, no motion lines, no magic glow effects, no flying projectiles. Original, no resemblance to any existing game, film or franchise character, no text, no logo, no watermark.",
+   "transparentBackground": true,
+   "inputImages": [
+    {
+     "name": "sheet-bruisers.png",
+     "sha256": "496029882da4f908c7e600c35e329b3817653daa988491f8797a6de37184b3ea"
+    }
+   ],
+   "model": "image generator",
+   "effort": "high",
+   "date": "2026-11-17 22:40 CST",
+   "verified": true
+  },
+  {
+   "run": "gen/sheet-bruisers",
+   "file": "sheet-bruisers.png",
+   "prompt": "prompts/sheet-bruisers.md",
+   "sha256": "496029882da4f908c7e600c35e329b3817653daa988491f8797a6de37184b3ea",
+   "w": 1536,
+   "h": 1024,
+   "fromGenerator": true,
+   "generationId": "3ce24741-3eb2-4f23-a286-0e2fd4da6b10",
+   "revisedPrompt": "Sprite sheet for an original side-view fantasy tactics game on a wide landscape canvas: 6 full-body figures arranged in a neat grid of 3 columns and 2 rows, every figure inside its own cell, separated from every other figure by clear transparent space on all sides (no figure, weapon or cloak touches or overlaps another figure), all figures at the same scale, every figure complete from head to feet with nothing cropped by the canvas edge, the feet of each row on one common baseline. Every figure is seen in the same three-quarter side view turned toward the viewer's RIGHT and looks to the right. Three different original enemy characters, each drawn twice: the SAME person, costume, colours and weapon in both of its poses.\nColumn 1, a road brigand: a broad-shouldered man in his thirties with weathered light-brown skin, a shaggy dark topknot and stubble, a patched rust-brown leather vest over a bare chest with a diagonal rope strap, one mismatched iron shoulder plate, a dull red rag tied round his upper arm, baggy grey-brown trousers tucked into fur-topped boots; a heavy one-handed woodcutter's hatchet with a notched blade. Column 2, an ironclad soldier of a marching column: a heavyset figure fully enclosed in riveted dull-grey plate armour with a flat-topped barrel helmet with a narrow eye slit and no face visible, dark-red cloth tabard strips hanging from the belt, thick gauntlets and sabatons; a tall rectangular iron tower shield with a plain raised chevron on his far arm and a short heavy flanged mace in his near hand. Column 3, a warlord: a towering, powerfully built woman in her forties with a scarred face, deep-bronze skin and iron-grey hair in thick ropes tied back, a blackened steel cuirass with gilt edges over a dark crimson padded coat, a heavy wolf-grey fur mantle over one shoulder, a long crimson waist cloth, armoured greaves; a huge two-handed crescent-bladed war axe on a long dark haft.\nTOP ROW, ready stance: knees slightly bent, feet apart, weight low, weapon held ready in front of the body (the ironclad with the tower shield planted forward covering most of his body; the warlord with the great axe held across her body in both hands).\nBOTTOM ROW, the moment of the attack: a long forward lunge to the right with the front knee deeply bent; the brigand's hatchet arm fully extended in a downward chop in front of him; the ironclad's mace swung forward to the right at shoulder height past the edge of his shield; the warlord's great axe at the end of a wide two-handed horizontal sweep, the blade far out in front of her to the right, mantle swinging.\nFigures about 6.5 to 7 heads tall, the ironclad and the warlord noticeably bigger and heavier than the brigand. Painted HD 2D game character art with a visible thin dark warm-brown outline around every shape and along inner folds (about 1/150 of the figure's height, never black, never missing, like inked line art under the paint); soft hand-painted gradients with only 2 to 3 value steps per material; clearly distinct materials (cloth, leather, brass, steel, wood, fur); strong warm key light from the upper LEFT like a low sun, cool soft shade on the right side of every form, a thin bright rim of light on metal edges; muted warm palette with one accent colour per character. Fully transparent background (real alpha), no ground, no shadow on the ground, no backdrop, no frame, no labels, no captions, no numbers, no guide lines, no colour swatches, no motion lines, no magic glow effects, no flying projectiles. Original, no resemblance to any existing game, film or franchise character, no text, no logo, no watermark.",
+   "transparentBackground": true,
+   "inputImages": [
+    {
+     "name": "lineup.png",
+     "sha256": "0a414bd68475293bb7e6df862f52e8171f5e7023a6f1055464620ca07791411c"
+    }
+   ],
+   "model": "image generator",
+   "effort": "high",
+   "date": "2026-11-17 17:16 CST",
+   "verified": true
+  },
+  {
+   "run": "gen/sheet-casters-left",
+   "file": "sheet-casters-left.png",
+   "prompt": "prompts/sheet-casters-left.md",
+   "sha256": "ffd72f73b8fbffb5714c363e0e1a926d199f90f986c2ed08a1a7efa7d3d14454",
+   "w": 1536,
+   "h": 1024,
+   "fromGenerator": true,
+   "generationId": "43cdc284-5de7-4804-ab84-439151425f8a",
+   "revisedPrompt": "The same figures as the reference image, in the same grid cells and the same poses, each one turned around on the spot to face the OTHER way: this is a new painting of the same characters seen from their other side, not a mirror image. Every one keeps the same design, colours, proportions and size, and keeps each weapon, shield or staff in the SAME hand of its own body as in the reference. The light has not moved: it still comes from the upper LEFT of the canvas, so faces and fronts are now on the lit side. Sprite sheet for an original side-view fantasy tactics game on a wide landscape canvas: 6 full-body figures arranged in a neat grid of 3 columns and 2 rows, every figure inside its own cell, separated from every other figure by clear transparent space on all sides (no figure, weapon or cloak touches or overlaps another figure), all figures at the same scale, every figure complete from head to feet with nothing cropped by the canvas edge, the feet of each row on one common baseline. Every figure is seen in the same three-quarter side view turned toward the viewer's LEFT and looks to the left. Three different original characters, each drawn twice: the SAME person, costume, colours and staff in both of its poses.\nColumn 1, the heroes' field cleric: a sturdy woman in her thirties with warm brown skin and thick dark hair in a braided crown, an undyed cream wool travelling habit with a short saffron-yellow shoulder mantle, a wide brown leather satchel belt hung with herb bundles and small bottles, rolled sleeves, sturdy walking boots; a straight walking staff of pale birch topped with a small bronze lantern cage holding a pale yellow glass. Column 2, an enemy hexer: a gaunt, stooped man in his fifties with ash-grey skin tone and long thin black hair, a ragged layered robe of dark violet and soot-black with a tall stiff collar, strings of small bones and green glass beads, long fingers with dark nails, bare bound feet; a crooked black thornwood staff with a cloudy green glass orb held in a claw of twigs. Column 3, an enemy mender: a stout bald old man with a white braided beard, a moss-grey hooded travelling robe with the hood down, a broad dull-gold sash, a round wooden travelling pack on his back with rolled bandages, heavy felt boots; a short thick staff of dark oak topped with a ring of pale green crystal shards.\nTOP ROW, ready stance: standing alert, feet apart, staff held upright in the far hand with its foot near the ground, near hand free.\nBOTTOM ROW, casting: leaning forward on the front foot, the staff thrust forward and up to the left at arm's length with its head leading, robe and sleeves swinging back, the free hand spread open behind or beside the body, mouth open as if calling a word.\nSlender heroic figures about 6.5 to 7 heads tall. Painted HD 2D game character art with a visible thin dark warm-brown outline around every shape and along inner folds (about 1/150 of the figure's height, never black, never missing, like inked line art under the paint); soft hand-painted gradients with only 2 to 3 value steps per material; clearly distinct materials (cloth, leather, brass, steel, wood, fur); strong warm key light from the upper LEFT like a low sun, cool soft shade on the right side of every form, a thin bright rim of light on metal edges; muted warm palette with one accent colour per character. Fully transparent background (real alpha), no ground, no shadow on the ground, no backdrop, no frame, no labels, no captions, no numbers, no guide lines, no colour swatches, no motion lines, no magic glow effects, no flying projectiles. Original, no resemblance to any existing game, film or franchise character, no text, no logo, no watermark.",
+   "transparentBackground": true,
+   "inputImages": [
+    {
+     "name": "sheet-casters.png",
+     "sha256": "689eddab1abf4530f2b0589478db0f267dbc44f0fb44f52961d83a26d668d469"
+    }
+   ],
+   "model": "image generator",
+   "effort": "high",
+   "date": "2026-11-17 22:45 CST",
+   "verified": true
+  },
+  {
+   "run": "gen/sheet-casters",
+   "file": "sheet-casters.png",
+   "prompt": "prompts/sheet-casters.md",
+   "sha256": "689eddab1abf4530f2b0589478db0f267dbc44f0fb44f52961d83a26d668d469",
+   "w": 1536,
+   "h": 1024,
+   "fromGenerator": true,
+   "generationId": "2bd3e25c-74a0-4b44-9dad-9d83d297595d",
+   "revisedPrompt": "Sprite sheet for an original side-view fantasy tactics game on a wide landscape canvas: 6 full-body figures arranged in a neat grid of 3 columns and 2 rows, every figure inside its own cell, separated from every other figure by clear transparent space on all sides (no figure, weapon or cloak touches or overlaps another figure), all figures at the same scale, every figure complete from head to feet with nothing cropped by the canvas edge, the feet of each row on one common baseline. Every figure is seen in the same three-quarter side view turned toward the viewer's RIGHT and looks to the right. Three different original characters, each drawn twice: the SAME person, costume, colours and staff in both of its poses.\nColumn 1, the heroes' field cleric: a sturdy woman in her thirties with warm brown skin and thick dark hair in a braided crown, an undyed cream wool travelling habit with a short saffron-yellow shoulder mantle, a wide brown leather satchel belt hung with herb bundles and small bottles, rolled sleeves, sturdy walking boots; a straight walking staff of pale birch topped with a small bronze lantern cage holding a pale yellow glass. Column 2, an enemy hexer: a gaunt, stooped man in his fifties with ash-grey skin tone and long thin black hair, a ragged layered robe of dark violet and soot-black with a tall stiff collar, strings of small bones and green glass beads, long fingers with dark nails, bare bound feet; a crooked black thornwood staff with a cloudy green glass orb held in a claw of twigs. Column 3, an enemy mender: a stout bald old man with a white braided beard, a moss-grey hooded travelling robe with the hood down, a broad dull-gold sash, a round wooden travelling pack on his back with rolled bandages, heavy felt boots; a short thick staff of dark oak topped with a ring of pale green crystal shards.\nTOP ROW, ready stance: standing alert, feet apart, staff held upright in the far hand with its foot near the ground, near hand free.\nBOTTOM ROW, casting: leaning forward on the front foot, the staff thrust forward and up to the right at arm's length with its head leading, robe and sleeves swinging back, the free hand spread open behind or beside the body, mouth open as if calling a word.\nSlender heroic figures about 6.5 to 7 heads tall. Painted HD 2D game character art with a visible thin dark warm-brown outline around every shape and along inner folds (about 1/150 of the figure's height, never black, never missing, like inked line art under the paint); soft hand-painted gradients with only 2 to 3 value steps per material; clearly distinct materials (cloth, leather, brass, steel, wood, fur); strong warm key light from the upper LEFT like a low sun, cool soft shade on the right side of every form, a thin bright rim of light on metal edges; muted warm palette with one accent colour per character. Fully transparent background (real alpha), no ground, no shadow on the ground, no backdrop, no frame, no labels, no captions, no numbers, no guide lines, no colour swatches, no motion lines, no magic glow effects, no flying projectiles. Original, no resemblance to any existing game, film or franchise character, no text, no logo, no watermark.",
+   "transparentBackground": true,
+   "inputImages": [
+    {
+     "name": "lineup.png",
+     "sha256": "0a414bd68475293bb7e6df862f52e8171f5e7023a6f1055464620ca07791411c"
+    }
+   ],
+   "model": "image generator",
+   "effort": "high",
+   "date": "2026-11-17 17:16 CST",
+   "verified": true
+  },
+  {
+   "run": "gen/sheet-vanguard",
+   "file": "sheet-vanguard.png",
+   "prompt": "prompts/sheet-vanguard.md",
+   "sha256": "e33acae4dd8f80c1bdbb64a0cc263c8bd492f83e6c340a354c79dc3c22e36422",
+   "w": 1536,
+   "h": 1024,
+   "fromGenerator": true,
+   "generationId": "4f2d7292-04b5-4061-99cf-56ece05c57f7",
+   "revisedPrompt": "Sprite sheet for an original side-view fantasy tactics game on a wide landscape canvas: 6 full-body figures arranged in a neat grid of 3 columns and 2 rows, every figure inside its own cell, separated from every other figure by clear transparent space on all sides (no figure, weapon or cloak touches or overlaps another figure), all figures at the same scale, every figure complete from head to feet with nothing cropped by the canvas edge, the feet of each row on one common baseline. Every figure is seen in the same three-quarter side view turned toward the viewer's RIGHT and looks to the right. The three characters of the attached reference image, each drawn twice: the SAME person, costume, colours and weapon in both of its poses.\nColumn 1: the young swordswoman with the auburn braid, slate-teal shoulder cloak, brass-edged leather pauldron, quilted cream tunic, straight single-edged sword and small round wooden buckler. Column 2: the tall spear fighter with dark brown skin and short black curly hair, moss-green half-cape, bronze scale chest piece, rust-orange sash and long ash-wood spear. Column 3: the mage in her forties with silver-grey chin-length hair, long deep-plum coat with gold cuffs, mustard under-tunic and twisted driftwood staff with a small amber crystal caged in wire at its top.\nTOP ROW, ready stance: knees slightly bent, feet apart, weight low, weapon held forward and low, calm and alert (the swordswoman with her buckler up in front of her chest; the mage with her staff upright in her far hand and her near hand open at her side).\nBOTTOM ROW, the moment of the attack: the swordswoman in a long forward lunge, front knee deeply bent, sword arm fully extended to the right at chest height, blade horizontal, cloak streaming behind her; the spear fighter in a deep lunge, both hands driving the spear straight forward to the right, spear horizontal at chest height and fully extended, cape flying back; the mage leaning forward on her front foot, thrusting the staff forward to the right at arm's length with the crystal end leading, coat flaring behind her, her free hand thrown back.\nSlender heroic figures about 6.5 to 7 heads tall. Painted HD 2D game character art with a visible thin dark warm-brown outline around every shape and along inner folds (about 1/150 of the figure's height, never black, never missing, like inked line art under the paint); soft hand-painted gradients with only 2 to 3 value steps per material; clearly distinct materials (cloth, leather, brass, steel, wood, fur); strong warm key light from the upper LEFT like a low sun, cool soft shade on the right side of every form, a thin bright rim of light on metal edges; muted warm palette with one accent colour per character. Fully transparent background (real alpha), no ground, no shadow on the ground, no backdrop, no frame, no labels, no captions, no numbers, no guide lines, no colour swatches, no motion lines, no magic glow effects, no flying projectiles. Original, no resemblance to any existing game, film or franchise character, no text, no logo, no watermark.",
+   "transparentBackground": true,
+   "inputImages": [
+    {
+     "name": "lineup.png",
+     "sha256": "0a414bd68475293bb7e6df862f52e8171f5e7023a6f1055464620ca07791411c"
+    }
+   ],
+   "model": "image generator",
+   "effort": "high",
+   "date": "2026-11-17 17:16 CST",
+   "verified": true
+  }
+ ],
+ "files": [
+  {
+   "file": "starter/art/archer.webp",
+   "sha256": "fa3040f2de9afedf2b31da68e8cec5c7fbeac0ab586f1e1011f5948f4f42cc00",
+   "bytes": 101196,
+   "from": "assets/gen/sheet-archers/sheet-archers.png",
+   "fromSha256": "a1bd0623df9d9c524ca18bac53a3bd2bcddfe64b929c2e22f6ec6f572ad68cbb"
+  },
+  {
+   "file": "starter/art/brigand-left.webp",
+   "sha256": "d9394449407be58875fb7853d7959fa07cb10893fb584f60747c9247631d2bf3",
+   "bytes": 67688,
+   "from": "assets/gen/sheet-bruisers-left/sheet-bruisers-left.png",
+   "fromSha256": "07866d7b2e42c033d1a21d0e3a5d40db8053f90c05347a0b79496b6ba9ad2571"
+  },
+  {
+   "file": "starter/art/brigand.webp",
+   "sha256": "10c3f7edf4932f69a123f253107a8b57c0613ae97c1bcb67dda1b1f226f0b3f9",
+   "bytes": 68052,
+   "from": "assets/gen/sheet-bruisers/sheet-bruisers.png",
+   "fromSha256": "496029882da4f908c7e600c35e329b3817653daa988491f8797a6de37184b3ea"
+  },
+  {
+   "file": "starter/art/cleric.webp",
+   "sha256": "6f19a1337828025f2eaec06f0a720b33bb8fb7698596246bdb1533d00fcd0001",
+   "bytes": 82882,
+   "from": "assets/gen/sheet-casters/sheet-casters.png",
+   "fromSha256": "689eddab1abf4530f2b0589478db0f267dbc44f0fb44f52961d83a26d668d469"
+  },
+  {
+   "file": "starter/art/field-dawn.webp",
+   "sha256": "c250ef8f28507abee552f082431ab8b96b11c56f599d3a22e1ea0a4b1c183e0f",
+   "bytes": 190456,
+   "from": "assets/gen/field-dawn/field-dawn.png",
+   "fromSha256": "4beefd81d47b4c10f846784cd8900edfc81cbbdca9dc461fe90ae82af2e8ea0e"
+  },
+  {
+   "file": "starter/art/field-day.webp",
+   "sha256": "79396dffbff66badf3f9264e181b9ac86e1d1400072abcf86c4bd437d15e033b",
+   "bytes": 225640,
+   "from": "assets/gen/field-day/field-day.png",
+   "fromSha256": "e4d4b6de22f1ee7eabb6e6b21a57427b90448a2c4339f358e663e3d052dd16fb"
+  },
+  {
+   "file": "starter/art/field-dusk.webp",
+   "sha256": "747150be4b13f6ef0d15c842ff413abe0a4699f427f412c46e76c053a68dfc3f",
+   "bytes": 214672,
+   "from": "assets/gen/field-dusk/field-dusk.png",
+   "fromSha256": "3ed3deb7ca142befe4491f0396c1a470ba4c97de3d44dc9418982a2489d78061"
+  },
+  {
+   "file": "starter/art/field-night.webp",
+   "sha256": "c5673602208d5556073fc050e1593cc781fc1fc0fe54fd7e9210b4c293cbcb6d",
+   "bytes": 201956,
+   "from": "assets/gen/field-night/field-night.png",
+   "fromSha256": "4930c8d11b344959f721112b5ed0742511b0cbd6d90996c23b98f5d53edcd254"
+  },
+  {
+   "file": "starter/art/hexer-left.webp",
+   "sha256": "582821888b5e3a8961729aa111cada5fb468dd7439a2ad31c29fb27b964dd04f",
+   "bytes": 88744,
+   "from": "assets/gen/sheet-casters-left/sheet-casters-left.png",
+   "fromSha256": "ffd72f73b8fbffb5714c363e0e1a926d199f90f986c2ed08a1a7efa7d3d14454"
+  },
+  {
+   "file": "starter/art/hexer.webp",
+   "sha256": "7856b657f07803ca0d4d072bf14a169c9856a01d10eef8945c25cdbf73c4ae48",
+   "bytes": 84680,
+   "from": "assets/gen/sheet-casters/sheet-casters.png",
+   "fromSha256": "689eddab1abf4530f2b0589478db0f267dbc44f0fb44f52961d83a26d668d469"
+  },
+  {
+   "file": "starter/art/hound-left.webp",
+   "sha256": "4d2fbc801f3cada66c38752a6a9ae9eb4f7606fe979cda0815f616d4aa44ec0a",
+   "bytes": 48524,
+   "from": "assets/gen/sheet-beasts-left/sheet-beasts-left.png",
+   "fromSha256": "97200f7138fd12d1a03e5580bba4060906752c9f6e74ab95b82cad22ccbaa846"
+  },
+  {
+   "file": "starter/art/hound.webp",
+   "sha256": "86f142087270938f3f453f0929f8125cfb1a6108dec5dc2babe28d96167f3607",
+   "bytes": 45070,
+   "from": "assets/gen/sheet-beasts/sheet-beasts.png",
+   "fromSha256": "c2df96011de2ebce32f6c9ad086d14606ef4220a7fe9413c36769927acb3d86b"
+  },
+  {
+   "file": "starter/art/ironclad-left.webp",
+   "sha256": "feadf2787e8d8950ce12429b5207f7a5e2ea067572030c74e9d03ca8aac300fe",
+   "bytes": 69896,
+   "from": "assets/gen/sheet-bruisers-left/sheet-bruisers-left.png",
+   "fromSha256": "07866d7b2e42c033d1a21d0e3a5d40db8053f90c05347a0b79496b6ba9ad2571"
+  },
+  {
+   "file": "starter/art/ironclad.webp",
+   "sha256": "17e5f9b0a5c4bc28b446b61414aa8881835baf7d8733435716527d5744a6024a",
+   "bytes": 70122,
+   "from": "assets/gen/sheet-bruisers/sheet-bruisers.png",
+   "fromSha256": "496029882da4f908c7e600c35e329b3817653daa988491f8797a6de37184b3ea"
+  },
+  {
+   "file": "starter/art/knight.webp",
+   "sha256": "83a2972c94b76a35e4ade9a3bb5a5be4d6e0dd8c4503b70d246ffc2cee481647",
+   "bytes": 58690,
+   "from": "assets/gen/sheet-vanguard/sheet-vanguard.png",
+   "fromSha256": "e33acae4dd8f80c1bdbb64a0cc263c8bd492f83e6c340a354c79dc3c22e36422"
+  },
+  {
+   "file": "starter/art/lancer.webp",
+   "sha256": "9d8b7bb3f9543dd669ca11e37e32a4567fc93f657829fed35ea9474b29c5837a",
+   "bytes": 74378,
+   "from": "assets/gen/sheet-vanguard/sheet-vanguard.png",
+   "fromSha256": "e33acae4dd8f80c1bdbb64a0cc263c8bd492f83e6c340a354c79dc3c22e36422"
+  },
+  {
+   "file": "starter/art/mage.webp",
+   "sha256": "78337d5319e3f46ebd477f935b28f747be980a882d6d71d6edb2f7103a43d93d",
+   "bytes": 72774,
+   "from": "assets/gen/sheet-vanguard/sheet-vanguard.png",
+   "fromSha256": "e33acae4dd8f80c1bdbb64a0cc263c8bd492f83e6c340a354c79dc3c22e36422"
+  },
+  {
+   "file": "starter/art/mender-left.webp",
+   "sha256": "71c28d1600463860ead0c0bad08fb00af7521a925609922bc4bd3100deb67f33",
+   "bytes": 74376,
+   "from": "assets/gen/sheet-casters-left/sheet-casters-left.png",
+   "fromSha256": "ffd72f73b8fbffb5714c363e0e1a926d199f90f986c2ed08a1a7efa7d3d14454"
+  },
+  {
+   "file": "starter/art/mender.webp",
+   "sha256": "160233eddda613f429fb22b92b72ee486e5d5b521f5a0e89650b13cc655a32c4",
+   "bytes": 73660,
+   "from": "assets/gen/sheet-casters/sheet-casters.png",
+   "fromSha256": "689eddab1abf4530f2b0589478db0f267dbc44f0fb44f52961d83a26d668d469"
+  },
+  {
+   "file": "starter/art/raptor-left.webp",
+   "sha256": "8334db0fb8fbb77be8b4d028677b5d464cfe7ae679479df6ccb63983853d2731",
+   "bytes": 48606,
+   "from": "assets/gen/sheet-beasts-left/sheet-beasts-left.png",
+   "fromSha256": "97200f7138fd12d1a03e5580bba4060906752c9f6e74ab95b82cad22ccbaa846"
+  },
+  {
+   "file": "starter/art/raptor.webp",
+   "sha256": "62de537fa21b0a23398d51340d59e5b1ca009833f63bc313eb2b6f359e63afad",
+   "bytes": 45480,
+   "from": "assets/gen/sheet-beasts/sheet-beasts.png",
+   "fromSha256": "c2df96011de2ebce32f6c9ad086d14606ef4220a7fe9413c36769927acb3d86b"
+  },
+  {
+   "file": "starter/art/slinger-left.webp",
+   "sha256": "7e42b1d5922fd990b3478184fa5668c4476ecf3e618836afc407f34a64bc71c8",
+   "bytes": 108626,
+   "from": "assets/gen/sheet-archers-left/sheet-archers-left.png",
+   "fromSha256": "37f33a860a0ea14fed605ec125ddbdccca71f7f1468c7aaa422ba3bda1e78c28"
+  },
+  {
+   "file": "starter/art/slinger.webp",
+   "sha256": "22feff2cfc7f84e91d6c6085f00288cc596f32546571a36cd04988a62775d2f9",
+   "bytes": 106628,
+   "from": "assets/gen/sheet-archers/sheet-archers.png",
+   "fromSha256": "a1bd0623df9d9c524ca18bac53a3bd2bcddfe64b929c2e22f6ec6f572ad68cbb"
+  },
+  {
+   "file": "starter/art/warlord-left.webp",
+   "sha256": "d6f15989d31e0a2d07633f6fea452ce042da514e8805e27a4620252d8e4e963e",
+   "bytes": 103020,
+   "from": "assets/gen/sheet-bruisers-left/sheet-bruisers-left.png",
+   "fromSha256": "07866d7b2e42c033d1a21d0e3a5d40db8053f90c05347a0b79496b6ba9ad2571"
+  },
+  {
+   "file": "starter/art/warlord.webp",
+   "sha256": "ac041d33c44776250ad5d7d97363d7ee8e0675bd7a3659a5e6771d3937512f11",
+   "bytes": 97804,
+   "from": "assets/gen/sheet-bruisers/sheet-bruisers.png",
+   "fromSha256": "496029882da4f908c7e600c35e329b3817653daa988491f8797a6de37184b3ea"
+  }
+ ],
+ "processing": "src/make-art.py: cut by alpha regions, alpha cleanup, premultiplied Lanczos scale, pack to WebP q90 (sprites) / centre crop 16:9, scale to 1600x900, WebP q86 (backdrops). No pixel drawn or retouched."
+}

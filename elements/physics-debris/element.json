@@ -1,0 +1,259 @@
+{
+ "id": "physics-debris",
+ "code": "E-13",
+ "name": "Physics debris & breakables",
+ "kind": "addon",
+ "family": "debris",
+ "oneLiner": "Breakable props, either the game's own art (painted or pixel) or built-in crates, barrels, pots, statues and crystals, that crack when hit and shatter into pieces cut from their own drawing; each piece is a rigid body (position, velocity, angle, spin) that tumbles, bounces off walls and floors, slides, settles flat on a low edge, rests and fades. Every move is swept along its path, so pieces never pass through walls. Loose pieces of a material (rock, wood, clay, crystal, leaf, bark, bone, shell, iron, spirit) for creatures that break apart, dust puffs, a screen-shake offset, and a wall bump for knocked-back foes: dust and chips at the contact point, a reflected velocity and a visual bounce. Side view (gravity) and top-down (fake height with shadows). Pooled, deterministic from a seed, never changes game state.",
+ "fits": [
+  "action RPG (top-down)",
+  "side-scrolling platformer / action",
+  "beat-'em-up",
+  "roguelike / dungeon crawler",
+  "metroidvania",
+  "twin-stick shooter",
+  "top-down action adventure",
+  "arena brawler"
+ ],
+ "notFor": [
+  "turn-based menus with no world view (no place for props to fall)",
+  "games whose props must block movement or hold loot rules: add that in the game; the module only draws and reports breaks",
+  "physics puzzles that need stacking or exact rigid-body contact (pieces are cosmetic; no stacking)"
+ ],
+ "interfaces": {
+  "time": "realtime",
+  "coords": "side",
+  "layer": "fx",
+  "needs": [
+   "a fixed update step that calls update(dt) once per step after movement (also run by ?t= fast-forward and ?auto=1), update(0) while paused or behind a window",
+   "the game's wall test in world px (solid(x, y)), and its tile size when walls are tiles",
+   "the impact frame of each attack (a point or the hit box, the direction)",
+   "knock-back: the step a knocked-back body moves (touch) and the frame a wall stops it (contact point, wall normal, speed)",
+   "where foes are defeated (optional: shatter them into a material)",
+   "the draw pass: props with the sprites (y-sorted in top-down), pieces after the sprites, before the HUD, with the camera offset; clear() on new game and level change"
+  ],
+  "provides": [
+   "breakable props (crate, barrel, pot, statue, crystal) with hp, crack marks, hit flash and wobble; onBreak(info)",
+   "rigid-body pieces cut from the prop's art, swept against walls, resting and fading; loose material shards; dust puffs",
+   "wallHit(): dust and chips at a wall bump, a reflected velocity and a visual bounce offset(key) for the body's sprite",
+   "screen-shake offset shake() and onShake / onHitstop / onSound hooks",
+   "stats(), audit(), list(), hash() for tests and judges"
+  ]
+ },
+ "params": [
+  {
+   "key": "amount",
+   "label": "Pieces (multiplier)",
+   "type": "range",
+   "min": 0.5,
+   "max": 2,
+   "step": 0.1,
+   "default": 1
+  },
+  {
+   "key": "gravity",
+   "label": "Gravity",
+   "type": "range",
+   "min": 0.3,
+   "max": 2,
+   "step": 0.1,
+   "default": 1
+  },
+  {
+   "key": "bounce",
+   "label": "Bounce",
+   "type": "range",
+   "min": 0,
+   "max": 0.9,
+   "step": 0.05,
+   "default": 0.35
+  },
+  {
+   "key": "friction",
+   "label": "Friction",
+   "type": "range",
+   "min": 0.1,
+   "max": 1.5,
+   "step": 0.05,
+   "default": 0.6
+  },
+  {
+   "key": "rest",
+   "label": "Rest before fade (ms)",
+   "type": "range",
+   "min": 400,
+   "max": 8000,
+   "step": 100,
+   "default": 2600
+  },
+  {
+   "key": "fade",
+   "label": "Fade (ms)",
+   "type": "range",
+   "min": 100,
+   "max": 2000,
+   "step": 100,
+   "default": 700
+  },
+  {
+   "key": "cap",
+   "label": "Piece pool size",
+   "type": "range",
+   "min": 64,
+   "max": 800,
+   "step": 32,
+   "default": 320
+  },
+  {
+   "key": "dust",
+   "label": "Dust",
+   "type": "range",
+   "min": 0,
+   "max": 2,
+   "step": 0.1,
+   "default": 1
+  },
+  {
+   "key": "shake",
+   "label": "Screen shake",
+   "type": "range",
+   "min": 0,
+   "max": 6,
+   "step": 0.5,
+   "default": 3
+  },
+  {
+   "key": "hitstop",
+   "label": "Hit-stop asked on a break (ms)",
+   "type": "range",
+   "min": 0,
+   "max": 120,
+   "step": 10,
+   "default": 40
+  },
+  {
+   "key": "spin",
+   "label": "Spin",
+   "type": "range",
+   "min": 0,
+   "max": 2,
+   "step": 0.1,
+   "default": 1
+  },
+  {
+   "key": "chips",
+   "label": "Extra chips",
+   "type": "range",
+   "min": 0,
+   "max": 2,
+   "step": 0.25,
+   "default": 1
+  },
+  {
+   "key": "depth",
+   "label": "Floor depth (side view, px)",
+   "type": "range",
+   "min": 0,
+   "max": 24,
+   "step": 2,
+   "default": 0
+  },
+  {
+   "key": "breakSpeed",
+   "label": "Speed that breaks props on touch (px/s)",
+   "type": "range",
+   "min": 100,
+   "max": 600,
+   "step": 20,
+   "default": 240
+  },
+  {
+   "key": "render",
+   "label": "Render",
+   "type": "select",
+   "options": [
+    "auto",
+    "smooth",
+    "pixel"
+   ],
+   "default": "auto"
+  },
+  {
+   "key": "art",
+   "label": "Piece look",
+   "type": "select",
+   "options": [
+    "image",
+    "color"
+   ],
+   "default": "image"
+  }
+ ],
+ "variants": [
+  {
+   "name": "Crunchy (default)",
+   "params": {
+    "amount": 1,
+    "bounce": 0.35,
+    "friction": 0.6,
+    "rest": 2600,
+    "dust": 1,
+    "shake": 3
+   }
+  },
+  {
+   "name": "Arcade chaos",
+   "params": {
+    "amount": 1.6,
+    "bounce": 0.55,
+    "friction": 0.35,
+    "rest": 5000,
+    "dust": 1.4,
+    "shake": 5,
+    "spin": 1.5,
+    "chips": 1.75
+   }
+  },
+  {
+   "name": "Calm and tidy",
+   "params": {
+    "amount": 0.7,
+    "bounce": 0.2,
+    "friction": 0.9,
+    "rest": 1200,
+    "fade": 500,
+    "dust": 0.6,
+    "shake": 0,
+    "hitstop": 0
+   }
+  },
+  {
+   "name": "Heavy stone",
+   "params": {
+    "gravity": 1.4,
+    "bounce": 0.15,
+    "friction": 1.0,
+    "spin": 0.6,
+    "shake": 4
+   }
+  },
+  {
+   "name": "Pixel render",
+   "params": {
+    "render": "pixel",
+    "amount": 0.8
+   }
+  }
+ ],
+ "assets": [
+  "module/physics-debris.js: the element as one dependency-free script (global GameDNA_Debris): prop art drawn in code (crate, barrel, pot, statue, crystal) cached at device resolution, fracture patterns computed from each silhouette (game art props: hull + material grids), piece sprites cut from the art with fresh-break rims, material shard sprites, pooled rigid bodies with swept tile or sampled wall tests, side and top-down physics, dust, wall bumps, shake",
+  "no image, font or audio files"
+ ],
+ "status": "draft",
+ "module": {
+  "file": "module/physics-debris.js",
+  "global": "GameDNA_Debris",
+  "version": "1.4.2",
+  "docs": "module/README.md"
+ }
+}

@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3D Tactics Grid</title>
+<style>
+  :root { --bg: #0d111b; --panel: #161d2e; --line: #2c3650; --text: #e8e2d2; --mute: #8f9bb3; --gold: #e2c078; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px "Trebuchet MS", "Segoe UI", Tahoma, sans-serif; }
+  #wrap { display: flex; gap: 14px; padding: 14px; align-items: flex-start; justify-content: center; }
+  #stage { position: relative; width: min(960px, calc(100vw - 316px)); aspect-ratio: 16 / 9; flex: none; border-radius: 8px; overflow: hidden; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+  #stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #panel { width: 280px; flex: none; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+  #panel h1 { font: 700 18px Georgia, serif; margin: 2px 0 2px; color: #f6e7c4; }
+  #panel p { margin: 0 0 10px; color: var(--mute); font-size: 12px; line-height: 1.4; }
+  .row { display: grid; grid-template-columns: 100px 1fr 36px; align-items: center; gap: 6px; margin: 7px 0; font-size: 13px; }
+  .row label { color: var(--mute); }
+  .row output { text-align: right; color: var(--gold); font-variant-numeric: tabular-nums; }
+  select, input[type=range] { width: 100%; accent-color: #e2c078; }
+  select { background: #0f1422; color: var(--text); border: 1px solid var(--line); border-radius: 4px; padding: 3px; }
+  .btns { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+  button { background: #253050; color: var(--text); border: 1px solid #45507a; border-radius: 5px; padding: 6px 10px; cursor: pointer; font: inherit; font-size: 12px; }
+  button:hover { border-color: var(--gold); }
+  hr { border: 0; border-top: 1px solid var(--line); margin: 10px 0; }
+  @media (max-width: 760px) { #wrap { flex-direction: column; align-items: stretch; padding: 8px; } #stage { width: 100%; aspect-ratio: 4 / 5; } #panel { width: 100%; } }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage"><canvas id="gl"></canvas><canvas id="ui"></canvas></div>
+  <div id="panel">
+    <h1>3D Tactics Grid</h1>
+    <p>Terraced heightmap battlefield, move / attack / threat ranges with height cost, path arrow, 90-degree camera turns, procedural units with code animation.</p>
+    <div class="row"><label>Scene</label><select id="scene"><option value="show">Skirmish showcase</option><option value="facing">Facing drill</option><option value="lineup">Unit lineup</option></select><span></span></div>
+    <div class="row"><label>Camera turn</label><input id="camStep" type="range" min="0" max="3" step="1"><output></output></div>
+    <div class="row"><label>Zoom</label><input id="zoom" type="range" min="0.7" max="2.2" step="0.05"><output></output></div>
+    <div class="row"><label>Pitch</label><input id="pitch" type="range" min="24" max="55" step="1"><output></output></div>
+    <div class="row"><label>Light</label><select id="light"><option>day</option><option>dusk</option></select><span></span></div>
+    <div class="row"><label>Overlay</label><select id="overlay"><option>pulse</option><option>solid</option><option>outline</option></select><span></span></div>
+    <div class="row"><label>Grid lines</label><input id="grid" type="range" min="0" max="0.5" step="0.02"><output></output></div>
+    <div class="row"><label>Shadows</label><select id="shadows"><option>soft</option><option>off</option></select><span></span></div>
+    <div class="row"><label>Unit height</label><input id="unitHeight" type="range" min="0.7" max="1.2" step="0.02"><output></output></div>
+    <hr>
+    <div class="row"><label>Move points</label><input id="move" type="range" min="2" max="8" step="1"><output></output></div>
+    <div class="row"><label>Jump</label><input id="jump" type="range" min="1" max="4" step="1"><output></output></div>
+    <div class="row"><label>Climb cost</label><input id="climbCost" type="range" min="0" max="2" step="1"><output></output></div>
+    <div class="row"><label>Threat</label><select id="threat"><option value="hover">enemy under cursor</option><option value="all">all enemies</option><option value="off">off</option></select><span></span></div>
+    <div class="btns"><button id="rotL">Rotate left (Q)</button><button id="rotR">Rotate right (E)</button><button id="replay">Replay</button></div>
+    <p style="margin-top:10px">Mouse: hover a tile to see the knight's path, wheel to zoom. URL: <code>?t=ms&amp;freeze=1</code>, <code>?scene=</code>, and any control id as a parameter.</p>
+  </div>
+</div>
+<script src="three.min.js"></script>
+<script src="../module/tactics-grid-3d.js"></script>
+<script>
+'use strict';
+const VW = 960, VH = 540, STEP = 1000 / 60;
+const Q = new URLSearchParams(location.search), FREEZE = Q.get('freeze') === '1', T_AT = +Q.get('t') || 0;
+const MAPS = {
+  terraces: { heights: ['332210012455', '433210012455', '432100001355', '432210012344', '332211012344', '322111222334', '321100012334', '321100012233', '221100011223', '211000001122', '111000000112', '110000000011'],
+    terrain: ['ggggdwwdgsss', 'ggggdwwdgsss', 'gggddddddsss', 'ggggdwwdggss', 'ggggdwwdgggs', 'gggggsssgggg', 'ggggdwwdgggg', 'ggggdwwdgggg', 'gggddwwddggg', 'ggddwwwwddgg', 'ggdwwwwwwdgg', 'ggdwwwwwwddg'],
+    props: ['P.........R.', '..T.......P.', '.........R..', '.r.......T..', '..........r.', '...T........', '.........P..', 'P......T....', '..........r.', '.r..........', '...........P', '.P..........'] },
+  drill: { heights: ['222233333', '222233333', '111233333', '111222222', '112222222', '111122222', '111112222'],
+    terrain: ['ggggsssss', 'ggggsssss', 'ggggsssss', 'ggddsssss', 'ggddggggg', 'ggggggggg', 'ggggggggg'],
+    props: ['P.......R', '.........', '.........', '.........', '.........', '.........', 'T.......P'] },
+  lineup: { heights: ['1111111', '1111111', '1111111', '1111111', '1111111'], terrain: ['ggsssgg', 'gssssgg', 'gssssgg', 'ggsssgg', 'ggggggg'], props: ['P.....T', '.......', '.......', '.......', 'T.....P'] }
+};
+const C = { scene: 'show', camStep: 0, zoom: 1.8, pitch: 33, light: 'day', overlay: 'pulse', grid: 0.22, shadows: 'soft', unitHeight: 0.92, move: 4, jump: 2, climbCost: 1, threat: 'hover' };
+for (const k in C) if (Q.has(k)) C[k] = typeof C[k] === 'number' ? +Q.get(k) : Q.get(k);
+const stage = document.getElementById('stage');
+let tg = null, simT = 0, timers = [], cursor = null, sel = null, numbers = [];
+function after(ms, fn) { timers.push({ at: simT + ms, fn }); }
+function build() {
+  const map = C.scene === 'show' ? MAPS.terraces : C.scene === 'facing' ? MAPS.drill : MAPS.lineup;
+  if (tg) { tg.clearActors(); tg.clearOverlays(); tg.rebuildMap(map); }
+  else tg = GameDNA_TacticsGrid3D.create({ canvas: document.getElementById('gl'), overlay: document.getElementById('ui'), view: { w: VW, h: VH }, map, seed: 3,
+    params: { zoom: C.zoom, camStep: C.camStep, pitch: C.pitch, light: C.light, overlay: C.overlay, grid: C.grid, shadows: C.shadows, unitHeight: C.unitHeight, jump: C.jump, climbCost: C.climbCost } });
+  tg.setParams({ zoom: C.zoom, camStep: C.camStep, pitch: C.pitch, light: C.light, overlay: C.overlay, grid: C.grid, shadows: C.shadows, unitHeight: C.unitHeight, jump: C.jump, climbCost: C.climbCost });
+  fit(); timers = []; simT = 0; numbers = []; sel = null; cursor = null; tg.setCursor(null);
+  SCENES[C.scene]();
+}
+const U = {}; // demo units (rules only need x, z, side, mv, jump, rng)
+function add(id, side, cls, x, z, face, extra) { U[id] = Object.assign({ id, side, cls, x, z, mv: C.move, jump: C.jump, rng: [1, 1], hp: 20 }, extra || {}); tg.addActor({ id, side, cls, x, z, face }); }
+function units() { return Object.values(U).filter(u => tg.actor(u.id) && !tg.actor(u.id).dead); }
+function hit(id, from, amount) { tg.hurt(id, from); tg.shake(3, 150); if (C.scene !== 'facing') numbers.push({ id, amount, t: 0 }); }
+function showRange(id, toX, toZ) {
+  const u = U[id]; u.mv = C.move; u.jump = C.jump; const rc = tg.reachOf(u, units());
+  tg.setSelected(id); tg.setOverlay('move', rc.stops); const set = new Set(rc.stops.map(s => s.z * 99 + s.x)), fr = [];
+  rc.stops.forEach(s => tg.attackTiles(u, s.x, s.z).forEach(t => { if (!set.has(t.z * 99 + t.x) && !fr.some(f => f.x === t.x && f.z === t.z)) fr.push(t); })); tg.setOverlay('attack', fr);
+  if (toX != null) { cursor = { x: toX, z: toZ }; tg.setCursor(toX, toZ); tg.setPath(tg.pathTo(rc, toX, toZ)); }
+  if (C.threat !== 'off') { const foes = units().filter(o => o.side !== u.side); tg.setOverlay('threat', C.threat === 'all' ? tg.threatOf(foes, units()) : null); }
+  return rc;
+}
+function clearRange() { tg.setOverlay('move', null); tg.setOverlay('attack', null); tg.setOverlay('threat', null); tg.setPath(null); tg.setSelected(null); }
+const SCENES = {
+  show() {
+    for (const k in U) delete U[k];
+    add('knight', 'a', 'knight', 3, 5, [1, 0]); add('lancer', 'a', 'lancer', 3, 7, [1, -1]); add('archer', 'a', 'archer', 3, 3, [1, 0], { rng: [2, 3] });
+    add('brute', 'b', 'brute', 7, 5, [-1, 0]); add('shaman', 'b', 'shaman', 8, 3, [-1, 0], { rng: [1, 2] }); add('brute2', 'b', 'brute', 10, 4, [-1, 0]);
+    tg.focus(5, 5, true);
+    after(400, () => { cursor = { x: 3, z: 5 }; tg.setCursor(3, 5); });
+    after(900, () => { const rc = showRange('knight', 6, 5); sel = { rc }; });
+    after(2700, () => { const path = tg.pathTo(sel.rc, 6, 5); clearRange(); tg.setCursor(null); tg.walk('knight', path, { onDone: () => { U.knight.x = 6; U.knight.z = 5;
+      after(250, () => tg.attack('knight', 'brute', { onImpact: () => hit('brute', 'knight', 9), onDone: () => after(150, () => tg.attack('brute', 'knight', { onImpact: () => hit('knight', 'brute', 5), onDone: () =>
+        after(300, () => tg.attack('shaman', 'knight', { kind: 'bolt', onImpact: () => hit('knight', 'shaman', 6), onDone: () =>
+          after(300, () => tg.attack('archer', 'shaman', { kind: 'arrow', onImpact: () => { tg.defeat('shaman'); tg.shake(5, 220); numbers.push({ id: 'shaman', amount: 14, t: 0 }); }, onDone: () =>
+            after(500, () => { const rc = showRange('lancer', 6, 6); after(1200, () => { const p = tg.pathTo(rc, 6, 6); clearRange(); tg.walk('lancer', p, { onDone: () => { U.lancer.x = 6; U.lancer.z = 6; tg.attack('lancer', 'brute', { onImpact: () => { tg.defeat('brute'); numbers.push({ id: 'brute', amount: 12, t: 0 }); }, onDone: () => after(1800, build) }); } }); }); }) }) ) }) ) }) ) }) ); } }); });
+  },
+  facing() {
+    for (const k in U) delete U[k];
+    // walker: a loop N, E (hop up), S, W (drop) ; archer: shoots N, E, S, W ; knight: strikes N, E, S, W
+    add('walker', 'a', 'lancer', 1, 6, [0, -1]);
+    add('knight', 'a', 'knight', 1, 1, [1, 0]); add('dN', 'b', 'brute', 1, 0, [0, 1]); add('dE', 'b', 'brute', 2, 1, [-1, 0]); add('dS', 'b', 'shaman', 1, 2, [0, -1]); add('dW', 'b', 'shaman', 0, 1, [1, 0]);
+    add('archer', 'a', 'archer', 6, 3, [0, -1], { rng: [2, 3] }); add('tN', 'b', 'brute', 6, 1, [0, 1]); add('tE', 'b', 'shaman', 8, 3, [-1, 0]); add('tS', 'b', 'brute', 6, 5, [0, -1]); add('tW', 'b', 'shaman', 4, 3, [1, 0]);
+    tg.focus(4, 3, true);
+    const loop = [{ x: 1, z: 6 }, { x: 1, z: 5 }, { x: 1, z: 4 }, { x: 2, z: 4 }, { x: 3, z: 4 }, { x: 3, z: 5 }, { x: 3, z: 6 }, { x: 2, z: 6 }, { x: 1, z: 6 }];
+    after(300, () => tg.walk('walker', loop, { onDone: () => tg.face('walker', [0, -1], true) }));
+    const seqK = ['dN', 'dE', 'dS', 'dW'], seqA = ['tN', 'tE', 'tS', 'tW'];
+    seqK.forEach((d, i) => after(600 + i * 1150, () => tg.attack('knight', d, { onImpact: () => hit(d, 'knight', 7) })));
+    seqA.forEach((d, i) => after(900 + i * 1150, () => tg.attack('archer', d, { kind: 'arrow', onImpact: () => hit(d, 'archer', 8) })));
+    after(6200, () => tg.walk('walker', loop.slice().reverse(), {}));
+    after(9800, build);
+  },
+  lineup() {
+    for (const k in U) delete U[k];
+    add('knight', 'a', 'knight', 1, 2, [1, 1]); add('lancer', 'a', 'lancer', 2, 1, [1, 1]); add('archer', 'a', 'archer', 3, 0, [1, 1], { rng: [2, 3] });
+    add('brute', 'b', 'brute', 4, 3, [1, 1]); add('shaman', 'b', 'shaman', 5, 2, [1, 1], { rng: [1, 2] });
+    tg.focus(+(Q.get('fx') || 3), +(Q.get('fz') || 2), true);
+  }
+};
+// --- input (demo only: hover shows the knight's path, Q/E rotate, wheel zoom)
+function toLogical(e) { const r = stage.getBoundingClientRect(); return { x: (e.clientX - r.left) * VWd / r.width, y: (e.clientY - r.top) * VHd / r.height }; }
+stage.addEventListener('mousemove', e => { if (!sel || !sel.rc) return; const p = toLogical(e), t = tg.pickTile(p.x, p.y); if (!t) return; cursor = t; tg.setCursor(t.x, t.z); tg.setPath(tg.pathTo(sel.rc, t.x, t.z)); });
+stage.addEventListener('wheel', e => { e.preventDefault(); tg.zoomBy(e.deltaY < 0 ? 1.08 : 1 / 1.08); C.zoom = tg.params.zoom; syncUI(); }, { passive: false });
+addEventListener('keydown', e => { if (e.code === 'KeyQ') rot(-1); if (e.code === 'KeyE') rot(1); });
+function rot(d) { tg.rotate(d); C.camStep = tg.camStep(); syncUI(); }
+document.getElementById('rotL').onclick = () => rot(-1); document.getElementById('rotR').onclick = () => rot(1); document.getElementById('replay').onclick = () => build();
+// --- controls
+const LIVE = { camStep: v => tg.setCamStep(v), zoom: v => tg.setZoom(v), pitch: v => tg.setParams({ pitch: v }), light: v => tg.setParams({ light: v }), overlay: v => tg.setParams({ overlay: v }), grid: v => tg.setParams({ grid: v }), shadows: v => tg.setParams({ shadows: v }), unitHeight: () => build(), move: () => refreshRange(), jump: v => { tg.setParams({ jump: v }); refreshRange(); }, climbCost: v => { tg.setParams({ climbCost: v }); refreshRange(); }, threat: () => refreshRange(), scene: () => build() };
+function refreshRange() { if (sel && sel.rc && tg.overlayTiles('move').length) { const c = cursor; sel.rc = showRange('knight', c && c.x, c && c.z); } }
+function syncUI() { for (const k in C) { const el = document.getElementById(k); if (!el) continue; el.value = C[k]; const o = el.parentElement.querySelector('output'); if (o) o.textContent = C[k]; } }
+for (const k in C) { const el = document.getElementById(k); if (!el) continue; el.addEventListener('input', () => { C[k] = el.type === 'range' ? +el.value : el.value; syncUI(); LIVE[k] && LIVE[k](C[k]); }); }
+syncUI();
+// --- loop
+function fit() { const r = stage.getBoundingClientRect(), portrait = r.height > r.width; VWd = portrait ? 540 : 960; VHd = Math.round(VWd * r.height / r.width);
+  tg.setView(VWd, VHd); tg.setParams({ frameScale: portrait ? VHd / 540 * 0.78 : 1 }); tg.resize(r.width, r.height, Math.min(3, devicePixelRatio || 1)); }
+let VWd = 960, VHd = 540;
+addEventListener('resize', () => tg && fit());
+function step() { simT += STEP; for (let i = 0; i < timers.length; i++) if (timers[i].at <= simT) { const t = timers.splice(i, 1)[0]; i--; t.fn(); } tg.update(STEP); numbers.forEach(n => n.t += STEP); numbers = numbers.filter(n => n.t < 1000); }
+function draw() {
+  tg.render(); const g = tg.overlayContext(); if (!g) return;
+  for (const n of numbers) { const a = tg.anchorOf(n.id); if (!a) continue; const k = n.t / 1000, y = a.top - 14 - Math.min(1, n.t / 250) * 18;
+    g.globalAlpha = k > 0.7 ? (1 - k) / 0.3 : 1; g.font = '800 24px "Trebuchet MS", sans-serif'; g.textAlign = 'center'; g.lineJoin = 'round'; g.strokeStyle = '#2a0f08'; g.lineWidth = 5; g.strokeText(n.amount, a.x, y); g.fillStyle = '#fff'; g.fillText(n.amount, a.x, y); g.globalAlpha = 1; g.textAlign = 'left'; }
+  const label = { show: 'Skirmish showcase', facing: 'Facing drill: moves N E S W, strikes and shots N E S W', lineup: 'Unit lineup' }[C.scene];
+  g.font = '600 13px "Trebuchet MS", sans-serif'; const w = g.measureText(label).width + 24; g.fillStyle = 'rgba(10,14,24,0.62)'; g.beginPath(); g.roundRect ? g.roundRect(12, 12, w, 26, 13) : g.rect(12, 12, w, 26); g.fill(); g.fillStyle = '#e8e2d2'; g.fillText(label, 24, 30);
+}
+window.__state = () => tg.state();
+window.__anchor = id => tg.anchorOf(id);
+build();
+if (FREEZE) {
+  const n = Math.round(T_AT / STEP); for (let i = 0; i < n; i++) step(); draw();
+  window.__advance = (ms, noDraw) => { const k = Math.round(ms / STEP); for (let i = 0; i < k; i++) step(); if (!noDraw) draw(); return tg.state(); };
+  window.__frozen = true;
+} else { let last = performance.now(), acc = 0; (function loop(now) { acc += Math.min(250, now - last); last = now; while (acc >= STEP) { step(); acc -= STEP; } draw(); requestAnimationFrame(loop); })(last); }
+</script>
+</body>
+</html>

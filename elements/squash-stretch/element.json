@@ -1,0 +1,236 @@
+{
+  "id": "squash-stretch",
+  "code": "E-10",
+  "name": "Squash, stretch & anticipation",
+  "kind": "addon",
+  "family": "actor-deformation",
+  "oneLiner": "Every sprite the game already draws gets procedural squash and stretch about its feet, with no new frames: a crouch before jumps, swings and spells, a stretch while rising and falling fast, a squash on landing and on taking a hit, a damped spring back with overshoot, a lean into movement and a slow breath at rest. Area is kept (sx*sy = 1); it is a canvas transform around the sprite draw only, so hit boxes, timing and rules never change. Deterministic from game time; whole-pixel snapping for pixel games, smooth for HD.",
+  "fits": [
+    "side-scrolling platformer / action",
+    "top-down action RPG",
+    "beat-'em-up",
+    "turn-based or tactics battles (attack and hit poses)",
+    "character-driven puzzle games",
+    "any game with sprites drawn by drawImage or canvas paths"
+  ],
+  "notFor": [
+    "games that draw characters as tiles baked into a tilemap (no per-sprite draw call to wrap)",
+    "3D or WebGL-rendered characters (this is a 2D canvas transform)",
+    "games whose collision is pixel-perfect against the drawn sprite (read back from the canvas): the drawn shape changes",
+    "rigidly realistic styles where cartoon deformation reads as wrong (use amount 0.3-0.5)"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "actor",
+    "needs": [
+      "a fixed update step that calls update(dt) once per step (also run by ?t= fast-forward and ?auto=1)",
+      "each moving actor's velocity and on-ground flag per step (motion), any units, with maxSpeed / maxFall in the same units",
+      "optional hit event: accepted damage with the blow's direction (squash and tilt away)",
+      "optional attack / cast start and long wind-ups (anticipation, charge / release)",
+      "the per-actor sprite draw call, wrapped by wrap(ctx, id, footX, footY, fn) with the feet point in draw coordinates"
+    ],
+    "provides": [
+      "deformation of each wrapped sprite about its feet (sy, sx = 1/sy, shear)",
+      "automatic land / take-off detection from motion()",
+      "transform(id) for shadows that widen with the squash",
+      "stats(): events by kind, auto land / jump, deepest squash, tallest stretch, strongest lean, volume error, open saves (for tests)"
+    ]
+  },
+  "params": [
+    {
+      "key": "amount",
+      "label": "Amount (scales everything)",
+      "type": "range",
+      "min": 0,
+      "max": 2,
+      "step": 0.05,
+      "default": 1
+    },
+    {
+      "key": "squash",
+      "label": "Squash depth (landing, full strength)",
+      "type": "range",
+      "min": 0,
+      "max": 0.6,
+      "step": 0.01,
+      "default": 0.28
+    },
+    {
+      "key": "stretch",
+      "label": "Stretch at full speed",
+      "type": "range",
+      "min": 0,
+      "max": 0.6,
+      "step": 0.01,
+      "default": 0.2
+    },
+    {
+      "key": "spring",
+      "label": "Spring back (Hz)",
+      "type": "range",
+      "min": 1,
+      "max": 20,
+      "step": 0.5,
+      "default": 6
+    },
+    {
+      "key": "wobble",
+      "label": "Wobble (overshoot)",
+      "type": "range",
+      "min": 0,
+      "max": 0.95,
+      "step": 0.05,
+      "default": 0.55
+    },
+    {
+      "key": "lean",
+      "label": "Lean at full run speed (deg)",
+      "type": "range",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 9
+    },
+    {
+      "key": "breathe",
+      "label": "Idle breathing",
+      "type": "range",
+      "min": 0,
+      "max": 0.1,
+      "step": 0.005,
+      "default": 0.025
+    },
+    {
+      "key": "walk",
+      "label": "Stride bounce",
+      "type": "range",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.01,
+      "default": 0.05
+    },
+    {
+      "key": "anticipation",
+      "label": "Anticipation before a lunge (ms)",
+      "type": "range",
+      "min": 0,
+      "max": 400,
+      "step": 10,
+      "default": 70
+    },
+    {
+      "key": "snap",
+      "label": "Pixel snap",
+      "type": "select",
+      "options": [
+        "auto",
+        "pixel",
+        "smooth"
+      ],
+      "default": "auto"
+    },
+    {
+      "key": "reduced",
+      "label": "Reduced motion",
+      "type": "select",
+      "options": [
+        "system",
+        "on",
+        "off"
+      ],
+      "default": "system"
+    },
+    {
+      "key": "view",
+      "label": "View",
+      "type": "select",
+      "options": [
+        "side",
+        "top"
+      ],
+      "default": "side"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Classic cartoon",
+      "params": {
+        "amount": 1,
+        "squash": 0.28,
+        "stretch": 0.2,
+        "spring": 6,
+        "wobble": 0.55,
+        "lean": 9,
+        "breathe": 0.025,
+        "walk": 0.05,
+        "anticipation": 70,
+        "snap": "auto",
+        "reduced": "system"
+      }
+    },
+    {
+      "name": "Snappy arcade",
+      "params": {
+        "squash": 0.22,
+        "stretch": 0.16,
+        "spring": 9,
+        "wobble": 0.35,
+        "lean": 7,
+        "anticipation": 50
+      }
+    },
+    {
+      "name": "Rubbery",
+      "params": {
+        "squash": 0.38,
+        "stretch": 0.3,
+        "spring": 4.5,
+        "wobble": 0.75,
+        "lean": 13,
+        "breathe": 0.04,
+        "walk": 0.09,
+        "anticipation": 110
+      }
+    },
+    {
+      "name": "Subtle HD",
+      "params": {
+        "amount": 0.6,
+        "breathe": 0.015,
+        "walk": 0.03,
+        "lean": 6
+      }
+    },
+    {
+      "name": "Pixel-snapped",
+      "params": {
+        "snap": "pixel"
+      }
+    },
+    {
+      "name": "Reduced motion",
+      "params": {
+        "reduced": "on"
+      }
+    },
+    {
+      "name": "Top-down",
+      "params": {
+        "view": "top"
+      }
+    }
+  ],
+  "assets": [
+    "module/squash-stretch.js: the element as one dependency-free script (global GameDNA_SquashStretch): per-actor springs on a volume-preserving scale and a shear, scripted anticipation / hold / charge poses, auto land and take-off from velocity, whole-pixel snapping, apply/restore/wrap about the feet; skins only suggest snapping (motion.snap) and squash depth (motion.squash)",
+    "no image or audio files (the demo's three characters are painted once in code, original)"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/squash-stretch.js",
+    "global": "GameDNA_SquashStretch",
+    "version": "1.0.0",
+    "docs": "module/README.md",
+    "skin": "optional: skins/skin-api.js + a skin before it (pixel skins turn snapping on)"
+  }
+}

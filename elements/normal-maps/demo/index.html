@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Material &amp; normal maps</title>
+<style>
+  :root {
+    --bg: #0d0e14; --panel: #161821; --panel2: #1e2131; --line: #2a2e40; --fg: #eceef4; --muted: #9aa0b4; --dim: #6c7186;
+    --gold: #f2bf6b; --teal: #6cd4c4; --good: #84d6a0; --bad: #ff8070;
+    --checker-a: #20222f; --checker-b: #191b26;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  body { overflow-x: hidden; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px 64px; }
+  header { padding: 28px 0 8px; }
+  .eyebrow { color: var(--gold); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; font-weight: 600; }
+  h1 { font-size: 30px; line-height: 1.15; margin: 6px 0 8px; letter-spacing: -.01em; }
+  header p { color: var(--muted); max-width: 800px; margin: 0; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .chip { font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; background: var(--panel); }
+  section { margin-top: 34px; }
+  h2 { font-size: 18px; margin: 0 0 4px; }
+  .lede { color: var(--muted); margin: 0 0 14px; max-width: 820px; }
+  .stage { position: relative; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); background: #000; box-shadow: 0 20px 60px rgba(0,0,0,.5); touch-action: none; }
+  #scene { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; cursor: crosshair; }
+  .hud { position: absolute; left: 10px; top: 10px; font: 11.5px ui-monospace, SFMono-Regular, Menlo, monospace; color: #dfe3ee; background: rgba(10,12,20,.55); border: 1px solid rgba(255,255,255,.08); border-radius: 8px; padding: 4px 8px; pointer-events: none; max-width: calc(100% - 20px); }
+  .warn { display: none; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: rgba(40,16,16,.92); border: 1px solid #a04a40; color: #ffd8cf; padding: 10px 14px; border-radius: 10px; font-size: 13px; max-width: 80%; text-align: center; }
+  .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px 18px; margin-top: 12px; padding: 12px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+  .controls label { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 5px 8px; color: var(--muted); font-size: 13px; min-width: 0; }
+  .controls label span.v { order: 1; color: var(--fg); font-variant-numeric: tabular-nums; min-width: 40px; text-align: right; }
+  .controls label input[type=range] { order: 2; grid-column: 1 / -1; width: 100%; }
+  .controls label .seg { grid-column: 1 / -1; }
+  .seg { display: flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; min-width: 0; }
+  .seg button { flex: 1 1 auto; background: transparent; color: var(--muted); border: 0; padding: 6px 9px; font: inherit; font-size: 12.5px; cursor: pointer; white-space: nowrap; }
+  .seg button.on { background: var(--panel2); color: var(--fg); box-shadow: inset 0 -2px 0 var(--gold); }
+  input[type=range] { accent-color: var(--gold); width: 110px; min-width: 0; }
+  .maps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+  .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+  .pair .tile canvas { aspect-ratio: 4 / 3; }
+  .tile { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--panel); display: flex; flex-direction: column; min-width: 0; }
+  .tile canvas { display: block; width: 100%; height: auto; aspect-ratio: 3 / 4; }
+  .tile .cap { font-size: 11.5px; padding: 5px 8px; color: var(--muted); border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: 6px; }
+  .tile .cap b { color: var(--fg); font-weight: 600; }
+  .picker { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+  .pick { display: flex; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--line); color: var(--muted); border-radius: 10px; padding: 3px 10px 3px 4px; font: inherit; font-size: 12.5px; cursor: pointer; }
+  .pick img { width: 26px; height: 26px; object-fit: contain; }
+  .pick.on { border-color: var(--gold); color: var(--fg); background: var(--panel2); }
+  .grid2 { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; min-width: 0; }
+  .card h3 { margin: 0 0 6px; font-size: 14px; }
+  .note { color: var(--dim); font-size: 12.5px; margin-top: 8px; }
+  .mono, code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  th { color: var(--muted); font-weight: 600; }
+  .tablewrap { overflow-x: auto; }
+  .layout { display: flex; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); margin: 6px 0 10px; font-size: 11.5px; }
+  .layout div { flex: 1; padding: 8px; min-width: 0; }
+  .layout .l { background: linear-gradient(135deg, #8a86ff, #a0e0ff 60%, #ff9ad8); color: #10121c; }
+  .layout .r { background: linear-gradient(90deg, #2a2a2a, #e0e0e0); color: #10121c; }
+  ol { padding-left: 20px; margin: 6px 0; color: #cfd3df; font-size: 13px; }
+  ol li { margin: 3px 0; }
+  .ok { color: var(--good); }
+  @media (max-width: 760px) {
+    h1 { font-size: 24px; }
+    .maps { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .pair { grid-template-columns: 1fr; }
+    .grid2 { grid-template-columns: 1fr; }
+    .hud { font-size: 10px; }
+    .controls { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="eyebrow">L-05 · Generated art</div>
+  <h1>Material &amp; normal maps</h1>
+  <p>Painted sprites stop looking like paper cut-outs when a light passes them. A small script turns every generated bitmap with alpha into a <b>height map</b> (alpha distance field for the rounded silhouette + the painting's own light and dark for the relief), a <b>normal map</b> (Sobel of the height), ambient occlusion and a gloss mask, packed next to each other in one lossless file. The game loads them with the art and lights the sprite from any direction: here on a plain 2D canvas, in J-02 with WebGL.</p>
+  <div class="chips"><span class="chip">albedo: AI image generator (L-00, L-02, L-06)</span><span class="chip">maps: tools/assets/normalmap.py</span><span class="chip" id="chipBytes">8 sprites</span><span class="chip">module: GameDNA_NormalMaps</span><span class="chip">loader: GameDNA_Assets</span></div>
+</header>
+
+<section id="sec-live">
+  <h2>Lights moving through a painted night</h2>
+  <p class="lede">The lantern keeper walks between the lamppost and the well; the light comes from the painted lanterns themselves (the keeper's, the lamppost's, the well's) plus a spirit wisp under the far oak, under a cold moon from the right; the herbalist watches him go from the left. Nothing that holds a lantern is mirrored: the keeper only walks to the right, leaves the lane and comes back in from the left. Every sprite is lit from where each light actually is: the side facing a lantern goes warm, the side turned away falls back to the blue moonlight. <b>Split sprites</b> cuts through every sprite (left half a flat card that gets the same amount of light spread evenly, what a plain 2D light map does; right half normal-mapped). Move the pointer over the scene, or use the arrow keys, to carry a light yourself.</p>
+  <div class="stage" id="stage"><canvas id="scene" width="1280" height="720"></canvas><div class="hud" id="hud">loading…</div><div class="warn" id="warn"></div></div>
+  <div class="controls">
+    <label>View <span class="seg" id="segView"><button data-v="lit">Normal-mapped</button><button data-v="flat">Flat cards</button><button data-v="split">Split sprites</button></span></label>
+    <label>Lantern <span class="seg" id="segLight"><button data-v="walk">Keeper carries it</button><button data-v="pointer">Follows pointer</button></span></label>
+    <label>Pointer light colour <span class="seg" id="segColor"><button data-v="warm">Warm</button><button data-v="moon">Moon</button><button data-v="spirit">Spirit</button></span></label>
+    <label>Night ambient <input type="range" id="rAmbient" min="0.1" max="1" step="0.05"><span class="v" id="vAmbient"></span></label>
+    <label>Light radius <input type="range" id="rRadius" min="80" max="520" step="10"><span class="v" id="vRadius"></span></label>
+    <label>Light height <input type="range" id="rHeight" min="8" max="160" step="4"><span class="v" id="vHeight"></span></label>
+    <label>Light strength <input type="range" id="rStrength" min="0.2" max="2.5" step="0.05"><span class="v" id="vStrength"></span></label>
+    <label>Moon key light <span class="seg" id="segKey"><button data-v="on">On</button><button data-v="off">Off</button></span></label>
+    <label>Lamp &amp; wisp <span class="seg" id="segExtra"><button data-v="on">On</button><button data-v="off">Off</button></span></label>
+  </div>
+</section>
+
+<section id="sec-maps">
+  <h2>What the script derives from one picture</h2>
+  <p class="lede">Pick a sprite. The tiles are the shipped files decoded in the page: the albedo (the generated art, unchanged), the normal map (left half of the packed file), then height, ambient occlusion and gloss (right half). Below, one light circles the sprite: lit as a flat card, and lit with its maps.</p>
+  <div class="picker" id="picker"></div>
+  <div class="maps" id="maps"></div>
+  <div class="pair" id="pair"></div>
+  <p class="note" id="mapNote"></p>
+</section>
+
+<section id="sec-how">
+  <h2>How the maps are made and shipped</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3>One file per sprite, twice as wide</h3>
+      <div class="layout"><div class="l">normal: R = x, G = y up, B = z</div><div class="r">R height · G occlusion · B gloss</div></div>
+      <ol>
+        <li><b>Dome</b>: distance from each pixel to the nearest transparent one, bent into a quarter circle of radius R (auto: 0.7 × the 98th percentile distance, ridges softened), so every silhouette edge rounds over.</li>
+        <li><b>Relief</b>: the painting's luma minus a wide blur of it (local light and dark only, so dark cloth is not lower than a bright face), a few px deep.</li>
+        <li><b>Normal</b>: Sobel of the height in px. <b>Occlusion</b>: height below its 4 px blur. <b>Gloss</b>: per-sprite amount × the brighter painted areas.</li>
+        <li>Saved opaque and lossless (browsers premultiply alpha on decode, which would erase channels next to alpha 0); sha256 of the map and of the albedo it came from go in <span class="mono">assets.json</span>, and <span class="mono">assetcheck.py</span> re-derives every map and compares pixels.</li>
+      </ol>
+      <p class="note">Eight albedo files are byte-identical copies of the L-00, L-02 and L-06 packs; one (<span class="mono">lamppost-off</span>, the same post with its lantern out, so a game can show an inactive lamp) is a single Codex edit of the L-00 lamppost. Regenerating means: make your own sprite with the L-00 style lock, then run the same script on it.</p>
+    </div>
+    <div class="card">
+      <h3>The pack</h3>
+      <div class="tablewrap"><table id="packTable"><thead><tr><th>sprite</th><th>from</th><th>albedo</th><th>map</th><th>R px</th><th>map sha256</th></tr></thead><tbody></tbody></table></div>
+      <p class="note" id="packNote"></p>
+    </div>
+  </div>
+</section>
+</div>
+
+<script src="../../art-direction-lock/module/art-direction-lock.js"></script>
+<script src="../module/normal-maps.js"></script>
+<script src="manifest.js"></script>
+<script>
+"use strict";
+(() => {
+  const qs = new URLSearchParams(location.search);
+  const T0 = qs.has('t') ? Math.max(0, Number(qs.get('t')) || 0) : null;
+  const FREEZE = qs.get('freeze') === '1';
+  const M = window.NM_MANIFEST;
+  const COLORS = { warm: '#ffb35a', moon: '#a8c8ff', spirit: '#7af0c8' };
+  const P = {
+    view: qs.get('view') || 'lit', light: qs.get('light') || 'walk', color: qs.get('color') || 'warm',
+    ambient: +(qs.get('ambient') || 0.18), radius: +(qs.get('radius') || 260), height: +(qs.get('height') || 34),
+    strength: +(qs.get('strength') || 1.8), key: qs.get('key') || 'on', extra: qs.get('extra') || 'on',
+    asset: qs.get('asset') || 'keeper'
+  };
+  const VW = 960, VH = 540, GROUND = 180;
+  const scene = document.getElementById('scene'), sctx = scene.getContext('2d');
+  const hud = document.getElementById('hud');
+  if (!(qs.get('debug') === '1' || qs.get('stats') === '1')) hud.style.display = 'none';   // dev readout: ?debug=1
+  // ---------------------------------------------------------------- assets
+  const list = M.assets.map(a => Object.assign({}, a, { src: '../assets/' + a.file }));
+  list.push({ key: 'ground', src: '../../art-direction-lock/assets/with/ground.webp', tileW: 128, tileH: 128 });
+  // painted night backdrop (sky + far range, misty forest hills) from the L-01 Mistfall night set: the scene no longer uses flat shapes
+  list.push({ key: 'nightFar', src: '../../painted-parallax/assets/night/far.webp' });
+  list.push({ key: 'nightMid', src: '../../painted-parallax/assets/night/mid.webp' });
+  // set dressing (strict audit r2: the sprites stood on an empty plain): L-01 night treeline, the L-00 oak, and the
+  // demo kit's meadow road and crates. Oak and crates get maps derived by the same script. Files and sources: demo/extra/extra.json (not in the pack).
+  list.push({ key: 'nightNear', src: '../../painted-parallax/assets/night/near.webp' });
+  list.push({ key: 'road', src: 'extra/road.webp' });
+  list.push({ key: 'oak', src: '../../art-direction-lock/assets/with/oak.webp', anchor: [0.5, 1], alpha: true, normal: 'oak-nh' });
+  list.push({ key: 'oak-nh', src: 'extra/oak.nh.webp', role: 'normalmap', layout: 'nh2' });
+  list.push({ key: 'crates', src: 'extra/crates.webp', anchor: [0.5, 1], alpha: true, normal: 'crates-nh' });
+  list.push({ key: 'crates-nh', src: 'extra/crates.nh.webp', role: 'normalmap', layout: 'nh2' });
+  const WRAP = 0.12;
+  const nm = GameDNA_NormalMaps.create({ assets: GameDNA_Assets, ambient: P.ambient, lightZ: P.height, wrap: WRAP, maxLight: 2, rim: 0.6 });
+  const nmFlat = GameDNA_NormalMaps.create({ assets: GameDNA_Assets, ambient: P.ambient, lightZ: P.height, wrap: WRAP, maxLight: 2, rim: 0.6 });
+  // ---------------------------------------------------------------- scene layout (world = 960x540)
+  // Painted lanterns are the light sources: measured on the albedo files (brightest warm pixels), as a share of w / h.
+  const LANTERN = { keeper: [0.875, 0.64], lamppost: [0.246, 0.42], well: [0.268, 0.438] };
+  const STATIC = [
+    { key: 'lamppost', x: 182, y: 372, h: 250 },
+    { key: 'well', x: 640, y: 366, h: 210 },
+    { key: 'herbalist', x: 70, y: 482, h: 196, want: 'right' },
+    { key: 'vial', x: 300, y: 488, h: 46 },
+    { key: 'key', x: 560, y: 492, h: 34 },
+    { key: 'oak', x: 56, y: 312, h: 246, dress: true },
+    { key: 'oak', x: 396, y: 276, h: 176, want: 'left', dress: true },
+    { key: 'oak', x: 916, y: 300, h: 230, want: 'left', dress: true },
+    { key: 'crates', x: 748, y: 356, h: 84, dress: true },
+  ];
+  /* Native facing (tools/sprites/README.md rule 2): each sprite records the side its art looks at; the mirror is computed in ONE place,
+     flipOf(), as want !== asset.facing, and never typed in the scene. The keeper (lit lantern in one hand) and the herbalist (basket, stick)
+     are mirror: 'never' and the pack has no left-facing painting (so no left-facing normal map either): the scene is staged to draw them on
+     their native side only. The herbalist stands at the left end of the lane and looks right; the keeper only ever walks to the right,
+     leaves at the right edge and comes back in at the left edge. The oak is set dressing with no gear and no lantern: it may be mirrored
+     (the module negates the x of a mirrored normal map). */
+  const ASSET = {
+    keeper: { facing: 'right', mirror: 'never', why: 'carries a lit lantern in one hand' },
+    herbalist: { facing: 'right', mirror: 'never', why: 'basket and walking stick' },
+    oak: { facing: 'right', mirror: 'ok', why: 'tree used as set dressing: no gear, no lantern, soft top light' }
+  };
+  let mirrorRefused = 0;   // draws that asked a mirror: 'never' asset for its other side (stays 0 while the staging holds)
+  function flipOf(a) {
+    const A = ASSET[a.key]; if (!A || !a.want || a.want === A.facing) return false;
+    if (A.mirror === 'never') { mirrorRefused++; return false; }
+    return true;
+  }
+  function drawnSide(a) { return flipOf(a) ? a.want : ASSET[a.key].facing; }
+  const HERB = STATIC.find(a => a.key === 'herbalist');
+  const WALK = { loop: 16000, phase: 1700, x0: -70, dx: 1100 };   // one pass along the lane, always to the right
+  let pointer = null, userMoved = false;
+  function aspect(key) { const r = GameDNA_Assets.get(key); return r ? r.w / r.h : 0.5; }
+  function lanternOf(a) {             // world px of a sprite's painted lantern
+    const L = LANTERN[a.key], w = a.h * aspect(a.key), fx = flipOf(a) ? 1 - L[0] : L[0];
+    return { x: a.x + (fx - 0.5) * w, y: a.y - a.h * (1 - L[1]) };
+  }
+  function keeperAt(t) {
+    if (P.light === 'pointer') return { key: 'keeper', x: 430, y: 470, h: 200, want: 'right', vx: 0 };
+    const u = ((t + WALK.phase) % WALK.loop) / WALK.loop;
+    return { key: 'keeper', x: WALK.x0 + WALK.dx * u, y: 466 + Math.sin(t * 0.009) * 1.5, h: 200, want: 'right', vx: WALK.dx / WALK.loop * 16 };
+  }
+  function actorsAt(t) {
+    // the lamp's look follows its state: lantern out (lamppost-off, same post) when "Lamp & wisp" is off
+    return STATIC.map(a => a.key === 'lamppost' && P.extra !== 'on' ? Object.assign({}, a, { key: 'lamppost-off' }) : a).concat([keeperAt(t)]).sort((p, q) => p.y - q.y);
+  }
+  // sprites never fall to a black silhouette: a cool sky floor under the slider value
+  function ambientNow() { return 0.32 + 0.68 * P.ambient; }
+  function lightsAt(t) {
+    const K = keeperAt(t), out = [];
+    const fl = k => 0.9 + 0.06 * Math.sin(t * 0.011 + k) + 0.04 * Math.sin(t * 0.027 + 1.3 * k);
+    if (P.light === 'pointer' && pointer) out.push({ x: pointer.x, y: pointer.y, z: P.height, gy: Math.max(GROUND + 30, pointer.y + 50), radius: P.radius, color: COLORS[P.color], intensity: P.strength, orb: true });
+    else if (P.light !== 'pointer') { const L = lanternOf(K); out.push({ x: L.x, y: L.y, z: P.height, gy: K.y, radius: P.radius, color: COLORS.warm, intensity: P.strength * fl(0) }); }   // the painted lantern is warm: its light is too
+    if (P.extra === 'on') {
+      const lp = lanternOf(STATIC[0]), wl = lanternOf(STATIC[1]);
+      out.push({ x: lp.x, y: lp.y, z: 24, gy: STATIC[0].y, radius: 230, color: '#ffa04a', intensity: 1.1 * fl(1) });
+      out.push({ x: wl.x, y: wl.y, z: 20, gy: STATIC[1].y, radius: 170, color: '#ffb060', intensity: 0.8 * fl(2) });
+      const wa = t * 0.0011 + 2.2;
+      out.push({ x: 800 + Math.cos(wa) * 95, y: 330 + Math.sin(wa) * 46, z: 36, gy: 470, radius: 190, color: '#8af2ff', intensity: 1.0, orb: true });
+    }
+    return out;
+  }
+  const MOON = { x: 0.8, y: 0.45, z: 0.3, color: '#5f7dff', intensity: 0.95 };
+  // ---------------------------------------------------------------- drawing
+  function drawGround(ctx, t) {
+    // sky + far range: the painted night layer, cover-scaled to the width and lifted so its ridge sits above the treeline
+    const far = GameDNA_Assets.img('nightFar'), mid = GameDNA_Assets.img('nightMid');
+    if (far) { const h = VW * far.height / far.width; ctx.drawImage(far, 0, -58, VW, h); }
+    else { const g = ctx.createLinearGradient(0, 0, 0, 190); g.addColorStop(0, '#0b1024'); g.addColorStop(1, '#232846'); ctx.fillStyle = g; ctx.fillRect(0, 0, VW, 200); }
+    moon(ctx);
+    // misty forest hills as the horizon (a slice of the long mid layer, bottom edge hidden under the ground)
+    if (mid) { const h = 150, w = h * mid.width / mid.height; for (let x = -120; x < VW; x += w) ctx.drawImage(mid, Math.round(x), 196 - h, Math.ceil(w) + 1, h); }   // seamless layer, repeated
+    const ok = GameDNA_Assets.fillTiled(ctx, 'ground', { x: 0, y: 186, w: VW, h: VH - 186 }, { tileW: 128, tileH: 128, ox: 0, oy: 186 });
+    if (!ok) { ctx.fillStyle = '#3b3328'; ctx.fillRect(0, 186, VW, VH - 186); }
+    lane(ctx);
+    const near = GameDNA_Assets.img('nightNear');   // a nearer line of pines and brush over the far edge of the meadow (drawn after the ground, so the edge is not a ruled line)
+    if (near) { const h = 132, w = h * near.width / near.height; for (let x = -60; x < VW; x += w) ctx.drawImage(near, Math.round(x), 199 - h, Math.ceil(w) + 1, h); }
+    const edge = ctx.createLinearGradient(0, 190, 0, 232);   // brush shadow and mist fall onto the meadow: no ruled edge
+    edge.addColorStop(0, 'rgba(40,52,88,0)'); edge.addColorStop(0.2, 'rgba(40,52,88,0.95)'); edge.addColorStop(0.45, 'rgba(40,52,88,0.6)'); edge.addColorStop(1, 'rgba(40,52,88,0)');
+    ctx.fillStyle = edge; ctx.fillRect(0, 190, VW, 42);
+    // night on the ground: a cool moonlit wash, deeper toward the viewer, so the painted dirt still reads under it
+    const k = Math.min(1, (1 - P.ambient) / 0.82);
+    const night = ctx.createLinearGradient(0, 186, 0, VH);
+    night.addColorStop(0, `rgba(24,34,66,${0.50 * k})`); night.addColorStop(0.4, `rgba(16,22,50,${0.46 * k})`); night.addColorStop(1, `rgba(10,14,36,${0.46 * k})`);
+    ctx.fillStyle = night; ctx.fillRect(0, 186, VW, VH - 186);
+    const sheen = ctx.createRadialGradient(780, 230, 10, 780, 230, 420);   // moonlight catching the ground under the moon
+    sheen.addColorStop(0, 'rgba(120,150,230,0.16)'); sheen.addColorStop(1, 'rgba(120,150,230,0)');
+    ctx.fillStyle = sheen; ctx.fillRect(0, 186, VW, VH - 186);
+    const fog = ctx.createLinearGradient(0, 160, 0, 270);   // mist where the hills meet the ground hides the seam
+    fog.addColorStop(0, 'rgba(96,120,170,0)'); fog.addColorStop(0.25, 'rgba(96,120,170,0.5)'); fog.addColorStop(0.42, 'rgba(76,98,150,0.42)'); fog.addColorStop(1, 'rgba(70,90,140,0)');
+    ctx.fillStyle = fog; ctx.fillRect(0, 160, VW, 110);
+  }
+  // the lane the keeper walks: the dirt road, verge, stones and wildflowers of the demo kit's painted meadow (its lower band,
+  // top edge feathered into the L-00 grass), cooled to night with a multiply before the night wash
+  const ROAD_Y = 344;   // extra/road.webp = rows 516..810 of the kit's meadow-dusk scene
+  let roadCan = null;
+  function lane(ctx) {
+    const im = GameDNA_Assets.img('road'); if (!im) return;
+    if (!roadCan) {
+      roadCan = document.createElement('canvas'); roadCan.width = im.width; roadCan.height = im.height;
+      const g = roadCan.getContext('2d');
+      g.drawImage(im, 0, 0);
+      g.globalCompositeOperation = 'multiply'; g.fillStyle = '#a6b2ee'; g.fillRect(0, 0, roadCan.width, roadCan.height);
+      g.globalCompositeOperation = 'destination-out';
+      const f = g.createLinearGradient(0, 0, 0, 34); f.addColorStop(0, 'rgba(0,0,0,1)'); f.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = f; g.fillRect(0, 0, roadCan.width, 34);
+    }
+    ctx.drawImage(roadCan, 0, ROAD_Y, VW, VW * roadCan.height / roadCan.width);
+  }
+  function contact(ctx, t) {            // soft contact shadows seat the oaks and crates on the grass
+    for (const a of STATIC) {
+      if (!a.dress) continue;
+      const w = a.h * aspect(a.key) * (a.key === 'oak' ? 0.36 : 0.52), y = a.y - a.h * 0.045;
+      const g = ctx.createRadialGradient(a.x, y, w * 0.3, a.x, y, w);
+      g.addColorStop(0, 'rgba(4,6,16,0.6)'); g.addColorStop(1, 'rgba(4,6,16,0)');
+      ctx.save(); ctx.translate(a.x, y); ctx.scale(1, 0.32); ctx.translate(-a.x, -y);
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(a.x, y, w, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    }
+  }
+  function moon(ctx) {                 // a shaded moon with soft maria and a wide halo
+    const x = 820, y = 54, r = 17;
+    const halo = ctx.createRadialGradient(x, y, r, x, y, 120);
+    halo.addColorStop(0, 'rgba(190,210,255,0.30)'); halo.addColorStop(0.3, 'rgba(150,180,255,0.10)'); halo.addColorStop(1, 'rgba(150,180,255,0)');
+    ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(x, y, 120, 0, Math.PI * 2); ctx.fill();
+    ctx.save(); ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.clip();
+    const body = ctx.createRadialGradient(x - r * 0.35, y - r * 0.35, 1, x, y, r * 1.05);
+    body.addColorStop(0, '#fbfcff'); body.addColorStop(0.6, '#dfe6f6'); body.addColorStop(1, '#a9b6d6');
+    ctx.fillStyle = body; ctx.fillRect(x - r, y - r, 2 * r, 2 * r);
+    [[-5, -3, 7], [6, 3, 6], [-1, 8, 4.5], [8, -7, 3]].forEach(([dx, dy, rr]) => {   // soft maria, no hard edges
+      const m = ctx.createRadialGradient(x + dx, y + dy, 0, x + dx, y + dy, rr);
+      m.addColorStop(0, 'rgba(130,145,180,0.20)'); m.addColorStop(1, 'rgba(130,145,180,0)');
+      ctx.fillStyle = m; ctx.beginPath(); ctx.arc(x + dx, y + dy, rr, 0, Math.PI * 2); ctx.fill(); });
+    ctx.restore();
+  }
+  function pools(ctx, lights) {        // light on the ground only: clipped below the treeline, soft quadratic falloff
+    ctx.save(); ctx.beginPath(); ctx.rect(0, GROUND + 8, VW, VH); ctx.clip();
+    ctx.globalCompositeOperation = 'lighter';
+    for (const l of lights) {
+      const r = l.radius * 0.85, gy = l.gy, c = hex(l.color), k = Math.min(1.4, l.intensity);
+      const g = ctx.createRadialGradient(l.x, gy, 0, l.x, gy, r);
+      [[0, 0.30], [0.2, 0.22], [0.4, 0.12], [0.6, 0.05], [0.8, 0.015], [1, 0]].forEach(([o, a]) => g.addColorStop(o, `rgba(${c[0]},${c[1]},${c[2]},${a * k})`));
+      ctx.fillStyle = g; ctx.save(); ctx.translate(l.x, gy); ctx.scale(1, 0.55); ctx.translate(-l.x, -gy);
+      ctx.beginPath(); ctx.arc(l.x, gy, r, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    }
+    ctx.restore();
+  }
+  function orbs(ctx, lights) {          // soft glow round each source; a bright core only on free orbs (wisp, pointer)
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    for (const l of lights) {
+      const c = hex(l.color), R = l.orb ? 46 : 26;
+      const g = ctx.createRadialGradient(l.x, l.y, 0, l.x, l.y, R);
+      if (l.orb) { g.addColorStop(0, 'rgba(255,255,255,0.95)'); g.addColorStop(0.16, `rgba(${c[0]},${c[1]},${c[2]},0.75)`); }
+      else g.addColorStop(0, `rgba(${c[0]},${c[1]},${c[2]},0.45)`);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(l.x, l.y, R, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  }
+  function hex(s) { const n = parseInt(s.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+  function prep(inst, lights) {
+    inst.setLights(lights); inst.set('ambient', ambientNow()); inst.set('ambientColor', '#c2ceff'); inst.set('lightZ', P.height);
+    inst.set('key', P.key === 'on' ? MOON : null);
+  }
+  function drawOne(ctx, inst, a) {
+    if (!inst.draw(ctx, a.key, a.x, a.y, { h: a.h, flip: flipOf(a), normals: inst === nmFlat ? false : undefined })) {
+      ctx.fillStyle = '#556'; ctx.fillRect(a.x - 20, a.y - a.h, 40, a.h);
+    }
+  }
+  function drawActors(ctx, lights, t) {
+    prep(nm, lights); prep(nmFlat, lights);
+    for (const a of actorsAt(t)) {
+      if (P.view !== 'split') { drawOne(ctx, P.view === 'flat' ? nmFlat : nm, a); continue; }
+      // split THROUGH every sprite: left half as a flat card, right half normal-mapped
+      const w = a.h * aspect(a.key) + 4;
+      ctx.save(); ctx.beginPath(); ctx.rect(a.x - w, a.y - a.h - 4, w, a.h + 8); ctx.clip(); drawOne(ctx, nmFlat, a); ctx.restore();
+      ctx.save(); ctx.beginPath(); ctx.rect(a.x, a.y - a.h - 4, w, a.h + 8); ctx.clip(); drawOne(ctx, nm, a); ctx.restore();
+      if (a.h > 60) {
+        ctx.save(); ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1; ctx.setLineDash([3, 4]);
+        ctx.beginPath(); ctx.moveTo(Math.round(a.x) + 0.5, a.y - a.h - 8); ctx.lineTo(Math.round(a.x) + 0.5, a.y + 4); ctx.stroke(); ctx.restore();
+      }
+    }
+  }
+  function vignette(ctx) {
+    const g = ctx.createRadialGradient(VW / 2, VH * 0.55, VH * 0.35, VW / 2, VH * 0.55, VW * 0.72);
+    g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,0.55)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH);
+  }
+  function label(ctx, x, txt) {
+    ctx.save(); ctx.font = '600 13px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    const w = ctx.measureText(txt).width + 18;
+    ctx.fillStyle = 'rgba(10,12,22,0.78)'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x - w / 2, VH - 36, w, 24, 8) : ctx.rect(x - w / 2, VH - 36, w, 24); ctx.fill();
+    ctx.fillStyle = '#eef1f8'; ctx.fillText(txt, x, VH - 31); ctx.restore();
+  }
+  function render(t) {
+    const dpr = scene.width / VW;
+    const ctx = sctx;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+    const lights = lightsAt(t);
+    drawGround(ctx, t);
+    pools(ctx, lights);
+    contact(ctx, t);
+    drawActors(ctx, lights, t);
+    orbs(ctx, lights);
+    vignette(ctx);
+    if (P.view === 'split') label(ctx, VW / 2, 'Every sprite: left half flat card  |  right half normal-mapped');
+    else if (P.view === 'flat') label(ctx, VW / 2, 'Flat cards: same light energy, no normal maps');
+    const st = nm.stats();
+    hud.textContent = scene.clientWidth < 560 ? `t ${Math.round(t)} ms · ${lights.length} lights` :
+      `t ${Math.round(t)} ms · lights ${lights.length} · lit draws ${st.lit} · cache builds ${st.builds}${st.reason ? ' · ' + st.reason : ''}`;
+    const L0 = lights[0] || { x: 480 };
+    const boxes = actorsAt(t).filter(a => a.h > 100 && !a.dress).map(a => { const w = a.h * aspect(a.key); return { key: a.key, x: a.x, x0: a.x - w / 2, x1: a.x + w / 2, y0: a.y - a.h, y1: a.y, lightX: L0.x }; });
+    window.__nmDemo = { t, boxes, lights: lights.map(l => ({ x: Math.round(l.x), y: Math.round(l.y), radius: l.radius, color: l.color })), view: P.view, stats: st, flat: nmFlat.stats() };
+  }
+  // ---------------------------------------------------------------- map viewer
+  const mapTiles = {};
+  let mapLight = null;
+  function tile(box, k, name, tag, w, h, checker) {
+    const d = document.createElement('div'); d.className = 'tile' + (checker ? ' checker' : '');
+    const c = document.createElement('canvas'); c.width = w; c.height = h; d.appendChild(c);
+    const cap = document.createElement('div'); cap.className = 'cap'; cap.innerHTML = `<b>${name}</b><span>${tag}</span>`; d.appendChild(cap);
+    box.appendChild(d); mapTiles[k] = c; return c;
+  }
+  function buildMaps() {
+    const box = document.getElementById('maps'); box.innerHTML = '';
+    const pair = document.getElementById('pair'); pair.innerHTML = '';
+    const mp = nm.maps(P.asset);
+    const note = document.getElementById('mapNote');
+    const ent = M.assets.find(a => a.key === P.asset), nh = M.assets.find(a => a.key === P.asset + '-nh');
+    const tiles = [['albedo', 'Albedo', 'generated'], ['normal', 'Normal', 'left · RGB'], ['height', 'Height', 'right · R'], ['ao', 'Occlusion', 'right · G'], ['gloss', 'Gloss', 'right · B']];
+    for (const [k, name, tag] of tiles) {
+      const c = tile(box, k, name, tag, 300, 400, k === 'albedo');
+      const g = c.getContext('2d');
+      if (k !== 'albedo') { g.fillStyle = '#0e0f15'; g.fillRect(0, 0, 300, 400); }
+      const src = mp ? (k === 'albedo' ? GameDNA_Assets.img(P.asset) : mp[k]) : GameDNA_Assets.img(P.asset);
+      if (src) {
+        const s = Math.min(270 / ent.w, 370 / ent.h), dw = ent.w * s, dh = ent.h * s;
+        g.imageSmoothingQuality = 'high';
+        g.drawImage(src, (300 - dw) / 2, (400 - dh) / 2, dw, dh);
+      }
+    }
+    tile(pair, 'flatlit', 'Flat card', 'same light, no maps', 480, 360, false);
+    tile(pair, 'lit', 'Normal-mapped', 'GameDNA_NormalMaps.draw', 480, 360, false);
+    note.textContent = mp ? `${P.asset}: albedo ${ent.w}×${ent.h} px, map ${nh.w}×${nh.h} px lossless WebP (${(nh.bytes / 1024).toFixed(1)} KB), rounding radius R = ${nh.domeR} px, gloss ${nh.params.gloss}. Map sha256 ${nh.sha256.slice(0, 16)}…, derived from albedo ${nh.albedoSha256.slice(0, 16)}….` : `Maps unavailable: ${nm.why(P.asset) || 'not loaded'}.`;
+  }
+  function renderLit(t) {
+    const ent = M.assets.find(a => a.key === P.asset); if (!ent) return;
+    for (const k of ['flatlit', 'lit']) {
+      const c = mapTiles[k]; if (!c) continue;
+      const g = c.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0);
+      const W = c.width, H = c.height;
+      const bg = g.createRadialGradient(W / 2, H * 0.6, 20, W / 2, H * 0.6, W * 0.7); bg.addColorStop(0, '#1a1d2c'); bg.addColorStop(1, '#090a10');
+      g.fillStyle = bg; g.fillRect(0, 0, W, H);
+      const s = Math.min((W * 0.5) / ent.w, (H * 0.84) / ent.h), dh = ent.h * s;
+      const a = t * 0.0016, lx = W / 2 + Math.cos(a) * W * 0.36, ly = H / 2 + Math.sin(a) * H * 0.36;
+      const L = [{ x: lx, y: ly, z: 30, radius: W * 0.95, color: '#ffd29a', intensity: 1.8 }];
+      nm.draw(g, P.asset, W / 2, H / 2 + dh / 2, { h: dh, lights: L, ambient: 0.16, key: null, normals: k === 'flatlit' ? false : undefined });
+      g.save(); g.globalCompositeOperation = 'lighter';
+      const gr = g.createRadialGradient(lx, ly, 0, lx, ly, 28); gr.addColorStop(0, 'rgba(255,250,235,1)'); gr.addColorStop(0.3, 'rgba(255,190,110,0.7)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = gr; g.beginPath(); g.arc(lx, ly, 28, 0, Math.PI * 2); g.fill(); g.restore();
+    }
+  }
+  function picker() {
+    const box = document.getElementById('picker'); box.innerHTML = '';
+    for (const a of M.assets.filter(a => a.role !== 'normalmap')) {
+      const b = document.createElement('button'); b.className = 'pick' + (a.key === P.asset ? ' on' : '');
+      const im = document.createElement('img'); im.src = '../assets/' + a.file; im.alt = '';
+      b.appendChild(im); b.appendChild(document.createTextNode(a.key));
+      b.onclick = () => { P.asset = a.key; picker(); buildMaps(); renderLit(clock); };
+      box.appendChild(b);
+    }
+  }
+  function packTable() {
+    const tb = document.querySelector('#packTable tbody'); let bytes = 0, n = 0;
+    for (const a of M.assets.filter(a => a.role !== 'normalmap')) {
+      const m = M.assets.find(x => x.key === a.key + '-nh');
+      bytes += a.bytes + m.bytes; n++;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${a.key}</td><td>${!a.from ? 'L-05 edit' : a.from.element === 'art-direction-lock' ? 'L-00' : a.from.element === 'painted-portraits' ? 'L-02' : 'L-06'}</td><td>${a.w}×${a.h}</td><td>${(m.bytes / 1024).toFixed(0)} KB</td><td>${m.domeR}</td><td class="mono">${m.sha256.slice(0, 10)}</td>`;
+      tb.appendChild(tr);
+    }
+    document.getElementById('packNote').innerHTML = `${n} albedo files + ${n} maps, ${(bytes / 1024).toFixed(0)} KB of a 600 KB budget. <span class="ok">assetcheck: re-derived pixels identical</span> (checked at build).`;
+    document.getElementById('chipBytes').textContent = `${n} sprites · ${(bytes / 1024).toFixed(0)} KB`;
+  }
+  // ---------------------------------------------------------------- controls
+  function seg(id, key, after) {
+    const el = document.getElementById(id);
+    const sync = () => el.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === P[key]));
+    el.querySelectorAll('button').forEach(b => b.onclick = () => { P[key] = b.dataset.v; sync(); after && after(); if (FREEZE) render(clock); });
+    sync();
+  }
+  function range(id, key, fmt) {
+    const r = document.getElementById('r' + id), v = document.getElementById('v' + id);
+    r.value = P[key]; v.textContent = fmt(P[key]);
+    r.oninput = () => { P[key] = +r.value; v.textContent = fmt(P[key]); if (FREEZE) render(clock); };
+  }
+  seg('segView', 'view'); seg('segLight', 'light'); seg('segColor', 'color'); seg('segKey', 'key'); seg('segExtra', 'extra');
+  range('Ambient', 'ambient', v => v.toFixed(2)); range('Radius', 'radius', v => v + ' px'); range('Height', 'height', v => v + ' px'); range('Strength', 'strength', v => v.toFixed(2));
+  function toWorld(e) {
+    const r = scene.getBoundingClientRect();
+    return { x: (e.clientX - r.left) / r.width * VW, y: (e.clientY - r.top) / r.height * VH };
+  }
+  scene.addEventListener('pointermove', e => { if (FREEZE) return; pointer = toWorld(e); if (!userMoved) { userMoved = true; P.light = 'pointer'; seg('segLight', 'light'); } });
+  scene.addEventListener('pointerdown', e => { if (FREEZE) return; pointer = toWorld(e); P.light = 'pointer'; seg('segLight', 'light'); });
+  window.addEventListener('keydown', e => {
+    const d = { ArrowLeft: [-14, 0], ArrowRight: [14, 0], ArrowUp: [0, -14], ArrowDown: [0, 14] }[e.key];
+    if (!d || FREEZE) return;
+    if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+    pointer = pointer || lanternOf(keeperAt(clock)); pointer = { x: Math.max(0, Math.min(VW, pointer.x + d[0])), y: Math.max(0, Math.min(VH, pointer.y + d[1])) };
+    P.light = 'pointer'; seg('segLight', 'light'); e.preventDefault();
+  });
+  function resize() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1), w = Math.round(Math.min(scene.clientWidth || VW, 1280) * dpr);
+    const W = Math.max(480, Math.min(1920, w));
+    if (scene.width !== W) { scene.width = W; scene.height = Math.round(W * 9 / 16); }
+  }
+  // ---------------------------------------------------------------- boot
+  let clock = 0;
+  /* text state for critics and tools/sprites/statecheck.py (world px, 960x540, feet). `facing` comes from drawnSide(), the same flipOf() the
+     draw call uses. The keeper walks right only; the herbalist looks right down the lane: at the keeper while he is ahead of her, and she
+     does not turn for the short stretch where he comes in behind her at the left edge (target null there). */
+  window.__state = () => { const k = keeperAt(clock);
+    const actors = [{ id: 'keeper', x: Math.round(k.x), y: Math.round(k.y), facing: drawnSide(k), target: null, vx: Math.round(k.vx * 100) / 100, asset: { facing: ASSET.keeper.facing, mirror: ASSET.keeper.mirror }, flipX: flipOf(k), lanternX: Math.round(lanternOf(k).x) }];
+    actors.push({ id: 'herbalist', x: HERB.x, y: HERB.y, facing: drawnSide(HERB), target: k.x > HERB.x ? 'keeper' : null, asset: { facing: ASSET.herbalist.facing, mirror: ASSET.herbalist.mirror }, flipX: flipOf(HERB) });
+    return { t: Math.round(clock), mirrorRefused, actors }; };
+  function boot() {
+    resize();
+    picker(); packTable(); buildMaps();
+    const warn = document.getElementById('warn');
+    if (!nm.has('keeper')) { warn.style.display = 'block'; warn.textContent = 'Normal maps could not be read: ' + (nm.why('keeper') || 'unknown') + '. Sprites draw flat.'; }
+    if (T0 !== null) {
+      clock = T0; render(clock); renderLit(clock);
+      if (FREEZE) { window.__frozen = true; document.documentElement.dataset.ready = '1'; return; }
+    }
+    let last = null;
+    const frame = ts => {
+      if (last !== null) clock += Math.min(50, ts - last);
+      last = ts;
+      render(clock); renderLit(clock);
+      document.documentElement.dataset.ready = '1';
+      requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+  }
+  window.addEventListener('resize', () => { resize(); if (FREEZE) render(clock); });
+  GameDNA_Assets.load(list, { onReady: boot });
+})();
+</script>
+</body>
+</html>

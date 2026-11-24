@@ -1,0 +1,3 @@
+# Source PNGs from Codex (1-3 MB each) and console logs stay local; their sha256 is in each run's meta.json
+gen/**/*.png
+gen/**/run.log

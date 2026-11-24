@@ -1,0 +1,71 @@
+{
+ "pack": "cutout-characters sample: three original adventurers (sword, spear, mage) as painted cut-out parts",
+ "out": ".",
+ "scale": 0.5,
+ "pad": 6,
+ "atlasMax": 1024,
+ "quality": 90,
+ "characters": [
+  {
+   "id": "sword", "name": "Swordswoman", "role": "sword", "sheet": "gen/parts-sword/sword-parts.png", "weaponHand": "N",
+   "order": ["head", "torso", "pelvis", "cape", "armN", "foreN", "armF", "foreF", "weapon", "shield", "thighN", "shinN", "thighF", "shinF"],
+   "z": ["cape", "foreF", "armF", "shield", "shinF", "thighF", "shinN", "thighN", "pelvis", "torso", "head", "collar", "weapon", "foreN", "armN"],
+   "parts": {
+    "head":   {"pivot": [0.647, 0.714], "joints": {"top": [0.62, 0.0], "neck": [0.647, 0.714], "chin": [0.841, 0.588]}},
+    "torso":  {"pivot": [0.51, 0.94], "joints": {"head": [0.51, 0.112], "armN": [0.21, 0.3], "armF": [0.74, 0.3], "cape": [0.5, 0.12]}, "erase": [[[0.389, -0.019], [0.632, -0.019], [0.628, 0.093], [0.571, 0.093], [0.51, 0.084], [0.426, 0.065], [0.389, 0.056]]], "over": {"collar": [[0.341, 0.059], [0.416, 0.062], [0.51, 0.081], [0.571, 0.112], [0.581, 0.193], [0.598, 0.227], [0.679, 0.217], [0.774, 0.189], [0.848, 0.155], [0.882, 0.137], [0.882, 0.307], [0.341, 0.307]]}, "pegs": [[0.395, -0.006, 0.625, 0.068]], "eraseWarm": [{"poly": [[-0.05, 0.04], [0.4, 0.04], [0.42, 0.16], [0.405, 0.215], [0.395, 0.33], [0.36, 0.41], [0.31, 0.56], [-0.05, 0.56]], "min": 18, "grow": 2}]},
+    "pelvis": {"pivot": [0.52, 0.45], "joints": {"torso": [0.52, 0.1], "thighN": [0.35, 0.62], "thighF": [0.68, 0.62]}},
+    "cape":   {"pivot": [0.6, 0.05], "joints": {"hem": [0.5, 1.0]}},
+    "armN":   {"pivot": [0.45, 0.2], "joints": {"fore": [0.44, 0.77]}, "erase": [[[-0.1, 0.815], [1.1, 0.815], [1.1, 1.1], [-0.1, 1.1]]], "pegs": [[0, 0.82, 1, 1]]},
+    "foreN":  {"pivot": [0.5, 0.13], "joints": {"hand": [0.53, 0.88]}},
+    "armF":   {"pivot": [0.5, 0.15], "joints": {"fore": [0.43, 0.78]}, "erase": [[[-0.1, 0.835], [1.1, 0.835], [1.1, 1.1], [-0.1, 1.1]]], "pegs": [[0, 0.84, 1, 1]]},
+    "foreF":  {"pivot": [0.45, 0.13], "joints": {"hand": [0.57, 0.88]}},
+    "weapon": {"pivot": [0.135, 0.5], "joints": {"grip": [0.135, 0.5], "tip": [1.0, 0.5]}},
+    "shield": {"pivot": [0.36, 0.5], "joints": {"top": [0.5, 0.0]}},
+    "thighN": {"pivot": [0.5, 0.12], "joints": {"shin": [0.42, 0.81]}},
+    "shinN":  {"pivot": [0.48, 0.09], "joints": {"ankle": [0.4, 0.86]}, "pegs": [[0.25, 0, 0.75, 0.1]], "erase": [[[-0.1, -0.1], [1.1, -0.1], [1.1, 0.025], [-0.1, 0.025]]]},
+    "thighF": {"pivot": [0.5, 0.12], "joints": {"shin": [0.53, 0.86]}},
+    "shinF":  {"pivot": [0.41, 0.09], "joints": {"ankle": [0.4, 0.86]}, "pegs": [[0.18, 0, 0.63, 0.1]]}
+   }
+  },
+  {
+   "id": "spear", "name": "Spear fighter", "role": "spear", "sheet": "gen/parts-spear/spear-parts.png", "weaponHand": "N",
+   "order": ["head", "torso", "pelvis", "cape", "armN", "foreN", "armF", "foreF", "weapon", "thighN", "shinN", "thighF", "shinF"],
+   "z": ["cape", "foreF", "armF", "shinF", "thighF", "shinN", "thighN", "pelvis", "torso", "head", "weapon", "foreN", "armN"],
+   "parts": {
+    "head":   {"pivot": [0.5, 0.9], "joints": {"top": [0.45, 0.0], "neck": [0.5, 0.9], "chin": [0.734, 0.725]}},
+    "torso":  {"pivot": [0.5, 0.94], "joints": {"head": [0.5, 0.15], "armN": [0.18, 0.3], "armF": [0.84, 0.3], "cape": [0.5, 0.1]}, "pegs": [[0.364, -0.009, 0.656, 0.049]]},
+    "pelvis": {"pivot": [0.5, 0.25], "joints": {"torso": [0.5, 0.06], "thighN": [0.3, 0.4], "thighF": [0.6, 0.4]}},
+    "cape":   {"pivot": [0.55, 0.06], "joints": {"hem": [0.5, 1.0]}},
+    "armN":   {"pivot": [0.55, 0.15], "joints": {"fore": [0.49, 0.66]}, "erase": [[[-0.1, 0.715], [0.25, 0.745], [0.5, 0.73], [0.78, 0.675], [1.1, 0.61], [1.1, 1.1], [-0.1, 1.1]]], "pegs": [[0, 0.75, 1, 1]]},
+    "foreN":  {"pivot": [0.42, 0.12], "joints": {"hand": [0.57, 0.86]}},
+    "armF":   {"pivot": [0.5, 0.15], "joints": {"fore": [0.53, 0.66]}, "erase": [[[-0.1, 0.7], [0.3, 0.745], [0.55, 0.74], [0.85, 0.68], [1.1, 0.63], [1.1, 1.1], [-0.1, 1.1]]], "pegs": [[0, 0.75, 1, 1]]},
+    "foreF":  {"pivot": [0.39, 0.12], "joints": {"hand": [0.55, 0.86]}},
+    "weapon": {"pivot": [0.3, 0.5], "joints": {"grip": [0.3, 0.5], "tip": [1.0, 0.5]}},
+    "thighN": {"pivot": [0.5, 0.12], "joints": {"shin": [0.44, 0.86]}},
+    "shinN":  {"pivot": [0.47, 0.08], "joints": {"ankle": [0.4, 0.86]}, "pegs": [[0.22, 0, 0.72, 0.12]]},
+    "thighF": {"pivot": [0.5, 0.12], "joints": {"shin": [0.43, 0.86]}},
+    "shinF":  {"pivot": [0.3, 0.08], "joints": {"ankle": [0.35, 0.86]}, "pegs": [[0.16, 0, 0.46, 0.12]]}
+   }
+  },
+  {
+   "id": "mage", "name": "Mage", "role": "mage", "sheet": "gen/parts-mage/mage-parts.png", "weaponHand": "F",
+   "order": ["head", "torso", "pelvis", "skirt", "armN", "foreN", "armF", "foreF", "weapon", "thighN", "shinN", "thighF", "shinF"],
+   "z": ["skirt", "weapon", "foreF", "armF", "shinF", "thighF", "shinN", "thighN", "pelvis", "torso", "head", "foreN", "armN"],
+   "parts": {
+    "head":   {"pivot": [0.609, 0.762], "joints": {"top": [0.5, 0.0], "neck": [0.609, 0.762], "chin": [0.676, 0.572], "collar": [0.451, 0.762]}},
+    "torso":  {"pivot": [0.5, 0.94], "joints": {"head": [0.657, 0.199], "armN": [0.18, 0.3], "armF": [0.85, 0.3], "cape": [0.5, 0.1], "collarRef": [0.472, 0.199]}, "pegs": [[0.398, -0.006, 0.75, 0.082]]},
+    "pelvis": {"pivot": [0.5, 0.35], "joints": {"torso": [0.5, 0.06], "thighN": [0.33, 0.5], "thighF": [0.66, 0.5], "skirt": [0.5, 0.12]}},
+    "skirt":  {"pivot": [0.5, 0.02], "joints": {"hem": [0.5, 1.0]}},
+    "armN":   {"pivot": [0.5, 0.12], "joints": {"fore": [0.43, 0.83]}, "erase": [[[-0.1, 0.885], [1.1, 0.885], [1.1, 1.1], [-0.1, 1.1]]], "pegs": [[0, 0.89, 1, 1]]},
+    "foreN":  {"pivot": [0.46, 0.1], "joints": {"hand": [0.7, 0.8]}},
+    "armF":   {"pivot": [0.5, 0.12], "joints": {"fore": [0.45, 0.81]}, "erase": [[[-0.1, 0.885], [1.1, 0.885], [1.1, 1.1], [-0.1, 1.1]]], "pegs": [[0, 0.89, 1, 1]]},
+    "foreF":  {"pivot": [0.3, 0.1], "joints": {"hand": [0.72, 0.78]}},
+    "weapon": {"pivot": [0.5, 0.6], "joints": {"grip": [0.5, 0.6], "tip": [0.5, 0.0]}},
+    "thighN": {"pivot": [0.5, 0.12], "joints": {"shin": [0.42, 0.86]}},
+    "shinN":  {"pivot": [0.4, 0.08], "joints": {"ankle": [0.4, 0.86]}},
+    "thighF": {"pivot": [0.5, 0.12], "joints": {"shin": [0.46, 0.86]}},
+    "shinF":  {"pivot": [0.37, 0.08], "joints": {"ankle": [0.4, 0.86]}}
+   }
+  }
+ ]
+}

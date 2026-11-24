@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dynamic 2D Lights</title>
+<style>
+:root {
+  --bg: #090810; --panel: #13111b; --panel2: #1a1726; --line: #2a2640; --text: #ece8f6; --dim: #958fb0; --accent: #ffb86b; --accent2: #7fd4ff; --ok: #6ee7a8; --off: #ff7a8a;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1000px 520px at 30% -10%, #3a2318 0%, var(--bg) 60%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 16px 20px 10px; max-width: 1340px; margin: 0 auto; }
+.code { white-space: nowrap; font: 700 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #1d1206; background: linear-gradient(#ffd29a, var(--accent)); padding: 6px 8px; border-radius: 6px; box-shadow: 0 0 0 1px #00000040, 0 4px 14px #ffb86b40; }
+h1 { font-size: 18px; margin: 0; letter-spacing: .01em; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; max-width: 920px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 350px; gap: 18px; padding: 0 20px 20px; max-width: 1340px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; }
+.frame { position: relative; border-radius: 14px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px #3a3352, 0 24px 60px #00000090; }
+#game { display: block; width: 100%; height: auto; cursor: crosshair; touch-action: none; }
+.split { position: absolute; top: 0; bottom: 0; width: 2px; background: #ffffffd0; box-shadow: 0 0 12px #fff8; pointer-events: none; display: none; z-index: 5; }
+.split span { position: absolute; top: 52px; font: 700 10px/1 ui-monospace, Menlo, monospace; letter-spacing: .1em; background: #000a; padding: 4px 6px; border-radius: 4px; white-space: nowrap; }
+.split .l { right: 8px; } .split .r { left: 8px; }
+.gizmo { position: absolute; pointer-events: none; z-index: 6; display: none; border-radius: 50%; border: 1.5px dashed #ffffffb0; box-shadow: 0 0 0 1px #0008; transform: translate(-50%, -50%); }
+.gizmo i { position: absolute; left: 50%; top: 50%; width: 10px; height: 10px; margin: -5px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 2px #000a, 0 0 10px #fff; }
+.gizmo b { position: absolute; left: 50%; top: -22px; transform: translateX(-50%); font: 700 10px/1 ui-monospace, Menlo, monospace; background: #000c; color: #fff; padding: 3px 5px; border-radius: 4px; white-space: nowrap; }
+.caption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; margin-top: 10px; color: var(--dim); font-size: 12px; }
+.caption b { color: var(--text); font-weight: 600; }
+#mode::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--ok); margin-right: 6px; box-shadow: 0 0 8px var(--ok); vertical-align: 1px; }
+#mode.off::before { background: var(--off); box-shadow: 0 0 8px var(--off); }
+.help { margin-top: 8px; color: var(--dim); font-size: 12px; }
+.help kbd { font: 600 11px ui-monospace, Menlo, monospace; background: #221e33; border: 1px solid #3a3352; border-radius: 4px; padding: 1px 5px; color: var(--text); }
+aside { background: linear-gradient(var(--panel2), var(--panel)); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+section { border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+section:last-of-type { border-bottom: 0; padding-bottom: 0; }
+h2 { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+h2 .tog { display: flex; align-items: center; gap: 10px; text-transform: none; letter-spacing: 0; font-weight: 600; font-size: 11.5px; }
+.row { margin-bottom: 8px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 3px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 5px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--fill), #2c2742 var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 15px; height: 15px; border-radius: 50%; background: #fff4e2; border: 0; box-shadow: 0 0 0 3px #ffb86b55, 0 2px 6px #000a; cursor: pointer; }
+input[type=range]:disabled { opacity: .35; background: #2c2742 !important; }
+input[type=range]:disabled::-webkit-slider-thumb { background: #6a6480; box-shadow: none; cursor: default; }
+.sw { position: relative; width: 34px; height: 19px; flex: none; }
+.sw input { opacity: 0; width: 0; height: 0; position: absolute; }
+.sw i { position: absolute; inset: 0; border-radius: 10px; background: #2c2742; transition: background .2s; cursor: pointer; }
+.sw i::after { content: ""; position: absolute; left: 3px; top: 3px; width: 13px; height: 13px; border-radius: 50%; background: #cfc8e6; transition: transform .22s cubic-bezier(.3, 1.6, .5, 1); }
+.sw input:checked + i { background: linear-gradient(90deg, #ff9b52, var(--accent)); }
+.sw input:checked + i::after { transform: translateX(15px); background: #fff; }
+.seg { display: flex; background: #0e0c16; border: 1px solid var(--line); border-radius: 8px; padding: 2px; gap: 2px; }
+.seg button { flex: 1; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 3px; border-radius: 6px; cursor: pointer; text-transform: capitalize; white-space: nowrap; }
+.seg button[aria-checked=true] { background: #2c2546; color: var(--text); box-shadow: inset 0 0 0 1px #4a4068; }
+.btns { display: flex; gap: 8px; }
+.btn { flex: 1; appearance: none; border: 1px solid #4a4068; border-radius: 9px; padding: 8px 6px; font: 600 12px/1 inherit; color: var(--text); background: #221e33; cursor: pointer; }
+.btn.hot { border: 0; color: #1d1206; background: linear-gradient(#ffd29a, var(--accent)); box-shadow: 0 6px 18px #ffb86b40; font-weight: 700; }
+.btn:disabled { opacity: .4; cursor: default; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
+.note { color: var(--dim); font-size: 11.5px; margin: 4px 0 0; }
+.sel { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 12.5px; }
+.sel input[type=color] { width: 34px; height: 26px; padding: 0; border: 1px solid #4a4068; border-radius: 6px; background: none; cursor: pointer; }
+.sel b { font: 600 12px ui-monospace, Menlo, monospace; color: var(--accent2); }
+.stat { font: 11.5px/1.55 ui-monospace, Menlo, monospace; color: var(--dim); }
+.stat b { color: var(--text); font-weight: 600; }
+@media (max-width: 1040px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 700px; width: 100%; margin: 0 auto; } }
+@media (max-width: 560px) { header { padding: 12px 16px 8px; } main { padding: 0 16px 16px; gap: 12px; } .frame { border-radius: 10px; } .two { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">J-01</span>
+  <div><h1>Dynamic 2D lights &amp; soft shadows</h1><p>Point lights and spotlights with soft falloff, colour and flicker; lights that ride on actors (the hero's torch, fireballs) and flash on impacts; walls, pillars and crates cast soft shadows in real time. A light map is composited in a WebGL post pass, so the HUD stays unlit. Without WebGL the plain 2D game shows.</p></div>
+</header>
+<main>
+  <div id="stage">
+    <div class="frame" id="frame">
+      <canvas id="game" width="640" height="360"></canvas>
+      <div class="split" id="split"><span class="l">UNLIT</span><span class="r">LIGHTS</span></div>
+      <div class="gizmo" id="gizmo"><i></i><b id="gname">torch</b></div>
+    </div>
+    <div class="caption">
+      <span id="mode">WebGL2</span>
+      <span id="cost">light map <b>-</b></span>
+      <span id="size">-</span>
+    </div>
+    <p class="help">Light editor: <kbd>click</kbd> a light to select it, <kbd>drag</kbd> to move it, <kbd>click</kbd> empty floor to place a new one, <kbd>Del</kbd> removes it. The hero's torch and the fireball follow their actors. The top HUD bar is passed as <code>uiRects</code>, so it stays unlit.</p>
+  </div>
+  <aside>
+    <section>
+      <h2>Pipeline <span class="tog">WebGL <label class="sw"><input type="checkbox" id="webgl" checked><i></i></label> Lights <label class="sw"><input type="checkbox" id="lon" checked><i></i></label></span></h2>
+      <div class="row"><label>Scene</label><div class="seg" id="preset"><button data-v="dungeon">dungeon</button><button data-v="night">night</button><button data-v="dusk">dusk</button><button data-v="day">day</button><button data-v="retro">retro</button></div></div>
+      <div class="row"><label>Compare (unlit left, lit right) <output id="o-split">off</output></label><input type="range" id="splitR" min="0" max="1" step="0.01" value="0"></div>
+    </section>
+    <section>
+      <h2>Ambient &amp; look</h2>
+      <div class="row"><label>Ambient tint</label><div class="seg" id="tint"><button data-v="dusk">dusk</button><button data-v="night">night</button><button data-v="cave">cave</button><button data-v="warm">warm</button><button data-v="neutral">none</button></div></div>
+      <div class="two">
+        <div class="row"><label>Ambient <output></output></label><input type="range" data-k="ambient" min="0" max="1" step="0.01"></div>
+        <div class="row"><label>Glow <output></output></label><input type="range" data-k="glow" min="0" max="1.2" step="0.01"></div>
+        <div class="row"><label>All lights <output></output></label><input type="range" data-k="intensity" min="0" max="2" step="0.01"></div>
+        <div class="row"><label>Emissive above <output></output></label><input type="range" data-k="emissive" min="0" max="0.98" step="0.01"></div>
+        <div class="row"><label>Highlight headroom <output></output></label><input type="range" data-k="over" min="0" max="1" step="0.01"></div>
+      </div>
+      <div class="row"><label>Light style</label><div class="seg" id="bands"><button data-v="0">smooth</button><button data-v="4">4 bands</button><button data-v="6">6 bands</button></div></div>
+    </section>
+    <section>
+      <h2>Soft shadows <label class="sw"><input type="checkbox" id="shadows" checked><i></i></label></h2>
+      <div class="two">
+        <div class="row"><label>Softness px <output></output></label><input type="range" data-k="softness" min="0" max="16" step="0.5"></div>
+        <div class="row"><label>Wall light px <output></output></label><input type="range" data-k="wallLight" min="0" max="24" step="1"></div>
+        <div class="row"><label>Map blur px <output></output></label><input type="range" data-k="blur" min="0" max="6" step="0.25"></div>
+        <div class="row"><label>Samples</label><div class="seg" id="samples"><button data-v="1">1</button><button data-v="3">3</button><button data-v="5">5</button></div></div>
+      </div>
+    </section>
+    <section>
+      <h2>Selected light <span class="tog" id="selname">none</span></h2>
+      <div class="sel"><input type="color" id="lcolor" value="#ffb46a"><span>colour</span><span style="flex:1"></span><span>cone</span><label class="sw"><input type="checkbox" id="lcone"><i></i></label></div>
+      <div class="two">
+        <div class="row"><label>Radius <output></output></label><input type="range" data-l="radius" min="20" max="400" step="1"></div>
+        <div class="row"><label>Intensity <output></output></label><input type="range" data-l="intensity" min="0" max="2" step="0.01"></div>
+        <div class="row"><label>Flicker <output></output></label><input type="range" data-l="flicker" min="0" max="1" step="0.01"></div>
+        <div class="row"><label>Cone width&deg; <output></output></label><input type="range" data-l="width" min="10" max="180" step="1"></div>
+      </div>
+      <div class="row"><label>Cone direction&deg; <output></output></label><input type="range" data-l="dir" min="-180" max="180" step="1"></div>
+      <div class="btns"><button class="btn" id="ldel">Remove light</button><button class="btn hot" id="fire">Fire a fireball</button></div>
+    </section>
+    <section class="stat" id="stat">-</section>
+  </aside>
+</main>
+<script>
+/*MODULE*/
+</script>
+<script>
+/*MAIN*/
+</script>
+</body>
+</html>

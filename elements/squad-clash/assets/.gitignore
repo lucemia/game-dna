@@ -1,0 +1,4 @@
+# Source PNGs from Codex (1-3 MB each) stay local; their sha256 is in each run's meta.json and in assets.json
+gen/**/*.png
+gen/**/run.log
+**/__pycache__/

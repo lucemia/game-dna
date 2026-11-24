@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shardbound</title>
+<style>
+:root { --bg: #120c10; --ink: #f4ead8; --dim: #b4a488; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font: 13px/1.45 "Trebuchet MS", "Segoe UI", system-ui, -apple-system, sans-serif; }
+#wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px; min-height: 100vh; }
+#stage { width: 100%; max-width: 1600px; display: flex; align-items: center; justify-content: center; }
+#screen { display: block; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); touch-action: none; background: #000; }
+#bar { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; justify-content: center; color: var(--dim); font-size: 12px; max-width: 100%; }
+#bar b { color: var(--ink); }
+#info { display: none; width: 100%; max-width: 640px; background: #1e1418; border: 1px solid #4a3a2a; border-radius: 8px; padding: 6px 10px; font-size: 13px; line-height: 1.45; color: var(--ink); }
+#info b { color: #ffe7b0; } #info .dim { color: var(--dim); }
+@media (max-width: 760px) { #wrap { padding: 4px 4px 8px; gap: 6px; } #bar .keys { display: none; } #info { display: block; } }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage"><canvas id="screen" width="960" height="540"></canvas></div>
+  <div id="info" aria-live="polite"></div>
+  <div id="bar">
+    <span><b>Shardbound</b>: drag a gem onto its neighbour (or tap one, then the other) to match 3 or more. Tap a foe to target it, a glowing hero card to use its skill.</span>
+    <span class="keys"><b>Arrows</b> move, <b>Z</b> pick up a gem, then an arrow swaps it, <b>X</b> drop, <b>1-4</b> skills, <b>T</b> next target, <b>P</b> auto play. <b>?auto=1</b> to watch.</span>
+  </div>
+</div>
+<script src="art/cast-art.js"></script>
+<script src="art/kit.js"></script>
+<script>
+/*@@MODULE@@*/
+</script>
+<script>
+/*@@GAME@@*/
+</script>
+<script>
+/* ================================ ADDONS SLOT ================================
+   Paste addon modules here (or add <script src> tags right above this block) and register each one with
+   GAME.addons.push({...}). New content goes here too: GAME.addGem(id, def), GAME.addSkill(id, def, {hero}),
+   GAME.addHero(id, def, {slot}), GAME.addEnemy(id, def, {stage, wave, count}), GAME.addStage(stage). This block runs after
+   window.GAME exists and BEFORE the game boots, so addons and content see the first battle and every ?t=&freeze=1
+   fast-forwarded frame. Hooks: see README.md "Extension points". */
+</script>
+</body>
+</html>

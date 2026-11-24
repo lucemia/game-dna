@@ -1,0 +1,4 @@
+assets/gen/**/*.png
+assets/gen/**/run.log
+**/__pycache__/
+checks/critic*/

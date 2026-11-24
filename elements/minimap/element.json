@@ -1,0 +1,214 @@
+{
+  "id": "minimap",
+  "code": "C-06",
+  "kind": "addon",
+  "name": "Minimap",
+  "family": "minimap",
+  "oneLiner": "A corner map of the level that the player fills in by exploring: the tile grid (or collision boxes) baked once into a cached image per zoom, unexplored cells under a dark dither, an arrow on the player that points where they face, markers for the goal, enemies, items, people and exits, a rim arrow toward an off-map goal, zoom levels (the closest still shows 1.5x the screen) and a full-map view with a legend and the explored share. It places itself in a corner of the play area and never covers the HUD rects the game names, and dims its map image (never the frame or arrows) while the player sprite is under it. A warm parchment look for maps seen from above and dark rooms with bright walls for side-on levels; crisp whole pixels on native pixel canvases, smooth on HD. It can show what a fog-of-war module has explored instead of keeping its own.",
+  "fits": [
+    "top-down action adventure and RPG overworlds",
+    "metroidvania and side-on exploration platformers",
+    "dungeon crawlers and roguelites with rooms",
+    "survival and open-map games",
+    "twin-stick and arena shooters (enemy radar)",
+    "tactics maps too big for one screen"
+  ],
+  "notFor": [
+    "single-screen games (arena, puzzle, card battle): nothing is off screen",
+    "racing and flight games that need a rotating track radar (the map is north-up)",
+    "games without a level grid or collision boxes (free 3D worlds)"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "the level as a cell grid (cols, rows, tile size, what each cell is) or solid collision rects",
+      "the player's world position and facing, and the camera's world rect",
+      "world positions of what to mark: the current goal, living enemies, untaken items, people, exits",
+      "the screen rect of the play view and the HUD rects to keep clear",
+      "a fixed update step (also on the ?t= replay) and keys / taps for zoom and the full map"
+    ],
+    "provides": [
+      "a drawn corner minimap and full map (explored cells, player arrow, markers, edge arrows, view brackets, legend, explored %)",
+      "explored cells: isExplored(c, r), exploredRatio(), reveal helpers",
+      "hit(x, y) for tap-to-open, rect() of what is on screen (a UI rect for other overlays)",
+      "state(): every marker's world and map position or why it is hidden, the player arrow's position and angle"
+    ]
+  },
+  "params": [
+    {
+      "key": "mode",
+      "label": "Level view",
+      "type": "select",
+      "options": [
+        "topdown",
+        "side"
+      ],
+      "default": "topdown"
+    },
+    {
+      "key": "corner",
+      "label": "Corner",
+      "type": "select",
+      "options": [
+        "tr",
+        "tl",
+        "br",
+        "bl"
+      ],
+      "default": "tr"
+    },
+    {
+      "key": "size",
+      "label": "Width (share of the view)",
+      "type": "range",
+      "min": 0.15,
+      "max": 0.4,
+      "step": 0.01,
+      "default": 0.28
+    },
+    {
+      "key": "zooms",
+      "label": "Zoom levels (auto = closest still shows 1.5x the screen)",
+      "type": "select",
+      "options": [
+        "auto",
+        "2,3,4",
+        "1,2,3",
+        "2,4"
+      ],
+      "default": "auto"
+    },
+    {
+      "key": "fog",
+      "label": "Unexplored cells",
+      "type": "select",
+      "options": [
+        "explore",
+        "off"
+      ],
+      "default": "explore"
+    },
+    {
+      "key": "reveal",
+      "label": "Reveal radius (cells)",
+      "type": "range",
+      "min": 1,
+      "max": 12,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "key": "enemies",
+      "label": "Enemy markers",
+      "type": "select",
+      "options": [
+        "on",
+        "near",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "shape",
+      "label": "Shape",
+      "type": "select",
+      "options": [
+        "square",
+        "round"
+      ],
+      "default": "square"
+    },
+    {
+      "key": "theme",
+      "label": "Look",
+      "type": "select",
+      "options": [
+        "auto",
+        "atlas",
+        "sonar"
+      ],
+      "default": "auto"
+    },
+    {
+      "key": "fadeUnder",
+      "label": "Map opacity while the player is under it",
+      "type": "range",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.4
+    },
+    {
+      "key": "markSize",
+      "label": "Marker size",
+      "type": "range",
+      "min": 1,
+      "max": 2,
+      "step": 0.5,
+      "default": 1
+    },
+    {
+      "key": "render",
+      "label": "Render",
+      "type": "select",
+      "options": [
+        "auto",
+        "crisp",
+        "smooth"
+      ],
+      "default": "auto"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Adventure overworld",
+      "params": {
+        "mode": "topdown",
+        "corner": "tr",
+        "zooms": "auto",
+        "fog": "explore",
+        "theme": "atlas"
+      }
+    },
+    {
+      "name": "Metroidvania",
+      "params": {
+        "mode": "side",
+        "corner": "tr",
+        "zooms": "auto",
+        "fog": "explore",
+        "theme": "sonar"
+      }
+    },
+    {
+      "name": "Arena radar",
+      "params": {
+        "mode": "topdown",
+        "shape": "round",
+        "fog": "off",
+        "enemies": "near",
+        "corner": "bl"
+      }
+    },
+    {
+      "name": "Known map, no fog",
+      "params": {
+        "fog": "off",
+        "enemies": "off"
+      }
+    }
+  ],
+  "assets": [
+    "module/minimap.js: the element as one dependency-free script (global GameDNA_Minimap): grid read and cached map images per zoom, its own explored cells or a shared fog-of-war, placement clear of HUD rects, the fade, markers, the player arrow, edge arrows, view brackets, the full map with legend, crisp and smooth drawing, a built-in 3x5 bitmap font",
+    "no image, font or audio files"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/minimap.js",
+    "global": "GameDNA_Minimap",
+    "version": "1.1.1",
+    "docs": "module/README.md"
+  }
+}

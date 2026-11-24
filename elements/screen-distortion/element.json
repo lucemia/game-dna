@@ -1,0 +1,175 @@
+{
+  "id": "screen-distortion",
+  "code": "J-08",
+  "name": "Screen-space distortion",
+  "kind": "addon",
+  "family": "distortion",
+  "oneLiner": "The finished picture bends like hot air, water and lenses: heat haze rising over fires, a slow wobble under water, a portal that swirls and pulls in what is behind it, and shockwave rings that refract the whole scene outward from an explosion, slam or kill. One WebGL pass on the I-08 pipeline that only moves where each pixel is read from; HUD rects never bend. Without WebGL, or with ?webgl=0, the game looks exactly as before.",
+  "fits": [
+    "any browser game drawn on one 2D canvas, pixel or HD, any resolution and CSS scaling",
+    "action RPG, platformer, shmup, brawler (explosions, slams, kills)",
+    "levels with fire, lava, water or magic gates",
+    "boss fights (stomps, charges, death bursts)"
+  ],
+  "notFor": [
+    "games already drawn with WebGL or a 3D engine (use the engine's own post stack)",
+    "per-sprite effects that must follow a moving character pixel-exactly (it bends screen areas, not sprites)",
+    "colour changes: it moves pixels, it does not tint or light them (use grade, bloom or lights)"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "post",
+    "needs": [
+      "I-08 webgl-post (GameDNA_Post) loaded first; the game's existing instance, or one the module creates",
+      "render() once per drawn frame on every draw path",
+      "the game's step-counted clock in ms (waves and ripples; deterministic ?t=&freeze=1)",
+      "optional: on-screen regions each frame (heat / water / portal, camera subtracted)",
+      "optional: explosion, slam, heavy-hit and kill events with an on-screen point (shockwave)",
+      "optional: HUD rects in canvas px or view units (uiRects), or the shared uiMask"
+    ],
+    "provides": [
+      "one distortion pass on the I-08 chain (order 350, the distortion band), skipped when idle",
+      "heat, water and portal regions; params.underwater for a whole level",
+      "shockwave(x, y, {strength}) rings fading in game time (max 8, same-spot merge)",
+      "HUD protection: uiRects with a feathered fade, never samples HUD pixels into the world",
+      "stats(): frames drawn, waves fired / live, regions, HUD rects, errors"
+    ]
+  },
+  "params": [
+    {
+      "key": "strength",
+      "label": "Strength",
+      "type": "range",
+      "min": 0,
+      "max": 2,
+      "step": 0.01,
+      "default": 1
+    },
+    {
+      "key": "heat",
+      "label": "Heat haze (px at 360)",
+      "type": "range",
+      "min": 0,
+      "max": 4,
+      "step": 0.05,
+      "default": 2.2
+    },
+    {
+      "key": "water",
+      "label": "Water wobble (px at 360)",
+      "type": "range",
+      "min": 0,
+      "max": 6,
+      "step": 0.05,
+      "default": 2.2
+    },
+    {
+      "key": "portal",
+      "label": "Portal swirl",
+      "type": "range",
+      "min": 0,
+      "max": 2,
+      "step": 0.01,
+      "default": 1
+    },
+    {
+      "key": "wave",
+      "label": "Shockwave swell (px at 360)",
+      "type": "range",
+      "min": 0,
+      "max": 24,
+      "step": 0.5,
+      "default": 9
+    },
+    {
+      "key": "waveRadius",
+      "label": "Shockwave reach (px at 360)",
+      "type": "range",
+      "min": 40,
+      "max": 400,
+      "step": 5,
+      "default": 150
+    },
+    {
+      "key": "chroma",
+      "label": "Colour fringe",
+      "type": "range",
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "default": 0.35
+    },
+    {
+      "key": "shine",
+      "label": "Shine",
+      "type": "range",
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "default": 0.35
+    }
+  ],
+  "variants": [
+    {
+      "name": "Default",
+      "params": {}
+    },
+    {
+      "name": "Subtle",
+      "params": {
+        "strength": 0.6,
+        "chroma": 0.15,
+        "shine": 0.15,
+        "wave": 6
+      }
+    },
+    {
+      "name": "Dramatic",
+      "params": {
+        "strength": 1.3,
+        "wave": 14,
+        "waveRadius": 220,
+        "chroma": 0.7,
+        "shine": 0.6,
+        "heat": 3.2,
+        "water": 3.2,
+        "portal": 1.4
+      }
+    },
+    {
+      "name": "Pure UV (no fringe, no light)",
+      "params": {
+        "chroma": 0,
+        "shine": 0
+      }
+    },
+    {
+      "name": "Pixel (snapped)",
+      "params": {
+        "chroma": 0,
+        "shine": 0.25,
+        "snap": true
+      }
+    }
+  ],
+  "assets": [
+    "module/screen-distortion.js: the element as one dependency-free script (global GameDNA_Distort) adding one pass to an I-08 GameDNA_Post instance (shared or its own)",
+    "requires elements/webgl-post/module/webgl-post.js (I-08), shipped next to it in the combo",
+    "no image or audio files"
+  ],
+  "status": "draft",
+  "requires": [
+    "webgl-post"
+  ],
+  "module": {
+    "file": "module/screen-distortion.js",
+    "global": "GameDNA_Distort",
+    "version": "1.1.0",
+    "docs": "module/README.md",
+    "requires": [
+      "webgl-post"
+    ],
+    "skin": "optional: the shine tint may be a skin token (fx.hot) when skin-api.js is loaded; the module draws nothing on the game canvas"
+  }
+}

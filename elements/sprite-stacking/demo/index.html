@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sprite Stacking</title>
+<style>
+  :root { --bg: #12101a; --panel: #1d1a28; --line: #393350; --ink: #f0ebf6; --dim: #a79fbc; --acc: #f2b45a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; overflow-x: hidden; }
+  main { max-width: 1000px; margin: 0 auto; padding: 14px 16px 28px; }
+  h1 { font-size: 20px; margin: 0 0 2px; }
+  h2 { font-size: 15px; margin: 18px 0 6px; }
+  .sub { color: var(--dim); margin: 0 0 12px; font-size: 13.5px; }
+  #stage { position: relative; background: #0b0a10; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; display: flex; justify-content: center; }
+  @media (max-width: 560px) { #stage { margin: 0 -16px; border-radius: 0; border-left: 0; border-right: 0; } }
+  canvas#game { display: block; image-rendering: pixelated; image-rendering: crisp-edges; touch-action: none; cursor: grab; }
+  #wrap { position: relative; }
+  #compass { position: absolute; right: 10px; top: 10px; width: 46px; height: 46px; pointer-events: none; }
+  #compass svg { width: 100%; height: 100%; display: block; }
+  .cap { min-height: 21px; margin: 8px 0 0; font-size: 13.5px; color: var(--ink); }
+  .cap b { color: var(--acc); font-weight: 600; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0 6px; }
+  .bar input[type=range] { flex: 1 1 160px; min-width: 120px; accent-color: var(--acc); }
+  .time { font-variant-numeric: tabular-nums; color: var(--dim); min-width: 52px; }
+  button { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 7px; padding: 6px 12px; font: inherit; cursor: pointer; }
+  button.on { background: var(--acc); color: #2a1606; border-color: var(--acc); font-weight: 600; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 12px; }
+  .grid label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--dim); }
+  .grid select, .grid input[type=range] { font: inherit; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 5px; padding: 3px; accent-color: var(--acc); }
+  .grid label.ck { flex-direction: row; align-items: center; gap: 6px; }
+  .note { color: var(--dim); font-size: 12.5px; margin: 8px 0 0; }
+  .gal { display: grid; grid-template-columns: repeat(auto-fill, minmax(126px, 1fr)); gap: 8px; }
+  .tile { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 4px 5px; text-align: center; cursor: pointer; }
+  .tile.sel { border-color: var(--acc); }
+  .tile canvas { display: block; margin: 0 auto; image-rendering: pixelated; image-rendering: crisp-edges; }
+  .tile div { font-size: 12px; } .tile small { color: var(--dim); font-size: 11px; }
+  #slices { display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-end; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 10px; }
+  #slices figure { margin: 0; text-align: center; font-size: 11px; color: var(--dim); }
+  #slices canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; background: #2a2638; border-radius: 3px; }
+  kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; font-size: 12px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Sprite stacking</h1>
+  <p class="sub">Pseudo-3D props from stacked pixel slices: every crate, tree, house and cart is a small voxel model drawn as its slices, one screen row above the other, so the camera can turn all the way round. The villagers stay flat sprites, and every frame they are sorted with the stacks by their ground footprints, so they walk behind the well and in front of the stall from any side.</p>
+  <div id="stage"><div id="wrap"><canvas id="game" width="384" height="216"></canvas><div id="compass"></div></div></div>
+  <p class="cap" id="cap">&nbsp;</p>
+  <div class="bar">
+    <button id="tl" title="Turn the camera left (Q)">&#10226; Turn</button><button id="tr" title="Turn the camera right (E)">Turn &#10227;</button>
+    <button id="auto" class="on">Auto-turn</button>
+    <button id="play">Pause</button>
+    <input id="scrub" type="range" min="0" max="24000" step="50" value="0"><span class="time" id="time">0.0 s</span>
+  </div>
+  <div class="grid" id="ctl"></div>
+  <p class="note">Drag the scene or press <kbd>Q</kbd> / <kbd>E</kbd> to turn the camera; arrow keys walk the hero. Every frame is a function of the clock: <code>?t=&lt;ms&gt;&amp;freeze=1</code> gives the same still at any window size.</p>
+  <h2>The models</h2>
+  <div class="gal" id="gal"></div>
+  <h2 id="slh">Slices</h2>
+  <div id="slices"></div>
+</main>
+<script src="../../../pixel-kit/pixel-scene.js"></script>
+<script src="../module/sprite-stacking.js"></script>
+<script>
+/* K-02 sprite-stacking demo. The world is a pure function of the clock t (paths, buggy, camera), so ?t= is exact.
+   Ground: pixel-kit meadow baked once and drawn through the module's camera (it turns with the stacks).
+   Characters: pixel-kit villagers (4 facings, walk frames by distance walked), drawn as flat items in the same sorted list. */
+(function () {
+  'use strict';
+  var Q = new URLSearchParams(location.search), SS = GameDNA_SpriteStack, PXS = GameDNA_PixelScene;
+  var T0 = Q.has('t') ? Math.max(0, +Q.get('t') || 0) : null, FREEZE = Q.get('freeze') === '1', MUT = Q.get('mutant') || '';
+  var NARROW = Math.min(document.getElementById('stage').clientWidth || 384, innerWidth || 384) < 560, VW = NARROW ? 256 : 384, VH = NARROW ? 144 : 216, LOOP = 24000, TILE = 16, COLS = 36, WORLD = COLS * TILE, C = WORLD / 2;
+  var cv = document.getElementById('game'), ctx = cv.getContext('2d'); cv.width = VW; cv.height = VH;   // phones: a closer 256 x 144 view, same world
+  var P = { pitch: Q.has('pitch') ? +Q.get('pitch') : 0.78, lift: Q.has('lift') ? +Q.get('lift') : 1, steps: Q.get('steps') || '128', outline: Q.get('outline') || 'on',
+    shadows: Q.has('shadows') ? +Q.get('shadows') : 0.3, light: Q.has('light') ? +Q.get('light') : -0.62, footprints: Q.get('footprints') === '1' };
+
+  /* ---------- stage size: whole device pixels per native pixel ---------- */
+  function fit() {
+    var dpr = window.devicePixelRatio || 1, avail = Math.min(document.getElementById('stage').clientWidth || VW, 1000) * dpr;
+    var k = Math.max(1, Math.floor(avail / VW));
+    cv.style.width = (k * VW / dpr) + 'px'; cv.style.height = (k * VH / dpr) + 'px';
+  }
+  fit(); addEventListener('resize', fit);
+
+  /* ---------- the stack instance ---------- */
+  function mkSS() { return SS.create({ voxel: 1, lift: P.lift, pitch: P.pitch, steps: P.steps === 'exact' ? 0 : +P.steps, outline: P.outline === 'on', shadows: P.shadows, light: P.light, cacheMax: 4000, res: 1 }); }
+  var S = mkSS();
+
+  /* ---------- ground: pixel-kit meadow, baked ---------- */
+  var MAP = [];
+  for (var r = 0; r < COLS; r++) {
+    var row = '';
+    for (var c = 0; c < COLS; c++) {
+      var x = (c + 0.5) * TILE - C, y = (r + 0.5) * TILE - C, d = Math.hypot(x, y) / TILE, a = Math.atan2(y, x);
+      var ch = '.';
+      var spoke = [270, 10, 190, 85].some(function (h) { var dd = Math.abs((((a * 180 / Math.PI) - h) % 360 + 540) % 360 - 180) * Math.PI / 180 * d; return dd < 0.7; });
+      if (d < 4.7) ch = 'c';
+      else if (Math.abs(d - 7.4) < 0.72) ch = 'p';
+      else if (Math.hypot(x + 118, y - 118) < 34) ch = 'w';
+      else if (spoke && d < 9.6) ch = 'p';
+      else { var n = Math.sin(c * 1.7 + r * 0.6) + Math.cos(r * 1.3 - c * 0.4); if (n > 1.2) ch = ','; else if (n < -1.5) ch = ':'; }
+      row += ch;
+    }
+    MAP.push(row);
+  }
+  var SC = PXS.scene({ map: MAP, seed: 11 }), GROUND = [];
+  for (var fr = 0; fr < 4; fr++) { var gc = document.createElement('canvas'); gc.width = WORLD; gc.height = WORLD; SC.drawGround(gc.getContext('2d'), fr * 334, 0, 0); GROUND.push(gc); }
+
+  /* ---------- props (world px; house fronts face the plaza) ---------- */
+  var PROPS = [];
+  function prop(name, x, y, o) { o = o || {}; o.id = o.id || name + PROPS.length; PROPS.push({ name: name, x: x, y: y, o: o }); return o; }
+  function polar(rad, deg) { var a = deg * Math.PI / 180; return [C + Math.cos(a) * rad, C + Math.sin(a) * rad]; }
+  function faceCenter(x, y) { var ux = C - x, uy = C - y, L = Math.hypot(ux, uy) || 1; return Math.atan2(-ux / L, uy / L); }
+  prop('well', C, C, { id: 'well', model: { size: 15 } });
+  [45, 135, 225, 315].forEach(function (deg, i) { var p = polar(80, deg); prop('lamp', p[0], p[1], { id: 'lamp' + i }); });
+  [[200, '#c8384a', '#f2e6c8'], [320, '#3a6ac8', '#e8eef8'], [80, '#3a9a5a', '#f4ecc8']].forEach(function (s, i) {
+    var p = polar(48, s[0]); prop('stall', p[0], p[1], { id: 'stall' + i, angle: faceCenter(p[0], p[1]), model: { seed: i + 2, cloth: s[1], cloth2: s[2], w: 18, d: 11 } });
+    var t = polar(49, s[0] + 24), u = polar(50, s[0] - 25);
+    prop(i % 2 ? 'barrel' : 'crate', t[0], t[1], { angle: 0.3 + i, id: 'goodsA' + i }); prop(i % 2 ? 'crate' : 'barrel', u[0], u[1], { angle: 1.1 + i * 0.7, id: 'goodsB' + i });
+  });
+  var HOUSES = [[270, 'red'], [10, 'blue'], [190, 'slate'], [85, 'thatch']];
+  HOUSES.forEach(function (h, i) { var p = polar(170, h[0]); prop('house', p[0], p[1], { id: 'house' + i, angle: faceCenter(p[0], p[1]), model: { w: 44, d: 32, roof: h[1] } }); });
+  [[40, 162, 0], [55, 182, 1], [118, 176, 2], [160, 160, 3], [228, 166, 0], [245, 190, 1], [300, 160, 2], [318, 184, 3], [340, 170, 1], [62, 150, 2], [150, 134, 1], [250, 134, 3], [290, 133, 0]].forEach(function (q, k) {
+    var p = polar(q[1], q[0]); prop(k % 4 === 3 ? 'pine' : 'tree', p[0], p[1], { id: 'tree' + k, model: { seed: q[2], autumn: k === 4 || k === 8 } });
+  });
+  for (var k = 0; k < 30; k++) { var p2 = polar(214 + (k % 3) * 16, k * 12 + (k % 2) * 5); prop(k % 3 ? 'pine' : 'tree', p2[0], p2[1], { id: 'edge' + k, model: { seed: k % 3 } }); }
+  [[-96, 92, 0.4, 12], [-146, 108, 1.9, 9], [-150, 150, 2.6, 14], [-136, 70, 1.0, 7]].forEach(function (q, i) { prop('rock', C + q[0], C + q[1], { id: 'rock' + i, angle: q[2], model: { seed: i + 1, size: q[3] } }); });
+  prop('fence', C - 74, C + 112, { id: 'fence0', angle: -0.75 }); prop('fence', C - 62, C + 126, { id: 'fence1', angle: -0.75 });
+  var cp = polar(142, 330); prop('cart', cp[0], cp[1], { id: 'cart', angle: 2.2 });
+  var sp = polar(136, 104); prop('sign', sp[0], sp[1], { id: 'sign', angle: faceCenter(sp[0], sp[1]) });
+  var chp = polar(140, 232); prop('chest', chp[0], chp[1], { id: 'chest', angle: faceCenter(chp[0], chp[1]) + 0.2 });
+  [[138, 30], [140, 300], [138, 160], [136, 64]].forEach(function (b, i) { var q = polar(b[0], b[1]); prop('bush', q[0], q[1], { id: 'bush' + i, model: { seed: i + 4 } }); });
+
+  /* ---------- characters: paths are pure functions of t ---------- */
+  function circlePath(rad, deg0, speed, dir) {   // speed px per second, dir +1 clockwise on screen at yaw 0
+    return function (t) {
+      var a = deg0 * Math.PI / 180 + dir * speed * t / 1000 / rad, x = C + Math.cos(a) * rad, y = C + Math.sin(a) * rad;
+      return { x: x, y: y, vx: -Math.sin(a) * dir, vy: Math.cos(a) * dir, dist: speed * t / 1000 };
+    };
+  }
+  var ACTORS = [
+    { id: 'hero', pal: 'hero', path: circlePath(21, 90, 22, 1) },
+    { id: 'guard', pal: 'guard', path: circlePath(67, 0, 24, -1) },
+    { id: 'villager', pal: 'girl', path: circlePath(94, 200, 26, -1) },
+    { id: 'elder', pal: 'elder', stand: polar(172, 21.5), look: [C, C] }
+  ];
+  var hero = { manual: false, x: 0, y: 0, vx: 0, vy: 0, dist: 0 };
+
+  /* ---------- world at time t ---------- */
+  var yawUser = 0, autoTurn = true;
+  function yawAt(t) { return (autoTurn ? t / LOOP * Math.PI * 2 : 0) + yawUser + 0.35; }
+  function buggyAt(t) { var rad = 118, a = -t / 12000 * Math.PI * 2 + 1.2; return { x: C + Math.cos(a) * rad, y: C + Math.sin(a) * rad, angle: a - Math.PI / 2 }; }
+  function actorAt(A, t) {
+    if (A.id === 'hero' && hero.manual) return { x: hero.x, y: hero.y, vx: hero.vx, vy: hero.vy, dist: hero.dist, moving: Math.hypot(hero.vx, hero.vy) > 0.01, lookX: hero.lx, lookY: hero.ly };
+    if (A.path) { var p = A.path(t); p.moving = true; return p; }
+    return { x: A.stand[0], y: A.stand[1], vx: 0, vy: 0, dist: 0, moving: false, lookX: A.look[0] - A.stand[0], lookY: A.look[1] - A.stand[1] };
+  }
+  function dirOf(sx, sy, prev) { if (Math.abs(sx) < 1e-6 && Math.abs(sy) < 1e-6) return prev || 'down'; return Math.abs(sx) > Math.abs(sy) * 1.08 ? (sx > 0 ? 'right' : 'left') : (sy > 0 ? 'down' : 'up'); }
+
+  var clock = 0, frame = null;
+  function buildFrame(t) {
+    var yaw = yawAt(t), camX = C + Math.sin(t / 5200) * 16, camY = C + Math.cos(t / 6100) * 12;
+    S.setCamera({ x: camX, y: camY, yaw: yaw, sx: VW / 2, sy: VH / 2 + 8 });
+    var items = [], reach = 262;
+    PROPS.forEach(function (q) {
+      if (Math.hypot(q.x - camX, q.y - camY) > reach) return;
+      items.push(S.item(q.name, q.x, q.y, { angle: q.o.angle || 0, id: q.o.id, model: q.o.model || null }));
+    });
+    var b = buggyAt(t);
+    items.push(S.item('buggy', b.x, b.y, { angle: b.angle, id: 'buggy' }));
+    var actors = [];
+    ACTORS.forEach(function (A) {
+      var s = actorAt(A, t), dv = S.screenDir(s.moving ? s.vx : s.lookX, s.moving ? s.vy : s.lookY);
+      var dir = dirOf(dv.x, dv.y, A.lastDir);
+      if (MUT === 'face' && A.id === 'hero') dir = { left: 'right', right: 'left', up: 'down', down: 'up' }[dir];
+      A.lastDir = dir;
+      var fr2 = s.moving ? Math.floor(s.dist / 7) % 2 : 0, a = { id: A.id, pal: A.pal, x: s.x, y: s.y, dir: dir, frame: fr2, moving: s.moving, sx: dv.x };
+      actors.push(a);
+      items.push({ x: s.x, y: s.y, w: 12, h: 18, id: A.id, draw: function (g) { var p = S.project(a.x, a.y); PXS.actor(g, Math.round(p.x), Math.round(p.y), { pal: a.pal, dir: a.dir, frame: a.frame }); } });
+    });
+    if (MUT === 'sort') items.sort(function (p, q) { return p.y - q.y; });
+    return { t: t, yaw: yaw, cam: { x: camX, y: camY }, items: items, actors: actors };
+  }
+
+  /* ---------- render ---------- */
+  function render(t) {
+    frame = buildFrame(t);
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = '#2c5a30'; ctx.fillRect(0, 0, VW, VH);
+    ctx.save(); S.groundTransform(ctx); ctx.drawImage(GROUND[Math.floor(t / 334) % 4], 0, 0); ctx.restore();
+    S.drawShadows(ctx, frame.items);
+    if (MUT === 'sort') frame.drawn = frame.items.map(function (it) { return S.draw(ctx, [it])[0]; });   // mutant: the list order (world y), no footprint sort
+    else frame.drawn = S.draw(ctx, frame.items);
+    if (P.footprints) drawFootprints();
+    // soft warm light from the top left and a vignette (screen space)
+    var gr = ctx.createRadialGradient(VW * 0.35, VH * 0.25, 20, VW / 2, VH / 2, VW * 0.75);
+    gr.addColorStop(0, 'rgba(255,236,190,0.07)'); gr.addColorStop(0.6, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(10,6,30,0.32)');
+    ctx.fillStyle = gr; ctx.fillRect(0, 0, VW, VH);
+    compass(frame.yaw); caption();
+  }
+  function drawFootprints() {
+    ctx.save(); ctx.lineWidth = 1;
+    frame.drawn.forEach(function (d) {
+      if (!d.poly) return; var cam = S.camera();
+      ctx.strokeStyle = d.kind === 'stack' ? 'rgba(255,220,120,0.9)' : 'rgba(120,220,255,0.95)'; ctx.beginPath();
+      d.poly.forEach(function (q, i) { var X = cam.sx + q[0] - 0, Y = cam.sy + q[1] * P.pitch; if (i) ctx.lineTo(X + 0.5, Y + 0.5); else ctx.moveTo(X + 0.5, Y + 0.5); });
+      ctx.closePath(); ctx.stroke();
+    });
+    ctx.restore();
+  }
+  var compEl = document.getElementById('compass');
+  compEl.innerHTML = '<svg viewBox="-23 -23 46 46"><circle r="21" fill="rgba(18,16,26,0.72)" stroke="#5a5270" stroke-width="1.5"/><g id="cneedle"><path d="M0,-17 L5,0 L0,4 L-5,0 Z" fill="#e8584a"/><path d="M0,17 L5,0 L0,-4 L-5,0 Z" fill="#cfc8dc"/><text x="0" y="-8.5" fill="#fff" font-size="7.5" font-weight="700" text-anchor="middle" font-family="system-ui,sans-serif">N</text></g></svg>';
+  var needle = document.getElementById('cneedle');
+  function compass(yaw) { needle.setAttribute('transform', 'rotate(' + (-yaw * 180 / Math.PI).toFixed(2) + ')'); }
+
+  /* ---------- occlusion text (what is in front of what, this frame) ---------- */
+  var NAMES = { well: 'the well', buggy: 'the buggy', cart: 'the hay cart', chest: 'the chest', sign: 'the signpost', hero: 'the hero', guard: 'the guard', villager: 'the villager', merchant: 'the merchant', elder: 'the elder' };
+  var MODEL_NAMES = { lamp: 'a lamp post', stall: 'a market stall', crate: 'a crate', barrel: 'a barrel', house: 'a cottage', tree: 'an oak', pine: 'a pine', rock: 'a boulder', fence: 'the fence', bush: 'a bush', well: 'the well', buggy: 'the buggy', cart: 'the hay cart', chest: 'the chest', sign: 'the signpost' };
+  function niceName(d) { return NAMES[d.id] && d.kind !== 'stack' ? NAMES[d.id] : (MODEL_NAMES[d.name] || NAMES[d.id] || 'a prop'); }
+  function rectOf(d) {
+    if (d.kind === 'stack') return d.rect;
+    var p = S.project(d.x, d.y); return { x: Math.round(p.x) - 7, y: Math.round(p.y) - 16, w: 14, h: 17 };
+  }
+  // real overlap in pixels: a character's body (10 x 15 core of its sprite) against the stack's opaque pixels
+  var MASKS = {}, byId = {};
+  function maskOf(d) {
+    var it = byId[d.id]; if (!it) return null;
+    var key = it.model.__id + '|' + d.angle.toFixed(4) + '|' + P.pitch + '|' + P.lift + '|' + P.outline;
+    if (!MASKS[key]) { var b = S.bake(it.model, d.angle, { scale: it.scale }), m = new Uint8Array(b.w * b.h); for (var q = 0; q < m.length; q++) m[q] = b.rgba[q * 4 + 3] ? 1 : 0; MASKS[key] = { m: m, w: b.w, h: b.h, ox: b.ox, oy: b.oy }; }
+    return MASKS[key];
+  }
+  function occlusions() {
+    var out = [], D = frame.drawn, cam = S.camera();
+    frame.items.forEach(function (it) { byId[it.id] = it; });
+    for (var i = 0; i < D.length; i++) for (var j = i + 1; j < D.length; j++) {
+      var a = D[i], b = D[j]; if (a.kind === 'stack' && b.kind === 'stack' && a.id !== 'buggy' && b.id !== 'buggy') continue;
+      var px = 0;
+      if (a.kind === 'stack' && b.kind === 'stack') {
+        var MA = maskOf(a), MB = maskOf(b); if (!MA || !MB) continue;
+        var AX = Math.round(cam.sx + a.rx - MA.ox), AY = Math.round(cam.sy + a.ry * P.pitch - MA.oy), BX = Math.round(cam.sx + b.rx - MB.ox), BY = Math.round(cam.sy + b.ry * P.pitch - MB.oy);
+        for (var y2 = Math.max(AY, BY); y2 < Math.min(AY + MA.h, BY + MB.h); y2++) for (var x2 = Math.max(AX, BX); x2 < Math.min(AX + MA.w, BX + MB.w); x2++) if (MA.m[(y2 - AY) * MA.w + x2 - AX] && MB.m[(y2 - BY) * MB.w + x2 - BX]) px++;
+      } else
+      if (a.kind !== 'stack' && b.kind !== 'stack') {
+        var ra = rectOf(a), rb = rectOf(b), ox = Math.min(ra.x + ra.w, rb.x + rb.w) - Math.max(ra.x, rb.x), oy = Math.min(ra.y + ra.h, rb.y + rb.h) - Math.max(ra.y, rb.y);
+        px = ox > 0 && oy > 0 ? ox * oy : 0;
+      } else {
+        var st = a.kind === 'stack' ? a : b, fl = a.kind === 'stack' ? b : a, M = maskOf(st); if (!M) continue;
+        var fp = S.project(fl.x, fl.y), X0 = Math.round(cam.sx + st.rx - M.ox), Y0 = Math.round(cam.sy + st.ry * P.pitch - M.oy);
+        for (var yy = Math.round(fp.y) - 15; yy < Math.round(fp.y); yy++) for (var xx = Math.round(fp.x) - 5; xx < Math.round(fp.x) + 5; xx++) {
+          var mx = xx - X0, my = yy - Y0; if (mx >= 0 && my >= 0 && mx < M.w && my < M.h && M.m[my * M.w + mx]) px++;
+        }
+      }
+      if (px < 8) continue;
+      out.push({ front: b.id, back: a.id, frontName: niceName(b), backName: niceName(a), px: px });   // b drawn after a
+    }
+    return out.sort(function (p, q) { return q.px - p.px; });
+  }
+  var capEl = document.getElementById('cap');
+  function caption() {
+    var deg = Math.round(((frame.yaw * 180 / Math.PI) % 360 + 360) % 360), occ = occlusions().filter(function (o) { return o.px >= 20; });
+    var pick = occ.filter(function (o) { return /hero|guard|villager/.test(o.front + o.back); })[0] || occ[0];
+    var txt = 'Camera <b>' + deg + '&deg;</b>';
+    if (pick) txt += ' &middot; ' + (/^(hero|guard|villager|elder)$/.test(pick.back) ? pick.backName + ' is hidden behind ' + pick.frontName : pick.frontName + ' passes in front of ' + pick.backName);
+    // live play: a sentence stays at least 1.4 s (no flicker); stills and scrubbing show the current frame
+    var now = performance.now();
+    if (!FREEZE && playing && capT && now - capT < 1400 && capEl.dataset.yaw) { capEl.innerHTML = 'Camera <b>' + deg + '&deg;</b>' + capEl.dataset.rest; return; }
+    capT = now; capEl.dataset.yaw = '1'; capEl.dataset.rest = txt.replace(/^Camera <b>\d+&deg;<\/b>/, ''); capEl.innerHTML = txt;
+  }
+  var capT = 0;
+
+  /* ---------- text state for checks and critics ---------- */
+  window.__state = function () {
+    var acts = frame.actors.map(function (a) {
+      var p = S.project(a.x, a.y), o = { id: a.id, x: Math.round(p.x), y: Math.round(p.y), wx: Math.round(a.x * 10) / 10, wy: Math.round(a.y * 10) / 10, dir: a.dir };
+      if (a.dir === 'left' || a.dir === 'right') { o.facing = a.dir; o.target = null; o.vx = a.moving ? Math.round(a.sx * 100) / 100 : 0; if (!a.moving) o.target = a.sx > 0 ? o.x + 40 : o.x - 40; }   // vx and target from the walk / look direction, not from the frame
+      else { o.facing = null; o.noFace = 'top-down ' + a.dir + ' frame (' + (a.moving ? 'walking ' + (a.dir === 'up' ? 'away from' : 'toward') + ' the camera' : 'looking at the plaza') + ')'; }
+      return o;
+    });
+    return { t: Math.round(frame.t), yawDeg: Math.round(frame.yaw * 1800 / Math.PI) / 10, actors: acts, occlusions: occlusions().slice(0, 12), drawn: frame.drawn.length, stats: S.stats() };
+  };
+  window.__frame = function () { return frame; };
+  window.__ss = function () { return S; };
+  window.__ssCast = { hero: { actor: 'hero' }, guard: { actor: 'guard' }, villager: { actor: 'girl' }, merchant: { actor: 'merchant' }, elder: { actor: 'elder' } };
+  window.__renderAt = function (t) { clock = t; render(t); return window.__state(); };
+
+  /* ---------- controls ---------- */
+  var CTL = [['pitch', 'Camera tilt', 0.6, 1, 0.01], ['lift', 'Slice height (px)', 0.5, 2, 0.05], ['shadows', 'Shadow strength', 0, 0.6, 0.01], ['light', 'Light direction', -1.4, 0.2, 0.02]];
+  var SEL = [['steps', 'Angle steps', ['128', '64', '32', '16', 'exact']], ['outline', 'Outline', ['on', 'off']]];
+  var ctl = document.getElementById('ctl');
+  CTL.forEach(function (c) {
+    var l = document.createElement('label'); l.textContent = c[1];
+    var i = document.createElement('input'); i.type = 'range'; i.min = c[2]; i.max = c[3]; i.step = c[4]; i.value = P[c[0]];
+    i.oninput = function () { P[c[0]] = +i.value; S = mkSS(); redraw(); }; l.appendChild(i); ctl.appendChild(l);
+  });
+  SEL.forEach(function (c) {
+    var l = document.createElement('label'); l.textContent = c[1];
+    var s = document.createElement('select'); c[2].forEach(function (v) { var o = document.createElement('option'); o.textContent = v; s.appendChild(o); }); s.value = P[c[0]];
+    s.onchange = function () { P[c[0]] = s.value; S = mkSS(); redraw(); }; l.appendChild(s); ctl.appendChild(l);
+  });
+  (function () { var l = document.createElement('label'); l.className = 'ck'; var i = document.createElement('input'); i.type = 'checkbox'; i.checked = P.footprints; i.onchange = function () { P.footprints = i.checked; redraw(); }; l.appendChild(i); l.appendChild(document.createTextNode('Show footprints')); ctl.appendChild(l); })();
+
+  var playing = !FREEZE, last = null, keys = {};
+  var playB = document.getElementById('play'), scrub = document.getElementById('scrub'), timeEl = document.getElementById('time'), autoB = document.getElementById('auto');
+  function redraw() { render(clock); timeEl.textContent = (clock / 1000).toFixed(1) + ' s'; scrub.value = clock % LOOP; drawGallery(clock); }
+  playB.onclick = function () { playing = !playing; playB.textContent = playing ? 'Pause' : 'Play'; };
+  scrub.oninput = function () { clock = +scrub.value; hero.manual = false; redraw(); };
+  autoB.onclick = function () { yawUser = yawAt(clock) - 0.35; autoTurn = !autoTurn; if (autoTurn) yawUser -= clock / LOOP * Math.PI * 2; autoB.classList.toggle('on', autoTurn); redraw(); };
+  function turn(d) { yawUser += d; redraw(); }
+  document.getElementById('tl').onclick = function () { turn(-Math.PI / 8); };
+  document.getElementById('tr').onclick = function () { turn(Math.PI / 8); };
+  var drag = null;
+  cv.addEventListener('pointerdown', function (e) { drag = { x: e.clientX, y0: yawUser }; cv.setPointerCapture(e.pointerId); cv.style.cursor = 'grabbing'; });
+  cv.addEventListener('pointermove', function (e) { if (!drag) return; yawUser = drag.y0 + (e.clientX - drag.x) / (cv.clientWidth || 320) * Math.PI * 1.5; if (!playing) redraw(); });
+  cv.addEventListener('pointerup', function () { drag = null; cv.style.cursor = 'grab'; });
+  addEventListener('keydown', function (e) {
+    if (e.target && /INPUT|SELECT/.test(e.target.tagName)) return;
+    if (e.key === 'q' || e.key === 'Q') turn(-Math.PI / 8); else if (e.key === 'e' || e.key === 'E') turn(Math.PI / 8);
+    else if (/^Arrow/.test(e.key)) { keys[e.key] = 1; e.preventDefault(); if (!hero.manual) { var s = ACTORS[0].path(clock); hero.manual = true; hero.x = s.x; hero.y = s.y; hero.dist = 0; } }
+  });
+  addEventListener('keyup', function (e) { delete keys[e.key]; });
+  function heroStep(dt) {
+    if (!hero.manual) return;
+    var ix = (keys.ArrowRight ? 1 : 0) - (keys.ArrowLeft ? 1 : 0), iy = (keys.ArrowDown ? 1 : 0) - (keys.ArrowUp ? 1 : 0);
+    hero.vx = 0; hero.vy = 0;
+    if (!ix && !iy) return;
+    var L = Math.hypot(ix, iy), yaw = yawAt(clock), c = Math.cos(yaw), s = Math.sin(yaw), sp = 0.034 * dt;
+    var wx = (ix * c - iy * s) / L, wy = (ix * s + iy * c) / L, nx = hero.x + wx * sp, ny = hero.y + wy * sp;
+    var blocked = PROPS.some(function (q) { var m = S.model(q.name, q.o.model || null); return Math.hypot(q.x - nx, q.y - ny) < m.radius + 7; }) || Math.hypot(nx - C, ny - C) > 240;
+    hero.vx = wx; hero.vy = wy; hero.lx = wx; hero.ly = wy;
+    if (!blocked) { hero.x = nx; hero.y = ny; hero.dist += sp; }
+  }
+
+  /* ---------- gallery and slices ---------- */
+  var GS = SS.create({ voxel: 1, lift: 1, pitch: 0.78, steps: 128, outline: true, shadows: 0.3, res: 1 });
+  var GAL = [['crate', 'Crate'], ['barrel', 'Barrel'], ['tree', 'Oak'], ['pine', 'Pine'], ['bush', 'Bush'], ['rock', 'Boulder'], ['well', 'Well'], ['stall', 'Market stall'], ['house', 'Cottage', { w: 30, d: 22 }], ['cart', 'Hay cart'], ['buggy', 'Buggy'], ['lamp', 'Lamp post'], ['fence', 'Fence'], ['chest', 'Chest'], ['sign', 'Signpost']];
+  var galEl = document.getElementById('gal'), tiles = [], selected = 8;
+  GAL.forEach(function (g, i) {
+    var m = GS.model(g[0], g[2] || null), d = document.createElement('div'); d.className = 'tile' + (i === selected ? ' sel' : '');
+    var c2 = document.createElement('canvas'); c2.width = 40; c2.height = 40; c2.style.width = '120px'; c2.style.height = '120px';
+    var lab = document.createElement('div'); lab.textContent = g[1]; var sm = document.createElement('small'); sm.textContent = m.w + ' x ' + m.d + ' x ' + m.h + ' voxels';
+    d.appendChild(c2); d.appendChild(lab); d.appendChild(sm); galEl.appendChild(d);
+    d.onclick = function () { tiles[selected].el.classList.remove('sel'); selected = i; d.classList.add('sel'); showSlices(); };
+    tiles.push({ el: d, c: c2, g: g, m: m });
+  });
+  function drawGallery(t) {
+    tiles.forEach(function (T, i) {
+      var g = T.c.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 40, 40); g.imageSmoothingEnabled = false;
+      g.fillStyle = '#35602f'; g.fillRect(4, 31, 32, 5); g.fillRect(6, 30, 28, 7); g.fillStyle = '#4f8240'; g.fillRect(5, 31, 30, 4); g.fillRect(7, 30, 26, 5); g.fillStyle = '#5e9648'; g.fillRect(9, 31, 22, 2);
+      var sc = T.m.radius > 15 ? 15 / T.m.radius : 1;
+      GS.drawModel(g, T.m, 20, 33, t / 1000 * 0.7 + i * 0.4, { scale: sc });
+    });
+  }
+  var slEl = document.getElementById('slices'), slh = document.getElementById('slh');
+  function showSlices() {
+    var g = GAL[selected], m = tiles[selected].m, sl = GS.slices(m), k = Math.max(1, Math.min(4, Math.floor(64 / Math.max(m.w, m.d))));
+    slh.textContent = 'Slices of the ' + g[1].toLowerCase() + ': ' + sl.length + ' layers, bottom to top';
+    slEl.innerHTML = '';
+    var step = Math.max(1, Math.ceil(sl.length / 24));
+    sl.forEach(function (s, i) {
+      if (i % step && i !== sl.length - 1) return;
+      var f = document.createElement('figure'), c3 = s.canvas; c3.style.width = (s.w * k) + 'px'; c3.style.height = (s.h * k) + 'px';
+      var cap = document.createElement('figcaption'); cap.textContent = 'z ' + s.z; f.appendChild(c3); f.appendChild(cap); slEl.appendChild(f);
+    });
+  }
+  showSlices();
+
+  /* ---------- clock ---------- */
+  function tick(now) {
+    if (last == null) last = now;
+    var dt = Math.min(100, now - last); last = now;
+    if (playing) { clock += dt; if (!hero.manual && clock >= LOOP * 50) clock = 0; }
+    if (keys.ArrowLeft || keys.ArrowRight || keys.ArrowUp || keys.ArrowDown) heroStep(dt); else { hero.vx = 0; hero.vy = 0; }
+    redraw();
+    requestAnimationFrame(tick);
+  }
+  if (T0 !== null) { clock = T0; redraw(); if (FREEZE) { window.__frozen = true; } else { requestAnimationFrame(tick); } }
+  else { redraw(); requestAnimationFrame(tick); }
+})();
+</script>
+</body>
+</html>

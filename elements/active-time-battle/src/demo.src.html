@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A-01 Active-time gauge battle</title>
+<style>
+:root { --bg: #0b0a14; --panel: #15132a; --line: #2c2850; --ink: #dcd8f0; --dim: #8e88b4; --acc: #ffd860; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font: 13px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+#wrap { display: flex; gap: 14px; padding: 12px; min-height: 100vh; }
+#stage { flex: 1 1 auto; min-width: 0; height: calc(100vh - 24px); display: flex; align-items: center; justify-content: center; background: #000; border-radius: 6px; overflow: hidden; }
+#screen { display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
+#panel { flex: 0 0 290px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; max-height: calc(100vh - 24px); overflow: auto; }
+h1 { font-size: 15px; margin: 0 0 2px; letter-spacing: .02em; } h1 b { color: var(--acc); font-weight: 700; margin-right: 6px; }
+.lede { color: var(--dim); margin: 0 0 12px; font-size: 12px; }
+label { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 8px; margin: 9px 0; font-size: 12px; color: var(--ink); }
+label > input[type=range], label > select { grid-column: 1 / -1; width: 100%; }
+label output { color: var(--acc); font-variant-numeric: tabular-nums; }
+select, button { background: #221e40; color: var(--ink); border: 1px solid #3a3468; border-radius: 5px; padding: 5px 7px; font: inherit; }
+input[type=range] { accent-color: #f6c840; }
+h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); margin: 16px 0 4px; border-top: 1px solid var(--line); padding-top: 12px; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+td { padding: 2px 0; } td:nth-child(2), td:nth-child(3) { text-align: right; color: var(--acc); }
+.pad { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin-top: 8px; }
+.pad button { padding: 7px 0; touch-action: manipulation; }
+.keys { color: var(--dim); font-size: 11.5px; margin: 6px 0 0; }
+#restart { width: 100%; margin-top: 10px; }
+@media (max-width: 760px) {
+  #wrap { flex-direction: column; padding: 8px; gap: 10px; }
+  #stage { height: auto; width: 100%; flex: none; padding: 6px 0; }
+  #panel { flex: none; max-height: none; }
+}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage"><canvas id="screen" width="256" height="224"></canvas></div>
+  <aside id="panel">
+    <h1><b>A-01</b>Active-time gauge battle</h1>
+    <p class="lede">Every fighter's gauge fills in real time at a speed-based rate. A full hero gauge opens that hero's command window; in Active mode the enemies keep acting while you choose.</p>
+    <label>Variant <select id="variant"></select></label>
+    <label>Gauge speed <output data-out="speed"></output><input type="range" data-p="speed" min="0.5" max="2" step="0.25"></label>
+    <label>Battle mode <select data-p="mode"><option value="active">Active: time keeps running in menus</option><option value="wait">Wait: time stops while a menu is open</option></select></label>
+    <label>Party status <select data-p="status"><option value="none">None</option><option value="haste">Haste (gauge x1.5)</option><option value="slow">Slow (gauge x0.5)</option></select></label>
+    <label>Party size <output data-out="party"></output><input type="range" data-p="party" min="1" max="4" step="1"></label>
+    <label class="hero-row">Rowan speed <output data-out="spd1"></output><input type="range" data-p="spd1" min="10" max="60" step="1"></label>
+    <label class="hero-row">Mira speed <output data-out="spd2"></output><input type="range" data-p="spd2" min="10" max="60" step="1"></label>
+    <label class="hero-row">Bram speed <output data-out="spd3"></output><input type="range" data-p="spd3" min="10" max="60" step="1"></label>
+    <label class="hero-row">Ilsa speed <output data-out="spd4"></output><input type="range" data-p="spd4" min="10" max="60" step="1"></label>
+    <label>Native resolution <select data-p="res"><option value="256x224">256 x 224 (16-bit console)</option><option value="240x160">240 x 160 (handheld)</option></select></label>
+    <label>Enemy gauges <select data-p="enemyGauge"><option value="on">Shown under enemies</option><option value="off">Hidden</option></select></label>
+    <label>Control <select data-p="control"><option value="auto">Auto-battle (demo pacing)</option><option value="manual">Manual (keyboard / pad)</option></select></label>
+    <div class="pad"><button data-key="up" aria-label="Up">&#9650;</button><button data-key="down" aria-label="Down">&#9660;</button><button data-key="left" aria-label="Left">&#9664;</button><button data-key="right" aria-label="Right">&#9654;</button><button data-key="ok">OK</button><button data-key="back">Back</button></div>
+    <p class="keys">Arrows move, Z / Enter confirm, X / Esc back. Any game key switches to Manual.</p>
+    <button id="restart">Restart battle</button>
+    <h2>Time to fill (current settings)</h2>
+    <table id="fill"></table>
+  </aside>
+</div>
+<script>/*KIT*/</script>
+<script>/*SCENE*/</script>
+<script>/*MODULE*/</script>
+<script>/*GAME*/</script>
+</body>
+</html>

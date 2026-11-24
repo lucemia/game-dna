@@ -1,0 +1,218 @@
+{
+  "id": "toasts",
+  "code": "C-14",
+  "kind": "addon",
+  "name": "Toasts & unlock pop-ups",
+  "family": "notifications",
+  "oneLiner": "Achievement, quest-update and item-get notices slide in from a screen edge, stack and glide, leave on a visible timer line, merge duplicates into one card with a punching ×N badge (quest progress updates one card in place), and queue behind a \"+N more\" chip when more arrive than fit. They keep to a safe area, step around every HUD rect the game reports, hide while a window covers their place and come back after, and never pause the game or take input. Glassy cards on HD canvases, a crisp pixel card with its own bitmap fonts on native pixel canvases.",
+  "fits": [
+    "action RPG",
+    "open-world and exploration",
+    "roguelite / ARPG loot games",
+    "turn-based RPG battle",
+    "survival and crafting",
+    "idle / clicker",
+    "platformer and metroidvania (collectibles, abilities)",
+    "tactics / strategy RPG"
+  ],
+  "notFor": [
+    "phase or result moments that should stop the player (use C-04 big banner)",
+    "dialogue, tutorials or anything the player must read in full (use H-01 dialogue box)",
+    "damage or heal numbers over units (use C-11 / E-01)",
+    "dozens of events per second from one source (merge keys help, but use a counter in the HUD)"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "game events worth announcing (pickups, purchases, loot, quest steps, unlocks, level-ups, firsts), at the code that decides them",
+      "a fixed update step that runs in every scene, menus open included (also run by ?t= fast-forward)",
+      "the screen size in logical px (bounds)",
+      "the rects of the HUD panels, minimap, message lines, captions, banners and open windows on screen now"
+    ],
+    "provides": [
+      "non-blocking notices with merge, queue and auto-dismiss (busy() is always false)",
+      "rects() of the cards and chip, for other overlays to avoid",
+      "debug events (push, merge, enter, exit, hide, show, wait, drop) and stats() / state() for tests"
+    ]
+  },
+  "params": [
+    {
+      "key": "edge",
+      "label": "Edge",
+      "type": "select",
+      "options": [
+        "top-right",
+        "top-left",
+        "top",
+        "bottom-right",
+        "bottom-left",
+        "bottom"
+      ],
+      "default": "top-right"
+    },
+    {
+      "key": "max",
+      "label": "Max on screen",
+      "type": "range",
+      "min": 1,
+      "max": 5,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "key": "hold",
+      "label": "Hold (ms)",
+      "type": "range",
+      "min": 1200,
+      "max": 6000,
+      "step": 100,
+      "default": 2800
+    },
+    {
+      "key": "merge",
+      "label": "Merge duplicates",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "enter",
+      "label": "Enter",
+      "type": "select",
+      "options": [
+        "slide",
+        "pop",
+        "fade"
+      ],
+      "default": "slide"
+    },
+    {
+      "key": "size",
+      "label": "Text size (0 = auto)",
+      "type": "range",
+      "min": 0,
+      "max": 24,
+      "step": 1,
+      "default": 0
+    },
+    {
+      "key": "margin",
+      "label": "Safe-area margin (0 = auto)",
+      "type": "range",
+      "min": 0,
+      "max": 40,
+      "step": 1,
+      "default": 0
+    },
+    {
+      "key": "theme",
+      "label": "Theme",
+      "type": "select",
+      "options": [
+        "dusk",
+        "frost",
+        "ink",
+        "skin"
+      ],
+      "default": "dusk"
+    },
+    {
+      "key": "progress",
+      "label": "Timer line",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "more",
+      "label": "\"+N more\" chip",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "render",
+      "label": "Render",
+      "type": "select",
+      "options": [
+        "auto",
+        "smooth",
+        "crisp"
+      ],
+      "default": "auto"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Modern RPG corner",
+      "params": {
+        "edge": "top-right",
+        "max": 3,
+        "hold": 2800,
+        "enter": "slide",
+        "theme": "dusk"
+      }
+    },
+    {
+      "name": "Loot feed",
+      "params": {
+        "edge": "bottom-left",
+        "max": 5,
+        "hold": 2200,
+        "enter": "slide",
+        "theme": "ink",
+        "progress": "off"
+      }
+    },
+    {
+      "name": "Achievement pop",
+      "params": {
+        "edge": "top",
+        "max": 1,
+        "hold": 4000,
+        "enter": "pop",
+        "theme": "dusk"
+      }
+    },
+    {
+      "name": "Light and calm",
+      "params": {
+        "edge": "top-right",
+        "max": 2,
+        "hold": 3600,
+        "enter": "fade",
+        "theme": "frost"
+      }
+    },
+    {
+      "name": "Pixel host",
+      "params": {
+        "render": "crisp",
+        "max": 3,
+        "edge": "top-right"
+      }
+    }
+  ],
+  "assets": [
+    "module/toasts.js: the element as one dependency-free script (global GameDNA_Toasts): card layout, stack, springs, merge, queue, safe-area and UI-rect avoidance, smooth glass cards with vector icons, crisp pixel cards with built-in 5x7 / 3x5 bitmap fonts and 7x7 icons",
+    "no image, font or audio files (system sans stack, never loaded from the network)"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/toasts.js",
+    "global": "GameDNA_Toasts",
+    "version": "1.0.0",
+    "docs": "module/README.md"
+  }
+}

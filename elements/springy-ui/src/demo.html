@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Springy UI Motion</title>
+<style>
+:root {
+  --bg: #0c0a14; --panel: #15121f; --panel2: #1c1829; --line: #2b2640; --text: #eee9f8; --dim: #9a93b4; --accent: #ffc56b; --accent2: #8fd7ff; --ok: #7ee8b0; --off: #ff8a96;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1100px 560px at 26% -14%, #33224d 0%, var(--bg) 62%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 16px 20px 10px; max-width: 1360px; margin: 0 auto; }
+.code { white-space: nowrap; font: 700 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #1d1206; background: linear-gradient(#ffe0a8, var(--accent)); padding: 6px 8px; border-radius: 6px; box-shadow: 0 0 0 1px #00000040, 0 4px 14px #ffc56b40; }
+h1 { font-size: 18px; margin: 0; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; max-width: 920px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; padding: 0 20px 20px; max-width: 1360px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; }
+.frames { display: grid; grid-template-columns: 1fr; gap: 12px; }
+.frames.two { grid-template-columns: 1fr 1fr; }
+.frame { position: relative; border-radius: 14px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px #3a3352, 0 24px 60px #00000090; }
+.frame canvas { display: block; width: 100%; height: auto; }
+.tag { position: absolute; left: 10px; bottom: 10px; font: 700 10px/1 ui-monospace, Menlo, monospace; letter-spacing: .1em; background: #000b; color: #fff; padding: 5px 7px; border-radius: 5px; pointer-events: none; display: none; }
+.frames.two .tag { display: block; }
+.pad { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: center; }
+.key { appearance: none; border: 1px solid #3c3558; background: linear-gradient(#262036, #1a1626); color: var(--text); border-radius: 9px; padding: 9px 13px; font: 600 13px/1 inherit; cursor: pointer; min-width: 44px; box-shadow: 0 3px 0 #0d0b14; transition: transform .06s, box-shadow .06s; }
+.key:active, .key.down { transform: translateY(2px); box-shadow: 0 1px 0 #0d0b14; }
+.key b { color: var(--accent); }
+.pad .sp { flex: 1; }
+.status { font: 12px ui-monospace, Menlo, monospace; color: var(--dim); }
+.status b { color: var(--ok); font-weight: 600; }
+aside { background: linear-gradient(var(--panel2), var(--panel)); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+section { border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+section:last-of-type { border-bottom: 0; padding-bottom: 0; }
+h2 { display: flex; align-items: center; justify-content: space-between; margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.row { margin-bottom: 8px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 3px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 5px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--fill), #2c2742 var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 15px; height: 15px; border-radius: 50%; background: #fff4e2; border: 0; box-shadow: 0 0 0 3px #ffc56b55, 0 2px 6px #000a; cursor: pointer; }
+.sw { position: relative; width: 34px; height: 19px; flex: none; display: inline-block; }
+.sw input { opacity: 0; width: 0; height: 0; position: absolute; }
+.sw i { position: absolute; inset: 0; border-radius: 10px; background: #2c2742; transition: background .2s; cursor: pointer; }
+.sw i::after { content: ""; position: absolute; left: 3px; top: 3px; width: 13px; height: 13px; border-radius: 50%; background: #cfc8e6; transition: transform .22s cubic-bezier(.3, 1.6, .5, 1); }
+.sw input:checked + i { background: linear-gradient(90deg, #ffa75a, var(--accent)); }
+.sw input:checked + i::after { transform: translateX(15px); background: #fff; }
+.toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+.toggles label { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; }
+.seg { display: flex; background: #0e0c16; border: 1px solid var(--line); border-radius: 8px; padding: 2px; gap: 2px; }
+.seg button { flex: 1; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 4px; border-radius: 6px; cursor: pointer; text-transform: capitalize; }
+.seg button[aria-checked=true] { background: #2e2648; color: var(--text); box-shadow: inset 0 0 0 1px #4c4270; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.big { width: 100%; appearance: none; border: 0; border-radius: 10px; padding: 10px; font: 700 13px/1 inherit; color: #1d1206; cursor: pointer; background: linear-gradient(#ffe0a8, var(--accent)); box-shadow: 0 6px 18px #ffc56b40; }
+.note { color: var(--dim); font-size: 11.5px; margin: 6px 0 0; }
+#curve { width: 100%; height: 92px; display: block; border-radius: 8px; background: #0e0c16; border: 1px solid var(--line); }
+.logcard { margin-top: 12px; background: linear-gradient(var(--panel2), var(--panel)); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+.logcard h2 { flex-wrap: wrap; gap: 4px 12px; justify-content: flex-start; }
+.logcard h2 .status { text-transform: none; letter-spacing: 0; font-weight: 400; }
+#log { font: 11.5px/1.5 ui-monospace, Menlo, monospace; color: var(--dim); min-height: 96px; }
+#log div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#log b { color: var(--text); font-weight: 600; }
+#log .a { color: var(--accent2); }
+#log .ok { color: var(--ok); }
+@media (max-width: 1060px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 680px; width: 100%; margin: 0 auto; } }
+@media (max-width: 760px) { .frames.two { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { header { padding: 12px 16px 8px; } main { padding: 0 16px 16px; gap: 12px; } .frame { border-radius: 10px; } .key { padding: 9px 10px; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">C-10</span>
+  <div><h1>Springy UI motion</h1><p>The game draws its windows exactly as before; the module only wraps those draw calls. Panels open with an elastic pop and close faster, rows stagger in, the highlight glides on a spring and the chosen row lifts, numbers roll, the backdrop fades. Input is never held back: a confirm pressed while a window is still opening lands on the same step as without the module.</p></div>
+</header>
+<main>
+  <div id="stage">
+    <div class="frames" id="frames">
+      <div class="frame" id="fOff" hidden><canvas id="cOff" width="640" height="360"></canvas><span class="tag">MODULE OFF &middot; INSTANT</span></div>
+      <div class="frame" id="fOn"><canvas id="cOn" width="640" height="360"></canvas><span class="tag">MODULE ON &middot; SPRINGY</span></div>
+    </div>
+    <div class="pad">
+      <button class="key" data-k="up">&uarr;</button><button class="key" data-k="down">&darr;</button>
+      <button class="key" data-k="ok"><b>Z</b> confirm</button><button class="key" data-k="back"><b>X</b> back</button>
+      <span class="sp"></span>
+      <span class="status" id="status">demo script</span>
+    </div>
+    <div class="logcard">
+      <h2>Input log <span class="status">press during an animation: the result lands on the same step</span></h2>
+      <div id="log"></div>
+    </div>
+  </div>
+  <aside>
+    <section>
+      <h2>View</h2>
+      <div class="toggles">
+        <label>Module on <span class="sw"><input type="checkbox" id="on" checked><i></i></span></label>
+        <label>Compare off | on <span class="sw"><input type="checkbox" id="compare"><i></i></span></label>
+        <label>Slow motion &times;&frac14; <span class="sw"><input type="checkbox" id="slow"><i></i></span></label>
+        <label>Reduced motion <span class="sw"><input type="checkbox" id="reduced"><i></i></span></label>
+      </div>
+    </section>
+    <section>
+      <h2>Open &amp; close</h2>
+      <div class="row"><label>Style</label><div class="seg" id="style"><button data-v="auto">auto</button><button data-v="pop">pop</button><button data-v="slide">slide</button><button data-v="unfold">unfold</button></div></div>
+      <div class="two">
+        <div class="row"><label>Open ms <output></output></label><input type="range" data-k="open" min="0" max="600" step="10"></div>
+        <div class="row"><label>Close ms <output></output></label><input type="range" data-k="close" min="0" max="400" step="10"></div>
+        <div class="row"><label>Bounce <output></output></label><input type="range" data-k="bounce" min="0" max="0.4" step="0.01"></div>
+        <div class="row"><label>Backdrop dim <output></output></label><input type="range" data-k="dim" min="0" max="0.7" step="0.01"></div>
+      </div>
+      <canvas id="curve" width="600" height="184"></canvas>
+      <p class="note">Open curve (spring) and close curve (shorter, moving from the first frame) for the current settings; the dot follows the top window.</p>
+    </section>
+    <section>
+      <h2>Rows, highlight, numbers</h2>
+      <div class="two">
+        <div class="row"><label>Row stagger ms <output></output></label><input type="range" data-k="stagger" min="0" max="80" step="1"></div>
+        <div class="row"><label>Glide ms <output></output></label><input type="range" data-k="glide" min="0" max="400" step="10"></div>
+        <div class="row"><label>Lift px <output></output></label><input type="range" data-k="lift" min="0" max="6" step="0.5"></div>
+        <div class="row"><label>Number roll ms <output></output></label><input type="range" data-k="count" min="0" max="1200" step="10"></div>
+      </div>
+      <button class="big" id="replay">Replay demo script</button>
+    </section>
+  </aside>
+</main>
+<script>
+/*MODULE*/
+</script>
+<script src="../../../demo-kit/kit-art.js"></script>
+<script src="../../cutout-characters/module/cutout-characters.js"></script>
+<script src="../../cutout-characters/assets/pack.js"></script>
+<script src="../../../demo-kit/kit.js"></script>
+<script>
+/*MAIN*/
+</script>
+</body>
+</html>

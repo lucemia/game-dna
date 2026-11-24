@@ -1,0 +1,198 @@
+{
+  "id": "bloom-glow",
+  "code": "J-03",
+  "name": "Bloom & glow",
+  "kind": "addon",
+  "family": "light-post",
+  "oneLiner": "Bright areas bleed soft light: a soft-knee threshold (0..1) picks the bright pixels, an emissive layer the game draws into adds glow to exactly the things it marks (spells, lanterns, crystals, coins, a selected button), a dual-filter blur chain at 1/2 to 1/16 resolution spreads it, and a tinted additive or screen composite lays it back. A short flash of bloom on big hits. HUD rectangles never glow and never get washed. Six passes on the I-08 WebGL pipeline; without WebGL, or with ?webgl=0, the game looks exactly as before.",
+  "fits": [
+    "any browser game drawn on one 2D canvas, pixel or HD, any resolution and CSS scaling",
+    "night, dungeon, space and neon scenes (luminance bloom)",
+    "daylight and pixel games with white UI (emissive-only glow)",
+    "action RPG, platformer, shmup (projectiles, pickups, muzzle flashes)",
+    "turn-based and tactics battles (spell effects, finisher flash)"
+  ],
+  "notFor": [
+    "games already drawn with WebGL or a 3D engine (use the engine's own bloom)",
+    "scenes that are almost all near-white (snowfields): luminance bloom washes them; use source 'emissive'",
+    "HDR-accurate lighting: the I-08 buffers are 8-bit, so nothing is brighter than white"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "post",
+    "needs": [
+      "I-08 webgl-post (GameDNA_Post) loaded first; the game's existing instance, or one the module creates",
+      "render() once per drawn frame on every draw path",
+      "optional: the game's step-counted clock in ms (flare fade; deterministic ?t=&freeze=1)",
+      "optional: HUD rects in canvas px (uiRects) or a uiMask canvas",
+      "optional: per-frame emissive drawing of what should glow, at on-screen positions",
+      "optional: big-hit events with a contact point in canvas px (flare)"
+    ],
+    "provides": [
+      "bloom passes on the I-08 chain (order 600-605): threshold + soft knee, dual-filter blur 1/2..1/16, tinted add/screen composite",
+      "emissive layer: emissive() context and glow(x, y, r, color) helper, cleared once per frame",
+      "flare(strength, {at}): short flash of bloom from a point, fading in game time",
+      "HUD protection: uiRects / uiMask (white = HUD, blue = glow hole) with a feathered edge",
+      "stats(): passes, emissive frames, flares, HUD rects, frame cost"
+    ]
+  },
+  "params": [
+    {
+      "key": "source",
+      "label": "Glow source",
+      "type": "select",
+      "options": [
+        "both",
+        "luma",
+        "emissive"
+      ],
+      "default": "emissive"
+    },
+    {
+      "key": "threshold",
+      "label": "Threshold",
+      "type": "range",
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "default": 0.78
+    },
+    {
+      "key": "knee",
+      "label": "Soft knee",
+      "type": "range",
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "default": 0.5
+    },
+    {
+      "key": "intensity",
+      "label": "Intensity",
+      "type": "range",
+      "min": 0,
+      "max": 3,
+      "step": 0.05,
+      "default": 1.6
+    },
+    {
+      "key": "radius",
+      "label": "Radius (tight to wide)",
+      "type": "range",
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "default": 0.75
+    },
+    {
+      "key": "tint",
+      "label": "Tint",
+      "type": "select",
+      "options": [
+        "#fff1dc",
+        "#ffffff",
+        "#ffc890",
+        "#bfe4ff",
+        "#ffc0f0"
+      ],
+      "default": "#fff1dc"
+    },
+    {
+      "key": "blend",
+      "label": "Blend",
+      "type": "select",
+      "options": [
+        "add",
+        "screen"
+      ],
+      "default": "add"
+    },
+    {
+      "key": "emissiveGain",
+      "label": "Emissive gain",
+      "type": "range",
+      "min": 0,
+      "max": 3,
+      "step": 0.05,
+      "default": 1.2
+    }
+  ],
+  "variants": [
+    {
+      "name": "Soft night",
+      "params": {
+        "source": "both",
+        "threshold": 0.78,
+        "knee": 0.5,
+        "intensity": 1.6,
+        "radius": 0.75,
+        "tint": "#fff1dc",
+        "blend": "add"
+      }
+    },
+    {
+      "name": "Neon",
+      "params": {
+        "threshold": 0.7,
+        "knee": 0.4,
+        "intensity": 2.2,
+        "radius": 0.45,
+        "tint": "#ffc0f0",
+        "emissiveGain": 1.8
+      }
+    },
+    {
+      "name": "Dreamy",
+      "params": {
+        "threshold": 0.55,
+        "knee": 0.8,
+        "intensity": 2.0,
+        "radius": 1.0,
+        "tint": "#bfe4ff",
+        "blend": "add",
+        "emissiveGain": 1.6
+      }
+    },
+    {
+      "name": "Crisp pixels (emissive only)",
+      "params": {
+        "source": "emissive",
+        "threshold": 0.95,
+        "knee": 0.2,
+        "intensity": 1.8,
+        "radius": 0.3,
+        "tint": "#ffffff",
+        "emissiveGain": 1.5
+      }
+    },
+    {
+      "name": "Daylight",
+      "params": {
+        "source": "emissive",
+        "intensity": 1.0,
+        "radius": 0.6,
+        "blend": "screen"
+      }
+    }
+  ],
+  "assets": [
+    "module/bloom-glow.js: the element as one dependency-free script (global GameDNA_Bloom) adding six passes to an I-08 GameDNA_Post instance (shared or its own), the emissive layer, the HUD mask and the flare",
+    "requires elements/webgl-post/module/webgl-post.js (I-08), shipped next to it in the combo",
+    "no image or audio files"
+  ],
+  "status": "draft",
+  "requires": [
+    "webgl-post"
+  ],
+  "module": {
+    "file": "module/bloom-glow.js",
+    "global": "GameDNA_Bloom",
+    "version": "1.0.0",
+    "docs": "module/README.md",
+    "requires": [
+      "webgl-post"
+    ],
+    "skin": "optional: tint and glow() colours may be skin tokens (fx.hot) when skin-api.js is loaded; the module draws nothing on the game canvas"
+  }
+}

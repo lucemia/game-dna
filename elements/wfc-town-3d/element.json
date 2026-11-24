@@ -1,0 +1,59 @@
+{
+  "id": "wfc-town-3d",
+  "code": "N-06",
+  "name": "Wave-collapse town builder (3D)",
+  "family": "Town builder",
+  "kind": "system",
+  "oneLiner": "A cosy three.js town builder on a grid: click a cell to raise it (sea, land, a house, more storeys) and wave function collapse resolves every wall, door, window, balcony, lane, gable / hip / terrace / turret roof, stair and gate arch from its neighbours by socket rules, re-solving only around the edit. Orbit camera, hover ghost, pop and dust on each edit, exact undo / redo, four palettes, soft shadows, gulls; an exhaustive verifier proves no broken adjacency anywhere.",
+  "fits": ["cosy builders and town toys", "city or village editors inside a bigger game", "procedural settlements from a height map", "puzzle goals about shaping a town (arches, towers, stairs)"],
+  "notFor": ["simulation builders with economy, citizens and roads as agents", "free-form (non-grid) building", "voxel worlds with digging and caves", "pixel-art 2D games", "devices without WebGL as the main target (a 2D map is shown)"],
+  "interfaces": {
+    "time": "realtime",
+    "coords": "grid",
+    "layer": "scene",
+    "needs": [
+      "three.js 0.149.0 (window.THREE, three.min.js next to the page)",
+      "a WebGL canvas (and optionally a 2D canvas on top for the HUD)",
+      "a start map: rows of digits (0 sea, 1 land, 2+ a house with 1+ storeys)",
+      "a fixed-step update (60 Hz) and a draw pass",
+      "pointer or key input that calls grow / shrink / undo / redo"
+    ],
+    "provides": [
+      "rules: a socket table (sea, grass, lane, stair, joined wall, window wall, door, balcony, stair wall, arch, eave, ridge, gable end, parapet, turret) and a wave-function-collapse solver (AC-3 propagation, weighted lowest-entropy collapse, local re-solve radius 2 with widening, guaranteed fallback)",
+      "edits: grow, shrink, set, undo / redo restoring exact snapshots, load; deterministic from the seed and the edit history",
+      "verification: verify() over every side, top and bottom of every slot; counts() (houses, storeys, doors, arches, stairs, roofs...)",
+      "the screen: code-built low-poly houses and roofs, island slabs with foam and rocks, lanes, trees, wells, lamps, sea and sky, one soft-shadowed sun, four palettes (one lit at dusk), gulls that face their flight",
+      "camera: orbit, pitch, zoom with easing; picking of columns; hover ghost; anchors in screen px; screen-direction to grid-direction mapping",
+      "extension: registerTile (slot, sockets, weight, build with a small geometry API), registerPair, allowAir, setWeight"
+    ]
+  },
+  "params": [
+    { "key": "palette", "label": "Palette", "type": "select", "options": ["harbour", "highland", "dusk", "blossom"], "default": "harbour" },
+    { "key": "seed", "label": "Seed", "type": "int", "min": 1, "max": 9999, "step": 1, "default": 1 },
+    { "key": "arch", "label": "Arch weight", "type": "float", "min": 0, "max": 20, "step": 0.5, "default": 9 },
+    { "key": "turret", "label": "Turret weight", "type": "float", "min": 0, "max": 20, "step": 0.5, "default": 7 },
+    { "key": "flat", "label": "Flat terrace weight", "type": "float", "min": 0, "max": 6, "step": 0.1, "default": 0.8 },
+    { "key": "door", "label": "Front door weight", "type": "float", "min": 0, "max": 6, "step": 0.1, "default": 2.6 },
+    { "key": "balcony", "label": "Balcony weight", "type": "float", "min": 0, "max": 3, "step": 0.05, "default": 0.38 },
+    { "key": "radius", "label": "Re-solve radius (cells)", "type": "int", "min": 1, "max": 6, "step": 1, "default": 2 },
+    { "key": "pitch", "label": "Camera pitch (deg)", "type": "int", "min": 20, "max": 70, "step": 1, "default": 36 },
+    { "key": "zoom", "label": "Zoom", "type": "float", "min": 0.6, "max": 2.4, "step": 0.05, "default": 1.05 },
+    { "key": "shadows", "label": "Shadows", "type": "select", "options": ["soft", "off"], "default": "soft" },
+    { "key": "gulls", "label": "Gulls", "type": "int", "min": 0, "max": 6, "step": 1, "default": 3 }
+  ],
+  "variants": [
+    { "name": "Harbour town (default)", "params": { "palette": "harbour", "seed": 1, "arch": 9, "turret": 7, "flat": 0.8, "door": 2.6, "balcony": 0.38, "radius": 2, "pitch": 36, "zoom": 1.05, "shadows": "soft", "gulls": 3 } },
+    { "name": "Lantern dusk", "params": { "palette": "dusk", "seed": 1, "arch": 9, "turret": 7, "flat": 0.8, "door": 2.6, "balcony": 0.6, "radius": 2, "pitch": 32, "zoom": 1.2, "shadows": "soft", "gulls": 2 } },
+    { "name": "Terrace village", "params": { "palette": "blossom", "seed": 4, "arch": 9, "turret": 2, "flat": 4, "door": 2.6, "balcony": 1, "radius": 2, "pitch": 42, "zoom": 1.05, "shadows": "soft", "gulls": 3 } },
+    { "name": "Low-end device", "params": { "palette": "highland", "seed": 1, "arch": 9, "turret": 7, "flat": 0.8, "door": 2.6, "balcony": 0.38, "radius": 2, "pitch": 36, "zoom": 1.05, "shadows": "off", "gulls": 0 } }
+  ],
+  "assets": "none: houses, roofs, arches, stairs, islands, trees, lamps, sea, sky, gulls and HUD are drawn by code; three.js 0.149.0 (MIT) is the only dependency (vendor/three@0.149.0/three.min.js, copied next to the page as three.min.js)",
+  "status": "draft",
+  "delivery": { "version": "v1.1.0", "module": "module/wfc-town-3d.js", "global": "GameDNA_WfcTown3D", "readme": "module/README.md", "three": "0.149.0" },
+  "starter": "starter/index.html",
+  "starterReadme": "starter/README.md",
+  "starterFiles": ["three.min.js"],
+  "facing": { "facingOffset": "-PI/2 (gulls are modelled beak on +X); no walking characters", "check": "checks/facing-3d.py", "sheet": "checks/facing-3d/sheet.png" },
+  "checks": ["checks/wfc-checks.mjs (adjacency exhaustive, determinism, undo; 3 mutants)", "checks/facing-3d.py (gulls; mutant)", "checks/shots.py (moments, events, HUD layout, perf)", "checks/render-checks.py (ground seams by ray test, clipped-white blobs over a full turn per palette; 2 mutants)"],
+  "basketFiles": [{"from": "vendor/three@0.149.0/three.min.js", "to": "three.min.js"}]
+}

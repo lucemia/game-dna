@@ -1,0 +1,144 @@
+{
+  "id": "sprite-stacking",
+  "code": "K-02",
+  "kind": "addon",
+  "name": "Sprite stacking (pseudo-3D props from pixel slices)",
+  "family": "sprite-stacking",
+  "oneLiner": "Turns props (crates, barrels, trees, rocks, houses, wells, stalls, carts, a vehicle, lamps, fences) into pseudo-3D objects made of stacked pixel slices, built in code from small voxel / slice data: each object is drawn as its slices one screen row above the other (no gap at any slice height), shaded per face with one light, outlined, with a cast shadow, and can turn to any angle (single objects by their own angle, or the whole world under a turning camera). Objects are drawn in one sorted list with the game's own flat sprites, ordered by ground footprints in camera space, so characters pass behind and in front of them correctly from every side.",
+  "fits": [
+    "top-down and 3/4-view RPGs, adventure and action games with tile props",
+    "games that want a turning camera over a pixel world (towns, arenas, racing on a small map)",
+    "vehicles and moving props that must face their heading (carts, boats, buggies)"
+  ],
+  "notFor": [
+    "side-view platformers (no ground plane to stack on)",
+    "true 3D games (use real meshes)",
+    "characters themselves: they stay the game's flat sprites (stacked people read poorly at pixel size)"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "grid",
+    "layer": "actor",
+    "needs": [
+      "the props as data (tile kinds or object lists) with their ground centre in world px",
+      "each frame: one draw list of the stacks plus every flat sprite with feet x, y and width",
+      "the ground drawn first (plain ground where a stack replaced a tile); for a turning camera the ground drawn through groundTransform()"
+    ],
+    "provides": [
+      "stacked-slice pictures per angle step (cached), built-in models and a slice-data format for new ones",
+      "draw(ctx, list): footprint depth sort of stacks and flat sprites, then drawing; drawShadows(ctx, list)",
+      "setCamera / project / screenDir for a turning camera; stats(), lastDrawn() for checks and judges"
+    ]
+  },
+  "params": [
+    {
+      "key": "voxel",
+      "label": "Voxel size (world px)",
+      "type": "range",
+      "min": 0.5,
+      "max": 4,
+      "step": 0.25,
+      "default": 1
+    },
+    {
+      "key": "lift",
+      "label": "Slice height (px)",
+      "type": "range",
+      "min": 0.5,
+      "max": 3,
+      "step": 0.05,
+      "default": 1
+    },
+    {
+      "key": "pitch",
+      "label": "Camera tilt (ground squash)",
+      "type": "range",
+      "min": 0.6,
+      "max": 1,
+      "step": 0.01,
+      "default": 1
+    },
+    {
+      "key": "steps",
+      "label": "Angle steps",
+      "type": "select",
+      "options": [
+        "128",
+        "64",
+        "32",
+        "16",
+        "exact"
+      ],
+      "default": "128"
+    },
+    {
+      "key": "outline",
+      "label": "Outline",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "shadows",
+      "label": "Shadow strength",
+      "type": "range",
+      "min": 0,
+      "max": 0.6,
+      "step": 0.01,
+      "default": 0.3
+    },
+    {
+      "key": "light",
+      "label": "Light direction (rad)",
+      "type": "range",
+      "min": -1.4,
+      "max": 0.2,
+      "step": 0.02,
+      "default": -0.62
+    }
+  ],
+  "variants": [
+    {
+      "name": "Tile props (default)",
+      "params": {
+        "voxel": 1,
+        "lift": 1,
+        "pitch": 1
+      }
+    },
+    {
+      "name": "Turning town (demo)",
+      "params": {
+        "pitch": 0.78,
+        "steps": "128"
+      }
+    },
+    {
+      "name": "Chunky voxels (HD host)",
+      "params": {
+        "voxel": 2,
+        "lift": 2
+      }
+    },
+    {
+      "name": "Tall slices",
+      "params": {
+        "lift": 1.6
+      }
+    }
+  ],
+  "assets": [
+    "module/sprite-stacking.js: the element as one dependency-free script (global GameDNA_SpriteStack): voxel models built in code (15 built-ins) and from slice data, baking per angle step (shading, outline, cast shadow), footprint depth sort with flat sprites, turning-camera helpers, counters for judges",
+    "no image, font or audio files; the demo reuses pixel-kit (ground, villagers)"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/sprite-stacking.js",
+    "global": "GameDNA_SpriteStack",
+    "version": "1.0.0",
+    "docs": "module/README.md"
+  }
+}

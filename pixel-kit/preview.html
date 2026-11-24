@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Pixel scene kit preview</title>
+<style>body{margin:0;background:#120a1e;color:#cfc8e8;font:12px system-ui}canvas{image-rendering:pixelated;display:block;margin:8px}h3{margin:8px}</style></head>
+<body>
+<script src="pixel-scene.js"></script>
+<script>
+(function () {
+  var Q = new URLSearchParams(location.search), which = Q.get('scene') || 'all', t0 = +(Q.get('t') || 0), K = +(Q.get('k') || 3), freeze = Q.get('freeze') === '1';
+  var SC = {
+    village: function () { return PXS.scene({ seed: 7, map: [
+      'TTTTTT..T.....TT',
+      'TT.........,,.TT',
+      'T....ppp...,,,.T',
+      '.....pcp....wwwT',
+      'pppppppp...wwwww',
+      '..F..p.....wwwww',
+      '.....p..u...www.',
+      '.r...pppppbppp..',
+      '.....p.....w....',
+      '.fff.p.....ww..T',
+      '.fff.p..^^^^w.TT',
+      '.....p..^^^^..TT',
+      'T..S.p........TT',
+      'TTT..p..R..TTTTT'], props: [{ k: 'house', x: 44, y: 60, o: { roof: 'red' } }, { k: 'house', x: 150, y: 44, o: { w: 40, roof: 'blue', wall: 'stone', lit: true } }, { k: 'well', x: 120, y: 100 }, { k: 'sign', x: 100, y: 118 }, { k: 'lantern', x: 74, y: 72 }, { k: 'fence', x: 10, y: 140, o: { len: 62 } }, { k: 'crate', x: 20, y: 70 }, { k: 'barrel', x: 68, y: 62 }, { k: 'stall', x: 132, y: 150 }, { k: 'hay', x: 30, y: 180 }, { k: 'campfire', x: 150, y: 200 }, { k: 'tent', x: 180, y: 206 }] }); },
+    tactics: function () { return PXS.scene({ seed: 21, pines: true, map: [
+      'TT...TT.w....,TT',
+      'T..........w...T',
+      '...pppp..ww.#r..',
+      '...p..p..w..##.#',
+      '^^.p..ppbppppp..',
+      '^^^p.....w...p..',
+      '...p.u...ww..p.T',
+      '...pppp...w..pTT',
+      '.R.hh.p..ww.Mp..',
+      '......pppBpppp..',
+      '.TT......ww...ss',
+      'TTT.F.....wwssss'] }); },
+    room: function () { return PXS.room({ cols: 16, rows: 14, wall: 'brick', floor: 'wood', rugs: [{ x: 84, y: 120, w: 88, h: 44, color: 'blue' }], props: [{ k: 'window', x: 128, y: 34, o: { night: true } }, { k: 'torch', x: 96, y: 30 }, { k: 'torch', x: 160, y: 30 }, { k: 'banner', x: 212, y: 38 }, { k: 'shelf', x: 44, y: 28 }, { k: 'bookshelf', x: 30, y: 62 }, { k: 'fireplace', x: 70, y: 44 }, { k: 'table', x: 60, y: 110 }, { k: 'stool', x: 40, y: 104 }, { k: 'barrel', x: 236, y: 70 }, { k: 'barrel', x: 224, y: 76 }, { k: 'crate', x: 238, y: 92 }, { k: 'chest', x: 200, y: 70 }, { k: 'anvil', x: 150, y: 90 }, { k: 'bed', x: 228, y: 190 }, { k: 'plant', x: 20, y: 200 }, { k: 'pillar', x: 190, y: 64 }, { k: 'sack', x: 20, y: 96 }, { k: 'pot', x: 108, y: 60 }, { k: 'rack', x: 180, y: 36 }, { k: 'door', x: 240, y: 43 }, { k: 'counter', x: 120, y: 200 }] }); },
+    stone: function () { return PXS.room({ cols: 16, rows: 14, wall: 'stone', floor: 'stone', rugs: [{ x: 100, y: 90, w: 56, h: 100, color: 'red' }], props: [{ k: 'torch', x: 60, y: 30 }, { k: 'torch', x: 196, y: 30 }, { k: 'banner', x: 128, y: 38, o: { color: 'blue' } }, { k: 'pillar', x: 70, y: 100 }, { k: 'pillar', x: 186, y: 100 }, { k: 'pillar', x: 70, y: 170 }, { k: 'pillar', x: 186, y: 170 }, { k: 'statue', x: 30, y: 70 }, { k: 'statue', x: 226, y: 70 }] }); }
+  };
+  function show(name) {
+    var s = SC[name](), cv = document.createElement('canvas'); cv.width = s.w; cv.height = s.h; cv.style.width = s.w * K + 'px'; cv.style.height = s.h * K + 'px';
+    var h = document.createElement('h3'); h.textContent = name; document.body.appendChild(h); document.body.appendChild(cv);
+    var g = cv.getContext('2d');
+    function draw(t) {
+      var ex = [];
+      [['hero', 'down', 96, 150], ['girl', 'right', 120, 150], ['elder', 'up', 144, 150], ['guard', 'left', 168, 150], ['green', 'down', 96, 180], ['merchant', 'down', 120, 180]].forEach(function (a, i) { ex.push({ y: a[3], draw: function (gg) { PXS.actor(gg, a[2], a[3], { pal: a[0], dir: a[1], frame: Math.floor(t / 200 + i) % 2 }); } }); });
+      s.draw(g, t, ex);
+    }
+    draw(t0); if (!freeze) requestAnimationFrame(function loop(ts) { draw(t0 + ts); requestAnimationFrame(loop); });
+  }
+  (which === 'all' ? Object.keys(SC) : which.split(',')).forEach(show);
+})();
+</script></body></html>

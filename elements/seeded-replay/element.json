@@ -1,0 +1,72 @@
+{
+  "id": "seeded-replay",
+  "code": "I-07",
+  "kind": "addon",
+  "name": "Seeded replay & ghost",
+  "family": "seeded-replay",
+  "oneLiner": "Records every run as its seed plus the player's raw input on each fixed step, and plays it back through the game's own step function to the identical end state: the game's state is hashed every second and at the end, so a replay that drifts says DESYNC at the first second it differs, and one that holds says END STATE MATCH with the hash. The best run comes back as a translucent ghost drawn with the hero's own frames and facing that races the player, with a time-trial panel (time, best, live split) and a NEW BEST banner. Replays get a HUD: REPLAY / PAUSED tag, play-pause, speed x.25-x4, a scrubber with checkpoint ticks, the time and a verdict card. Runs save and load as one compact line of text with a checksum. It also counts Math.random calls inside recorded steps, the usual reason a replay drifts.",
+  "fits": [
+    "racing, platformer and arcade time trials (ghost of the best run)",
+    "speedrun-friendly action games (shareable replay text, verified end state)",
+    "roguelites and puzzle games with daily seeds (replay a seed, compare runs)",
+    "any fixed-step 2D canvas game whose update can be made deterministic from a seed",
+    "bug reports: a replay text reproduces the exact run"
+  ],
+  "notFor": [
+    "games whose update uses wall-clock time, variable dt or Math.random that cannot be replaced",
+    "online multiplayer (other players' input is not local)",
+    "physics engines with hidden native state or float differences across machines (replays may desync between browsers)",
+    "turn-based games where a move list is simpler (it works, but a move log is the natural format)"
+  ],
+  "interfaces": {
+    "time": "realtime",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "a fixed update step that reads device input once per step (also run by ?t= fast-forward and ?auto=1): rep.input(readInput()) before any autopilot",
+      "a deterministic update: all randomness from a seeded RNG whose seed can be set per run; restart(seed, meta) that equals a live run start",
+      "state(): the gameplay fields and RNG state to hash; pose() and drawGhost(ctx, pose) with the hero's own frames",
+      "begin(seed, meta) where play of a run starts, end({won}) at every win and loss",
+      "the live loop calls rep.steps() per fixed tick; render ends with rep.draw(ctx); HUD rects through uiRects()"
+    ],
+    "provides": [
+      "recorded runs (seed, input stream, checkpoint hashes, end hash, ghost track) and their one-line text form: save / load",
+      "replays through the game's step at x.25-x4 with pause, scrub and step, a verdict (END STATE MATCH / DESYNC at a time)",
+      "verify(run): an in-place full-speed replay with checkpoint, end-hash and round-trip results (for tests and judges)",
+      "a ghost of the best run with a time-trial panel, live split and NEW BEST banner",
+      "stats(): steps, distinct inputs, best, playback cursor, randomCalls (Math.random inside steps), errors"
+    ]
+  },
+  "params": [
+    { "key": "ghost", "label": "Ghost", "type": "select", "options": ["best", "last", "off"], "default": "best" },
+    { "key": "ghostAlpha", "label": "Ghost opacity", "type": "range", "min": 0.2, "max": 1, "step": 0.05, "default": 0.8 },
+    { "key": "tint", "label": "Ghost tint", "type": "select", "options": ["cyan", "gold", "violet", "white"], "default": "cyan" },
+    { "key": "tag", "label": "Ghost name tag", "type": "select", "options": ["start", "on", "off"], "default": "start" },
+    { "key": "split", "label": "Live split", "type": "select", "options": ["on", "off"], "default": "on" },
+    { "key": "speed", "label": "Replay speed", "type": "select", "options": ["0.5", "1", "2", "4"], "default": "2" },
+    { "key": "checkEvery", "label": "Checkpoint every (steps)", "type": "range", "min": 15, "max": 300, "step": 15, "default": 60 },
+    { "key": "watchKey", "label": "Watch key", "type": "select", "options": ["v", "r", "b"], "default": "v" },
+    { "key": "pauseKey", "label": "Pause key", "type": "select", "options": ["p", "k"], "default": "p" },
+    { "key": "autoExit", "label": "Leave a finished replay after (s)", "type": "range", "min": 0, "max": 10, "step": 1, "default": 4 },
+    { "key": "store", "label": "Keep best run", "type": "select", "options": ["off", "local"], "default": "off" },
+    { "key": "render", "label": "Render", "type": "select", "options": ["auto", "pixel", "smooth"], "default": "auto" }
+  ],
+  "variants": [
+    { "name": "Time trial (default)", "params": { "ghost": "best", "tint": "cyan", "split": "on", "speed": "2" } },
+    { "name": "Rival = last run", "params": { "ghost": "last", "tint": "violet" } },
+    { "name": "Golden ghost", "params": { "tint": "gold", "ghostAlpha": 0.6, "tag": "on" } },
+    { "name": "Replay only", "params": { "ghost": "off", "split": "off", "speed": "1" } },
+    { "name": "Saved best", "params": { "store": "local" } }
+  ],
+  "assets": [
+    "module/seeded-replay.js: the element as one dependency-free script (global GameDNA_SeededReplay): canonical input recording, run-length input stream, 64-bit state hash (exact floats, Map, Set, typed arrays), checkpoints, replay through the game's step with speed / pause / seek, in-place verify, GDR1 text format with CRC32, ghost compositing of the host's own sprite (tint, ring, fade), time-trial panel, banners, replay HUD, 3x5 pixel font, Math.random counter",
+    "no image, font or audio files"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/seeded-replay.js",
+    "global": "GameDNA_SeededReplay",
+    "version": "1.1.0",
+    "docs": "module/README.md"
+  }
+}

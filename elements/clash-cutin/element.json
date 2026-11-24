@@ -1,0 +1,64 @@
+{
+  "id": "clash-cutin",
+  "code": "A-04",
+  "kind": "addon",
+  "name": "Side-view clash cut-in",
+  "family": "battle-cutin",
+  "oneLiner": "When a turn or tactics battle confirms an attack, the game cuts to a staged side-view scene: both units on a ground strip in front of a backdrop that matches the terrain, the attacker leaps in, winds up and swings (or shoots, or casts), the hit lands with a freeze frame, sparks, a damage number and an HP bar that drains, misses are dodged, criticals get a gleam and a flash, the counter-attack follows, a fallen unit fades away, and both return before the scene closes. Skippable, with a x2 speed toggle. The game passes the outcome it already decided; the module only stages it, so what you see always equals the game's own numbers.",
+  "fits": [
+    "tactics / strategy RPG (grid map, attack + counter exchanges)",
+    "turn-based RPG with single-target physical or spell attacks",
+    "monster battler or card battler that wants a dramatic attack scene",
+    "wargame or skirmish game with a battle animation toggle"
+  ],
+  "notFor": [
+    "real-time action games (no confirm step; the cut-in would pause the action)",
+    "attacks that hit many units at once (stage one pair per cut-in)",
+    "games whose combat is already shown in a side view (the cut-in would repeat it)"
+  ],
+  "interfaces": {
+    "time": "turn",
+    "coords": "screen",
+    "layer": "scene",
+    "needs": [
+      "the moment the game has confirmed an attack and resolved it with its own rules: attacker and defender, each strike in order (who strikes, hit / miss / crit, damage) and both HP values before and after",
+      "each unit's sprite (image or canvas plus the side its art looks at; a painted variant for the other side when the art must not be mirrored) or a draw callback, name, team, max HP, and optionally its map x, weapon name and forecast numbers",
+      "a fixed update step (ms), the screen rect to cover (native px), and a place to pause the game's own world, autoplay and input while busy() is true"
+    ],
+    "provides": [
+      "onDone({att, def, skipped}) when the scene has closed: resume the game there",
+      "onImpact({i, by, result, dmg, after}) once per strike at the moment it lands (sound, rumble, other effects)",
+      "busy(), state() (who stands where, facing, shown HP), rect() of the covered area"
+    ]
+  },
+  "params": [
+    { "key": "speed", "label": "Speed", "type": "select", "options": ["1", "2"], "default": "1" },
+    { "key": "sides", "label": "Who stands left", "type": "select", "options": ["map", "team", "attacker"], "default": "map" },
+    { "key": "intro", "label": "Open / close", "type": "select", "options": ["band", "cut"], "default": "band" },
+    { "key": "introMs", "label": "Open / close time (ms)", "type": "range", "min": 0, "max": 600, "step": 20, "default": 300 },
+    { "key": "drain", "label": "HP drain (ms)", "type": "range", "min": 0, "max": 1200, "step": 50, "default": 450 },
+    { "key": "stop", "label": "Hit-stop (frames)", "type": "range", "min": 0, "max": 10, "step": 1, "default": 4 },
+    { "key": "shake", "label": "Hit shake (px)", "type": "range", "min": 0, "max": 4, "step": 1, "default": 2 },
+    { "key": "hold", "label": "Hold at the end (ms)", "type": "range", "min": 0, "max": 1500, "step": 50, "default": 450 },
+    { "key": "backdrop", "label": "Backdrop", "type": "select", "options": ["auto", "plains", "forest", "marsh", "desert", "ruins"], "default": "auto" },
+    { "key": "keys", "label": "Skip / x2 keys", "type": "select", "options": ["on", "off"], "default": "on" }
+  ],
+  "variants": [
+    { "name": "Classic", "params": { "speed": "1", "sides": "map", "intro": "band", "introMs": 300, "drain": 450, "stop": 4, "shake": 2, "hold": 450 } },
+    { "name": "Brisk x2", "params": { "speed": "2", "drain": 300, "hold": 250 } },
+    { "name": "Heavy hits", "params": { "stop": 8, "shake": 4, "drain": 800 } },
+    { "name": "Player on the right", "params": { "sides": "team" } },
+    { "name": "Hard cut, no shake", "params": { "intro": "cut", "shake": 0, "stop": 0 } }
+  ],
+  "assets": [
+    "module/clash-cutin.js: the element as one dependency-free script (global GameDNA_ClashCutin): timeline, poses (leap, wind-up, swing, recoil, dodge, fall), backdrops drawn in code for five terrains (plains, forest, marsh, desert, ruins) with three parallax layers, slash arcs, sparks, arrows and spell orbs, damage / MISS / CRITICAL pops, HP panels with a draining bar, letterbox caption bar, skip and x2; draws through GameDNA_Skin when skin-api.js is loaded, otherwise with its built-in copy of the pixel16 look",
+    "no image or audio files: units are the game's own sprites"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/clash-cutin.js",
+    "global": "GameDNA_ClashCutin",
+    "version": "1.1.1",
+    "docs": "module/README.md"
+  }
+}

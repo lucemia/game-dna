@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Demo kit preview</title>
+<style>html,body{margin:0;background:#120d1c;color:#e9e2f4;font:14px/1.4 system-ui,sans-serif}main{max-width:1280px;margin:0 auto;padding:16px}canvas{width:100%;display:block;border-radius:10px;margin:0 0 14px}h1{font-size:18px;margin:0 0 10px}p{margin:0 0 12px;color:#a79fba}</style>
+</head><body><main>
+<h1>Demo kit: shared HD cast, props and backdrops</h1>
+<p>For the element demo pages only. <code>?t=ms&amp;freeze=1</code> freezes; <code>?scene=id</code> shows one scene. See site-review/hd-cast-notes.md.</p>
+<div id="stage"></div>
+</main>
+<script src="kit-art.js"></script>
+<script src="../elements/cutout-characters/module/cutout-characters.js"></script>
+<script src="../elements/cutout-characters/assets/pack.js"></script>
+<script src="kit.js"></script>
+<script>
+'use strict';
+var Kit = GameDNA_DemoKit, qs = new URLSearchParams(location.search), FREEZE = qs.get('freeze') === '1', T0 = +qs.get('t') || 0, STEP = 1000 / 60;
+var VW = 640, VH = 360, GY = 292, HH = 92;
+var LAYOUT = {
+  'ruins-night': [['mage', 70], ['sword', 150], ['knight', 232], ['imp', 330], ['golem', 440], ['wisp', 540], ['skeleton', 600]],
+  'meadow-dusk': [['spear', 80], ['archer', 160], ['sword', 240], ['slime', 340], ['wolf', 430], ['harpy', 530], ['cultist', 600]],
+  'market-night': [['herbalist', 70], ['mage', 150], ['keeper', 250], ['crates', 350, 1], ['lamp', 430, 1], ['campfire', 510, 1], ['sword', 590]],
+  'forge-hall': [['sword', 90], ['anvil', 190, 1], ['brazier', 270, 1], ['dummy', 350, 1], ['golem', 480], ['imp', 590]],
+  'lakeside-day': [['sword', 110], ['spear', 200], ['mage', 290], ['slime', 400], ['wolf', 500], ['herbalist', 590]]
+};
+Kit.ready(function () {
+  var ids = qs.get('scene') ? [qs.get('scene')] : Kit.scenes(), views = [];
+  ids.forEach(function (id) {
+    var c = document.createElement('canvas'), dpr = Math.max(2, window.devicePixelRatio || 1); c.width = VW * dpr; c.height = VH * dpr; document.getElementById('stage').appendChild(c);
+    var cast = (LAYOUT[id] || []).map(function (r, i) {
+      var a = r[2] ? null : Kit.actor(r[0], { h: HH * Kit.rel(r[0]) }), right = i < 3 || (id === 'lakeside-day' && i < 3) || (id === 'market-night' && r[0] !== 'sword');
+      return { id: r[0], x: r[1], a: a, prop: !!r[2], facing: r[0] === 'sword' && id === 'market-night' ? -1 : (Kit.meta(r[0]) && Kit.meta(r[0]).face === -1 ? -1 : 1), n: i };
+    });
+    views.push({ id: id, g: c.getContext('2d'), dpr: dpr, cast: cast });
+  });
+  var t = 0, ANIMS = ['attack', 'hurt', 'cast', 'guard'];
+  function step() {
+    t += STEP;
+    views.forEach(function (v) { v.cast.forEach(function (c) {
+      if (!c.a) return;
+      var ph = Math.floor((t + c.n * 700) / 2600), was = Math.floor((t - STEP + c.n * 700) / 2600);
+      if (ph !== was) c.a.play(ANIMS[(ph + c.n) % ANIMS.length]);
+      c.a.update(STEP, { facing: c.facing });
+    }); });
+  }
+  function draw() {
+    views.forEach(function (v) {
+      var g = v.g; g.setTransform(v.dpr, 0, 0, v.dpr, 0, 0);
+      Kit.backdrop(g, v.id, { x: 0, y: 0, w: VW, h: VH, groundY: GY });
+      v.cast.slice().forEach(function (c) {
+        if (c.prop) { Kit.sprite(g, c.id, c.x, GY, { h: HH * Kit.rel(c.id) }); if (c.id === 'brazier' || c.id === 'campfire') Kit.flame(g, c.x, GY - HH * Kit.rel(c.id) * 0.7, 46, t); }
+        else c.a.draw(g, c.x, GY, { facing: c.facing });
+      });
+    });
+  }
+  for (var n = Math.floor(T0 / STEP); n > 0; n--) step();
+  if (FREEZE) { draw(); document.documentElement.dataset.frozen = '1'; }
+  else { var last = performance.now(), acc = 0; (function loop(now) { acc += Math.min(250, now - last); last = now; while (acc >= STEP) { step(); acc -= STEP; } draw(); requestAnimationFrame(loop); })(last); }
+});
+</script></body></html>

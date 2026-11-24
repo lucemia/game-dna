@@ -1,0 +1,78 @@
+{
+  "id": "shop-inventory",
+  "code": "G-01",
+  "kind": "addon",
+  "name": "Shop & inventory grid",
+  "family": "shop-inventory",
+  "oneLiner": "A modal shop window: buy and sell lists with icons, prices and an amount picker, a bag grid with stacks, a max stack and a capacity, tooltips, and green up / red down arrows comparing gear against what each party member wears. \"Not enough gold.\" and \"Your bag is full.\" are refused with a message, never with negative gold; items sell back at a ratio; Use and Equip call the game's own callbacks. Items and stock are plain objects the designer edits; gold, equipment and stats stay in the game. 16x16 item icons are drawn procedurally. Under autoplay it buys one deterministic upgrade and leaves.",
+  "fits": [
+    "top-down adventure and RPG (a merchant you talk to, a shop tile)",
+    "turn-based RPG (a shop between battles or waves, items used through the battle's own item command)",
+    "tactics RPG (a shop on the world map between chapters)",
+    "action or platformer games with a hub shop",
+    "roguelites (a shop room with limited stock)",
+    "an inventory screen on its own (bag only: use and equip)"
+  ],
+  "notFor": [
+    "real-money stores or anything with payment",
+    "crafting, item enchanting or random loot rolls (the item table is fixed data)",
+    "grid-packing bags where items take several cells",
+    "trading with other players"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "the moment the shop opens (talking to a merchant, a shop tile, a menu key), in update logic: open({stock, onClose})",
+      "the game's gold: getGold() and setGold(n), the only way the shop changes it",
+      "party members and what they wear: getParty() -> [{id, name}], getEquipped(id, slot) -> item id",
+      "apply callbacks: onEquip(id, item, slot, old) recomputes stats; onUse(item, id) applies an effect (false = no effect)",
+      "input routed to the shop while busy() (key(code, down) or press(name), tap(x, y)) and the world paused",
+      "a fixed 60 Hz update step (the shop's only clock), also while the world is paused",
+      "the play field size in native px and ui rects to keep visible (HUD, party panel)",
+      "optional: the game's autoplay flag"
+    ],
+    "provides": [
+      "busy flag: route input here and pause the world while the window is open",
+      "the bag (module-owned): count / add / remove / setCount / room, for the game's own item command and HUD",
+      "serialize() / restore(data): plain JSON for a save file (works inside a save-slots serialize())",
+      "onClose({bought, sold, used, equipped, spent, earned, gold, auto}) (synchronous, inside update())",
+      "per-action hooks onBuy / onSell / onItems and sound cue names (onSfx)",
+      "drawIcon(ctx, kind, x, y): the 16x16 item icons for the game's own menus",
+      "the window rectangle on screen, for other overlays"
+    ]
+  },
+  "params": [
+    { "key": "where", "label": "Where the shop opens (required; the designer's words)", "type": "text", "default": "a merchant the hero talks to" },
+    { "key": "capacity", "label": "Bag capacity (stacks)", "type": "range", "min": 8, "max": 48, "step": 1, "default": 20 },
+    { "key": "cols", "label": "Grid columns", "type": "range", "min": 4, "max": 6, "step": 1, "default": 5 },
+    { "key": "stack", "label": "Max stack for consumables", "type": "range", "min": 1, "max": 99, "step": 1, "default": 9 },
+    { "key": "sellRatio", "label": "Sell-back ratio", "type": "range", "min": 0, "max": 1, "step": 0.05, "default": 0.5 },
+    { "key": "qty", "label": "Amount picker", "type": "select", "options": ["on", "off"], "default": "on" },
+    { "key": "compare", "label": "Gear comparison per member", "type": "select", "options": ["on", "off"], "default": "on" },
+    { "key": "equipAfterBuy", "label": "Ask \"Equip now?\" after buying gear", "type": "select", "options": ["on", "off"], "default": "on" },
+    { "key": "tooltip", "label": "Tooltip on the bag grid", "type": "select", "options": ["on", "off"], "default": "on" },
+    { "key": "autoBuy", "label": "Autoplay buys", "type": "select", "options": ["best", "cheapest", "none"], "default": "best" },
+    { "key": "tint", "label": "Window colour (a blue, n slate, b red)", "type": "select", "options": ["a", "n", "b"], "default": "a" },
+    { "key": "dim", "label": "Dim behind", "type": "range", "min": 0, "max": 0.7, "step": 0.05, "default": 0.35 }
+  ],
+  "variants": [
+    { "name": "Classic 16-bit RPG shop", "params": { "capacity": 20, "cols": 5, "stack": 9, "sellRatio": 0.5, "qty": "on", "compare": "on", "equipAfterBuy": "on", "tint": "a" } },
+    { "name": "Small bag, survival", "params": { "capacity": 8, "cols": 4, "stack": 3, "sellRatio": 0.25, "tint": "n" } },
+    { "name": "Roguelite shop (no selling back)", "params": { "sellRatio": 0, "qty": "off", "equipAfterBuy": "on", "tint": "b", "dim": 0.5 } },
+    { "name": "Big hoard", "params": { "capacity": 40, "cols": 6, "stack": 99, "sellRatio": 0.5 } },
+    { "name": "Quick shop (one at a time, no prompts)", "params": { "qty": "off", "equipAfterBuy": "off", "compare": "on" } }
+  ],
+  "assets": [
+    "module/shop-inventory.js: the element as one dependency-free script (global GameDNA_ShopInventory): item table, bag with stacks and capacity, buy / sell / use / equip with checks, comparison, autopilot, serialize / restore, drawing with the 6x8 font and 19 procedural 16x16 icons built in",
+    "no image or audio files (sounds are a callback; the game plays its own)"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/shop-inventory.js",
+    "global": "GameDNA_ShopInventory",
+    "version": "1.0.0",
+    "docs": "module/README.md"
+  }
+}

@@ -1,0 +1,228 @@
+{
+  "id": "parallax-layers",
+  "code": "I-02",
+  "kind": "addon",
+  "name": "Multi-layer parallax backdrop",
+  "family": "backdrop",
+  "oneLiner": "A flat single background becomes 3-6 generated, original pixel-art layers (dithered sky, clouds or a cave ceiling, far range, back range, a tree / cliff / building line, dark near foliage) that scroll at their own fraction of the camera, tile seamlessly, move by whole pixels, and carry small ambient motion (drifting clouds, twinkling stars, swaying grass, fireflies, sea glints, drips, window lights) in four themes and three times of day.",
+  "fits": [
+    "platformer",
+    "side-scrolling action",
+    "run-and-gun / side shooter",
+    "side-view RPG battle",
+    "beat-'em-up",
+    "endless runner",
+    "title and menu screens"
+  ],
+  "notFor": [
+    "top-down / overhead games (parallax does not apply; depth comes from floor, walls and props)",
+    "isometric and pseudo-3D (mode-7) scenes",
+    "games whose background is a hand-painted level illustration the designer wants to keep",
+    "settings outside the four themes (desert, snow, space, underwater) unless a skin supplies the colours"
+  ],
+  "interfaces": {
+    "time": "realtime",
+    "coords": "side",
+    "layer": "scene",
+    "needs": [
+      "camera offset in world px (x, optionally y) from the game's draw pass",
+      "fixed 60 Hz step to advance the ambient clock (the same step ?t= fast-forward runs)",
+      "draw slot before tiles and sprites (where the old background was painted)",
+      "optional: sprite and UI rects to avoid (ui rects) so bright ambient pixels never sit next to a character"
+    ],
+    "provides": [
+      "background for the whole play field",
+      "list of layers with their scroll factors (for tests and other scene elements)"
+    ]
+  },
+  "params": [
+    {
+      "key": "theme",
+      "label": "Theme",
+      "type": "select",
+      "options": [
+        "forest",
+        "cliffs",
+        "cave",
+        "city"
+      ],
+      "default": "forest"
+    },
+    {
+      "key": "time",
+      "label": "Time of day",
+      "type": "select",
+      "options": [
+        "day",
+        "dusk",
+        "night"
+      ],
+      "default": "day"
+    },
+    {
+      "key": "layers",
+      "label": "Layers",
+      "type": "range",
+      "min": 3,
+      "max": 6,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "key": "depth",
+      "label": "Parallax strength",
+      "type": "range",
+      "min": 0,
+      "max": 1.3,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "vertical",
+      "label": "Vertical parallax",
+      "type": "range",
+      "min": 0,
+      "max": 1,
+      "step": 0.1,
+      "default": 0
+    },
+    {
+      "key": "ambient",
+      "label": "Ambient motion",
+      "type": "range",
+      "min": 0,
+      "max": 2,
+      "step": 0.25,
+      "default": 1
+    },
+    {
+      "key": "drift",
+      "label": "Cloud drift",
+      "type": "range",
+      "min": 0,
+      "max": 4,
+      "step": 0.5,
+      "default": 1
+    },
+    {
+      "key": "horizon",
+      "label": "Horizon",
+      "type": "range",
+      "min": 0.15,
+      "max": 0.8,
+      "step": 0.01,
+      "default": 0.5
+    },
+    {
+      "key": "ground",
+      "label": "Ground line",
+      "type": "range",
+      "min": 0.3,
+      "max": 1,
+      "step": 0.01,
+      "default": 0.82
+    },
+    {
+      "key": "idle",
+      "label": "Idle drift (px/s)",
+      "type": "range",
+      "min": -40,
+      "max": 40,
+      "step": 2,
+      "default": 0
+    },
+    {
+      "key": "sway",
+      "label": "Idle sway (px)",
+      "type": "range",
+      "min": 0,
+      "max": 8,
+      "step": 1,
+      "default": 0
+    },
+    {
+      "key": "detail",
+      "label": "Detail",
+      "type": "range",
+      "min": 0.5,
+      "max": 1.5,
+      "step": 0.25,
+      "default": 1
+    },
+    {
+      "key": "floor",
+      "label": "Floor plane",
+      "type": "select",
+      "options": [
+        "none",
+        "plain"
+      ],
+      "default": "none"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Side-scroller forest",
+      "params": {
+        "theme": "forest",
+        "time": "day",
+        "layers": 5
+      }
+    },
+    {
+      "name": "Dusk coast",
+      "params": {
+        "theme": "cliffs",
+        "time": "dusk",
+        "layers": 6
+      }
+    },
+    {
+      "name": "Night city",
+      "params": {
+        "theme": "city",
+        "time": "night",
+        "layers": 6,
+        "vertical": 0.5
+      }
+    },
+    {
+      "name": "Crystal cave",
+      "params": {
+        "theme": "cave",
+        "time": "night",
+        "layers": 6
+      }
+    },
+    {
+      "name": "Battle backdrop",
+      "params": {
+        "theme": "forest",
+        "time": "dusk",
+        "layers": 6,
+        "floor": "plain",
+        "ground": 0.56,
+        "horizon": 0.4,
+        "sway": 2
+      }
+    },
+    {
+      "name": "Minimal (3 layers)",
+      "params": {
+        "layers": 3,
+        "ambient": 0.5
+      }
+    }
+  ],
+  "assets": [
+    "module/parallax-layers.js: the element as one dependency-free script (global GameDNA_Parallax): periodic-noise layer generators for 4 themes, palettes and time-of-day grading, ambient animation, drawing",
+    "no image or audio files: every layer is generated at load from the seed"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/parallax-layers.js",
+    "global": "GameDNA_Parallax",
+    "version": "1.0.0",
+    "docs": "module/README.md"
+  }
+}

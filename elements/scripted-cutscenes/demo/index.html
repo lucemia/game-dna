@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Scripted Cutscenes</title>
+<style>
+  :root { --bg: #0f0c16; --panel: #1b1626; --line: #352b47; --ink: #efe9f7; --dim: #a397b8; --acc: #ffc76a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; overflow-x: hidden; }
+  main { max-width: 1000px; margin: 0 auto; padding: 14px 16px 28px; }
+  h1 { font-size: 20px; margin: 0 0 2px; }
+  .sub { color: var(--dim); margin: 0 0 12px; font-size: 13.5px; }
+  #stage { position: relative; background: #000; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; display: flex; justify-content: center; }
+  @media (max-width: 560px) { #stage { margin: 0 -16px; border-radius: 0; border-left: 0; border-right: 0; } }
+  canvas#game { display: block; touch-action: none; image-rendering: pixelated; image-rendering: crisp-edges; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0 6px; }
+  .bar input[type=range] { flex: 1 1 180px; min-width: 120px; accent-color: var(--acc); }
+  .time { font-variant-numeric: tabular-nums; color: var(--dim); min-width: 56px; }
+  button { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 7px; padding: 6px 12px; font: inherit; cursor: pointer; }
+  button.on { background: var(--acc); color: #2a1606; border-color: var(--acc); font-weight: 600; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 12px; }
+  .grid label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--dim); }
+  .grid select, .grid input[type=range] { font: inherit; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 5px; padding: 3px; accent-color: var(--acc); }
+  .note { color: var(--dim); font-size: 12.5px; margin: 8px 0 0; }
+  kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; font: 12px ui-monospace, monospace; color: var(--ink); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Scripted cutscenes</h1>
+  <p class="sub">A small script plays a scene in the game's own world: characters walk with real steps and face where they go, the camera pans and cuts, lines type out with a speaker plate, emotes pop over heads, letterbox bars frame it all. Hold <kbd>X</kbd> to skip: it fades to black and lands on exactly the state the scene would have ended in. Control comes back once.</p>
+  <div id="stage"><canvas id="game" width="384" height="216"></canvas></div>
+  <div class="bar">
+    <button id="lkHd">HD interface</button><button id="lkPx">16-bit pixel</button>
+    <button id="play">Pause</button><button id="again">Replay</button>
+    <input id="scrub" type="range" min="0" max="44000" step="50" value="0"><span class="time" id="time">0.0 s</span>
+  </div>
+  <div class="grid" id="ctl"></div>
+  <p class="note">Arrow keys take over the traveller (walk into the square or up to the captain to start a scene) &middot; <kbd>Z</kbd> / tap: next line &middot; hold <kbd>X</kbd> / long-press: skip. Every frame is a function of the clock: <code>?t=&lt;ms&gt;&amp;freeze=1</code> gives the same still every time, <code>?look=pixel</code> the pixel interface.</p>
+</main>
+<script src="../../../pixel-kit/pixel-scene.js"></script>
+<script src="../module/scripted-cutscenes.js"></script>
+<script src="cast.js"></script>
+<script src="scene.js"></script>
+<script>
+/* H-04 scripted cutscenes demo. One clock: sim.step() (scene.js) runs free play, the autopilot, the triggers and the module.
+   World: pixel-kit village at native 384x216, integer-scaled. HD look: the module draws its bars, box and emotes in CSS px over
+   the world; pixel look: crisp bitmap interface drawn into the native world canvas. */
+(function () {
+  'use strict';
+  var Q = new URLSearchParams(location.search), D = GameDNA_CutsceneDemo, CS = GameDNA_Cutscenes, PXS = window.GameDNA_PixelScene, CAST = GameDNA_CutCast;
+  var LOOK = Q.get('look') === 'pixel' ? 'pixel' : 'hd', PIX = LOOK === 'pixel';
+  var narrow = Math.min(document.getElementById('stage').clientWidth || 384, 1000) < 768;   // the native canvas would not reach 2x
+  var W = PIX && narrow ? 256 : 384, H = PIX && narrow ? 144 : 216, T = D.T, STEP = D.STEP, END = 44000;   // pixel look on phones: 256x144 native, scaled up whole
+  var T0 = Q.has('t') ? Math.max(0, +Q.get('t') || 0) : null, FREEZE = Q.get('freeze') === '1';
+  var cv = document.getElementById('game'), g = cv.getContext('2d');
+  var wc = document.createElement('canvas'); wc.width = W; wc.height = H; var w = wc.getContext('2d');
+  var CTL = [['bars', 'Letterbox height', 0, 0.2, 0.01, 0.09], ['textSpeed', 'Text speed (chars/s)', 15, 90, 1, 42], ['holdMs', 'Hold to skip (ms)', 300, 1500, 50, 700]];
+  var SEL = [['skip', 'Skip', ['hold', 'press', 'off']], ['theme', 'Box theme', ['night', 'parchment']], ['box', 'Box side', ['auto', 'bottom', 'top']]];
+  var params = {};
+  CTL.forEach(function (c) { params[c[0]] = Q.has(c[0]) ? +Q.get(c[0]) : c[5]; });
+  SEL.forEach(function (c) { params[c[0]] = Q.get(c[0]) || c[2][0]; });
+  params.render = PIX ? 'pixel' : 'smooth'; params.snap = 'on'; params.emotes = 'pixel';   // emotes are pixel art at world scale in both looks
+
+  /* ---------- size: integer scale of the native world; the interface in CSS px (HD) or native px (pixel) ---------- */
+  var css = { w: W, h: H, k: 1, dpr: 1 };
+  function fit() {
+    var avail = Math.min(document.getElementById('stage').clientWidth || W, 1000), dpr = window.devicePixelRatio || 1, kk = Math.floor(avail / W);
+    var cw = PIX && narrow ? avail : kk >= 1 ? kk * W : avail; css = { w: cw, h: Math.round(cw * H / W), k: cw / W, dpr: dpr };
+    cv.style.width = cw + 'px'; cv.style.height = css.h + 'px';
+    var bw = Math.round(cw * dpr), bh = Math.round(css.h * dpr); if (cv.width !== bw || cv.height !== bh) { cv.width = bw; cv.height = bh; }
+  }
+  fit();
+
+  /* ---------- the scene ---------- */
+  var SC = PXS.scene({ seed: 41, map: D.rows, props: D.props });
+  var sim = null, clock = 0;
+  var audio = null;
+  function cue(name) {
+    if (!audio || FREEZE) return;
+    try { var o = audio.createOscillator(), gn = audio.createGain(), t = audio.currentTime; o.type = name === 'horn' ? 'sawtooth' : 'triangle'; o.frequency.setValueAtTime(name === 'horn' ? 220 : 90, t); o.frequency.exponentialRampToValueAtTime(name === 'horn' ? 330 : 60, t + 0.35);
+      gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.06, t + 0.04); gn.gain.exponentialRampToValueAtTime(0.0001, t + 0.5); o.connect(gn); gn.connect(audio.destination); o.start(t); o.stop(t + 0.55); } catch (e) { }
+  }
+  function build() {
+    sim = D.make(CS, { params: params, onCue: cue, viewW: W, viewH: H,
+      view: function () { return PIX ? { x: 0, y: 0, w: W, h: H } : { x: 0, y: 0, w: css.w, h: css.h }; },
+      cssScale: function () { return PIX ? css.k : 1; } });
+    clock = 0;
+  }
+  function simTo(ms) { build(); sim.runTo(ms); clock = sim.clock; }
+
+  /* ---------- drawing ---------- */
+  function drawWorld(cam) {
+    var z = cam.zoom || 1, ox = -cam.x, oy = -cam.y, ex = [];
+    w.setTransform(1, 0, 0, 1, 0, 0); w.imageSmoothingEnabled = false; w.fillStyle = '#0c0a14'; w.fillRect(0, 0, W, H);
+    w.setTransform(z, 0, 0, z, 0, 0);
+    Object.keys(sim.actors).forEach(function (id) {
+      var a = sim.actors[id];
+      ex.push({ y: a.y, draw: function (gg) { CAST.draw(gg, id, a.x + ox, a.y + oy, { dir: a.face, step: a.moving ? a.frame : -1, run: a.moving && a.run }); } });
+    });
+    SC.draw(w, clock, ex, ox, oy);
+    w.setTransform(1, 0, 0, 1, 0, 0);
+    var vg = w.createRadialGradient(W / 2, H / 2, 100, W / 2, H / 2, 250); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(14,8,26,0.34)'); w.fillStyle = vg; w.fillRect(0, 0, W, H);
+  }
+  function hudAlpha() { var s = sim.cs.state(); return s.active ? Math.max(0, 1 - (s.bars || 0) * 1.6) : 1; }
+  function heart(gg, x, y, k) { var R = function (a, b, c, d, col) { gg.fillStyle = col; gg.fillRect(x + a * k, y + b * k, c * k, d * k); }; R(1, 0, 2, 1, '#160e1c'); R(4, 0, 2, 1, '#160e1c'); R(0, 1, 7, 3, '#160e1c'); R(1, 4, 5, 1, '#160e1c'); R(2, 5, 3, 1, '#160e1c'); R(1, 1, 2, 2, '#e8404a'); R(4, 1, 2, 2, '#e8404a'); R(1, 3, 5, 1, '#a8283a'); R(2, 4, 3, 1, '#a8283a'); R(1, 1, 1, 1, '#ff8a8a'); }
+  function drawHudPixel() {
+    var a = hudAlpha(); if (a <= 0.01) return;
+    w.globalAlpha = a; w.fillStyle = 'rgba(12,8,22,0.78)'; w.fillRect(4, 4, 34, 11); w.fillRect(W - 4 - 150, 4, 150, 11);
+    for (var i = 0; i < 3; i++) heart(w, 7 + i * 10, 6, 1);
+    pxLabel(sim.objective, W - 8, 6, '#f4ecd2', 'right');
+    w.globalAlpha = 1;
+  }
+  /* a tiny 3x5 label font for the pixel HUD (the module has its own fonts) */
+  var F3 = { A: '010101111101101', B: '110101110101110', C: '011100100100011', D: '110101101101110', E: '111100110100111', F: '111100110100100', G: '011100101101011', H: '101101111101101', I: '111010010010111', K: '101101110101101', L: '100100100100111', M: '101111111101101', N: '110101101101101', O: '010101101101010', P: '110101110100100', R: '110101110101101', S: '011100010001110', T: '111010010010010', U: '101101101101111', V: '101101101101010', W: '101101111111101', Y: '101101010010010', ' ': '000000000000000' };
+  function pxLabel(s, x, y, col, al) { s = String(s).toUpperCase(); var wd = s.length * 4 - 1; if (al === 'right') x -= wd; w.fillStyle = col; for (var i = 0; i < s.length; i++) { var m = F3[s.charAt(i)] || F3[' ']; for (var j = 0; j < 15; j++) if (m.charAt(j) === '1') w.fillRect(x + i * 4 + (j % 3), y + Math.floor(j / 3), 1, 1); } }
+  function drawHudHD() {
+    var a = hudAlpha(); if (a <= 0.01) return;
+    var u = Math.max(1, css.h / 360), fs = Math.max(11, 13 * u);
+    g.save(); g.globalAlpha = a;
+    g.fillStyle = 'rgba(14,10,24,0.72)'; g.beginPath(); g.roundRect(10 * u, 10 * u, 86 * u, 26 * u, 7 * u); g.fill();
+    for (var i = 0; i < 3; i++) { var hx = 22 * u + i * 24 * u, hy = 23 * u, s = 7 * u; g.fillStyle = '#ff5468'; g.beginPath(); g.moveTo(hx, hy + s * 0.75); g.bezierCurveTo(hx - s * 1.3, hy - s * 0.1, hx - s * 0.6, hy - s * 1.15, hx, hy - s * 0.42); g.bezierCurveTo(hx + s * 0.6, hy - s * 1.15, hx + s * 1.3, hy - s * 0.1, hx, hy + s * 0.75); g.fill(); g.fillStyle = 'rgba(255,255,255,0.55)'; g.beginPath(); g.arc(hx - s * 0.45, hy - s * 0.35, s * 0.18, 0, 7); g.fill(); }
+    g.font = '600 ' + fs + 'px system-ui, -apple-system, "Segoe UI", sans-serif'; var tw = g.measureText(sim.objective).width;
+    g.fillStyle = 'rgba(14,10,24,0.72)'; g.beginPath(); g.roundRect(css.w - tw - 34 * u, 10 * u, tw + 24 * u, 26 * u, 7 * u); g.fill();
+    g.fillStyle = '#ffd27a'; g.beginPath(); g.moveTo(css.w - tw - 24 * u, 23 * u - 4 * u); g.lineTo(css.w - tw - 20 * u, 23 * u); g.lineTo(css.w - tw - 24 * u, 23 * u + 4 * u); g.lineTo(css.w - tw - 28 * u, 23 * u); g.closePath(); g.fill();
+    g.fillStyle = '#f4ecdc'; g.textBaseline = 'middle'; g.textAlign = 'right'; g.fillText(sim.objective, css.w - 16 * u, 23 * u + 0.5);
+    g.restore();
+  }
+  var lastRec = null;
+  function render() {
+    fit();
+    var cam = sim.camera();
+    drawWorld(cam);
+    if (PIX) { if (!sim.cs.cinematic() || hudAlpha() > 0) drawHudPixel(); lastRec = sim.cs.draw(w); }
+    g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = false; g.drawImage(wc, 0, 0, cv.width, cv.height);
+    if (!PIX) { g.setTransform(css.dpr, 0, 0, css.dpr, 0, 0); g.imageSmoothingEnabled = true; drawHudHD(); lastRec = sim.cs.draw(g); }
+    document.getElementById('time').textContent = (clock / 1000).toFixed(1) + ' s';
+    if (!dragging) document.getElementById('scrub').value = Math.min(END, clock);
+  }
+
+  /* ---------- text state for checks and critics ---------- */
+  window.__state = function () {
+    var cam = sim.camera(), z = cam.zoom || 1, st = sim.cs.state();
+    var sx = function (x) { return Math.round(((x - cam.x) * z) * css.k * 10) / 10; }, sy = function (y) { return Math.round(((y - cam.y) * z) * css.k * 10) / 10; };
+    return { t: Math.round(clock), look: LOOK, objective: sim.objective, flags: sim.flags, camera: cam, world: { w: D.COLS * T, h: D.ROWS * T },
+      actors: Object.keys(sim.actors).map(function (id) { var a = sim.actors[id], ud = a.face === 'up' || a.face === 'down';
+        return { id: id, x: sx(a.x), y: sy(a.y), wx: +a.x.toFixed(2), wy: +a.y.toFixed(2), facing: a.face, target: a.target || null, moving: a.moving, frame: a.moving ? a.frame : 0, walk: +a.walk.toFixed(2),
+          vx: a.moving ? (a.face === 'left' ? -1 : a.face === 'right' ? 1 : 0) : 0, noFace: ud ? 'top-down ' + a.face + ' frame (pixel-kit chibi, no side)' : undefined, kind: 'pixel-kit ' + a.pal }; }),
+      cutscene: st, drawn: lastRec, cssScale: PIX ? css.k : 1, events: sim.events.slice() };
+  };
+  window.__cutCast = { hero: 'hero', guard: 'guard', elder: 'elder' };
+  window.__seek = function (ms) { simTo(ms); render(); return window.__state(); };   // checks: jump to a time without reloading
+  window.__advance = function (ms) { var n = Math.round(ms / STEP); for (var i = 0; i < n; i++) sim.step(); clock = sim.clock; render(); return window.__state(); };
+
+  /* ---------- controls ---------- */
+  var ctl = document.getElementById('ctl');
+  CTL.forEach(function (c) { var l = document.createElement('label'); l.textContent = c[1]; var i = document.createElement('input'); i.type = 'range'; i.min = c[2]; i.max = c[3]; i.step = c[4]; i.value = params[c[0]]; i.oninput = function () { params[c[0]] = +i.value; sim.cs.setParams(params); }; l.appendChild(i); ctl.appendChild(l); });
+  SEL.forEach(function (c) { var l = document.createElement('label'); l.textContent = c[1]; var s = document.createElement('select'); c[2].forEach(function (o) { var op = document.createElement('option'); op.value = op.textContent = o; s.appendChild(op); }); s.value = params[c[0]]; s.onchange = function () { params[c[0]] = s.value; sim.cs.setParams(params); }; l.appendChild(s); ctl.appendChild(l); });
+  var lkHd = document.getElementById('lkHd'), lkPx = document.getElementById('lkPx'); (PIX ? lkPx : lkHd).className = 'on';
+  lkHd.onclick = function () { Q.delete('look'); location.search = Q.toString(); };
+  lkPx.onclick = function () { Q.set('look', 'pixel'); location.search = Q.toString(); };
+  var running = true, dragging = false;
+  document.getElementById('play').onclick = function () { running = !running; this.textContent = running ? 'Pause' : 'Play'; };
+  document.getElementById('again').onclick = function () { simTo(0); running = true; document.getElementById('play').textContent = 'Pause'; };
+  var scrub = document.getElementById('scrub');
+  scrub.oninput = function () { dragging = true; simTo(+scrub.value); render(); };
+  scrub.onchange = function () { dragging = false; };
+
+  /* ---------- input: arrows take over the traveller; Z next line; hold X skip ---------- */
+  var KEYS = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' };
+  function wake() { if (!audio) try { audio = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { audio = null; } }
+  addEventListener('keydown', function (e) {
+    if (KEYS[e.key]) { e.preventDefault(); sim.manual = true; sim.keys[KEYS[e.key]] = true; }
+    else if (e.key === 'z' || e.key === 'Z' || e.key === 'Enter' || e.key === ' ') { e.preventDefault(); wake(); sim.manual = true; sim.cs.input('ok'); }
+    else if ((e.key === 'x' || e.key === 'X' || e.key === 'Escape') && !e.repeat) { e.preventDefault(); wake(); sim.manual = true; sim.cs.input('skip', true); }
+  });
+  addEventListener('keyup', function (e) { if (KEYS[e.key]) sim.keys[KEYS[e.key]] = false; else if (e.key === 'x' || e.key === 'X' || e.key === 'Escape') sim.cs.input('skip', false); });
+  var pressT = null;
+  cv.addEventListener('pointerdown', function () { wake(); sim.manual = true; pressT = setTimeout(function () { sim.cs.input('skip', true); pressT = 'held'; }, 250); });
+  addEventListener('pointerup', function () { if (pressT === 'held') sim.cs.input('skip', false); else if (pressT) { clearTimeout(pressT); sim.cs.input('ok'); } pressT = null; });
+
+  /* ---------- run ---------- */
+  build();
+  if (T0 != null) { sim.runTo(T0); clock = sim.clock; render(); if (FREEZE) { window.__frozen = true; return; } }
+  else render();
+  var acc = 0, prev = null;
+  function frame(now) {
+    if (prev === null) prev = now;
+    var dt = Math.min(250, now - prev); prev = now;
+    if (running && !dragging) { acc += dt; while (acc >= STEP) { sim.step(); clock = sim.clock; acc -= STEP; } if (clock > END && !sim.manual) simTo(0); }
+    render();
+    requestAnimationFrame(frame);
+  }
+  addEventListener('resize', render);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

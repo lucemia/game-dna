@@ -1,0 +1,192 @@
+{
+  "id": "cutout-characters",
+  "code": "L-10",
+  "kind": "addon",
+  "name": "Layered cutout characters",
+  "family": "generated-art",
+  "requires": [
+    "art-direction-lock"
+  ],
+  "oneLiner": "HD painted characters built from cut-out parts and moved by a small bone rig in code instead of frame-by-frame drawing: each original character is generated once as a full body and then as a parts sheet (head, torso, hips, upper / lower arms, thighs, shins, weapon, shield, cape or coat skirt), cut and packed into one atlas + rig by a script; the module gives a breathing idle, a walk cycle with planted feet, an overhead attack and a forward slash with anticipation, strike and recover, a blade swoosh, a crisp hit flash, hurt recoil, guard, cheer, cast, jump and fall, feet planted by IK, a spring cape, a code key light with a warm rim, and draws at device resolution. The game's own timers drive it; its rules never change.",
+  "fits": [
+    "side-scrolling action and platformers with a hero and a few humanoid foes",
+    "turn-based, tactics and squad battles shown in side view (attack, hurt, guard, victory poses)",
+    "dialogue or story scenes with full-body characters standing on a stage",
+    "any HD game that wants hand-painted characters that move smoothly without sprite sheets"
+  ],
+  "notFor": [
+    "pixel-art styles on a fixed low-resolution canvas (pixel8, pixel16, handheld4): the painted HD art clashes",
+    "top-down or front-facing characters (the parts are painted in a three-quarter side view facing right; left is a mirror)",
+    "non-humanoid creatures (the rig is a biped; a beast needs its own rig)",
+    "art generated at runtime (the game only loads files)"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "side",
+    "layer": "actor",
+    "needs": [
+      "the draw site of each replaced character: feet point, drawn height, facing, hit flash and blink",
+      "the character's states from the game's fixed step: attack timer and length, hurt timer, airborne, running speed",
+      "the game's boot moved into onReady (atlases loaded before the first step)",
+      "the pack: pack.js (or pack.json) + chars/<id>.webp, or the designer's own pack made with the regenerate prompt"
+    ],
+    "provides": [
+      "actor.draw(ctx, feetX, feetY, {h, facing, flash, alpha, light}) -> bool: the painted, posed character (false = not loaded, keep the old drawing)",
+      "actor.pose(anim, k) / play(anim, {dur, onHit}) / loop(anim): idle, walk, attack, cast, hurt, guard, cheer, jump, down",
+      "lib.walkSpeed(id) (no foot sliding), lib.drawHead(ctx, id, x, y, r) (portrait / turn-order heads), flash: 'auto', swoosh",
+      "lib.drawPose(ctx, id, x, footY, {pose, k, t, fall}): stateless drawing for hosts that compute poses (squad clash)",
+      "checks/run-checks.py joins: every animation sample at 2x with a per-part ID buffer; fails on a floating part, an item not held or a visible joint stub; neck: head pivot on the neck, neck length, head : body ratio, neck stub hidden, no seam at the collar",
+      "actor.point('tip' | 'hand' | 'head'): where the weapon tip etc. is drawn now",
+      "tools/make-pack.py: parts sheet -> atlas + rig (pivots, joints, z order), sleeve stubs cut away (erase) and joint stubs listed (pegs), foot split at the ankle, overlay check",
+      "assets.json manifest with every image_gen call (savedPath, revisedPrompt, input sha256), atlas sha256, source sheets"
+    ]
+  },
+  "params": [
+    {
+      "key": "light",
+      "label": "Key light from",
+      "type": "select",
+      "options": [
+        "left",
+        "right",
+        "auto",
+        "off"
+      ],
+      "default": "left"
+    },
+    {
+      "key": "rim",
+      "label": "Rim light strength",
+      "type": "range",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.42
+    },
+    {
+      "key": "shade",
+      "label": "Far-side shade",
+      "type": "range",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 1
+    },
+    {
+      "key": "blendMs",
+      "label": "Pose blend (ms)",
+      "type": "range",
+      "min": 0,
+      "max": 400,
+      "step": 20,
+      "default": 140
+    },
+    {
+      "key": "shadow",
+      "label": "Contact shadow",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "swoosh",
+      "label": "Blade swoosh",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "flash",
+      "label": "Hit flash",
+      "type": "select",
+      "options": [
+        "auto",
+        "off"
+      ],
+      "default": "auto"
+    }
+  ],
+  "promptParams": [
+    {
+      "key": "targets",
+      "default": "the player character (plus any ally or enemy one of the pack's characters fits)"
+    },
+    {
+      "key": "light",
+      "default": "left"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Torch-lit stage",
+      "params": {
+        "light": "left",
+        "rim": 0.42,
+        "shade": 1
+      }
+    },
+    {
+      "name": "Light follows facing",
+      "params": {
+        "light": "auto"
+      }
+    },
+    {
+      "name": "Baked light only (cheapest)",
+      "params": {
+        "light": "off"
+      }
+    },
+    {
+      "name": "Snappy poses",
+      "params": {
+        "blendMs": 60
+      }
+    },
+    {
+      "name": "Side-view action",
+      "params": {
+        "swoosh": "on",
+        "flash": "auto",
+        "light": "left"
+      }
+    }
+  ],
+  "assets": [
+    "module/cutout-characters.js: the rig, animation sets and renderer (global GameDNA_Cutout)",
+    "assets/pack.js + pack.json: rigs of 3 characters (sword, spear, mage); assets/chars/*.webp: one atlas each (182 KB total)",
+    "assets/assets.json: manifest (4 image_gen calls: style mother line-up + 3 parts sheets; savedPath, revisedPrompt, input sha256; atlas sha256)",
+    "assets/prompts/: style-lock.txt (words only), templates.md (full body, parts sheet, rig config), the briefs actually sent",
+    "tools/make-pack.py (cut, alpha, scale, foot split, pack, overlay) and tools/make-manifest.py; shared tools/assets (gen.sh, genmeta.py, namecheck.py, postproc.py, assetcheck.py)"
+  ],
+  "assetPack": {
+    "manifest": "assets/assets.json",
+    "generated": true,
+    "tool": "codex image_gen.imagegen (built-in)",
+    "date": "2026-11-17",
+    "budgetBytes": 600000,
+    "imagegenCalls": 4,
+    "styles": "hd (non-pixel skins)",
+    "check": "tools/assets/assetcheck.py assets/assets.json; checks/run-checks.py (rig, limits, joint gaps, determinism, perf)",
+    "regenerate": "prompt.md (Regenerate) + assets/prompts/templates.md + style-lock.txt + assets/rig-config.json + tools/make-pack.py + tools/assets"
+  },
+  "status": "draft",
+  "module": {
+    "file": "module/cutout-characters.js",
+    "global": "GameDNA_Cutout",
+    "version": "1.2.5",
+    "docs": "module/README.md"
+  },
+  "related": {
+    "art-direction-lock": "L-00: the style-lock method (one STYLE LOCK paragraph in every prompt, the first image as the reference for the rest)",
+    "squad-clash": "A-14: drawUnit hook -> lib.drawPose with the clash's pose, k, t and fall, drawn at 1.1x the built-in height; turn-order heads through a drawHead hook (checks/hosts/squad-clash)",
+    "normal-maps": "L-05 lights flat sprites; this element lights its layer with a code key light and rim instead (the parts carry baked light)",
+    "hit-sparks": "E-02 / E-11: place sparks at actor.point('tip')"
+  }
+}

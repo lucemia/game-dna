@@ -1,0 +1,54 @@
+{
+  "id": "iso-height-map",
+  "code": "B-04",
+  "kind": "system",
+  "name": "Isometric height & jump",
+  "family": "B: map & movement",
+  "oneLiner": "A 2:1 isometric tactics map where every tile has a height: units climb at most their jump, shoot farther from high ground, hit harder from above or behind, choose a facing when done, and act in wait-time order; blocks in front hide units behind them, which get an outline.",
+  "fits": ["isometric tactics RPG", "grid tactics that wants terrain height", "turn-based skirmish with flanking", "dungeon tactics with stairs and ledges"],
+  "notFor": ["real-time action", "free (non-grid) movement", "hex grids", "side-view battles", "games whose units must stay on a flat top-down view"],
+  "interfaces": {
+    "time": "turn",
+    "coords": "iso",
+    "layer": "scene",
+    "needs": [
+      "tile grid size, height level per tile, terrain kind per tile",
+      "unit list {x, y, hp, side} with move, jump and range stats (or defaults)",
+      "a unit draw function that can draw at given feet coordinates",
+      "a fixed-step update (60 Hz) and the map viewport rect",
+      "input: cursor tile (two-way), pointer position, confirm / cancel keys"
+    ],
+    "provides": [
+      "data projection tile <-> screen px and picking with height",
+      "data reachable / stoppable / attack sets under the jump rule",
+      "data damage multiplier (height and facing: front / side / back)",
+      "data unit anchors (drawn sprite box on the iso map)",
+      "data UI rects (info plate, WT bar, cursor)",
+      "event facing chosen",
+      "event next unit by wait time"
+    ]
+  },
+  "params": [
+    { "key": "jump", "label": "Default jump (levels a unit can climb)", "type": "int", "min": 1, "max": 6, "step": 1, "default": 3 },
+    { "key": "fall", "label": "Extra levels a unit may drop", "type": "int", "min": 0, "max": 4, "step": 1, "default": 2 },
+    { "key": "hgRange", "label": "Height levels per +1 range", "type": "int", "min": 1, "max": 4, "step": 1, "default": 2 },
+    { "key": "hgDamage", "label": "Damage % per height step", "type": "int", "min": 0, "max": 20, "step": 5, "default": 10 },
+    { "key": "side", "label": "Side hit multiplier", "type": "float", "min": 1, "max": 1.5, "step": 0.05, "default": 1.25 },
+    { "key": "back", "label": "Back hit multiplier", "type": "float", "min": 1, "max": 2, "step": 0.1, "default": 1.5 },
+    { "key": "step", "label": "Pixels per height level", "type": "select", "options": ["4", "6", "8"], "default": "4" },
+    { "key": "xray", "label": "Hidden-unit outline", "type": "select", "options": ["active", "team", "all", "off"], "default": "active" },
+    { "key": "facing", "label": "Facing at the end of an action", "type": "select", "options": ["choose", "auto"], "default": "choose" },
+    { "key": "overlay", "label": "Range overlay", "type": "select", "options": ["pulse", "solid"], "default": "pulse" }
+  ],
+  "variants": [
+    { "name": "Classic iso tactics (default)", "params": { "jump": 3, "fall": 2, "hgRange": 2, "hgDamage": 10, "side": 1.25, "back": 1.5, "step": "4", "xray": "active", "facing": "choose", "overlay": "pulse" } },
+    { "name": "Steep cliffs", "params": { "jump": 2, "fall": 1, "hgRange": 1, "hgDamage": 15, "side": 1.25, "back": 1.5, "step": "8", "xray": "team", "facing": "choose", "overlay": "pulse" } },
+    { "name": "Flanking matters", "params": { "jump": 3, "fall": 2, "hgRange": 2, "hgDamage": 5, "side": 1.5, "back": 2, "step": "4", "xray": "active", "facing": "choose", "overlay": "solid" } },
+    { "name": "Quick play", "params": { "jump": 4, "fall": 3, "hgRange": 2, "hgDamage": 10, "side": 1.25, "back": 1.5, "step": "4", "xray": "all", "facing": "auto", "overlay": "solid" } }
+  ],
+  "assets": "none: blocks, water, units, backdrop, font and windows are drawn by code",
+  "status": "draft",
+  "delivery": { "version": "v1", "module": "module/iso-height-map.js", "global": "GameDNA_IsoHeight", "readme": "module/README.md" },
+  "starter": "starter/index.html",
+  "starterReadme": "starter/README.md"
+}

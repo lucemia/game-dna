@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Card Illustrations</title>
+<style>
+:root { --bg: #0d0b09; --panel: #18140f; --panel2: #201a13; --line: #3a2f22; --text: #f3ead9; --dim: #ab9d86; --accent: #f0c05a; --rare: #6cc0ff; --epic: #d79bff; --ok: #9fe0a8; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1100px 600px at 20% -10%, #3a2c18 0%, var(--bg) 60%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: flex-start; gap: 14px; padding: 18px 20px 10px; max-width: 1320px; margin: 0 auto; }
+.code { white-space: nowrap; font: 700 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #1d1206; background: linear-gradient(#ffe7a8, var(--accent)); padding: 6px 8px; border-radius: 6px; margin-top: 2px; }
+h1 { font-size: 19px; margin: 0; }
+header p { margin: 3px 0 0; color: var(--dim); font-size: 13px; max-width: 900px; }
+main { max-width: 1320px; margin: 0 auto; padding: 0 20px 28px; display: grid; gap: 18px; }
+.block { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
+.frame { position: relative; border-radius: 14px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px #4a3a26, 0 24px 60px #00000090; }
+.frame canvas { display: block; width: 100%; height: auto; touch-action: none; }
+aside { background: linear-gradient(var(--panel2), var(--panel)); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 11px; min-width: 0; }
+h2 { margin: 0 0 4px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+h3 { margin: 0; font-size: 15px; }
+.lead { margin: 2px 0 8px; color: var(--dim); font-size: 13px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 3px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+.seg { display: flex; background: #0f0c08; border: 1px solid var(--line); border-radius: 8px; padding: 2px; gap: 2px; }
+.seg button { flex: 1; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 4px; border-radius: 6px; cursor: pointer; min-width: 0; }
+.seg button[aria-checked=true] { background: #3a2e1e; color: var(--text); box-shadow: inset 0 0 0 1px #6a5434; }
+.pad { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.key { appearance: none; border: 1px solid #5a4630; background: linear-gradient(#2e2418, #1e170f); color: var(--text); border-radius: 9px; padding: 8px 12px; font: 600 13px/1 inherit; cursor: pointer; box-shadow: 0 3px 0 #0d0a06; }
+.key b { color: var(--accent); }
+.status { font: 12px ui-monospace, Menlo, monospace; color: var(--dim); overflow-wrap: anywhere; }
+.status b { color: var(--ok); font-weight: 600; }
+.note { color: var(--dim); font-size: 11.5px; margin: 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
+.tile { position: relative; border-radius: 10px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px #4a3a26; aspect-ratio: 2 / 3; }
+.tile img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.tile .safe { position: absolute; left: 15%; right: 15%; top: 4%; height: 51%; border: 1.5px dashed #9fe0a8cc; border-radius: 6px; display: none; }
+.tile .text { position: absolute; left: 0; right: 0; bottom: 0; height: 45%; background: repeating-linear-gradient(135deg, #f0c05a22 0 6px, transparent 6px 12px); border-top: 1.5px dashed #f0c05acc; display: none; }
+.showsafe .tile .safe, .showsafe .tile .text { display: block; }
+.tile span { position: absolute; left: 6px; bottom: 6px; font: 700 11px/1 ui-monospace, Menlo, monospace; background: #000a; padding: 4px 6px; border-radius: 5px; }
+@media (max-width: 1000px) { .block { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 640px) { header { padding: 12px 16px 8px; } main { padding: 0 16px 20px; } .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">L-07</span>
+  <div>
+    <h1>Card illustrations</h1>
+    <p>Painted 2:3 card art generated once (one style lock, light from the top-left, a calm lower half for text) and a card frame drawn in code: title, cost, type and rules text are live text, never part of the image. The same art fills the G-07 upgrade-draft cards.</p>
+  </div>
+</header>
+<main>
+  <div class="block">
+    <div>
+      <h3>In the upgrade draft (G-07)</h3>
+      <p class="lead">The draft module is unchanged: <code>art.drawDraft(ctx, draft)</code> replaces <code>draft.draw(ctx)</code> and paints each card's illustration under its chip, name and text. Arrows / A D choose, Z take, R reroll, X skip, or click.</p>
+      <div class="frame" id="f1"><canvas id="c1" width="1280" height="720" aria-label="Upgrade draft with painted card art"></canvas></div>
+      <div class="pad"><button class="key" data-k="left"><b>&larr;</b> Left</button><button class="key" data-k="right"><b>&rarr;</b> Right</button><button class="key" data-k="confirm"><b>Z</b> Take</button><button class="key" data-k="reroll"><b>R</b> Reroll</button><button class="key" data-k="skip"><b>X</b> Skip</button><button class="key" id="again"><b>+</b> New draft</button></div>
+    </div>
+    <aside>
+      <section><h2>Art in the draft</h2>
+        <div class="seg" id="sArt"><button data-v="full">With art</button><button data-v="off">Off (G-07 alone)</button></div></section>
+      <section class="row"><label>Text shade <output id="oShade"></output></label><input id="rShade" type="range" min="0.5" max="1" step="0.05"></section>
+      <section class="row"><label>Subject height in the art (focusY) <output id="oFocus"></output></label><input id="rFocus" type="range" min="0.15" max="0.45" step="0.01"></section>
+      <section><h2>State</h2><div class="status" id="st1">loading...</div></section>
+      <p class="note">G-07's medallion icon is replaced by the art; rarity chip, stack pips, name, tags, rules text, stat preview and synergy ribbon are G-07's own drawing. Back faces, the owned strip and the pixel look stay as G-07 draws them.</p>
+    </aside>
+  </div>
+
+  <div class="block">
+    <div>
+      <h3>Card frame renderer</h3>
+      <p class="lead"><code>art.drawCard(ctx, {title, cost, type, text, rarity, art}, {x, y, w})</code>: a brass frame, cost gem, title plate, type line and rules text that shrinks to fit (<code>*6*</code> = a value in gold). Ready for a card-battle hand.</p>
+      <div class="frame" id="f2"><canvas id="c2" width="1280" height="560" aria-label="A hand of cards drawn by the frame renderer"></canvas></div>
+    </div>
+    <aside>
+      <section class="row"><label>Card width <output id="oW"></output></label><input id="rW" type="range" min="110" max="230" step="2"></section>
+      <section><h2>Rarity of the lifted card</h2><div class="seg" id="sRar"><button data-v="common">Common</button><button data-v="rare">Rare</button><button data-v="epic">Epic</button><button data-v="legendary">Legend</button></div></section>
+      <section><h2>Hand</h2><div class="seg" id="sHand"><button data-v="face">Faces</button><button data-v="dim">Unplayable dim</button><button data-v="back">Backs</button></div></section>
+      <p class="note">Hover or use the arrows over the hand to lift a card. The art window keeps the illustration's safe area: the subject in the upper part, the calm lower part under the title plate.</p>
+    </aside>
+  </div>
+
+  <div>
+    <h3>The pack: 15 illustrations</h3>
+    <p class="lead">One per G-07 tag (blade, fire, frost, storm, guard, heart, speed, gold, magic, luck, poison, light, crit, arrow, regen); an upgrade or card gets its art from its <code>art</code> field, its id or its first tag that matches. <label><input type="checkbox" id="safe"> show the safe area and the text zone</label></p>
+    <div class="grid" id="grid"></div>
+  </div>
+</main>
+<script src="../../../demo-kit/kit-art.js"></script>
+<script src="../../cutout-characters/module/cutout-characters.js"></script>
+<script src="../../cutout-characters/assets/pack.js"></script>
+<script src="../../../demo-kit/kit.js"></script>
+<script src="../../upgrade-draft/module/upgrade-draft.js"></script>
+<script src="../module/card-art.js"></script>
+<script>
+(() => {
+  'use strict';
+  const qs = new URLSearchParams(location.search);
+  const T0 = qs.has('t') ? Math.max(0, Number(qs.get('t')) || 0) : null, FROZEN = T0 !== null && qs.get('freeze') === '1';
+  const STEP = 1000 / 60;
+  const KEYS = GameDNA_CardArt.PACK_KEYS;
+  const art = GameDNA_CardArt.create({ src: '../assets/cards/{key}.webp', keys: KEYS,
+    params: { shade: +(qs.get('shade') || 0.9), focusY: +(qs.get('focusY') || 0.28) } });
+  let artMode = qs.get('art') === 'off' ? 'off' : 'full';
+
+  // ---------------- upgrade table (one per pack key) ----------------
+  const UPGRADES = [
+    { id: 'honed-edge', name: 'Honed Edge', rarity: 'common', tags: ['blade'], text: '+{value} attack on every swing.', delta: { atk: 2 } },
+    { id: 'cinder-brand', name: 'Cinder Brand', rarity: 'rare', tags: ['fire', 'blade'], text: 'Hits set foes alight for {value} damage.', delta: { burn: 3 } },
+    { id: 'rime-shard', name: 'Rime Shard', rarity: 'common', tags: ['frost'], text: 'Hits slow foes by {value}%.', delta: { slow: 10 } },
+    { id: 'stormcall-rod', name: 'Stormcall Rod', rarity: 'epic', tags: ['storm'], text: 'Every 4th hit calls lightning for {value}.', delta: { storm: 12 }, max: 2 },
+    { id: 'oakheart-shield', name: 'Oakheart Shield', rarity: 'common', tags: ['guard'], text: '+{value} defence.', delta: { def: 2 } },
+    { id: 'hearthroot', name: 'Hearthroot', rarity: 'common', tags: ['heart'], text: '+{value} max HP.', delta: { maxHp: 10 } },
+    { id: 'windstep-boots', name: 'Windstep Boots', rarity: 'rare', tags: ['speed'], text: '+{value}% move speed.', delta: { spd: 8 } },
+    { id: 'gilded-purse', name: 'Gilded Purse', rarity: 'common', tags: ['gold'], text: 'Foes drop {value}% more coins.', delta: { gold: 15 } },
+    { id: 'starlit-tome', name: 'Starlit Tome', rarity: 'rare', tags: ['magic'], text: '+{value} spell power.', delta: { mag: 3 } },
+    { id: 'clover-charm', name: 'Clover Charm', rarity: 'rare', tags: ['luck'], text: '+{value}% chance to dodge.', delta: { dodge: 5 } },
+    { id: 'nightshade-flask', name: 'Nightshade Flask', rarity: 'common', tags: ['poison'], text: 'Hits poison for {value} over 3 s.', delta: { psn: 4 } },
+    { id: 'dawn-feather', name: 'Dawn Feather', rarity: 'epic', tags: ['light', 'heart'], text: 'Once per run, rise again with {value}% HP.', max: 1, value: 50, delta: { revive: 50 } },
+    { id: 'hawkeye-amulet', name: 'Hawkeye Amulet', rarity: 'rare', tags: ['crit'], text: '+{value}% critical chance.', delta: { crit: 8 } },
+    { id: 'ashwood-bow', name: 'Ashwood Bow', rarity: 'common', tags: ['arrow'], text: '+{value} attack range.', delta: { reach: 12 } },
+    { id: 'sproutling-pot', name: 'Sproutling Pot', rarity: 'common', tags: ['regen'], text: 'Heal {value} HP every 5 s.', delta: { regen: 2 } }
+  ];
+  const LABELS = { atk: 'ATK', burn: 'BURN', slow: 'SLOW', storm: 'BOLT', def: 'DEF', maxHp: 'HP', spd: 'SPD', gold: 'GOLD', mag: 'MAG', dodge: 'DODGE', psn: 'PSN', revive: 'REV', crit: 'CRIT', reach: 'RNG', regen: 'REGEN' };
+  const BASE = { atk: 6, burn: 0, slow: 0, storm: 0, def: 1, maxHp: 60, spd: 100, gold: 0, mag: 2, dodge: 0, psn: 0, revive: 0, crit: 5, reach: 40, regen: 0 };
+  let hero = Object.assign({}, BASE);
+  let userInput = false;
+  const draft = GameDNA_UpgradeDraft.create({ view: { w: 640, h: 360 }, upgrades: UPGRADES, statLabels: LABELS,
+    applyDelta: (s, a) => { hero[s] = (hero[s] || 0) + a; }, getStat: s => hero[s], target: () => hero,
+    params: { seed: 7, title: 'LEVEL UP', strip: 'draft' } });
+  // the scripted timeline (also what ?t= reproduces): fixed hands so every moment shows art of all three rarities
+  const HANDS = [['cinder-brand', 'stormcall-rod', 'oakheart-shield'], ['hearthroot', 'dawn-feather', 'windstep-boots'], ['starlit-tome', 'nightshade-flask', 'hawkeye-amulet'], ['clover-charm', 'ashwood-bow', 'sproutling-pot']];
+  const SCRIPT = [[300, 'open', 0], [2600, 'right'], [3600, 'right'], [4600, 'left'], [5600, 'confirm'], [8200, 'open', 1], [10200, 'right'], [11400, 'confirm'],
+    [14000, 'open', 2], [16000, 'reroll'], [19000, 'left'], [20200, 'confirm'], [23000, 'open', 3], [25000, 'confirm']];
+  let gt = 0, si = 0, opens = 0;
+  function openHand(i) { draft.open({ hand: HANDS[i % HANDS.length], subtitle: 'Choose 1 of {n}' }); opens++; }
+  function step() {
+    while (!userInput && si < SCRIPT.length && SCRIPT[si][0] <= gt) { const s = SCRIPT[si++]; if (s[1] === 'open') { if (!draft.busy()) openHand(s[2]); } else draft.press(s[1]); }
+    if (!userInput && si >= SCRIPT.length && !draft.busy() && gt > 28000) { gt = 0; si = 0; draft.reset(); hero = Object.assign({}, BASE); }
+    draft.update(STEP); stepCast(); gt += STEP; handT += STEP;
+  }
+
+  // ---------------- canvas 1: draft over a painted scene ----------------
+  const c1 = document.getElementById('c1'), x1 = c1.getContext('2d');
+  function fit(c, w, h) { const dpr = Math.min(3, window.devicePixelRatio || 1), cw = Math.max(320, Math.round(c.clientWidth || w)); const W = Math.round(cw * dpr), H = Math.round(cw * h / w * dpr); if (c.width !== W || c.height !== H) { c.width = W; c.height = H; } return W / w; }
+  // the field behind the draft: the shared painted demo kit (rigged mage, painted golem and wisp, lamp, night ruins); actors advance in step()
+  const KIT = GameDNA_DemoKit, GY = 300, HERO_H = 100;
+  const CAST = [['wisp', 548, -2, -1], ['golem', 442, 4, -1], ['mage', 196, 3, 1]].map(([id, x, dy, facing]) => ({ id, x, dy, facing, h: HERO_H * KIT.rel(id), act: KIT.actor(id, { h: HERO_H * KIT.rel(id) }) }));
+  function stepCast() { CAST.forEach(c => c.act.update(STEP, { facing: c.facing, h: c.h })); }
+  function rrp(ctx, x, y, w, h, r) { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); }
+  function scene(ctx, t) {
+    ctx.fillStyle = '#17122a'; ctx.fillRect(0, 0, 640, 360);
+    KIT.backdrop(ctx, 'ruins-night', { x: 0, y: 0, w: 640, h: 360, groundY: GY });
+    const vg = ctx.createLinearGradient(0, 210, 0, 360); vg.addColorStop(0, 'rgba(14,8,30,0)'); vg.addColorStop(1, 'rgba(14,8,30,0.36)'); ctx.fillStyle = vg; ctx.fillRect(0, 210, 640, 150);
+    const bh = HERO_H * KIT.rel('brazier'); KIT.sprite(ctx, 'brazier', 318, GY - 6, { h: bh }); KIT.flame(ctx, 318, GY - 6 - bh * 0.85, 58, t);
+    CAST.forEach(c => c.act.draw(ctx, c.x, GY + c.dy, { facing: c.facing, h: c.h }));
+    for (let i = 0; i < 12; i++) { const a = 0.3 + 0.25 * Math.sin(t / 900 + i), x = (i * 97 + t * 0.008 * (i % 3 + 1)) % 660 - 10, y = 70 + (i * 53) % 200, r = 4 + (i % 3);
+      const fg = ctx.createRadialGradient(x, y, 0, x, y, r); fg.addColorStop(0, 'rgba(255,236,180,' + a.toFixed(3) + ')'); fg.addColorStop(0.35, 'rgba(255,214,140,' + (a * 0.45).toFixed(3) + ')'); fg.addColorStop(1, 'rgba(255,200,120,0)'); ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); }
+    // HUD plate
+    const F = 'ui-rounded, "SF Pro Rounded", system-ui, -apple-system, sans-serif';
+    rrp(ctx, 8, 8, 172, 24, 12); let g = ctx.createLinearGradient(0, 8, 0, 32); g.addColorStop(0, 'rgba(34,26,22,0.92)'); g.addColorStop(1, 'rgba(14,11,12,0.9)'); ctx.fillStyle = g; ctx.fill(); ctx.strokeStyle = 'rgba(240,192,90,0.6)'; ctx.lineWidth = 1; ctx.stroke();
+    rrp(ctx, 12, 12, 40, 16, 8); g = ctx.createLinearGradient(0, 12, 0, 28); g.addColorStop(0, '#ffe7a8'); g.addColorStop(1, '#e9a93c'); ctx.fillStyle = g; ctx.fill(); ctx.strokeStyle = '#5a3708'; ctx.stroke();
+    ctx.textBaseline = 'middle'; ctx.textAlign = 'center'; ctx.font = '800 10.5px ' + F; ctx.fillStyle = '#3a2204'; ctx.fillText('LV ' + (1 + draft.owned().length), 32, 20.5);
+    ctx.textAlign = 'left'; let x = 62;
+    [['ATK', hero.atk], ['HP', hero.maxHp], ['DEF', hero.def]].forEach(([k, v]) => { ctx.font = '700 8.5px ' + F; const lw = ctx.measureText(k).width; ctx.fillStyle = '#b9a98a'; ctx.fillText(k, x, 20.6); ctx.font = '800 11.5px ' + F; ctx.fillStyle = '#f6ecd6'; ctx.fillText(String(v), x + lw + 4, 20.6); x += lw + ctx.measureText(String(v)).width + 16; });
+    ctx.textBaseline = 'alphabetic';
+  }
+  function render1() {
+    const s = fit(c1, 640, 360); x1.setTransform(s, 0, 0, s, 0, 0); scene(x1, gt);
+    if (artMode === 'off') draft.draw(x1); else art.drawDraft(x1, draft);
+    const st = draft.state(), a = art.stats();
+    document.getElementById('st1').innerHTML = st ? 'stage <b>' + st.stage + '</b> · hand ' + st.hand.map(id => id + ' → ' + (art.keyFor(UPGRADES.find(u => u.id === id)) || 'none')).join(', ') + '<br>faces with art <b>' + a.withArt + '</b> of ' + a.faces + ' · build: ' + (draft.owned().map(o => o.name).join(', ') || 'none') : 'no draft open · build: ' + (draft.owned().map(o => o.name).join(', ') || 'none');
+  }
+
+  // ---------------- canvas 2: a hand drawn with the frame renderer ----------------
+  const HAND = [
+    { id: 'cleave', title: 'Cleave', cost: 1, type: 'Attack', text: 'Deal *6* damage to every foe.', rarity: 'common', art: 'blade' },
+    { id: 'oak-ward', title: 'Oak Ward', cost: 1, type: 'Skill', text: 'Gain *8* block.', rarity: 'common', art: 'guard' },
+    { id: 'cinder-bolt', title: 'Cinder Bolt', cost: 2, type: 'Spell · Fire', text: 'Deal *12* damage. Burn *3* for 3 turns.', rarity: 'rare', art: 'fire' },
+    { id: 'second-wind', title: 'Second Wind', cost: 0, type: 'Skill', text: 'Heal *5*. Draw a card.', rarity: 'common', art: 'regen' },
+    { id: 'storm-lance', title: 'Storm Lance', cost: 3, type: 'Spell · Storm', text: 'Deal *20* damage and stun the target for one turn. Exhaust.', rarity: 'epic', art: 'storm' },
+    { id: 'hawk-mark', title: 'Hawk Mark', cost: 1, type: 'Skill', text: 'Your next attack is a critical hit.', rarity: 'rare', art: 'crit' }
+  ];
+  const c2 = document.getElementById('c2'), x2 = c2.getContext('2d');
+  let cardW = +(qs.get('cardW') || 200), lifted = +(qs.get('lift') || 2), liftRar = qs.get('rarity') || null, handMode = qs.get('hand') || 'face', handT = 0, liftA = HAND.map((_, i) => i === lifted ? 1 : 0);
+  // wide: the whole hand of 6 in a 1280x560 scene; narrow (phones): the canvas is laid out in CSS px and shows 4 larger cards
+  // around the lifted one (lifted card >= 150 CSS px wide, so its rules text is >= 10.8 CSS px)
+  let HG = { W: 1280, H: 560, geo: [] };
+  function handSize() { const cw = Math.round(c2.clientWidth || 1280); return cw < 760 ? { W: Math.max(300, cw), H: Math.round(Math.max(300, cw) * 1.3), narrow: true } : { W: 1280, H: 560, narrow: false }; }
+  function handGeom(W, H, narrow) {
+    const out = [];
+    if (!narrow) {
+      const n = HAND.length, w = Math.min(cardW, W / (n * 0.72 + 0.6)), h = w * 1.5, cx = W / 2, spread = w * 0.74;
+      for (let i = 0; i < n; i++) { const k = i - (n - 1) / 2, rot = k * 0.075, x = cx + k * spread - w / 2, y = H - h - 34 + k * k * 5; out.push({ x, y, w, h, rot, k }); }
+      return out;
+    }
+    const n = 4, s0 = Math.max(0, Math.min(HAND.length - n, lifted - 1)), w = Math.min(190, Math.max(150, W * 0.44)), h = w * 1.5, spread = (W - 20 - w) / (n - 1);
+    for (let i = 0; i < HAND.length; i++) { const j = i - s0; if (j < 0 || j >= n) { out.push(null); continue; } const k = j - (n - 1) / 2; out.push({ x: 10 + j * spread, y: H - h - 16 + k * k * 4, w, h, rot: k * 0.05, k }); }
+    return out;
+  }
+  function render2() {
+    const Z = handSize(), W = Z.W, H = Z.H, s = fit(c2, W, H); x2.setTransform(s, 0, 0, s, 0, 0); const sm = Z.narrow ? 0.6 : 1;
+    const g = x2.createRadialGradient(W / 2, H * 0.2, 40, W / 2, H * 0.5, W * 0.7); g.addColorStop(0, '#3a2c1c'); g.addColorStop(1, '#120e0a'); x2.fillStyle = g; x2.fillRect(0, 0, W, H);
+    x2.fillStyle = '#e9dcc0'; x2.font = '600 ' + (Z.narrow ? 13 : 15) + 'px ui-sans-serif, system-ui, sans-serif'; x2.fillText('Energy', 40 * sm, 52 * sm); for (let i = 0; i < 3; i++) { x2.beginPath(); x2.arc((52 + i * 30) * sm, 76 * sm, 11 * sm, 0, 7); x2.fillStyle = i < 2 ? '#f0c05a' : '#4a3a26'; x2.fill(); }
+    // deck pile (backs)
+    const pw = Z.narrow ? 56 : 100; for (let i = 0; i < 4; i++) art.drawBack(x2, { x: W - pw - 50 * sm - i * 3, y: 30 * sm + i * 3, w: pw });
+    x2.fillStyle = '#ab9d86'; x2.fillText('Draw pile', W - pw - 46 * sm, 30 * sm + pw * 1.5 + 22);
+    const geo = handGeom(W, H, Z.narrow); HG = { W, H, geo }; art.beginFrame();
+    const order = HAND.map((_, i) => i).filter(i => geo[i]).sort((a, b) => liftA[a] - liftA[b]);
+    order.forEach(i => {
+      const r = geo[i], L = liftA[i], card = Object.assign({}, HAND[i], i === lifted && liftRar ? { rarity: liftRar } : {});
+      x2.save(); x2.translate(r.x + r.w / 2, r.y + r.h / 2 - L * r.h * 0.22); x2.rotate(r.rot * (1 - L)); const sc = 1 + L * 0.12; x2.scale(sc, sc);
+      art.drawCard(x2, card, { x: -r.w / 2, y: -r.h / 2, w: r.w }, { selected: L > 0.5, t: handT, dim: handMode === 'dim' && card.cost > 2 ? 0.5 : 0, faceDown: handMode === 'back' });
+      x2.restore();
+    });
+  }
+  function stepHand() { for (let i = 0; i < liftA.length; i++) liftA[i] += ((i === lifted ? 1 : 0) - liftA[i]) * 0.2; }
+
+  // ---------------- pack grid ----------------
+  const grid = document.getElementById('grid');
+  KEYS.forEach(k => { const d = document.createElement('div'); d.className = 'tile'; d.innerHTML = '<img alt="' + k + ' card illustration" src="../assets/cards/' + k + '.webp"><div class="text"></div><div class="safe"></div><span>' + k + '</span>'; grid.appendChild(d); });
+  const safe = document.getElementById('safe'); safe.checked = qs.get('safe') === '1'; const setSafe = () => grid.classList.toggle('showsafe', safe.checked); safe.onchange = setSafe; setSafe();
+
+  // ---------------- controls ----------------
+  function seg(id, val, on) { const el = document.getElementById(id); const set = v => { el.querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', String(b.dataset.v === v))); }; el.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; set(b.dataset.v); on(b.dataset.v); }); set(val); }
+  seg('sArt', artMode, v => { artMode = v; if (FROZEN) render1(); });
+  seg('sRar', liftRar || 'none', v => { liftRar = v; if (FROZEN) render2(); });
+  seg('sHand', handMode, v => { handMode = v; if (FROZEN) render2(); });
+  function range(id, oid, val, on, fmt) { const r = document.getElementById(id), o = document.getElementById(oid); r.value = val; const upd = () => { o.textContent = fmt ? fmt(+r.value) : r.value; on(+r.value); }; r.addEventListener('input', () => { upd(); if (FROZEN) { render1(); render2(); } }); o.textContent = fmt ? fmt(+r.value) : r.value; }
+  range('rShade', 'oShade', art.params().shade, v => art.setParams({ shade: v }), v => v.toFixed(2));
+  range('rFocus', 'oFocus', art.params().focusY, v => art.setParams({ focusY: v }), v => v.toFixed(2));
+  range('rW', 'oW', cardW, v => { cardW = v; }, v => v + ' px');
+  document.querySelectorAll('[data-k]').forEach(b => b.addEventListener('click', () => { userInput = true; if (!draft.busy()) openHand(opens); else draft.press(b.dataset.k); }));
+  document.getElementById('again').onclick = () => { userInput = true; if (!draft.busy()) openHand(opens); };
+  addEventListener('keydown', e => {
+    if (draft.busy() && draft.key(e.code, true)) { userInput = true; e.preventDefault(); return; }
+    if (e.code === 'ArrowLeft') { lifted = Math.max(0, lifted - 1); e.preventDefault(); } if (e.code === 'ArrowRight') { lifted = Math.min(HAND.length - 1, lifted + 1); e.preventDefault(); }
+  });
+  addEventListener('keyup', e => draft.key(e.code, false));
+  function local(c, e, W) { const r = c.getBoundingClientRect(); return [(e.clientX - r.left) * W / r.width, (e.clientY - r.top) * W / r.width]; }
+  c1.addEventListener('pointermove', e => { const [x, y] = local(c1, e, 640); draft.pointer(x, y, false); c1.style.cursor = draft.hitTest(x, y) ? 'pointer' : ''; });
+  c1.addEventListener('pointerdown', e => { userInput = true; const [x, y] = local(c1, e, 640); if (!draft.busy()) openHand(opens); else draft.pointer(x, y, true); });
+  c2.addEventListener('pointermove', e => { const [x, y] = local(c2, e, HG.W); let best = -1; HG.geo.forEach((r, i) => { if (r && x >= r.x && x <= r.x + r.w && y >= r.y - r.h * 0.3 && y <= r.y + r.h) best = i; }); if (best >= 0) lifted = best; });
+  c2.addEventListener('pointerdown', e => { const [x, y] = local(c2, e, HG.W); let best = -1; HG.geo.forEach((r, i) => { if (r && x >= r.x && x <= r.x + r.w && y >= r.y - r.h * 0.3 && y <= r.y + r.h) best = i; }); if (best >= 0) lifted = best; });
+
+  // ---------------- loop / freeze ----------------
+  function frame() { step(); stepHand(); render1(); render2(); requestAnimationFrame(frame); }
+  art.onReady(() => KIT.ready(() => {                         // card art and the painted cast both decoded
+    if (T0 !== null) { for (let t = 0; t < T0; t += STEP) { step(); stepHand(); } }
+    render1(); render2();
+    /* text state for critics and tools/sprites/statecheck.py: the mage (left) faces the golem and wisp (right) and they face it */
+    window.__state = () => ({ t: Math.round(gt), actors: CAST.map(c => { const foes = CAST.filter(b => b.facing !== c.facing);
+      return { id: c.id, x: c.x, y: GY + c.dy, facing: c.facing > 0 ? 'right' : 'left', target: Math.round(foes.reduce((n, b) => n + b.x, 0) / foes.length), asset: c.id }; }) });
+    window.__cardArt = () => ({ t: gt, draft: draft.state(), art: art.stats(), drawn: art.lastDrawn(), status: art.status() });
+    document.documentElement.dataset.ready = '1';
+    if (!FROZEN) requestAnimationFrame(frame);
+  }));
+  addEventListener('resize', () => { if (FROZEN) { render1(); render2(); } });
+})();
+</script>
+</body>
+</html>

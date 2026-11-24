@@ -1,0 +1,58 @@
+{
+  "id": "beat-judge",
+  "code": "F-04",
+  "kind": "addon",
+  "name": "Beat judge",
+  "family": "rhythm-judge",
+  "oneLiner": "A beat clock and an input judge for rhythm actions: every press the game accepts is rated Perfect, Good or Miss against the nearest beat, measured at the moment of the key or tap event (never the frame that handles it), minus audio output latency and the player's calibration offset. Beats follow F-03 chip-music tracks when present (tempo, switches, no beats during a pausing jingle, back on the beat), otherwise its own beat clock with a woodblock click track. A beat track shows markers sliding to a judge ring with the windows, EARLY / LATE and the combo; a calibration window measures the player's offset from 8 taps. The game decides what a rating does.",
+  "fits": [
+    "turn-based RPG (timed attacks and parries on the beat)",
+    "action and platformer (attacks or dashes that hit harder on the beat)",
+    "rhythm and music games, rhythm-action hybrids",
+    "any game with a music loop that should matter to play"
+  ],
+  "notFor": [
+    "music playback itself (use F-03 chip-music and pass it in)",
+    "a single timing check that stops the world (use F-01 timing-bar)",
+    "note charts with many lanes and held notes (a full rhythm-game chart editor)"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "the game's fixed update step in every scene (the beat clock while sound is off)",
+      "the input event (keydown / pointerdown) of the judged action, kept until the game accepts the action",
+      "the one function every judged player action goes through (where the rating scales the game's own result)",
+      "a free strip 22 canvas px tall for the beat track; a key or menu entry for calibration (optional)"
+    ],
+    "provides": [
+      "ratings through press(event) and onRate: perfect / good / miss, delta in ms, early / late, combo",
+      "beats through onBeat(b), beats(t0, t1), phase() (animate on the beat), state()",
+      "a calibration window (busy() while open) that sets the player offset from 8 taps",
+      "a click track (silent until the first gesture; mute, volume, toggle) and render(spec) via OfflineAudioContext for tests",
+      "beat sync with F-03 chip-music when its instance is passed"
+    ]
+  },
+  "params": [
+    { "key": "bpm", "label": "Tempo (own clock)", "type": "range", "min": 60, "max": 200, "step": 1, "default": 120 },
+    { "key": "perfect", "label": "Perfect window (ms each side)", "type": "range", "min": 20, "max": 80, "step": 5, "default": 45 },
+    { "key": "good", "label": "Good window (ms each side)", "type": "range", "min": 60, "max": 180, "step": 5, "default": 100 },
+    { "key": "perfectMult", "label": "Perfect effect (game side, e.g. damage x)", "type": "range", "min": 1, "max": 3, "step": 0.25, "default": 1.5 },
+    { "key": "missMult", "label": "Miss effect (game side, e.g. damage x)", "type": "range", "min": 0, "max": 1, "step": 0.25, "default": 0.5 },
+    { "key": "expect", "label": "Unpressed beats count as misses", "type": "select", "options": ["false", "true"], "default": "false" },
+    { "key": "calibrateKey", "label": "Calibration key", "type": "select", "options": ["C", "V", "none"], "default": "C" }
+  ],
+  "variants": [
+    { "name": "Strike on the beat (default)", "params": { "perfectMult": 1.5, "missMult": 0.5 } },
+    { "name": "Strict rhythm game", "params": { "perfect": 30, "good": 70, "expect": "true", "missMult": 0 } },
+    { "name": "Forgiving, bonus only", "params": { "perfect": 60, "good": 140, "missMult": 1 } },
+    { "name": "Fast music", "params": { "bpm": 160, "perfect": 40, "good": 90 } }
+  ],
+  "assets": [
+    "module/beat-judge.js: the element as one dependency-free script (global GameDNA_BeatJudge): beat grid (own clock or F-03 chip-music plan), event-time judge with latency and offset, click track (Web Audio, gesture unlock), beat track and calibration window drawn in code with a built-in 5x7 pixel font, offline render for tests",
+    "demo: a rhythm duel at a cliff-top arena (pixel-kit fighters in padded frames with repaired weapons, code-drawn dusk scene), synced to the F-03 battle loop"
+  ],
+  "status": "draft",
+  "module": { "file": "module/beat-judge.js", "global": "GameDNA_BeatJudge", "version": "1.1.0", "docs": "module/README.md" }
+}

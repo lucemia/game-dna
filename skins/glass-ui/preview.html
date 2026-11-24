@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glass Gradient UI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&display=block" rel="stylesheet">
+<style>
+  :root { --bg: #0f0c2e; --fg: #f5f7ff; --muted: #b2b7e6; --line: rgba(255,255,255,.14); --cyan: #22d3ee; --violet: #8b5cf6; --pink: #ec4899; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); }
+  body { color: var(--fg); font: 500 14px/1.55 "Outfit", system-ui, -apple-system, "Segoe UI", sans-serif; padding: 24px 16px 36px;
+    background: radial-gradient(1200px 600px at 10% -10%, rgba(34,211,238,.22), transparent 60%), radial-gradient(900px 600px at 100% 10%, rgba(236,72,153,.20), transparent 60%), var(--bg); min-height: 100vh; }
+  main { max-width: 860px; margin: 0 auto; }
+  h1 { font-size: 26px; font-weight: 800; letter-spacing: -.01em; margin: 0 0 4px; }
+  h1 span { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; vertical-align: middle; margin-left: 8px; padding: 3px 10px; border-radius: 99px;
+    background: linear-gradient(90deg, var(--cyan), var(--violet), var(--pink)); color: #fff; }
+  p { margin: 0 0 14px; color: var(--muted); max-width: 70ch; }
+  figure { margin: 0 0 22px; }
+  .stage { border-radius: 18px; overflow: hidden; border: 1px solid var(--line); box-shadow: 0 20px 50px rgba(5,3,30,.55), 0 2px 6px rgba(5,3,30,.4); background: #000; }
+  canvas { display: block; width: 100%; height: auto; }
+  #scene { aspect-ratio: 256 / 224; }
+  #sheet { aspect-ratio: 256 / 128; }
+  figcaption { color: var(--muted); font-size: 12.5px; margin-top: 8px; }
+  code { font: 600 12px ui-monospace, SFMono-Regular, Menlo, monospace; color: #a5f3fc; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px; }
+  .bar a { color: var(--fg); text-decoration: none; font-size: 12.5px; padding: 4px 11px; border-radius: 99px; border: 1px solid var(--line); background: rgba(255,255,255,.05); }
+  .bar a[aria-current="true"] { background: linear-gradient(90deg, rgba(34,211,238,.35), rgba(139,92,246,.35)); border-color: rgba(255,255,255,.35); }
+  .status { font-size: 12px; color: var(--muted); }
+  .status b { color: var(--fg); font-weight: 700; }
+  @media (max-width: 560px) { body { padding: 16px 16px 28px; } h1 { font-size: 21px; } .stage { border-radius: 12px; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Glass &amp; gradient UI<span>skin · glass-ui</span></h1>
+  <p>A modern mobile-game look: frosted-glass panels that blur the board behind them, soft layered shadows, vivid cyan → violet → pink gradients, rounded corners, one crisp geometric sans and springy motion. The board itself is clean and bright: a seamless gradient field, glossy rounded props and capsule pawns.</p>
+  <div class="bar" id="modes"></div>
+  <div class="status" id="status">starting</div>
+  <figure><div class="stage"><canvas id="scene" aria-label="Glass and gradient UI style: the shared tactics scene with range, path ribbon, damage numbers and an open frosted-glass menu"></canvas></div>
+    <figcaption>Shared scene (same map, seed and moment as every style). The real modules draw through this skin: <code>grid-range-path</code> (range tiles, path ribbon, cursor ring), <code>damage-numbers</code> (gradient numerals, landing squash, CRITICAL chip), <code>window-cursor</code> (glass menu, gradient row pill, pointer). <code>?t=1400&amp;freeze=1</code> renders one moment; <code>?blur=off</code> shows the no-blur fallback.</figcaption></figure>
+  <figure><div class="stage"><canvas id="sheet" aria-label="Skin sheet"></canvas></div>
+    <figcaption>Skin sheet: plate, alert plate, banner, team windows over a tree, a crystal, a brazier, an enemy pawn and range tiles (they show through the frosted blur as soft colour blobs; compare ?blur=off), gauges of every kind with haste / slow tags, HP meters, every number kind, the four range kinds, cursors, selected row and backing well.</figcaption></figure>
+</main>
+<script src="../skin-api.js"></script>
+<script src="../pixel16.js"></script>
+<script src="glass-ui.js"></script>
+<script src="../../elements/grid-range-path/module/grid-range-path.js"></script>
+<script src="../../elements/damage-numbers/module/damage-numbers.js"></script>
+<script src="../../elements/window-cursor/module/window-cursor.js"></script>
+<script src="../scene/shared-scene.js"></script>
+<script>
+'use strict';
+var Q = new URLSearchParams(location.search), S = GameDNA_Scene, FREEZE = Q.get('freeze') === '1', T0 = Q.has('t') ? +Q.get('t') : S.DEFAULT_T, FOCUS = Q.get('focus') || 'all';
+var SK = GameDNA_Skin.resolve('glass-ui'), P = SK.palette, BLUR = Q.get('blur') || 'auto';
+if (['auto', 'filter', 'scale', 'off'].indexOf(BLUR) < 0) BLUR = 'auto';
+SK.glass.mode = BLUR;
+var cv = document.getElementById('scene'), sheet = document.getElementById('sheet');
+
+(function () {
+  var box = document.getElementById('modes');
+  [['auto', 'Blur: auto'], ['filter', 'Filter blur'], ['scale', 'Downsample blur'], ['off', 'No blur (tint)']].forEach(function (m) {
+    var q = new URLSearchParams(location.search); if (m[0] === 'auto') q.delete('blur'); else q.set('blur', m[0]); if (!q.has('t')) q.set('t', String(T0)); q.set('freeze', '1');
+    var a = document.createElement('a'); a.href = '?' + q.toString(); a.textContent = m[1]; if (m[0] === BLUR) a.setAttribute('aria-current', 'true'); box.appendChild(a);
+  });
+})();
+
+function devW(c) { return Math.max(256, Math.round((c.getBoundingClientRect().width || 800) * (window.devicePixelRatio || 1))); }
+
+function drawSheet(T) {
+  var t = T / 1000, W = devW(sheet), s = W / 256; sheet.width = W; sheet.height = Math.round(W / 2);
+  var g = sheet.getContext('2d'); g.setTransform(s, 0, 0, s, 0, 0); GameDNA_Skin.setup(SK, g);
+  for (var y = 0; y < 8; y++) for (var x = 0; x < 16; x++) SK.tile(g, { x: x * 16, y: y * 16, w: 16, h: 16 }, x > 13 ? 'water' : 'grass', t);
+  // a busy backdrop under the windows so the frosted blur shows
+  // strongly coloured content under the windows, so the frosted blur shows as soft colour blobs
+  for (var mx = 0; mx < 7; mx++) SK.overlay(g, { x: 8 + mx * 16, y: 100, w: 16, h: 16 }, mx < 3 ? 'attack' : mx < 5 ? 'move' : 'heal', t, { tile: { x: mx, y: 0 }, edges: { top: true, bottom: true, left: true, right: true } });
+  SK.prop(g, { x: 30, y: 56, w: 16, h: 16 }, 'tree', t, { seed: 1 }); SK.prop(g, { x: 96, y: 62, w: 16, h: 16 }, 'crystal', t, { seed: 2, light: { intensity: 0.7 } });
+  SK.prop(g, { x: 112, y: 40, w: 16, h: 16 }, 'brazier', t, { seed: 3, light: { intensity: 0.7 } }); SK.prop(g, { x: 6, y: 74, w: 16, h: 16 }, 'bush', t, { seed: 4 });
+  SK.unitToken(g, { x: 62, y: 50, w: 16, h: 24 }, { team: 'b', kind: 'fighter', facing: -1 }, t);
+  SK.path(g, [{ x: 150, y: 112 }, { x: 166, y: 112 }, { x: 182, y: 112 }, { x: 198, y: 112 }], t, { tile: 16 });
+  SK.atmosphere(g, { x: 0, y: 0, w: 256, h: 128 }, t, { phase: 'world', lights: [{ x: 72, y: 116, r: 40, col: '#ffb860', intensity: 0.5, kind: 'fire' }] });
+  var pw = SK.measure('Turn 3', { font: 'plate' }); SK.frame(g, { x: 4, y: 4, w: pw + 14, h: 13 }, { role: 'plate' }); SK.text(g, 'Turn 3', 11, 7, { font: 'plate', color: P.text.plate });
+  SK.frame(g, { x: pw + 24, y: 4, w: 60, h: 13 }, { role: 'plate', alert: true }); SK.text(g, 'Enemy phase', pw + 54, 7, { font: 'small', align: 'center', color: '#ffe4e6' });
+  SK.frame(g, { x: 146, y: 3, w: 106, h: 16 }, { role: 'banner' }); SK.text(g, 'Storm Surge', 199, 6, { font: 'title', align: 'center', color: '#ffffff' });
+  SK.frame(g, { x: 4, y: 22, w: 124, h: 70 }, { role: 'window', team: 'a' });
+  SK.frame(g, { x: 8, y: 38.5, w: 116, h: 12 }, { role: 'row' });
+  [['Rowan', 0.62, 'charge', null], ['Mira', 0.35, 'haste', 'haste'], ['Bram', 1, 'ready', null], ['Ilsa', 1, 'queued', 'slow'], ['Osric', 0, null, null]].forEach(function (r, i) {
+    var yy = 28 + i * 12; SK.text(g, r[0], 11, yy, { color: i === 1 ? P.text.select : P.text.main }); SK.bar(g, { x: 46, y: yy + 3, w: 66, h: 3.5 }, r[1], r[2], { tag: r[3], t: t });
+  });
+  SK.frame(g, { x: 4, y: 96, w: 124, h: 28 }, { role: 'window', team: 'b' });
+  SK.bar(g, { x: 10, y: 103, w: 52, h: 3.5 }, 0.45, 'enemy'); SK.bar(g, { x: 70, y: 103, w: 50, h: 3.5 }, 1, 'enemyFull', { t: t });
+  SK.bar(g, { x: 10, y: 114, w: 52, h: 3.5 }, 0.8, 'hp', { style: 'meter' }); SK.bar(g, { x: 70, y: 114, w: 50, h: 3.5 }, 0.22, 'hpLow', { style: 'meter' });
+  SK.number(g, '128', 140, 30, { kind: 'damage' }); SK.number(g, '57', 178, 34, { kind: 'crit', big: true, label: 'CRITICAL' }); SK.number(g, '+30', 214, 30, { kind: 'heal' });
+  SK.number(g, '12', 140, 56, { kind: 'mp', suffix: 'MP' }); SK.number(g, 'MISS', 176, 58, { kind: 'miss' }); SK.number(g, 'POISON', 210, 58, { kind: 'status' });
+  ['move', 'attack', 'threat', 'heal'].forEach(function (k, i) { for (var j = 0; j < 2; j++) SK.overlay(g, { x: 140 + i * 28 + j * 12, y: 78, w: 12, h: 12 }, k, t, { tile: { x: j, y: 0 }, edges: { top: true, bottom: true, left: j === 0, right: j === 1 }, seams: { right: j === 0 }, pattern: 'pulsing' }); });
+  SK.frame(g, { x: 140, y: 100, w: 66, h: 22 }, { role: 'window' }); SK.frame(g, { x: 144, y: 104, w: 58, h: 14 }, { role: 'backing' });
+  SK.cursor(g, { x: 148, y: 108, w: 7, h: 6 }, 'hand', t); SK.text(g, 'Pointer', 159, 107);
+  SK.cursor(g, { x: 220, y: 102, w: 16, h: 16 }, 'bracket', t);
+}
+
+function frame(T) {
+  var info = S.draw(cv, 'glass-ui', T, { width: devW(cv), focus: FOCUS });
+  drawSheet(T);
+  var used = SK.glass.last || 'off', st = document.getElementById('status');
+  st.innerHTML = 'Glass backdrop: <b>' + (used === 'filter' ? 'canvas filter blur' : used === 'scale' ? 'downsample blur (no ctx.filter)' : 'tint only, no blur') + '</b> · requested <b>' + BLUR + '</b> · t = ' + Math.round(T) + ' ms';
+  document.documentElement.dataset.glass = used; document.documentElement.dataset.t = String(Math.round(T));
+  window.__glass = { t: T, glass: used, requested: BLUR, numbers: info.numbers, menu: info.menu };
+}
+function start() {
+  if (FREEZE) { frame(T0); requestAnimationFrame(function () { frame(T0); document.documentElement.dataset.ready = '1'; });
+    var rt = 0; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(function () { frame(T0); }, 120); }); return; }
+  var t0 = performance.now() - T0;
+  (function loop(now) { frame((now - t0) % S.LOOP); requestAnimationFrame(loop); })(performance.now());
+  document.documentElement.dataset.ready = '1';
+}
+S.ready(['glass-ui']).then(start, start);
+</script>
+</body>
+</html>

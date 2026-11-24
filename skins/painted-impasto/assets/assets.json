@@ -1,0 +1,748 @@
+{
+ "format": "gamedna-assets/1",
+ "pack": "painted-impasto",
+ "budgetBytes": 600000,
+ "generated": {
+  "tool": "codex image_gen.imagegen (built-in)",
+  "model": "image generator",
+  "effort": "high",
+  "date": "2026-11-16"
+ },
+ "styleLock": {
+  "text": "prompts/style-lock-v2.txt",
+  "reference": "sheet",
+  "history": "v1 (prompts/style-lock.txt, gen/sheet, gen/units-tiles, gen/props-frames, gen/portraits) was replaced by v2 after critic r1 found the v1 units and props too finely detailed for impasto; v1 runs are kept as records; the two frames are still the v1 run (flat UI art)."
+ },
+ "assets": [
+  {
+   "key": "sheet",
+   "role": "reference",
+   "file": "ref/sheet.webp",
+   "source": {
+    "run": "gen/v2-sheet",
+    "file": "sheet.png",
+    "sha256": "b2a80ea1f70067e1e9f68d93499c028569f8f97e8c42e724128fa8ea56920eb0"
+   },
+   "prompt": [
+    "gen/v2-sheet/PROMPT.md",
+    "gen/v2-sheet/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "w": 960
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "note": "the locked L-00 style reference sheet v2 (shipped downsized; source PNG local). Its brief accidentally carried the v1 style paragraph before the v2 paragraph (prompts/sheet-v2.md, as sent); every later v2 prompt carries only v2.",
+   "w": 960,
+   "h": 311,
+   "bytes": 49370,
+   "sha256": "b8979e78170568ba12913c7f8812219b16a273bddc5ed7ac779e488255c10a85"
+  },
+  {
+   "key": "unit-knight",
+   "role": "sprite",
+   "file": "pack/unit-knight.webp",
+   "source": {
+    "run": "gen/v2-units-tiles",
+    "file": "unit-knight.png",
+    "sha256": "e04f9f7ac56d4b29213767b5c6093ea93d58949be4b880faa58bd26b6e289390"
+   },
+   "prompt": [
+    "gen/v2-units-tiles/PROMPT.md",
+    "gen/v2-units-tiles/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 176
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "w": 124,
+   "h": 176,
+   "bytes": 7446,
+   "sha256": "9efd0155166cb60d6adf757b9a197f5e6c434a0cd2f039adeb493bc4f9a33054",
+   "baseline": 176
+  },
+  {
+   "key": "unit-mage",
+   "role": "sprite",
+   "file": "pack/unit-mage.webp",
+   "source": {
+    "run": "gen/v2-units-tiles",
+    "file": "unit-mage.png",
+    "sha256": "2f8123bd37fd9b71e6023f2a8eda009d3d60fa2549167bd918862cb7833d68ea"
+   },
+   "prompt": [
+    "gen/v2-units-tiles/PROMPT.md",
+    "gen/v2-units-tiles/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 176
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "w": 123,
+   "h": 176,
+   "bytes": 8152,
+   "sha256": "262a27e3c96e6d1e072119728d4c5bcac96be28ba0ec11b2df4eabf6bf2115e0",
+   "baseline": 176
+  },
+  {
+   "key": "unit-ghoul",
+   "role": "sprite",
+   "file": "pack/unit-ghoul.webp",
+   "source": {
+    "run": "gen/v2-units-tiles",
+    "file": "unit-ghoul.png",
+    "sha256": "ca234eb9e7934e293acf1311611c8d610010ff228299d688766482c5f7b697d5"
+   },
+   "prompt": [
+    "gen/v2-units-tiles/PROMPT.md",
+    "gen/v2-units-tiles/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 160
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "w": 146,
+   "h": 160,
+   "bytes": 8002,
+   "sha256": "185f16cf45888f94c72de7df06da7a134a82cd9a07b6edc228e19a861987c282",
+   "baseline": 160
+  },
+  {
+   "key": "unit-wraith",
+   "role": "sprite",
+   "file": "pack/unit-wraith.webp",
+   "source": {
+    "run": "gen/v2-units-tiles",
+    "file": "unit-wraith.png",
+    "sha256": "4cd3e6b8326f4d47212473770f029ce2a32aecdc57134b5d35aeb3d776f96eaa"
+   },
+   "prompt": [
+    "gen/v2-units-tiles/PROMPT.md",
+    "gen/v2-units-tiles/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 184
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "w": 153,
+   "h": 184,
+   "bytes": 7908,
+   "sha256": "cf4254e7a830dd2840b7a9c5680c18990463ae7991d43517b52ff1063ca58016",
+   "baseline": 184
+  },
+  {
+   "key": "prop-tree",
+   "role": "prop",
+   "file": "pack/prop-tree.webp",
+   "source": {
+    "run": "gen/v2-props",
+    "file": "prop-tree.png",
+    "sha256": "ee8e3ec8461557aaa24d7d6b6137cc7413ca80397ada2c7a8a3a8e4f8d009646"
+   },
+   "prompt": [
+    "gen/v2-props/PROMPT.md",
+    "gen/v2-props/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 256
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "skinRole": {
+    "role": "prop",
+    "kind": "tree"
+   },
+   "w": 252,
+   "h": 256,
+   "bytes": 13976,
+   "sha256": "38b77df48548a1eef18a2a586ff8e90b050e7886319d43f02f7b4813e3a97217",
+   "baseline": 256
+  },
+  {
+   "key": "prop-bush",
+   "role": "prop",
+   "file": "pack/prop-bush.webp",
+   "source": {
+    "run": "gen/v2-props",
+    "file": "prop-bush.png",
+    "sha256": "d1a566fa1f2b273c347cd5c18f4f0c4a1807317fec02b481285295b82dbdf311"
+   },
+   "prompt": [
+    "gen/v2-props/PROMPT.md",
+    "gen/v2-props/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 96
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "skinRole": {
+    "role": "prop",
+    "kind": "bush"
+   },
+   "w": 146,
+   "h": 96,
+   "bytes": 4514,
+   "sha256": "6bce121328bc5ed96622523622f06b56229b2acc481b94e721bcffded0189739",
+   "baseline": 96
+  },
+  {
+   "key": "prop-stone",
+   "role": "prop",
+   "file": "pack/prop-stone.webp",
+   "source": {
+    "run": "gen/v2-props",
+    "file": "prop-stone.png",
+    "sha256": "ed4025227ecad1d3c6f8f0b52509a9a510913f93a4a8fbaebd18efc5d187f37a"
+   },
+   "prompt": [
+    "gen/v2-props/PROMPT.md",
+    "gen/v2-props/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 112
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "skinRole": {
+    "role": "prop",
+    "kind": "stone"
+   },
+   "w": 97,
+   "h": 112,
+   "bytes": 3560,
+   "sha256": "43f6bf502ed1d26a331349b84bc4c796307c4ef7eac0a5fe7aac7599eceac036",
+   "baseline": 112
+  },
+  {
+   "key": "prop-lamp",
+   "role": "prop",
+   "file": "pack/prop-lamp.webp",
+   "source": {
+    "run": "gen/v2-props",
+    "file": "prop-lamp.png",
+    "sha256": "adb1dd893258ddecaf37f0799d0b866365754d61ec6c12a7fd233ea8deeb15c8"
+   },
+   "prompt": [
+    "gen/v2-props/PROMPT.md",
+    "gen/v2-props/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 200
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "skinRole": {
+    "role": "prop",
+    "kind": "lamp"
+   },
+   "w": 100,
+   "h": 200,
+   "bytes": 5526,
+   "sha256": "559b2bd2338f9b2b266cd71392647f8927b1244fcdd8ce07967608a2a5893908",
+   "baseline": 200
+  },
+  {
+   "key": "prop-crystal",
+   "role": "prop",
+   "file": "pack/prop-crystal.webp",
+   "source": {
+    "run": "gen/v2-props",
+    "file": "prop-crystal.png",
+    "sha256": "79655177ca932cdc92d9fa02acceebb8ad67ed3558c6645a4a98f884b7236fa7"
+   },
+   "prompt": [
+    "gen/v2-props/PROMPT.md",
+    "gen/v2-props/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 136
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 5
+     }
+    },
+    {
+     "export": {
+      "quality": 88
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "skinRole": {
+    "role": "prop",
+    "kind": "crystal"
+   },
+   "w": 109,
+   "h": 136,
+   "bytes": 5106,
+   "sha256": "98100dead844b9853cb83cd74403dcd56ca9b5c561dfffa29e42d48e3d774266",
+   "baseline": 136,
+   "maxHalo": 0.1,
+   "haloNote": "bright cyan facets meet the dark rock inside the silhouette, so edge pixels differ from opaque neighbours by design; checked on light and dark grounds in the preview, no fringe"
+  },
+  {
+   "key": "prop-brazier",
+   "role": "prop",
+   "file": "pack/prop-brazier.webp",
+   "source": {
+    "run": "gen/v2-props",
+    "file": "prop-brazier.png",
+    "sha256": "f3d93acbecfc7b240e84d5992863570c29f6be5801c6521564d24e126d6c8552"
+   },
+   "prompt": [
+    "gen/v2-props/PROMPT.md",
+    "gen/v2-props/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 112
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "skinRole": {
+    "role": "prop",
+    "kind": "brazier"
+   },
+   "w": 71,
+   "h": 112,
+   "bytes": 3106,
+   "sha256": "176244094a953ba01fffa2a442d679eaf3973867e5a47b35a61a31877c79c23c",
+   "baseline": 112
+  },
+  {
+   "key": "portrait-knight",
+   "role": "portrait",
+   "file": "pack/portrait-knight.webp",
+   "source": {
+    "run": "gen/v2-units-tiles",
+    "file": "portrait-knight.png",
+    "sha256": "a9742c503fd0a5c45390fe626d28ef544ea40e876c8cf67ae867b459a79edd90"
+   },
+   "prompt": [
+    "gen/v2-units-tiles/PROMPT.md",
+    "gen/v2-units-tiles/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 240
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    },
+    "skins/painted-impasto/tools/pack_post.py soften <out> <out> --size 3  (median on colour: removes small checker facets)"
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "w": 201,
+   "h": 240,
+   "bytes": 8290,
+   "sha256": "a075edfe6bc697ca68451bd8816fd0b4c9ae200127d99e639eed60a654c710f9",
+   "baseline": 240
+  },
+  {
+   "key": "portrait-mage",
+   "role": "portrait",
+   "file": "pack/portrait-mage.webp",
+   "source": {
+    "run": "gen/v2-units-tiles",
+    "file": "portrait-mage.png",
+    "sha256": "e17e2cb992abb236192a4b355d32ecaef4db421d5bc79a567690862b422468fd"
+   },
+   "prompt": [
+    "gen/v2-units-tiles/PROMPT.md",
+    "gen/v2-units-tiles/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 240
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    },
+    "skins/painted-impasto/tools/pack_post.py soften <out> <out> --size 3  (median on colour: removes small checker facets)"
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "w": 203,
+   "h": 240,
+   "bytes": 8500,
+   "sha256": "090ce43ec2ea4592ca10cb3b29987280618eba1bf0c48756f0cfe380f8c73d98",
+   "baseline": 240
+  },
+  {
+   "key": "tile-grass",
+   "role": "tile",
+   "file": "pack/tile-grass.webp",
+   "source": {
+    "run": "gen/v2-units-tiles",
+    "file": "tile-grass.png",
+    "sha256": "8e3421a9fe5b390401e830df14c966e976a311b8a5fb2d85f1bd69f08d569b0a"
+   },
+   "prompt": [
+    "gen/v2-units-tiles/PROMPT.md",
+    "gen/v2-units-tiles/GEN.md"
+   ],
+   "post": [
+    {
+     "seam": {
+      "mode": "tile"
+     }
+    },
+    {
+     "resize": {
+      "size": "384x384",
+      "wrap": "xy"
+     }
+    },
+    {
+     "export": {
+      "quality": 95
+     }
+    },
+    "skins/painted-impasto/tools/pack_post.py grass-clean <out> <out>  (landmarks painted out with shifted grass; flowers and pebbles are scattered in code)"
+   ],
+   "alpha": false,
+   "seam": "tile",
+   "cells": 4,
+   "tileW": 64,
+   "tileH": 64,
+   "skinRole": {
+    "role": "tile",
+    "kind": "grass"
+   },
+   "w": 384,
+   "h": 384,
+   "bytes": 61668,
+   "sha256": "1d36b09cc946d834977b12512c12af4d91cb2458033f8495d9f29bac22433b64"
+  },
+  {
+   "key": "tile-water",
+   "role": "tile",
+   "file": "pack/tile-water.webp",
+   "source": {
+    "run": "gen/v2-units-tiles",
+    "file": "tile-water.png",
+    "sha256": "0d52b38248d9ce92c544dc6acd80c619c9794386095f2444368fdbe6f0d8ea11"
+   },
+   "prompt": [
+    "gen/v2-units-tiles/PROMPT.md",
+    "gen/v2-units-tiles/GEN.md"
+   ],
+   "post": [
+    {
+     "seam": {
+      "mode": "tile"
+     }
+    },
+    {
+     "resize": {
+      "size": "384x384",
+      "wrap": "xy"
+     }
+    },
+    {
+     "export": {
+      "quality": 95
+     }
+    }
+   ],
+   "alpha": false,
+   "seam": "tile",
+   "cells": 4,
+   "tileW": 64,
+   "tileH": 64,
+   "skinRole": {
+    "role": "tile",
+    "kind": "water"
+   },
+   "w": 384,
+   "h": 384,
+   "bytes": 35466,
+   "sha256": "17d360126c82cf4f64b9114755342eaeace4c6a48e0774ab4398632e2cb864d0"
+  },
+  {
+   "key": "frame-window",
+   "role": "frame9",
+   "file": "pack/frame-window.webp",
+   "source": {
+    "run": "gen/props-frames",
+    "file": "frame-window.png",
+    "sha256": "5e82e7626f248c2db8963746cbaddcd0cb7e8799189a05c06bf8d007a1649ec1"
+   },
+   "prompt": [
+    "gen/props-frames/PROMPT.md",
+    "gen/props-frames/GEN.md"
+   ],
+   "post": [
+    "elements/painted-ui/tools/uikit.py frame9 <src> <out> --size 320 --mid 32"
+   ],
+   "alpha": true,
+   "slice": [
+    88,
+    86,
+    88,
+    86
+   ],
+   "thick": 33,
+   "fill": false,
+   "skinRole": {
+    "role": "frame9",
+    "kind": "window"
+   },
+   "w": 208,
+   "h": 204,
+   "bytes": 15306,
+   "sha256": "5d55b652b0280368748d06a53230d433e33bba4114fd0ff2ae9c4ee8eb59ade3"
+  },
+  {
+   "key": "frame-plate",
+   "role": "frame9",
+   "file": "pack/frame-plate.webp",
+   "source": {
+    "run": "gen/props-frames",
+    "file": "frame-plate.png",
+    "sha256": "db893325d771921864e1889fb7006e517ee5ad2c3b9929bf155fe31ffb1a4bdc"
+   },
+   "prompt": [
+    "gen/props-frames/PROMPT.md",
+    "gen/props-frames/GEN.md"
+   ],
+   "post": [
+    "elements/painted-ui/tools/uikit.py frame9 <src> <out> --size 160 --mid 16 --hard"
+   ],
+   "alpha": true,
+   "slice": [
+    20,
+    20,
+    20,
+    20
+   ],
+   "thick": 12,
+   "fill": false,
+   "skinRole": {
+    "role": "frame9",
+    "kind": "plate"
+   },
+   "w": 56,
+   "h": 56,
+   "bytes": 1726,
+   "sha256": "2beb862597a0bb340ce9fc01f2a454b5965f2b1a3a9a6cf56f01a19c94828af2"
+  }
+ ],
+ "totalBytes": 256370
+}

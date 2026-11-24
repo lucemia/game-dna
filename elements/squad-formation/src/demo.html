@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Squad Formation Grid</title>
+<style>
+:root { --bg: #0b0a12; --panel: #14121d; --panel2: #1b1828; --line: #2a2640; --text: #eee9f8; --dim: #9a93b4; --accent: #ffc56b; --front: #ffb86a; --back: #8ac8ff; --ok: #7ee8b0; --bad: #ff8a7a; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1100px 560px at 70% -18%, #2c2347 0%, var(--bg) 62%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 16px 20px 10px; max-width: 1360px; margin: 0 auto; }
+.code { white-space: nowrap; font: 700 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #1d1206; background: linear-gradient(#ffe0a8, var(--accent)); padding: 6px 8px; border-radius: 6px; box-shadow: 0 0 0 1px #00000040, 0 4px 14px #ffc56b40; }
+h1 { font-size: 18px; margin: 0; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; max-width: 940px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 18px; padding: 0 20px 20px; max-width: 1360px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; }
+.frame { position: relative; border-radius: 14px; overflow: hidden; background: #0d0b16; box-shadow: 0 0 0 1px #3a3352, 0 24px 60px #00000090; line-height: 0; }
+.frame canvas { display: block; width: 100%; height: auto; margin: 0 auto; image-rendering: pixelated; image-rendering: crisp-edges; touch-action: none; }
+.pad { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: center; }
+.key { appearance: none; border: 1px solid #3c3558; background: linear-gradient(#262036, #1a1626); color: var(--text); border-radius: 9px; padding: 9px 12px; font: 600 13px/1 inherit; cursor: pointer; min-width: 44px; box-shadow: 0 3px 0 #0d0b14; transition: transform .06s, box-shadow .06s; }
+.key:active { transform: translateY(2px); box-shadow: 0 1px 0 #0d0b14; }
+.key b { color: var(--accent); }
+.key.foe b { color: var(--bad); }
+.pad .sp { flex: 1; }
+.status { font: 12px ui-monospace, Menlo, monospace; color: var(--dim); }
+.status b { color: var(--ok); font-weight: 600; }
+.card { margin-top: 12px; background: linear-gradient(var(--panel2), var(--panel)); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+.card h2, aside h2 { display: flex; align-items: center; gap: 10px; margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+#readout { font: 12px/1.55 ui-monospace, Menlo, monospace; color: var(--dim); min-height: 80px; }
+#readout b { color: var(--text); font-weight: 600; }
+#readout .f { color: var(--front); } #readout .k { color: var(--back); } #readout .x { color: var(--bad); } #readout .o { color: var(--ok); }
+aside { background: linear-gradient(var(--panel2), var(--panel)); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+section { border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+section:last-of-type { border-bottom: 0; padding-bottom: 0; }
+.row { margin-bottom: 8px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 3px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 5px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--fill), #2c2742 var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 15px; height: 15px; border-radius: 50%; background: #fff4e2; border: 0; box-shadow: 0 0 0 3px #ffc56b55, 0 2px 6px #000a; cursor: pointer; }
+.seg { display: flex; background: #0e0c16; border: 1px solid var(--line); border-radius: 8px; padding: 2px; gap: 2px; }
+.seg button { flex: 1; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 4px; border-radius: 6px; cursor: pointer; }
+.seg button[aria-checked=true] { background: #2e2648; color: var(--text); box-shadow: inset 0 0 0 1px #4c4270; }
+.big { width: 100%; appearance: none; border: 0; border-radius: 10px; padding: 10px; font: 700 13px/1 inherit; color: #1d1206; cursor: pointer; background: linear-gradient(#ffe0a8, var(--accent)); box-shadow: 0 6px 18px #ffc56b40; }
+.note { color: var(--dim); font-size: 11.5px; margin: 6px 0 0; }
+table.rules { width: 100%; border-collapse: collapse; font-size: 12px; }
+table.rules th, table.rules td { text-align: left; padding: 4px 4px; border-bottom: 1px solid var(--line); }
+table.rules th { color: var(--dim); font-weight: 600; }
+table.rules td.f { color: var(--front); } table.rules td.k { color: var(--back); }
+.variants { display: flex; flex-wrap: wrap; gap: 6px; }
+.variants button { appearance: none; border: 1px solid #3c3558; background: #1c1829; color: var(--text); border-radius: 999px; padding: 6px 10px; font: 600 12px/1 inherit; cursor: pointer; }
+.variants button:hover { border-color: var(--accent); }
+@media (max-width: 1060px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 680px; width: 100%; margin: 0 auto; } }
+@media (max-width: 560px) { header { padding: 12px 16px 8px; } main { padding: 0 16px 16px; gap: 12px; } .frame { border-radius: 10px; } .key { padding: 9px 9px; font-size: 12px; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">A-12</span>
+  <div><h1>Squad formation grid</h1><p>Every side fights as a 2&times;3 squad: a front row that faces the enemy and a back row behind it. Melee reaches only the front row while anyone stands there; arrows and spells reach everyone and hit the back row harder; a melee fighter in the back swings at half power. Drag units (or use the arrows and Z) in the formation editor, press DEPLOY, then send the raiders at your line.</p></div>
+</header>
+<main>
+  <div id="stage">
+    <div class="frame"><canvas id="cv" width="320" height="224"></canvas></div>
+    <div class="pad">
+      <button class="key" data-k="left">&larr;</button><button class="key" data-k="up">&uarr;</button><button class="key" data-k="down">&darr;</button><button class="key" data-k="right">&rarr;</button>
+      <button class="key" data-k="ok"><b>Z</b> pick / place</button><button class="key" data-k="back"><b>X</b> back</button>
+      <button class="key" id="edit"><b>E</b> formation</button>
+      <span class="sp"></span>
+      <span class="status" id="status">demo script</span>
+    </div>
+    <div class="pad">
+      <button class="key foe" data-a="melee"><b>1</b> Brute charges (melee)</button>
+      <button class="key foe" data-a="ranged"><b>2</b> Arrow volley (ranged)</button>
+      <button class="key foe" data-a="magic"><b>3</b> Hex bolt (magic)</button>
+      <button class="key" data-a="strike"><b>4</b> Your line strikes</button>
+    </div>
+    <div class="card">
+      <h2>Rules readout <span class="status" id="mode"></span></h2>
+      <div id="readout"></div>
+    </div>
+  </div>
+  <aside>
+    <section>
+      <h2>Row rules</h2>
+      <div class="row"><label>Front row shields the back from melee</label><div class="seg" id="backGuard"><button data-v="on">on</button><button data-v="off">off</button></div></div>
+      <div class="row"><label>Back row hit by ranged / magic &times; <output></output></label><input type="range" data-k="backWeak" min="1" max="2" step="0.05"></div>
+      <div class="row"><label>Melee power from the back row &times; <output></output></label><input type="range" data-k="backMelee" min="0" max="1" step="0.05"></div>
+      <table class="rules" id="rules"></table>
+    </section>
+    <section>
+      <h2>Editor</h2>
+      <div class="row"><label>Autopilot fixes wrong rows</label><div class="seg" id="autoArrange"><button data-v="on">on</button><button data-v="off">off</button></div></div>
+      <div class="row"><label>Row tags on sprites</label><div class="seg" id="tags"><button data-v="on">on</button><button data-v="off">off</button></div></div>
+      <div class="row"><label>Autopilot step ms <output></output></label><input type="range" data-k="autoStepMs" min="80" max="600" step="10"></div>
+    </section>
+    <section>
+      <h2>Variants</h2>
+      <div class="variants" id="variants"></div>
+      <p class="note">Each variant changes the rules only; the formation stays.</p>
+    </section>
+    <section>
+      <button class="big" id="replay">Replay demo script</button>
+      <p class="note">Keys: arrows, Z, X, E (editor), 1&ndash;4 (attacks). Mouse or touch: drag a unit onto another cell. <code>?t=&lt;ms&gt;&amp;freeze=1</code> renders one deterministic frame of the script.</p>
+    </section>
+  </aside>
+</main>
+<script>
+/*PIXELSCENE*/
+</script>
+<script>
+/*MODULE*/
+</script>
+<script>
+/*MAIN*/
+</script>
+</body>
+</html>

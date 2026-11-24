@@ -1,0 +1,226 @@
+{
+ "id": "water-surface",
+ "code": "E-18",
+ "name": "Spring water surface and splashes",
+ "kind": "addon",
+ "family": "water",
+ "oneLiner": "Pits, ponds and lakes of a side-view game get a surface made of springs: anything that falls in throws a crown of droplets and a curved splash sheet and sends waves to both banks that reflect and calm down (damped, clamped, fixed sub-steps: it never blows up). Bodies the game lists splash once per entry (tested along their path, so a fast arrow still splashes), drip when they leave and push a bow wave while wading; floaters bob, tilt and never overlap or sink; under the line the water tints what is in it, mirrors the bank, shows light shafts, foam and bubbles; an optional waterfall keeps feeding a pool. Pixel and HD renders, deterministic from the seed.",
+ "fits": [
+  "side-scrolling platformer / action",
+  "metroidvania",
+  "run-and-gun",
+  "side-view adventure with lakes or sewers",
+  "artillery / physics games with water"
+ ],
+ "notFor": [
+  "top-down games (the surface is a side-view line)",
+  "3D games",
+  "games that need real swimming physics (the module draws and floats; the game keeps its own movement rules)"
+ ],
+ "interfaces": {
+  "time": "realtime",
+  "coords": "side",
+  "layer": "fx",
+  "needs": [
+   "pool rects in world px (the pits / ponds: x, w, the water line y, the depth)",
+   "bodies(): top-left boxes {id, x, y, w, h} of the hero, enemies and projectiles with stable ids",
+   "a fixed update step (also run by ?t= fast-forward and ?auto=1), update(0) while stopped",
+   "the draw pass: water.draw after the sprites, before the HUD, in the sprites' space",
+   "the game's own art for floating props (optional)"
+  ],
+  "provides": [
+   "entry splash per body (crown of droplets, splash sheet, foam ring, bubbles), exit drips, wading wake; onSplash / onSound hooks",
+   "spring surface with travelling, reflecting, damped waves and a gentle breeze",
+   "floaters that bob, tilt, drift and stay on the surface without overlapping (addFloater)",
+   "waterfalls (falls) with a churning foot, mist and spray",
+   "water drawn over what is in it: tint by depth, reflection, light shafts, foam, bubbles (pixel and smooth renders)",
+   "queries: surfaceY, restY, floorY, depthAt, inWater, poolAt; splash(), bubble(), clear(), stats(), hash(), events()"
+  ]
+ },
+ "params": [
+  {
+   "key": "splash",
+   "label": "Splash strength",
+   "type": "range",
+   "min": 0.2,
+   "max": 2,
+   "step": 0.1,
+   "default": 1
+  },
+  {
+   "key": "droplets",
+   "label": "Droplets",
+   "type": "range",
+   "min": 0,
+   "max": 2,
+   "step": 0.1,
+   "default": 1
+  },
+  {
+   "key": "spread",
+   "label": "Wave speed (px/s)",
+   "type": "range",
+   "min": 40,
+   "max": 300,
+   "step": 5,
+   "default": 150
+  },
+  {
+   "key": "damping",
+   "label": "Damping (1/s)",
+   "type": "range",
+   "min": 0.3,
+   "max": 4,
+   "step": 0.1,
+   "default": 1.5
+  },
+  {
+   "key": "tension",
+   "label": "Column spring",
+   "type": "range",
+   "min": 5,
+   "max": 80,
+   "step": 1,
+   "default": 26
+  },
+  {
+   "key": "maxAmp",
+   "label": "Max wave height (px)",
+   "type": "range",
+   "min": 4,
+   "max": 40,
+   "step": 1,
+   "default": 22
+  },
+  {
+   "key": "clarity",
+   "label": "Water alpha under the line",
+   "type": "range",
+   "min": 0.1,
+   "max": 0.9,
+   "step": 0.02,
+   "default": 0.42
+  },
+  {
+   "key": "depthAlpha",
+   "label": "Water alpha at the bottom",
+   "type": "range",
+   "min": 0.4,
+   "max": 1,
+   "step": 0.02,
+   "default": 0.86
+  },
+  {
+   "key": "reflect",
+   "label": "Reflection",
+   "type": "range",
+   "min": 0,
+   "max": 0.6,
+   "step": 0.05,
+   "default": 0.3
+  },
+  {
+   "key": "ambient",
+   "label": "Breeze",
+   "type": "range",
+   "min": 0,
+   "max": 1,
+   "step": 0.05,
+   "default": 0.3
+  },
+  {
+   "key": "wake",
+   "label": "Wading wake",
+   "type": "range",
+   "min": 0,
+   "max": 2,
+   "step": 0.1,
+   "default": 1
+  },
+  {
+   "key": "palette",
+   "label": "Water",
+   "type": "select",
+   "options": [
+    "lake",
+    "sea",
+    "swamp",
+    "cave"
+   ],
+   "default": "lake"
+  },
+  {
+   "key": "render",
+   "label": "Render",
+   "type": "select",
+   "options": [
+    "auto",
+    "pixel",
+    "smooth"
+   ],
+   "default": "auto"
+  },
+  {
+   "key": "waterfall",
+   "label": "Add a waterfall where a wall rises over a pool",
+   "type": "select",
+   "options": [
+    "yes",
+    "no"
+   ],
+   "default": "yes"
+  }
+ ],
+ "variants": [
+  {
+   "name": "Lake (default)",
+   "params": {}
+  },
+  {
+   "name": "Stormy sea",
+   "params": {
+    "palette": "sea",
+    "splash": 1.6,
+    "droplets": 1.6,
+    "ambient": 0.8,
+    "damping": 1
+   }
+  },
+  {
+   "name": "Swamp",
+   "params": {
+    "palette": "swamp",
+    "clarity": 0.6,
+    "depthAlpha": 0.95,
+    "reflect": 0.15,
+    "spread": 90,
+    "damping": 2.4
+   }
+  },
+  {
+   "name": "Cave pool",
+   "params": {
+    "palette": "cave",
+    "ambient": 0,
+    "reflect": 0.45
+   }
+  },
+  {
+   "name": "Pixel render",
+   "params": {
+    "render": "pixel"
+   }
+  }
+ ],
+ "assets": [
+  "module/water-surface.js: the element as one dependency-free script (global GameDNA_WaterSurface): spring columns, entry / exit detection, droplets, sheets, bubbles, mist, foam, floaters, waterfalls, pixel and smooth renders",
+  "no image, font or audio files"
+ ],
+ "status": "draft",
+ "module": {
+  "file": "module/water-surface.js",
+  "global": "GameDNA_WaterSurface",
+  "version": "1.0.2",
+  "docs": "module/README.md"
+ }
+}

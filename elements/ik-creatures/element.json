@@ -1,0 +1,66 @@
+{
+ "id": "ik-creatures",
+ "code": "E-14",
+ "name": "Procedural IK creatures",
+ "kind": "addon",
+ "family": "procedural-creatures",
+ "oneLiner": "The game's ground-walking foes become many-legged creatures (spider, crab, centipede) whose feet plant on the game's own ground with 2-bone IK and step when stretched, in two alternating groups so no two neighbouring legs ever lift together; a planted foot never slides, never floats and never sinks, a swinging foot lifts over any rise, the body rides on its feet, faces its path and turns its head to the target. Drawn per pixel (light, rim light, gloss, outline) at the screen's own resolution, or at native resolution with a fixed ramp for pixel games. The game keeps its foes' positions, AI and hit boxes.",
+ "fits": [
+  "side-scrolling platformer / action (crawlers, a crab boss)",
+  "top-down action RPG (spiders, a centipede boss)",
+  "metroidvania, dungeon crawler, horror (cave creatures)",
+  "any game with walking foes that look stiff"
+ ],
+ "notFor": [
+  "flying or swimming foes (no ground to stand on)",
+  "humanoid characters (two legs and arms: use real walk frames)",
+  "3D games (this draws to a 2D canvas)",
+  "side-view centipedes that reverse on the spot (a line has no room for a U-turn: use a spider)"
+ ],
+ "interfaces": {
+  "time": "realtime",
+  "coords": "side",
+  "layer": "fx",
+  "needs": [
+   "the game's ground: side view ground(x, y) = surface y at or below y (null for a pit); top view walkable(x, y)",
+   "actors(): stable ids, kind, feet position in world px, size, target (the hero), flash, dead",
+   "a fixed update step (also run by ?t= fast-forward and ?auto=1), update(0) while stopped",
+   "the draw pass: drawOne(ctx, id) where the foe sprite was drawn (inside y-sorted lists), in the sprites' space"
+  ],
+  "provides": [
+   "legs planted on the game's ground with 2-bone IK, alternating steps, lift over rises, re-aim, landing, dust",
+   "a body that rides on its feet, faces its path (a crab its side) and turns at a bounded rate; a head that turns to the target",
+   "hanging legs in the air and a re-plant on landing; a curl-up death",
+   "per-pixel drawing (HD at device resolution, pixel at native resolution with a fixed ramp)",
+   "onStep(info) per planted foot, onEvent; creature(id), list(), boxes(), stats(), hash()"
+  ]
+ },
+ "params": [
+  { "key": "kind", "label": "Creature for walking foes", "type": "select", "options": ["spider", "crab", "centipede"], "default": "spider" },
+  { "key": "stride", "label": "Stride (x body length)", "type": "range", "min": 0.15, "max": 0.5, "step": 0.01, "default": 0.3 },
+  { "key": "lift", "label": "Foot lift (x body length)", "type": "range", "min": 0.05, "max": 0.35, "step": 0.01, "default": 0.16 },
+  { "key": "turnRate", "label": "Body turn (deg/s)", "type": "range", "min": 90, "max": 720, "step": 10, "default": 300 },
+  { "key": "headYaw", "label": "Head turn limit (deg)", "type": "range", "min": 0, "max": 80, "step": 1, "default": 40 },
+  { "key": "rim", "label": "Rim light", "type": "range", "min": 0, "max": 1.6, "step": 0.1, "default": 1 },
+  { "key": "palette", "label": "Colours", "type": "select", "options": ["auto", "forest", "ember", "cave", "frost"], "default": "auto" },
+  { "key": "render", "label": "Render", "type": "select", "options": ["auto", "hd", "pixel"], "default": "auto" }
+ ],
+ "variants": [
+  { "name": "Forest spiders (default)", "params": {} },
+  { "name": "Ember crab boss", "params": { "kind": "crab", "palette": "ember" } },
+  { "name": "Cave centipede", "params": { "kind": "centipede", "palette": "cave" } },
+  { "name": "Skittish (fast, high steps)", "params": { "stride": 0.22, "lift": 0.24, "turnRate": 540 } },
+  { "name": "Pixel render", "params": { "render": "pixel" } }
+ ],
+ "assets": [
+  "module/ik-creatures.js: the element as one dependency-free script (global GameDNA_IKCreatures): kinds, gait, IK, body and head, per-pixel renderer (HD and pixel)",
+  "no image, font or audio files"
+ ],
+ "status": "draft",
+ "module": {
+  "file": "module/ik-creatures.js",
+  "global": "GameDNA_IKCreatures",
+  "version": "1.2.2",
+  "docs": "module/README.md"
+ }
+}

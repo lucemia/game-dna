@@ -1,0 +1,56 @@
+{
+ "id": "crafting-recipes",
+ "code": "G-06",
+ "kind": "addon",
+ "name": "Crafting recipes",
+ "family": "crafting",
+ "oneLiner": "A recipe book with discovery and a slot bench over the game's own inventory: learned recipes in colour (a green dot when craftable now, a sparkle when new), unknown ones as dark silhouettes with a hint; pick one and craft it, or put ingredients from the pouch on the bench and try a mix (a matching mix discovers the recipe). Slots show have / need, the result slot previews the result (? for an unknown mix). Crafting takes each ingredient exactly once and gives the result exactly once at the end of a short work bar, re-checking every count (never below 0); a failed try shakes the bench, says why and costs nothing. Recipes are learned by holding their ingredients, by crafting another recipe, by experiment or by the game's own unlock, each with one toast that slides in at a free spot and stays put. The window opens beside the player and never over the HUD; text never under 10 CSS px. Crisp bitmap text and pixel icons on native pixel canvases, smooth text and shaded icons on HD canvases (or the game's own icon sheet and painted frames).",
+ "fits": [
+  "top-down action RPGs and adventures with loot",
+  "survival and crafting games",
+  "farming and life sims (kitchen, workshop, alchemy table)",
+  "dungeon crawlers and roguelites with a camp or forge",
+  "turn-based RPGs with a town menu"
+ ],
+ "notFor": [
+  "grid-shaped crafting where the position of each ingredient matters (this bench matches the set of ingredients and counts, not their layout)",
+  "games without items (nothing to combine)",
+  "real-time crafting while the world keeps running (the window pauses the world)"
+ ],
+ "interfaces": {
+  "time": "any",
+  "coords": "screen",
+  "layer": "ui",
+  "needs": [
+   "the game's item record: count(id), take(id, n), give(id, n) (or a plain {id: count} object); where ingredients are given",
+   "recipe data: output, inputs with counts, how each is learned (known, have:a,b, crafted:recipe, experiment, manual)",
+   "the screen rect, the canvas (CSS size, so text stays >= 10 CSS px), avoid() = player / bench / NPC screen rects, uiRects() = HUD boxes",
+   "a fixed update step (also the ?t= fast-forward), a key or bench that opens it (update logic), keys and pointer while it is open"
+  ],
+  "provides": [
+   "onCraft(info) after the take / give (the game reacts: heal, equip, light), onUnlock, onFail, onOpen, onClose",
+   "busy() while open (pause the world), rect() / rects() for other overlays' UI rects",
+   "state(), events(), stats(), hash(), layout(), lastDrawn() for checks; save() / load() of learned recipes"
+  ]
+ },
+ "params": [
+  {"key": "slots", "label": "Bench slots", "type": "select", "options": [2, 3, 4], "default": 3},
+  {"key": "craftMs", "label": "Work bar (ms)", "type": "range", "min": 0, "max": 2000, "step": 50, "default": 650},
+  {"key": "theme", "label": "Look", "type": "select", "options": ["forge", "parchment"], "default": "forge"},
+  {"key": "toasts", "label": "Unlock toasts", "type": "select", "options": ["on", "off"], "default": "on"},
+  {"key": "title", "label": "Window title", "type": "text", "default": "Workbench"},
+  {"key": "keyHints", "label": "Key hints", "type": "select", "options": ["on", "off"], "default": "on"},
+  {"key": "render", "label": "Render", "type": "select", "options": ["auto", "crisp", "smooth"], "default": "auto"}
+ ],
+ "variants": [
+  {"name": "Workbench (default)", "params": {"slots": 3, "craftMs": 650, "theme": "forge"}},
+  {"name": "Alchemy table", "params": {"slots": 4, "craftMs": 1100, "theme": "parchment", "title": "Alchemy Table"}},
+  {"name": "Field kit (instant)", "params": {"slots": 2, "craftMs": 0, "title": "Field Kit"}}
+ ],
+ "assets": [
+  "module/crafting-recipes.js: the element as one dependency-free script (global GameDNA_CraftingRecipes): recipe rules and discovery, exactly-once crafting, book / bench / pouch window, toasts, placement clear of the HUD and the player, smooth and crisp drawing with built-in bitmap fonts and 40 shaded icons",
+  "optional: the game's own icon sheet and frames (the demo's HD look reuses elements/painted-ui/assets/kit/icons.webp, frame-window.webp, slot.webp, frame-small.webp)"
+ ],
+ "status": "draft",
+ "module": {"file": "module/crafting-recipes.js", "global": "GameDNA_CraftingRecipes", "version": "1.3.0", "docs": "module/README.md"}
+}

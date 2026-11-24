@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Branching Run Map</title>
+<style>
+:root { --bg: #0a0c14; --panel: #131725; --panel2: #1a1f30; --line: #2a3048; --text: #eee8d8; --dim: #98a0b8; --accent: #ffd36b; --ok: #86e6b8; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1100px 560px at 26% -14%, #262c4c 0%, var(--bg) 62%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 16px 20px 10px; max-width: 1380px; margin: 0 auto; }
+.code { white-space: nowrap; font: 700 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #1d1206; background: linear-gradient(#ffe7a8, var(--accent)); padding: 6px 8px; border-radius: 6px; }
+h1 { font-size: 18px; margin: 0; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; max-width: 940px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; padding: 0 20px 20px; max-width: 1380px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; }
+.frame { position: relative; border-radius: 14px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px #343b58, 0 24px 60px #00000090; }
+.frame canvas { display: block; width: 100%; height: auto; touch-action: none; }
+.frame canvas.px { image-rendering: pixelated; image-rendering: crisp-edges; }
+.pad { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: center; }
+.key { appearance: none; border: 1px solid #39405c; background: linear-gradient(#232a3e, #181c2b); color: var(--text); border-radius: 9px; padding: 9px 13px; font: 600 13px/1 inherit; cursor: pointer; min-width: 44px; box-shadow: 0 3px 0 #0b0d14; }
+.key:active { transform: translateY(2px); box-shadow: 0 1px 0 #0b0d14; }
+.key b { color: var(--accent); }
+.key.go { background: linear-gradient(#ffe7a8, var(--accent)); color: #241400; border-color: #ffd36b; }
+.key.go b { color: #7a4200; }
+.pad .sp { flex: 1; }
+.card { background: linear-gradient(var(--panel2), var(--panel)); border: 1px solid var(--line); border-radius: 12px; padding: 12px; min-width: 0; margin-top: 14px; }
+aside { background: linear-gradient(var(--panel2), var(--panel)); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+section { border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+section:last-of-type { border-bottom: 0; padding-bottom: 0; }
+h2 { display: flex; justify-content: space-between; margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.row { margin-bottom: 8px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 3px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+select { width: 100%; background: #0e1018; color: var(--text); border: 1px solid var(--line); border-radius: 7px; padding: 6px; font: inherit; font-size: 12.5px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.note { color: var(--dim); font-size: 11.5px; margin: 6px 0 0; }
+#log { font: 11.5px/1.55 ui-monospace, Menlo, monospace; color: var(--dim); min-height: 90px; max-height: 170px; overflow: auto; }
+#log div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#log b { color: var(--text); font-weight: 600; }
+label.chk { display: flex; gap: 8px; align-items: center; font-size: 12.5px; }
+@media (max-width: 1080px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 700px; width: 100%; margin: 0 auto; } }
+@media (max-width: 640px) { header { padding: 12px 16px 8px; } main { padding: 0 16px 16px; gap: 12px; } .frame { border-radius: 10px; } .key { padding: 9px 10px; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">G-08</span>
+  <div><h1>Branching run map</h1><p>A seeded roguelite route: floors of battle, elite, event, shop and rest nodes join on the way up to a boss, with paths that never cross. Pick the next node with arrows, mouse or touch; the token travels, the game plays that node (here a stand-in fight), and the map comes back one floor higher with your route drawn in gold. Shop, rest and event nodes run as small panels whose choices are the game's own callbacks.</p></div>
+</header>
+<main>
+  <div id="stage">
+    <div class="frame"><canvas id="cv" width="640" height="360"></canvas></div>
+    <div class="pad">
+      <button class="key" data-a="left">&larr;</button><button class="key" data-a="right">&rarr;</button>
+      <button class="key" data-a="up">&uarr;</button><button class="key" data-a="down">&darr;</button>
+      <button class="key go" data-a="confirm"><b>Z</b> go / take</button><button class="key" data-a="back"><b>X</b> leave</button>
+      <span class="sp"></span>
+      <button class="key" id="newrun">New run <b>N</b></button>
+    </div>
+    <div class="card"><h2>Game log <span id="status">demo</span></h2><div id="log"></div></div>
+  </div>
+  <aside>
+    <section>
+      <h2>Map shape</h2>
+      <div class="row"><label>Seed <output id="o-seed"></output></label><input type="range" id="seed" min="1" max="999" step="1"></div>
+      <div class="two">
+        <div class="row"><label>Floors <output id="o-floors"></output></label><input type="range" id="floors" min="3" max="14" step="1"></div>
+        <div class="row"><label>Width <output id="o-width"></output></label><input type="range" id="width" min="3" max="7" step="1"></div>
+      </div>
+      <div class="two">
+        <div class="row"><label>Paths <output id="o-paths"></output></label><input type="range" id="paths" min="2" max="6" step="1"></div>
+        <div class="row"><label>Elites from floor <output id="o-eliteFrom"></output></label><input type="range" id="eliteFrom" min="1" max="8" step="1"></div>
+      </div>
+    </section>
+    <section>
+      <h2>Node weights</h2>
+      <div class="two">
+        <div class="row"><label>Battle <output id="o-wBattle"></output></label><input type="range" id="wBattle" min="0" max="100" step="1"></div>
+        <div class="row"><label>Elite <output id="o-wElite"></output></label><input type="range" id="wElite" min="0" max="100" step="1"></div>
+        <div class="row"><label>Event <output id="o-wEvent"></output></label><input type="range" id="wEvent" min="0" max="100" step="1"></div>
+        <div class="row"><label>Shop <output id="o-wShop"></output></label><input type="range" id="wShop" min="0" max="100" step="1"></div>
+        <div class="row"><label>Rest <output id="o-wRest"></output></label><input type="range" id="wRest" min="0" max="100" step="1"></div>
+        <div class="row"><label>Rest before boss</label><select id="restBefore"><option>on</option><option>off</option></select></div>
+      </div>
+    </section>
+    <section>
+      <h2>Look &amp; play</h2>
+      <div class="two">
+        <div class="row"><label>Look</label><select id="look"><option>auto</option><option>hd</option><option>pixel</option></select></div>
+        <div class="row"><label>Autoplay route</label><select id="autoRoute"><option>balanced</option><option>safe</option><option>bold</option><option>first</option></select></div>
+      </div>
+      <label class="chk"><input type="checkbox" id="auto"> Autoplay (the map picks by itself)</label>
+      <p class="note">Changing the shape starts a new run with the same seed: the same seed always gives the same map.</p>
+    </section>
+  </aside>
+</main>
+<script src="../../../skins/skin-api.js"></script>
+<script src="../../../skins/pixel16.js"></script>
+<script src="../module/run-map.js"></script>
+<script src="../../../demo-kit/kit-art.js"></script>
+<script src="../../cutout-characters/module/cutout-characters.js"></script>
+<script src="../../cutout-characters/assets/pack.js"></script>
+<script src="../../../demo-kit/kit.js"></script>
+<script>
+"use strict";
+(() => {
+  const qs = new URLSearchParams(location.search);
+  const T = qs.has("t") ? Math.max(0, +qs.get("t") || 0) : null, FREEZE = qs.get("freeze") === "1";
+  let AUTO = qs.get("auto") === "1" || (T !== null && qs.get("auto") !== "0");
+  const D = GameDNA_RunMap.defaults;
+  const SHAPE = ["seed", "floors", "width", "paths", "eliteFrom", "wBattle", "wElite", "wEvent", "wShop", "wRest"];
+  const prm = { look: qs.get("look") || "auto", autoRoute: qs.get("autoRoute") || "balanced", restBefore: qs.get("restBefore") || "on" };
+  SHAPE.forEach(k => { prm[k] = qs.has(k) ? +qs.get(k) : D[k]; });
+  const cv = document.getElementById("cv"), g = cv.getContext("2d");
+  let VW = 640, VH = 360;
+  function sizeCanvas() {
+    const px = prm.look === "pixel";
+    VW = px ? 256 : 640; VH = px ? 224 : 360;
+    const k = px ? 1 : Math.min(2, Math.max(1, Math.round(window.devicePixelRatio || 1)));
+    cv.width = VW * k; cv.height = VH * k; cv.dataset.k = k; cv.classList.toggle("px", px);
+  }
+  sizeCanvas();
+  const rnd = s => { let a = s >>> 0; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
+
+  // ---------------------------------------------------------------- the stand-in game
+  const H = { hp: 60, maxHp: 60, atk: 6, def: 0, coins: 10 };
+  let fight = null, scene = "map", wins = 0, t = 0, pops = [];
+  const logEl = document.getElementById("log");
+  function log(s) { const d = document.createElement("div"); d.innerHTML = s; logEl.prepend(d); while (logEl.children.length > 40) logEl.lastChild.remove(); }
+  const FOES = { battle: { hp: 16, dmg: [3, 5], coins: 6, cast: ["slime", "imp", "wolf", "skeleton"] }, elite: { hp: 34, dmg: [5, 8], coins: 14, cast: ["harpy", "cultist"] }, boss: { hp: 62, dmg: [5, 7], coins: 0, cast: ["golem"] } };
+  const NAMES = { slime: "Moss Slime", imp: "Bramble Imp", wolf: "Dusk Wolf", skeleton: "Bone Archer", harpy: "Gale Harpy", cultist: "Ash Cultist", golem: "Summit Warden" };
+  // the painted cast and places (shared demo kit): every stop of the run has its own backdrop and company
+  const KIT = GameDNA_DemoKit, FRAME = 1000 / 60, HERO_H = 92, GROUND = 0.82, HOME_X = 0.085, FIGHT_X = 0.41, SIDE_X = 0.915, WALK = 220, LEAD = { hero: 7, foe: 11 };
+  const PLACES = { start: { bg: "meadow-dusk" }, battle: { bg: "meadow-dusk" }, elite: { bg: "ruins-night" }, boss: { bg: "ruins-night" },
+    shop: { bg: "market-night", npc: "keeper" }, event: { bg: "meadow-dusk", npc: "herbalist" }, rest: { bg: "ruins-night", prop: "campfire" } };
+  const heroAct = KIT.actor("sword", { h: HERO_H }), NPCS = { keeper: KIT.actor("keeper", { h: HERO_H }), herbalist: KIT.actor("herbalist", { h: HERO_H }) };
+  const FOE_F = -1, NPC_F = -1;   // foes and the shopkeeper / herbalist stand right of the hero and look left at him: the one facing their update / draw calls read (__state reports it)
+  let hx = 0, heroMode = "", place = "start", prevPlace = "start", placeT = 1;
+  function setPlace(p) { if (p === place) return; prevPlace = place; place = p; placeT = 0; }
+  const heal = n => { const b = H.hp; H.hp = Math.min(H.maxHp, H.hp + n); return H.hp - b; };
+  const run = GameDNA_RunMap.create({
+    view: () => ({ w: VW, h: VH }), skin: "pixel16",
+    params: prm,
+    uiRects: () => [{ x: 0, y: 0, w: VW, h: Math.round(VH * 30 / 360) }],
+    autoplay: () => AUTO,
+    hpFrac: () => H.hp / H.maxHp, getGold: () => H.coins, spendGold: n => { H.coins -= n; },
+    onEnter: node => {
+      log("<b>enter</b> floor " + node.floor + " " + node.label);
+      setPlace(PLACES[node.type] ? node.type : "battle");
+      if (node.type === "battle" || node.type === "elite" || node.type === "boss") {
+        const F = FOES[node.type], k = 1 + node.tier * 0.8, r = rnd(node.seed + 17);
+        const kid = F.cast[Math.floor(rnd(node.seed + 91)() * F.cast.length)], u = VH / 360;
+        fight = { type: node.type, foe: F, kid, name: NAMES[kid], act: KIT.actor(kid, { h: HERO_H * KIT.rel(kid) * u }), hp: Math.round(F.hp * (node.type === "boss" ? 1 : k)), max: 0, t: 0, turn: 0, r, k };
+        fight.max = fight.hp; scene = "fight";
+      }
+    },
+    nodes: {
+      rest: { choices: [
+        { label: "Sleep", text: "Recover 40% of max HP", apply: () => "Recovered " + heal(Math.round(H.maxHp * 0.4)) + " HP." },
+        { label: "Sharpen", text: "Attack +2 for the rest of the run", apply: () => { H.atk += 2; return "Attack is now " + H.atk + "."; } } ] },
+      shop: { choices: [
+        { label: "Healing Draught", text: "Recover 25 HP", cost: 8, priority: () => H.hp < H.maxHp * 0.5 ? 3 : -1, apply: () => "Recovered " + heal(25) + " HP." },
+        { label: "Whetstone", text: "Attack +2", cost: 12, priority: 2, apply: () => { H.atk += 2; return "Attack is now " + H.atk + "."; } },
+        { label: "Oak Buckler", text: "-1 damage per hit", cost: 15, priority: 1, apply: () => { H.def += 1; return "Defense is now " + H.def + "."; } } ] },
+      event: { pool: [
+        { title: "Wishing Well", text: "Moss-green water glitters with old coins.", choices: [
+          { label: "Toss 5 coins", text: "Max HP +8", cost: 5, apply: () => { H.maxHp += 8; H.hp += 8; return "You feel sturdier. Max HP " + H.maxHp + "."; } },
+          { label: "Walk on", text: "Nothing happens", apply: () => "You leave the well behind." } ] },
+        { title: "Lost Peddler", text: "A peddler with a broken cart waves you over.", choices: [
+          { label: "Fix the wheel", text: "Lose 6 HP, gain 14 coins", apply: () => { H.hp = Math.max(1, H.hp - 6); H.coins += 14; return "He pays you 14 coins."; } },
+          { label: "Share a meal", text: "Recover 10 HP", apply: () => "Recovered " + heal(10) + " HP." } ] },
+        { title: "Lantern Shrine", text: "A row of lanterns burns without oil. One is unlit.", choices: [
+          { label: "Light it", text: "Attack +1, lose 4 HP", apply: () => { H.atk += 1; H.hp = Math.max(1, H.hp - 4); return "The flame leans toward your blade."; } },
+          { label: "Take the offering", text: "Gain 9 coins", apply: () => { H.coins += 9; return "You pocket 9 coins."; } } ] } ] }
+    },
+    onChoice: (c, node) => log("<b>" + node.label + "</b>: " + c.label),
+    onRunEnd: r => { scene = r.won ? "won" : "lost"; log("<b>run " + (r.won ? "won" : "lost") + "</b> on floor " + r.floor); }
+  });
+  function newRun() { Object.assign(H, { hp: 60, maxHp: 60, atk: 6, def: 0, coins: 10 }); fight = null; scene = "map"; pops = []; place = prevPlace = "start"; placeT = 1; hx = VW * HOME_X; heroMode = ""; heroAct.reset(); run.setParams(prm); run.start(); log("<b>new run</b> seed " + prm.seed); }
+
+  const foeX = f => VW * FIGHT_X + Math.max(98 * (VH / 360), 54 * (VH / 360) + f.act.box(0, 0).w / 2);
+  function stepFight() {
+    const f = fight, u = VH / 360; f.t++;
+    if (!f.done) {   // start the swing a few frames early so its impact lands on the frame the damage is dealt
+      const m = f.t % 34, heroTurn = f.turn % 2 === 0, lead = heroTurn ? LEAD.hero : LEAD.foe;
+      if (m === 34 - lead && f.t + lead >= 40) { if (heroTurn) heroAct.play("slash", { dur: 560 }); else f.act.play("attack", { dur: 460 }); }
+    }
+    if (f.t < 40 || f.t % 34 !== 0 || f.done) { if (f.done && f.t > f.done + 50) { const won = f.hp <= 0; fight = null; scene = "map"; if (won) { H.coins += f.foe.coins; if (f.type === "elite") H.atk += 1; } run.finish({ won }); } return; }
+    const gy = VH * GROUND, fx = foeX(f);
+    if (f.turn++ % 2 === 0) { const d = H.atk + Math.floor(f.r() * 3); f.hp = Math.max(0, f.hp - d); const b = f.act.box(fx, gy); pops.push({ x: fx, y: b.y - 40 * u, v: d, t: 0, c: "#fff3c4" }); if (f.hp <= 0) f.done = f.t; f.act.play(f.hp <= 0 ? "down" : "hurt"); }
+    else { const [a, b] = f.foe.dmg, d = Math.max(1, Math.round((a + Math.floor(f.r() * (b - a + 1))) * (f.type === "boss" ? 1 : f.k)) - H.def); H.hp = Math.max(0, H.hp - d); pops.push({ x: hx, y: gy - (HERO_H + 12) * u, v: d, t: 0, c: "#ff8a7a" }); if (H.hp <= 0) { f.done = f.t; heroMode = "down"; heroAct.play("down"); } else heroAct.play("hurt"); }
+  }
+  // the cast lives in the fixed step (also while the map is open), so a frozen frame equals live play
+  function stepCast() {
+    const u = VH / 360, target = fight ? VW * FIGHT_X : scene === "map" ? VW * HOME_X : hx, d = target - hx, sp = WALK * u / 60;
+    let mode = heroMode;
+    if (heroMode !== "down") {
+      if (Math.abs(d) > 0.5) { hx += Math.max(-sp, Math.min(sp, d)); mode = d > 0 ? "walkR" : "walkL"; }
+      else { hx = target; mode = scene === "won" ? "cheer" : "idle"; }
+      if (mode !== heroMode) { heroMode = mode; if (mode === "cheer") heroAct.loop("cheer"); else heroAct.walk(mode === "walkR" ? WALK * u : mode === "walkL" ? -WALK * u : 0); }
+    }
+    heroAct.update(FRAME, { h: HERO_H * u, facing: heroMode === "walkL" ? -1 : 1 });
+    if (fight) fight.act.update(FRAME, { facing: FOE_F });
+    for (const id in NPCS) NPCS[id].update(FRAME, { facing: NPC_F, h: HERO_H * KIT.rel(id) * u });
+    if (placeT < 1) placeT = Math.min(1, placeT + 1 / 26);
+  }
+  function step() {
+    t++; stepCast();
+    if (run.busy()) { run.update(FRAME); return; }
+    if (scene === "fight" && fight) stepFight();
+    pops.forEach(p => p.t++); pops = pops.filter(p => p.t < 50);
+    run.update(FRAME);
+  }
+
+  // ---------------------------------------------------------------- drawing the stand-in world
+  function drawPlace(id, a) {
+    const P = PLACES[id] || PLACES.start, u = VH / 360, gy = VH * GROUND, x = VW * SIDE_X;
+    g.save(); g.globalAlpha = a; KIT.backdrop(g, P.bg, { x: 0, y: 0, w: VW, h: VH, groundY: gy }); g.restore();
+    if (P.npc) NPCS[P.npc].draw(g, x, gy, { facing: NPC_F, alpha: a });
+    if (P.prop) { const h = HERO_H * KIT.rel(P.prop) * u; KIT.sprite(g, P.prop, x, gy + 4 * u, { h, alpha: a }); g.save(); g.globalAlpha = a; KIT.flame(g, x, gy - h * 0.55, 70 * u, t * FRAME); g.restore(); }
+  }
+  function rrect(x, y, w, h, r) { g.beginPath(); if (g.roundRect) g.roundRect(x, y, w, h, r); else g.rect(x, y, w, h); }
+  function draw() {
+    const k = +cv.dataset.k; g.setTransform(k, 0, 0, k, 0, 0);
+    const u = VH / 360, W = VW, Hh = VH, gy = Hh * GROUND;
+    g.fillStyle = "#0b0d18"; g.fillRect(0, 0, W, Hh);
+    if (placeT < 1) drawPlace(prevPlace, 1);
+    drawPlace(place, placeT < 1 ? placeT * placeT * (3 - 2 * placeT) : 1);
+    const vg = g.createLinearGradient(0, Hh * 0.55, 0, Hh); vg.addColorStop(0, "rgba(10,8,22,0)"); vg.addColorStop(1, "rgba(10,8,22,0.38)"); g.fillStyle = vg; g.fillRect(0, Hh * 0.55, W, Hh * 0.45);
+    const f = fight;
+    if (f) {
+      const fx = foeX(f), dead = f.hp <= 0 && f.done, al = dead ? Math.max(0, Math.min(1, 1 - (f.t - f.done - 22) / 26)) : 1;
+      f.act.draw(g, fx, gy, { facing: FOE_F, flash: "auto", alpha: al });
+      const b = f.act.box(fx, gy), bw = 84 * u, bh = 6 * u, bx = fx - bw / 2, by = b.y - 16 * u;
+      g.save(); g.globalAlpha = al;
+      g.fillStyle = "rgba(10,10,20,0.82)"; rrect(bx - 2 * u, by - 2 * u, bw + 4 * u, bh + 4 * u, 5 * u); g.fill();
+      g.strokeStyle = "rgba(255,214,140,0.55)"; g.lineWidth = Math.max(1, u); g.stroke();
+      if (f.hp > 0) { const hg = g.createLinearGradient(0, by, 0, by + bh); hg.addColorStop(0, "#ff8a8f"); hg.addColorStop(1, "#e23a5c"); g.fillStyle = hg; rrect(bx, by, Math.max(bh, bw * f.hp / f.max), bh, 3 * u); g.fill(); }
+      g.font = "700 " + (11 * u).toFixed(1) + "px ui-rounded, system-ui, sans-serif"; g.textAlign = "center"; g.textBaseline = "alphabetic"; g.lineJoin = "round"; g.lineWidth = 3.5 * u; g.strokeStyle = "rgba(10,10,20,0.9)";
+      g.strokeText(f.name, fx, by - 7 * u); g.fillStyle = "#f4e6c6"; g.fillText(f.name, fx, by - 7 * u);
+      g.restore();
+    }
+    heroAct.draw(g, hx, gy, { h: HERO_H * u });
+    pops.forEach(p => { const e = Math.min(1, p.t / 7), sc = 1 + 0.45 * (1 - e) * (1 - e), y = p.y - p.t * 0.7 * u; g.save(); g.translate(p.x, y); g.scale(sc, sc); g.font = "800 " + (21 * u).toFixed(1) + "px ui-rounded, system-ui, sans-serif"; g.textAlign = "center"; g.textBaseline = "alphabetic"; g.lineJoin = "round"; g.lineWidth = 5 * u; g.strokeStyle = "#140c1c"; g.globalAlpha = Math.min(1, (50 - p.t) / 15); g.strokeText(p.v, 0, 0); g.fillStyle = p.c; g.fillText(p.v, 0, 0); g.restore(); });
+    hud(u);
+    if (scene === "won" || scene === "lost") {
+      const og = g.createLinearGradient(0, 0, 0, Hh); og.addColorStop(0, "rgba(6,8,14,0.78)"); og.addColorStop(0.5, "rgba(6,8,14,0.5)"); og.addColorStop(1, "rgba(6,8,14,0.1)"); g.fillStyle = og; g.fillRect(0, 0, W, Hh);
+      g.textAlign = "center"; g.textBaseline = "alphabetic"; g.lineJoin = "round"; g.font = "800 " + (30 * u).toFixed(1) + "px ui-rounded, system-ui, sans-serif"; g.lineWidth = 6 * u; g.strokeStyle = "rgba(10,8,18,0.85)"; g.strokeText(scene === "won" ? "The summit is yours" : "The run ends here", W / 2, Hh * 0.36); g.fillStyle = scene === "won" ? "#ffd36b" : "#ff8a7a";
+      g.fillText(scene === "won" ? "The summit is yours" : "The run ends here", W / 2, Hh * 0.36); g.font = "600 " + (13 * u).toFixed(1) + "px ui-rounded, system-ui, sans-serif"; g.fillStyle = "#efe2c4"; g.fillText("Route: " + run.route().length + " nodes  ·  press N for a new run", W / 2, Hh * 0.36 + 26 * u);
+    }
+    run.draw(g);
+  }
+  function hud(u) {
+    const h = Math.round(30 * u); g.fillStyle = "rgba(8,10,18,0.86)"; g.fillRect(0, 0, VW, h); g.fillStyle = "rgba(255,214,140,0.35)"; g.fillRect(0, h - 1, VW, 1);
+    g.textBaseline = "middle"; g.textAlign = "left"; g.font = "700 " + (12 * u).toFixed(1) + "px system-ui, sans-serif";
+    g.fillStyle = "#efe2c4"; g.fillText("HP", 10 * u, h / 2); g.fillStyle = "#2a1820"; g.fillRect(32 * u, h / 2 - 5 * u, 110 * u, 10 * u); g.fillStyle = "#ff5c74"; g.fillRect(32 * u, h / 2 - 5 * u, 110 * u * H.hp / H.maxHp, 10 * u);
+    g.fillStyle = "#efe2c4"; g.fillText(H.hp + "/" + H.maxHp, 150 * u, h / 2);
+    g.fillStyle = "#ffd36b"; g.fillText("● " + H.coins, 222 * u, h / 2); g.fillStyle = "#efe2c4"; g.fillText("ATK " + H.atk + "   DEF " + H.def, 280 * u, h / 2);
+    const st = run.state(); g.textAlign = "right"; g.fillStyle = "rgba(239,226,196,0.7)"; if (VW > 300) g.fillText(scene === "fight" ? "" : "Floor " + st.floor + " / " + st.floors, VW - 10 * u, h / 2);
+  }
+
+  // ---------------------------------------------------------------- input and controls
+  addEventListener("keydown", e => {
+    if (run.key(e.code, true)) { e.preventDefault(); return; }
+    if (e.code === "KeyN") newRun();
+  });
+  addEventListener("keyup", e => run.key(e.code, false));
+  const toNative = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * VW / r.width, (e.clientY - r.top) * VH / r.height]; };
+  cv.addEventListener("pointermove", e => { const [x, y] = toNative(e); run.pointer(x, y, false); cv.style.cursor = run.hitTest(x, y) ? "pointer" : ""; });
+  cv.addEventListener("pointerdown", e => { const [x, y] = toNative(e); run.pointer(x, y, true); });
+  document.querySelectorAll("[data-a]").forEach(b => b.addEventListener("click", () => run.press(b.dataset.a)));
+  document.getElementById("newrun").addEventListener("click", newRun);
+  SHAPE.forEach(k => { const el = document.getElementById(k), out = document.getElementById("o-" + k); el.value = prm[k]; out.textContent = prm[k];
+    el.addEventListener("input", () => { prm[k] = +el.value; out.textContent = el.value; newRun(); }); });
+  ["look", "autoRoute", "restBefore"].forEach(k => { const el = document.getElementById(k); el.value = prm[k]; el.addEventListener("change", () => { prm[k] = el.value; if (k === "look") sizeCanvas(); newRun(); }); });
+  const ac = document.getElementById("auto"); ac.checked = AUTO; ac.addEventListener("change", () => { AUTO = ac.checked; });
+  /* text state for critics and tools/sprites/statecheck.py (view px, feet on the ground line). The hero walks between his map spot (left) and the
+     fight spot: while walking he faces his move direction, standing he faces the foe or the place's NPC. The foe and the NPCs (far right)
+     face him. A place fading out still draws its NPC, so it stays listed until the fade ends. */
+  window.__state = () => { const dir = v => v > 0 ? "right" : "left", u = VH / 360, gy = Math.round(VH * GROUND), f = fight, walking = heroMode === "walkR" || heroMode === "walkL";
+    const npcs = (placeT < 1 ? [prevPlace, place] : [place]).map(p => (PLACES[p] || PLACES.start).npc).filter((n, i, L) => n && L.indexOf(n) === i);
+    const A = [{ id: "hero", x: Math.round(hx), y: gy, facing: dir(heroAct.facing), target: walking ? null : f ? "foe" : npcs.length ? npcs[npcs.length - 1] : null, vx: heroMode === "walkR" ? WALK * u : heroMode === "walkL" ? -WALK * u : 0, asset: "sword" }];
+    if (f) A.push(Object.assign({ id: "foe", x: Math.round(foeX(f)), y: gy, facing: dir(FOE_F), target: "hero", asset: f.kid }, f.hp <= 0 && f.done ? { noFace: "dead (falling / fading out)" } : null));
+    npcs.forEach(n => A.push({ id: n, x: Math.round(VW * SIDE_X), y: gy, facing: dir(NPC_F), target: "hero", asset: n }));
+    return { t: Math.round(t * FRAME), actors: A }; };
+  window.__runMapDemo = () => ({ t, scene, hero: Object.assign({}, H), run: run.state() });
+  window.__runMapInst = run;
+
+  KIT.ready(() => {
+    newRun();
+    if (T !== null) {
+      for (let n = Math.floor(T / FRAME); n > 0; n--) step();
+      draw();
+      if (FREEZE) { window.__frozen = true; document.documentElement.dataset.frozen = "1"; } else requestAnimationFrame(loop);
+    } else { draw(); requestAnimationFrame(loop); }
+  });
+  let acc = 0, prev = null;
+  function loop(now) {
+    if (prev === null) prev = now; acc += Math.min(250, now - prev); prev = now;
+    while (acc >= FRAME) { step(); acc -= FRAME; }
+    draw(); document.getElementById("status").textContent = run.state().phase + " · " + scene;
+    requestAnimationFrame(loop);
+  }
+})();
+</script>
+</body>
+</html>

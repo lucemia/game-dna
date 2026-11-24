@@ -1,0 +1,161 @@
+{
+  "id": "color-grade-lut",
+  "code": "J-06",
+  "name": "Colour grading LUT",
+  "kind": "addon",
+  "family": "colour-grade",
+  "oneLiner": "The whole picture is graded through a 32x32x32 colour lookup table (a 1024x32 strip texture) on the I-08 WebGL post layer. Five original moods are generated in code (dusk, cold night, faded memory, high-contrast combat, toxic swamp), designers can load a .cube file or a PNG strip, and zones or story beats blend between tables over game time with grade.to('night', 1200). A lens pass adds a vignette and deterministic film grain. The HUD stays exactly as drawn (uiMask). Without WebGL, or with ?webgl=0, the game shows as plain 2D.",
+  "fits": [
+    "any browser game drawn on one 2D canvas, pixel or HD",
+    "top-down adventure: one look per zone (village, swamp, cave) and per time of day",
+    "tactics and turn-based battles: a colder enemy phase, a combat look on the battle screen",
+    "story games: flashbacks, nightfall, a boss arena",
+    "side-scrollers and action games: one look per level or area"
+  ],
+  "notFor": [
+    "games already drawn with WebGL or a 3D engine (use their own LUT pass)",
+    "games without the I-08 webgl-post module (it is required and shipped alongside)",
+    "games that must look identical on machines without WebGL (the grade is progressive: no WebGL = no grade)"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "post",
+    "needs": [
+      "I-08 webgl-post.js (GameDNA_Post), loaded first; the game's own I-08 instance is shared when it has one",
+      "the canvas element the game draws on",
+      "render() once per drawn frame on every draw path",
+      "the game's step-counted clock in ms (blends and grain follow it; deterministic ?t=&freeze=1)",
+      "where the player is: zone, phase or scene, to pick a look each step",
+      "optional: HUD and window rects in canvas px (uiRects) so the HUD stays ungraded"
+    ],
+    "provides": [
+      "a colour-grade pass (order 750) and a vignette + film-grain pass (order 860) on the I-08 chain",
+      "to(name, ms): idempotent blends between LUTs over game time; set(name): cut",
+      "six presets generated in code, plus define(name, recipe | .cube text | PNG strip | function)",
+      "the uiMask input (from uiRects) that every J-family pass reads to leave the HUD untouched",
+      "compare(x): before/after split of the same frame"
+    ]
+  },
+  "params": [
+    {
+      "key": "preset",
+      "label": "Look at start",
+      "type": "select",
+      "options": [
+        "neutral",
+        "dusk",
+        "night",
+        "memory",
+        "combat",
+        "toxic"
+      ],
+      "default": "neutral"
+    },
+    {
+      "key": "strength",
+      "label": "LUT strength",
+      "type": "range",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 1
+    },
+    {
+      "key": "blend",
+      "label": "Blend time (ms)",
+      "type": "range",
+      "min": 0,
+      "max": 3000,
+      "step": 50,
+      "default": 900
+    },
+    {
+      "key": "vignette",
+      "label": "Vignette",
+      "type": "range",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.3
+    },
+    {
+      "key": "grain",
+      "label": "Film grain",
+      "type": "range",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.005,
+      "default": 0.035
+    },
+    {
+      "key": "builtin",
+      "label": "I-08 built-in grade",
+      "type": "select",
+      "options": [
+        "replace",
+        "keep"
+      ],
+      "default": "replace"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Moods per zone (default)",
+      "params": {
+        "preset": "neutral",
+        "strength": 1,
+        "blend": 900,
+        "vignette": 0.3,
+        "grain": 0.035
+      }
+    },
+    {
+      "name": "Gentle (half strength)",
+      "params": {
+        "strength": 0.5,
+        "vignette": 0.2,
+        "grain": 0.02
+      }
+    },
+    {
+      "name": "Filmic stack (keep the I-08 grade after the LUT)",
+      "params": {
+        "builtin": "keep",
+        "vignette": 0.35
+      }
+    },
+    {
+      "name": "Clean pixels (no grain, no vignette)",
+      "params": {
+        "vignette": 0,
+        "grain": 0
+      }
+    },
+    {
+      "name": "Hard cuts between beats",
+      "params": {
+        "blend": 0
+      }
+    }
+  ],
+  "assets": [
+    "module/color-grade-lut.js: the element as one dependency-free script (global GameDNA_ColorGrade): recipe-to-LUT generator, .cube / PNG strip / array / function loaders, two-slot blending over game time, LUT and lens-grain shader passes on I-08, uiMask from rects, built-in grade replace/keep",
+    "requires elements/webgl-post/module/webgl-post.js (I-08), shipped next to it in the combo",
+    "no image or audio files: every LUT is generated in code"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/color-grade-lut.js",
+    "global": "GameDNA_ColorGrade",
+    "version": "1.1.0",
+    "docs": "module/README.md",
+    "requires": [
+      "webgl-post"
+    ],
+    "skin": "optional: the vignette fades to the skin's palette.ink when skin-api.js is loaded and a skin is passed"
+  },
+  "requires": [
+    "webgl-post"
+  ]
+}

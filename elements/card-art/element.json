@@ -1,0 +1,142 @@
+{
+  "id": "card-art",
+  "code": "L-07",
+  "kind": "addon",
+  "name": "Card illustrations",
+  "family": "generated-art",
+  "oneLiner": "Painted 2:3 card illustrations generated once and locked to one style (light from the top-left, the subject in the upper safe area, a calm darker lower half, no text), plus a card frame drawn in code that renders title, cost, type line and rules text as live text. drawDraft(ctx, draft) replaces G-07's draft.draw and paints each upgrade card's illustration full-bleed inside G-07's own card (under its chip, name, tags and text, following deal, flip, tilt, dim and fly-out) without changing G-07; drawCard draws framed cards for card-battle hands, shops and rewards.",
+  "fits": [
+    "roguelite and survivor-like action games with a G-07 upgrade draft (level-up, chest, wave clear)",
+    "top-down adventure and side-scrolling platformers with boons at checkpoints or shrines",
+    "deck-builders and card battles (A-10): hands, draw piles, reward picks",
+    "any HD game that shows items, relics or skills as cards"
+  ],
+  "notFor": [
+    "pixel-art styles on a fixed low-resolution canvas (pixel8, pixel16, handheld4): G-07's pixel look keeps its icons",
+    "art generated at runtime (the game only loads files)",
+    "character portraits (use L-02 painted-portraits) or UI frames (L-06 painted-ui)",
+    "card text baked into images (all text stays live, drawn in code)"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "a G-07 upgrade draft (GameDNA_UpgradeDraft) whose draw call can be replaced by drawDraft, or the game's own card drawing for drawCard",
+      "each upgrade's art key: an art field, its id or a tag naming a pack key (blade, fire, frost, storm, guard, heart, speed, gold, magic, luck, poison, light, crit, arrow, regen)",
+      "the game's boot moved into onReady (images loaded before the first step)",
+      "the card image files: the shipped pack, or the designer's own set made with prompt.md"
+    ],
+    "provides": [
+      "each G-07 HD card face painted with its illustration, G-07's text and motion unchanged",
+      "drawCard: a code-drawn 2:3 card (brass frame, cost gem, title plate, type line, rules text that fits, rarity colours, selected / dim / face-down)",
+      "drawArt and drawBack for shop slots, tooltips and draw piles",
+      "assets.json manifest with prompt, GEN.md, model, effort, date, safe area and sha256 of every shipped file",
+      "tools/cardset.py: crop to 2:3, resize, export; card-set check (ratio, calm lower part, subject in the safe area, edges, light from the left, one exposure)"
+    ]
+  },
+  "params": [
+    {
+      "key": "shade",
+      "label": "Shade under G-07's text",
+      "type": "range",
+      "min": 0.5,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.9
+    },
+    {
+      "key": "focusY",
+      "label": "Subject centre in the art (fraction of height)",
+      "type": "range",
+      "min": 0.15,
+      "max": 0.45,
+      "step": 0.01,
+      "default": 0.28
+    },
+    {
+      "key": "textMin",
+      "label": "Smallest rules text in drawCard (card units)",
+      "type": "range",
+      "min": 4,
+      "max": 7,
+      "step": 0.2,
+      "default": 5.2
+    },
+    {
+      "key": "sheen",
+      "label": "Sheen on rare and better",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    }
+  ],
+  "promptParams": [
+    {
+      "key": "cards",
+      "default": "one per upgrade in the game's G-07 table (at most 12; upgrades that do the same thing may share one)"
+    },
+    {
+      "key": "style",
+      "default": "modern hand-painted 2D card illustration"
+    },
+    {
+      "key": "light",
+      "default": "TOP-LEFT"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Full-bleed draft cards",
+      "params": {
+        "shade": 0.9
+      }
+    },
+    {
+      "name": "Lighter shade (bright art shows more)",
+      "params": {
+        "shade": 0.75
+      }
+    },
+    {
+      "name": "Quiet frames",
+      "params": {
+        "sheen": "off"
+      }
+    }
+  ],
+  "assets": [
+    "module/card-art.js: the element as one dependency-free script (global GameDNA_CardArt): loads the illustrations, the G-07 bridge (drawDraft), the card frame renderer (drawCard, drawBack, drawArt), art lookup by art field / id / tag / synonym",
+    "assets/assets.json: manifest of 15 generated cards (360x540 WebP) in three backdrop families (ruin arch, cliff above the clouds, forest floor) with prompts, GEN.md, meta (model, effort, references by sha256), safe area and sha256 per file",
+    "assets/prompts/: style lock, key and set briefs, templates.md",
+    "tools/cardset.py (crop23, resize, export, card-set check, contact sheet); shared tools/assets (gen.sh, genmeta.py, namecheck.py, assetcheck.py)"
+  ],
+  "assetPack": {
+    "manifest": "assets/assets.json",
+    "generated": true,
+    "tool": "codex image_gen.imagegen (built-in)",
+    "date": "2026-11-17",
+    "budgetBytes": 600000,
+    "styles": "hd (non-pixel skins)",
+    "check": "tools/assets/assetcheck.py assets/assets.json + tools/cardset.py check assets/assets.json",
+    "regenerate": "prompt.md + assets/prompts/templates.md + tools/cardset.py + tools/assets"
+  },
+  "requires": [
+    "upgrade-draft"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/card-art.js",
+    "global": "GameDNA_CardArt",
+    "version": "1.1.0",
+    "docs": "module/README.md"
+  },
+  "related": {
+    "upgrade-draft": "G-07 draws the cards; drawDraft paints the art inside them (G-07 v1.0.0 unchanged)",
+    "art-direction-lock": "L-00's style sheet is passed as a reference in every generation run; the style lock paragraph follows its template",
+    "card-battle": "A-10 can draw its hand with drawCard and the same pack"
+  }
+}

@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Minimap</title>
+<style>
+  :root { --bg: #120d1a; --panel: #1d1628; --line: #3a2c4a; --text: #e9e0f4; --dim: #a597b8; --accent: #ffcc33; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 1180px; margin: 0 auto; padding: 14px 16px 28px; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin-bottom: 10px; }
+  h1 { font-size: 20px; margin: 0; letter-spacing: 0.02em; }
+  header p { margin: 0; color: var(--dim); font-size: 13px; }
+  .tabs { display: flex; gap: 6px; margin: 4px 0 10px; flex-wrap: wrap; }
+  .tabs button, .ctl button, #play { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; font: inherit; cursor: pointer; }
+  .tabs button.on { background: #3b2a52; border-color: #8f6fc0; }
+  .ctl button:hover, .tabs button:hover, #play:hover { border-color: #8f6fc0; }
+  #stage { background: #000; border: 1px solid var(--line); border-radius: 8px; padding: 0; overflow: hidden; display: flex; justify-content: center; }
+  canvas#game { display: block; image-rendering: pixelated; image-rendering: crisp-edges; touch-action: manipulation; }
+  .bar { display: flex; align-items: center; gap: 10px; margin: 10px 0 4px; flex-wrap: wrap; }
+  .bar input[type=range] { flex: 1 1 200px; min-width: 120px; accent-color: #b48cff; }
+  .bar .time { font-variant-numeric: tabular-nums; color: var(--dim); min-width: 64px; }
+  .ctl { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px 14px; margin-top: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+  .ctl label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--dim); }
+  .ctl select, .ctl input[type=range] { font: inherit; background: #120d1a; color: var(--text); border: 1px solid var(--line); border-radius: 5px; padding: 4px; accent-color: #b48cff; }
+  .ctl .row { display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-end; }
+  .keys { color: var(--dim); font-size: 12px; margin-top: 8px; }
+  kbd { background: #2a2038; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; font: 12px ui-monospace, monospace; color: var(--text); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Minimap</h1>
+    <p>Corner map of the level: explored cells, a player arrow that points where the hero faces, goal / enemy / item markers, edge arrows, zoom and a full map. It moves out of the way of the HUD.</p>
+  </header>
+  <div class="tabs" id="tabs">
+    <button data-scene="top">Meadow (top-down)</button>
+    <button data-scene="side">Caverns (side-on)</button>
+  </div>
+  <div id="stage"><canvas id="game" width="384" height="216"></canvas></div>
+  <div class="bar">
+    <button id="play" class="ctlb">Pause</button>
+    <input id="scrub" type="range" min="0" max="30000" step="50" value="0">
+    <span class="time" id="time">0.0 s</span>
+  </div>
+  <div class="ctl">
+    <div class="row"><button id="zout">Zoom &minus;</button><button id="zin">Zoom +</button><button id="fullb">Full map (M)</button></div>
+    <label>Corner <select id="corner"><option value="tr">top right</option><option value="tl">top left</option><option value="br">bottom right</option><option value="bl">bottom left</option></select></label>
+    <label>Fog <select id="fog"><option value="explore">explored only</option><option value="off">off (whole map)</option></select></label>
+    <label>Enemies <select id="enemies"><option value="on">all seen</option><option value="near">only near</option><option value="off">hidden</option></select></label>
+    <label>Shape <select id="shape"><option value="square">square</option><option value="round">round</option></select></label>
+    <label>Theme <select id="theme"><option value="auto">auto</option><option value="atlas">atlas (warm)</option><option value="sonar">sonar (dark)</option></select></label>
+    <label>Size <input id="size" type="range" min="0.15" max="0.4" step="0.01" value="0.28"></label>
+    <label>Quest panel (HUD rect) <select id="panel"><option value="script">scripted</option><option value="on">always</option><option value="off">never</option></select></label>
+  </div>
+  <p class="keys"><kbd>M</kbd> full map &middot; <kbd>Z</kbd> / <kbd>X</kbd> zoom in / out &middot; <kbd>Space</kbd> pause &middot; tap the minimap to open the full map. The hero follows a scripted tour; scrub the timeline to replay it.</p>
+</main>
+<script src="../../../pixel-kit/pixel-scene.js"></script>
+<script src="../module/minimap.js"></script>
+<script>
+/* C-06 minimap demo: drives module/minimap.js on two original pixel levels (pixel-kit scenery, code-drawn actors). */
+(function () {
+  'use strict';
+  var W = 384, H = 216, HUD = 14, T = 16, STEP = 1000 / 60;
+  var Q = new URLSearchParams(location.search);
+  var cv = document.getElementById('game'), g = cv.getContext('2d');
+  g.imageSmoothingEnabled = false;
+
+  /* ---------- tiny 3x5 pixel font ---------- */
+  var F3S = "075557126227261247361216455711574616634757771222875757975716A25755B65656C34443D65556E74647F74644G34553H55755I72227J11152K55655L44447M57755N65555O25552P65644Q25563R65655S34216T72222U55557V55552W55575X55255Y55222Z71247!22202.00002-00700+02720/11244:02020'22000?61202(24442)21112,00024%51245";
+  var FONT = {}; for (var fi = 0; fi + 5 < F3S.length + 1; fi += 6) { var gl = []; for (var fr = 0; fr < 5; fr++) gl.push(parseInt(F3S.charAt(fi + 1 + fr), 32) || 0); FONT[F3S.charAt(fi)] = gl; }
+  function txt(s, x, y, col, sh) {
+    s = String(s).toUpperCase();
+    var draw = function (ox, oy, c) { g.fillStyle = c; var xx = x + ox; for (var i = 0; i < s.length; i++) { var q = FONT[s.charAt(i)]; if (q) for (var r = 0; r < 5; r++) for (var k = 0; k < 3; k++) if (q[r] & (4 >> k)) g.fillRect(xx + k, y + oy + r, 1, 1); xx += 4; } };
+    if (sh) draw(1, 1, sh); draw(0, 0, col);
+  }
+  function txtW(s) { return String(s).length * 4 - 1; }
+
+  /* ---------- code-drawn sprites ---------- */
+  var SLIME = [PXS.strArt(['....oooo....', '..oolllloo..', '.olllgggllo.', '.ollgggggGo.', 'olgwkggwkgGo', 'olgkkggkkgGo', 'oggggggggGGo', 'oGgggggggGGo', '.oGGGGGGGGo.', '..oooooooo..']),
+    PXS.strArt(['............', '....oooo....', '.oollllllo..', 'olllgggglllo', 'olgwkggwkgGo', 'olgkkggkkgGo', 'oggggggggGGo', 'oGGgggggGGGo', '.oGGGGGGGGo.', '..oooooooo..'])];
+  var SLIME_R = [PXS.strArt(['....oooo....', '..oorrrroo..', '.orrrRRRrro.', '.orrRRRRRqo.', 'orRwkRRwkRqo', 'orRkkRRkkRqo', 'oRRRRRRRRqqo', 'oqRRRRRRRqqo', '.oqqqqqqqqo.', '..oooooooo..']),
+    PXS.strArt(['............', '....oooo....', '.oorrrrrro..', 'orrrRRRRrrro', 'orRwkRRwkRqo', 'orRkkRRkkRqo', 'oRRRRRRRRqqo', 'oqqRRRRRqqqo', '.oqqqqqqqqo.', '..oooooooo..'])];
+  var BAT = [PXS.strArt(['o...........o', 'Vo...ooo...oV', 'vVo.oVVVo.oVv', 'vvVoVwVwVoVvv', '.vvVVVVVVVvv.', '..ovVVVVVvo..', '...o.ooo.o...', '.............']),
+    PXS.strArt(['.............', '.....ooo.....', '....oVVVo....', '.oooVwVwVooo.', 'ovvVVVVVVVvvo', 'vVvvoVVVovvVv', 'Vo..o.o.o..oV', 'o...........o'])];
+  var GEM = [PXS.strArt(['..ooo..', '.oaAco.', 'oaaAcco', 'oAaAcAo', '.oAAAo.', '..oAo..', '...o...']), PXS.strArt(['..ooo..', '.owaco.', 'oaaAcco', 'oAaAcAo', '.oAAAo.', '..oAo..', '...o...'])];
+  var CRYSTAL = PXS.strArt(['....o....', '...oao...', '..oaAo.o.', '..oaAooao', '.ooaAoaAo', 'oaoaAoaAo', 'oaAaAoAoo', 'oaAaAAAo.', '.oooooo..']);
+  var RELIC = PXS.strArt(['......oo......', '.....oyyo.....', '....oyuuYo....', '....oyuuYo....', '.....oYYo.....', '......oo......', '....oooooo....', '...oXsssSXo...', '..oXssssSSXo..', '..oxxxxxxxxo..', '.oXssssssSSXo.', '.oXsssssSSSXo.', 'oxxxxxxxxxxxxo', 'oooooooooooooo']);
+
+  /* ---------- scene: Meadow (top-down) ---------- */
+  function meadow() {
+    var C = 48, R = 32, m = [], r, c;
+    for (r = 0; r < R; r++) { m.push([]); for (c = 0; c < C; c++) m[r].push('.'); }
+    var set = function (cc, rr, ch) { if (cc >= 0 && rr >= 0 && cc < C && rr < R) m[rr][cc] = ch; };
+    var rect = function (c0, r0, c1, r1, ch) { for (var y = r0; y <= r1; y++) for (var x = c0; x <= c1; x++) set(x, y, ch); };
+    // lush patches and dry patches for texture
+    for (r = 0; r < R; r++) for (c = 0; c < C; c++) { var n = PXS.noise(c * 16, r * 16, 70, 11); if (n > 0.62) m[r][c] = ','; else if (n < 0.3) m[r][c] = ':'; }
+    // pond, north-west
+    rect(4, 4, 8, 6, 'w'); rect(5, 3, 7, 7, 'w'); set(9, 5, 'w');
+    // river with two bridges
+    var riverX = function (rr) { return 23 + Math.round(1.6 * Math.sin(rr / 4.2)); };
+    for (r = 0; r < R; r++) { var x0 = riverX(r); set(x0, r, 'w'); set(x0 + 1, r, 'w'); }
+    // paths
+    var path = function (pts) { for (var i = 0; i < pts.length - 1; i++) { var a = pts[i], b = pts[i + 1], dx = Math.sign(b[0] - a[0]), dy = Math.sign(b[1] - a[1]), x = a[0], y = a[1]; set(x, y, 'p'); while (x !== b[0] || y !== b[1]) { x += dx; y += dy; set(x, y, 'p'); } } };
+    path([[7, 26], [7, 13], [39, 13], [39, 10]]);
+    path([[39, 13], [39, 25], [43, 25]]);
+    path([[7, 22], [3, 22]]);
+    path([[11, 13], [11, 8]]);
+    // bridges where paths cross the river
+    for (r = 0; r < R; r++) for (c = 20; c < 28; c++) if (m[r][c] === 'w' && ((r === 13))) m[r][c] = 'b';
+    // ruins, north-east: stone walls with a gate on the south side, cobbles inside
+    rect(35, 3, 44, 10, 'c');
+    for (c = 35; c <= 44; c++) { set(c, 3, '#'); if (c !== 39 && c !== 40) set(c, 10, '#'); }
+    for (r = 3; r <= 10; r++) { set(35, r, '#'); set(44, r, '#'); }
+    set(38, 6, '#'); set(41, 6, '#'); set(38, 7, '#');
+    // border forest
+    for (r = 0; r < R; r++) for (c = 0; c < C; c++) {
+      var edge = Math.min(r, c, R - 1 - r, C - 1 - c);
+      if (edge < 2 || (edge < 3 && PXS.hash(c, r, 5) < 0.45)) m[r][c] = PXS.hash(c, r, 9) < 0.2 ? 'P' : 'T';
+    }
+    set(7, 31, 'p'); set(7, 30, 'p'); set(7, 29, 'p');
+    // groves in the east meadow, kept off the route, the ruins and the slimes' meadows
+    var keep = function (cc, rr) {
+      if (m[rr][cc] !== '.' && m[rr][cc] !== ',' && m[rr][cc] !== ':') return true;
+      for (var dy = -1; dy <= 1; dy++) for (var dx = -1; dx <= 1; dx++) { var q = (m[rr + dy] || [])[cc + dx]; if (q === 'p' || q === 'c' || q === '#' || q === 'b') return true; }
+      if (cc >= 27 && cc <= 37 && rr >= 15 && rr <= 23) return true;
+      if (cc >= 41 && cc <= 45 && rr >= 13 && rr <= 22) return true;
+      if (cc >= 29 && cc <= 33 && rr >= 4 && rr <= 9) return true;
+      return false;
+    };
+    for (r = 3; r < R - 3; r++) for (c = 26; c < C - 3; c++) if (!keep(c, r)) { var nn = PXS.noise(c * 16, r * 16, 40, 23); if (nn > 0.66) m[r][c] = PXS.hash(c, r, 3) < 0.25 ? 't' : 'T'; else if (PXS.hash(c, r, 31) < 0.03) m[r][c] = 'R'; else if (PXS.hash(c, r, 37) < 0.04) m[r][c] = 'F'; }
+    for (r = 3; r < R - 3; r++) for (c = 12; c < 21; c++) if (!keep(c, r) && !(c >= 12 && r >= 16 && r <= 27)) { var n2 = PXS.noise(c * 16, r * 16, 36, 41); if (n2 > 0.7) m[r][c] = 'T'; else if (PXS.hash(c, r, 43) < 0.05) m[r][c] = 'u'; }
+    for (r = 16; r < 28; r++) for (c = 12; c < 21; c++) if (!keep(c, r) && PXS.hash(c, r, 47) < 0.05) m[r][c] = 'F';
+    // farm plots by the village
+    rect(9, 27, 12, 28, 'f');
+    var houses = [{ x: 4 * T, y: 19 * T + 6, o: { roof: 'red' } }, { x: 12 * T, y: 19 * T + 6, o: { roof: 'blue', wall: 'stone' } }, { x: 4 * T, y: 27 * T + 4, o: { roof: 'thatch', wall: 'timber', w: 40 } }, { x: 12 * T + 8, y: 24 * T + 2, o: { roof: 'slate', w: 40, lit: true } }];
+    var props = houses.map(function (h) { return { k: 'house', x: h.x, y: h.y, o: h.o }; }).concat([
+      { k: 'well', x: 9 * T, y: 22 * T + 4 }, { k: 'sign', x: 8 * T + 10, y: 14 * T + 12 }, { k: 'lantern', x: 6 * T + 4, y: 17 * T }, { k: 'crate', x: 2 * T + 8, y: 23 * T + 10 },
+      { k: 'barrel', x: 14 * T + 6, y: 21 * T + 4 }, { k: 'fence', x: 9 * T, y: 26 * T + 12, o: { len: 64 } }, { k: 'hay', x: 3 * T, y: 25 * T + 12 },
+      { k: 'statue', x: 37 * T + 8, y: 5 * T + 12 }, { k: 'pillar', x: 42 * T + 8, y: 8 * T + 14 }, { k: 'torch', x: 36 * T + 8, y: 9 * T + 12 }, { k: 'torch', x: 43 * T + 8, y: 9 * T + 12 },
+      { k: 'tent', x: 42 * T + 8, y: 28 * T }, { k: 'campfire', x: 39 * T + 8, y: 27 * T + 6 }, { k: 'log', x: 37 * T + 8, y: 27 * T + 8 }]);
+    var rows = m.map(function (rw) { return rw.join(''); });
+    var sc = PXS.scene({ seed: 17, map: rows, props: props });
+    // building footprints for the minimap
+    var bld = {};
+    houses.forEach(function (h) { var w = (h.o.w || 48) - 4, hh = 26, c0 = Math.floor((h.x - w / 2) / T), c1 = Math.floor((h.x + w / 2 - 1) / T), r0 = Math.floor((h.y - hh) / T), r1 = Math.floor((h.y - 1) / T); for (var yy = r0; yy <= r1; yy++) for (var xx = c0; xx <= c1; xx++) bld[xx + ',' + yy] = 1; });
+    var KIND = { w: 'water', b: 'bridge', p: 'path', c: 'path', '#': 'wall', R: 'wall', M: 'wall', T: 'tree', t: 'tree', P: 'tree', f: 'sand' };
+    var ROOF = { red: '#b04a3c', blue: '#3c64b0', thatch: '#c09a46', slate: '#62607a' };
+    houses.forEach(function (h) { var w = (h.o.w || 48) - 4, hh = 26, c0 = Math.floor((h.x - w / 2) / T), c1 = Math.floor((h.x + w / 2 - 1) / T), r0 = Math.floor((h.y - hh) / T), r1 = Math.floor((h.y - 1) / T); for (var yy = r0; yy <= r1; yy++) for (var xx = c0; xx <= c1; xx++) bld[xx + ',' + yy] = ROOF[h.o.roof || 'red']; });
+    function cellAt(cc, rr) { if (bld[cc + ',' + rr]) return { kind: 'building', color: bld[cc + ',' + rr] }; return KIND[rows[rr].charAt(cc)] || 'grass'; }
+    var pois = [{ id: 'well', x: 9 * T, y: 22 * T }, { id: 'signpost', x: 8 * T + 10, y: 14 * T + 8 }, { id: 'statue', x: 37 * T + 8, y: 5 * T + 6 }, { id: 'campfire', x: 39 * T + 8, y: 27 * T + 2 }, { id: 'pond', x: 6 * T + 8, y: 5 * T + 8 }];
+    // the scripted route (tile centres), walked at a fixed speed
+    var route = [[7.5, 23.5], [7.5, 13.5], [16, 13.5], [23.5, 13.5], [33, 13.5], [39.5, 13.5], [39.5, 9], [39.5, 7.3], [39.5, 9.5], [39.5, 12], [41, 15], [43, 18], [41.5, 21], [39.5, 25.5], [42.5, 25.5]];
+    var slimes = [
+      { id: 'slime-1', x: 30, y: 18, ax: 2.2, ay: 1.2, w: 0.7, ph: 0, red: false }, { id: 'slime-2', x: 34, y: 21, ax: 1.6, ay: 1.4, w: 0.55, ph: 2, red: false },
+      { id: 'slime-3', x: 31, y: 6.5, ax: 1.4, ay: 1.2, w: 0.8, ph: 1, red: true }, { id: 'slime-4', x: 43, y: 17, ax: 1.0, ay: 2.6, w: 0.5, ph: 4, red: false },
+      { id: 'slime-5', x: 17, y: 6, ax: 1.6, ay: 1.0, w: 0.6, ph: 3, red: false }];
+    var gems = [[16, 9], [29, 25], [45, 11], [3, 9], [19, 20]].map(function (p, i) { return { id: 'gem-' + (i + 1), x: p[0] * T + 8, y: p[1] * T + 10 }; });
+    var npcs = [{ id: 'elder', pal: 'elder', x: 9 * T + 8, y: 23 * T + 12 }, { id: 'merchant', pal: 'merchant', x: 5 * T + 8, y: 22 * T + 12 }];
+    return { kind: 'top', cols: C, rows: R, rows_: rows, sc: sc, cellAt: cellAt, pois: pois, route: route, slimes: slimes, gems: gems, npcs: npcs, speed: 46,
+      goal: { id: 'shrine', x: 39.5 * T + 8 - 8, y: 5 * T + 12, label: 'Old shrine' }, exit: { id: 'camp', x: 42 * T + 8, y: 27 * T + 12 }, length: 0 };
+  }
+
+  /* ---------- scene: Caverns (side-on) ---------- */
+  function caverns() {
+    var C = 96, R = 30, m = [], r, c;
+    for (r = 0; r < R; r++) { m.push([]); for (c = 0; c < C; c++) m[r].push('#'); }
+    var carve = function (c0, r0, c1, r1, ch) { for (var y = r0; y <= r1; y++) for (var x = c0; x <= c1; x++) if (x >= 0 && y >= 0 && x < C && y < R) m[y][x] = ch || '.'; };
+    carve(4, 0, 8, 3);            // daylight shaft
+    carve(2, 3, 20, 10);          // entrance hall (floor row 11)
+    carve(20, 7, 34, 10);         // corridor
+    carve(34, 4, 56, 16);         // great cavern (floor row 17)
+    carve(40, 13, 45, 13, '=');   // ledge
+    carve(48, 10, 52, 10, '=');   // high ledge
+    carve(56, 6, 62, 9);          // passage to the loft
+    carve(62, 3, 90, 9);          // upper loft (floor row 10), never visited by the tour
+    carve(52, 17, 55, 21);        // shaft down
+    carve(28, 22, 70, 26);        // lower hall (floor row 27)
+    carve(70, 23, 73, 26);        // low corridor
+    carve(73, 17, 92, 26);        // relic chamber
+    carve(78, 22, 82, 22, '=');
+    // stalactite teeth and bumps for shape
+    [[12, 3], [16, 3], [38, 4], [46, 4], [47, 4], [66, 3], [80, 3], [36, 22], [50, 22], [64, 22], [84, 17], [76, 17]].forEach(function (p) { m[p[1]][p[0]] = '#'; });
+    [[11, 10], [30, 26], [31, 26], [86, 26]].forEach(function (p) { m[p[1]][p[0]] = '#'; });
+    var rows = m.map(function (rw) { return rw.join(''); });
+    var solid = function (cc, rr) { if (cc < 0 || cc >= C) return true; if (rr < 0) return false; if (rr >= R) return true; var ch = rows[rr].charAt(cc); return ch === '#' || ch === '='; };
+    function cellAt(cc, rr) { var ch = rows[rr].charAt(cc); return ch === '#' ? 'wall' : ch === '=' ? 'wall' : rr < 3 && cc >= 4 && cc <= 8 ? 'empty' : 'empty'; }
+    // the tour: walk / jump / fall keyframes (feet positions in px)
+    var F11 = 11 * T, F17 = 17 * T, F27 = 27 * T;
+    var tour = [
+      { t: 'walk', a: [6 * T, F11], b: [10.5 * T, F11] }, { t: 'jump', a: [10.5 * T, F11], b: [12.5 * T, F11], h: 22 }, { t: 'walk', a: [12.5 * T, F11], b: [33.6 * T, F11] },
+      { t: 'fall', a: [33.6 * T, F11], b: [35.5 * T, F17] }, { t: 'walk', a: [35.5 * T, F17], b: [39 * T, F17] }, { t: 'jump', a: [39 * T, F17], b: [41.5 * T, 13 * T], h: 30 },
+      { t: 'walk', a: [41.5 * T, 13 * T], b: [45.6 * T, 13 * T] }, { t: 'fall', a: [45.6 * T, 13 * T], b: [47 * T, F17] }, { t: 'walk', a: [47 * T, F17], b: [53.5 * T, F17] },
+      { t: 'fall', a: [53.5 * T, F17], b: [53.5 * T, F27] }, { t: 'walk', a: [53.5 * T, F27], b: [45 * T, F27] }, { t: 'walk', a: [45 * T, F27], b: [69.5 * T, F27] },
+      { t: 'walk', a: [69.5 * T, F27], b: [86 * T, F27] }];
+    var bats = [{ id: 'bat-1', x: 44 * T, y: 8 * T, ax: 50, ay: 14, w: 0.5, ph: 0 }, { id: 'bat-2', x: 60 * T, y: 24 * T, ax: 70, ay: 10, w: 0.42, ph: 1.5 }, { id: 'bat-3', x: 82 * T, y: 20 * T, ax: 40, ay: 12, w: 0.6, ph: 3 }, { id: 'bat-4', x: 74 * T, y: 6 * T, ax: 60, ay: 8, w: 0.5, ph: 2 }];
+    var slimes = [{ id: 'slime-1', x: 40 * T, y: F27, ax: 40, w: 0.35, ph: 0 }, { id: 'slime-2', x: 80 * T, y: 22 * T, ax: 24, w: 0.5, ph: 1 }, { id: 'slime-3', x: 76 * T, y: 10 * T, ax: 40, w: 0.6, ph: 2 }];
+    var gems = [[43, 13], [50, 10], [75, 10], [84, 10], [33, 27], [61, 27], [80, 22]].map(function (p, i) { return { id: 'crystal-' + (i + 1), x: p[0] * T + 8, y: p[1] * T }; });
+    var npcs = [{ id: 'miner', pal: 'guard', x: 31 * T, y: F27 }];
+    return { kind: 'side', cols: C, rows: R, rows_: rows, solid: solid, cellAt: cellAt, pois: [{ id: 'torch-hall', x: 2 * T + 12, y: 10 * T }, { id: 'torch-chamber', x: 75 * T, y: 26 * T }], tour: tour, bats: bats, slimes: slimes, gems: gems, npcs: npcs, speed: 58,
+      goal: { id: 'relic', x: 89 * T, y: F27 }, exit: { id: 'shaft', x: 6 * T + 8, y: 2 * T } };
+  }
+
+  /* ---------- side-on level art, baked once ---------- */
+  function bakeCaves(L) {
+    var c = document.createElement('canvas'); c.width = L.cols * T; c.height = L.rows * T;
+    var x = c.getContext('2d'), id = x.createImageData(c.width, c.height), d = id.data, Wd = c.width;
+    var ROCK = ['#1a1220', '#251a2c', '#31233a', '#3d2d47', '#4c3a58', '#5e4a6a'], MOSS = ['#1f4a3a', '#2e6a4a', '#4a9058', '#7cbc6a'], RIM = '#6e5a7c';
+    var rgbH = function (h) { var n = parseInt(h.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; };
+    var RK = ROCK.map(rgbH), MS = MOSS.map(rgbH), RM = rgbH(RIM);
+    for (var py = 0; py < c.height; py++) for (var px = 0; px < Wd; px++) {
+      var cc = px >> 4, rr = py >> 4, q = (py * Wd + px) * 4, col;
+      if (!L.solid(cc, rr)) { d[q + 3] = 0; continue; }
+      var lx = px & 15, ly = py & 15, up = !L.solid(cc, rr - 1), dn = !L.solid(cc, rr + 1), lf = !L.solid(cc - 1, rr), rt = !L.solid(cc + 1, rr);
+      var n = PXS.noise(px, py, 9, 3), n2 = PXS.noise(px, py, 4, 8), band = Math.floor((py + PXS.noise(px, 0, 30, 5) * 10) / 7) % 2;
+      var k = 2 + (n > 0.62 ? 1 : 0) - (n < 0.3 ? 1 : 0) + (band && n2 > 0.55 ? 1 : 0);
+      // depth from the nearest open face: darker inside the rock
+      var dist = 99; if (up) dist = Math.min(dist, ly); if (dn) dist = Math.min(dist, 15 - ly); if (lf) dist = Math.min(dist, lx); if (rt) dist = Math.min(dist, 15 - lx);
+      if (dist > 8) k -= 1;
+      col = RK[Math.max(0, Math.min(5, k))];
+      if (up && ly < 4) { var lip = 2 + (PXS.hash(px >> 1, rr, 2) > 0.5 ? 1 : 0); if (ly === 0) col = MS[3]; else if (ly < lip) col = MS[2]; else if (ly < lip + 1) col = MS[1]; }
+      else if (up && ly < 6) col = RK[4];
+      else if ((lf && lx === 0) || (rt && lx === 15)) col = RM;
+      else if ((lf && lx === 1) || (rt && lx === 14)) col = RK[4];
+      if (dn && ly === 15) col = RK[0];
+      if (dn && ly >= 13 && PXS.hash(px, rr, 4) > 0.8) col = RK[1];
+      d[q] = col[0]; d[q + 1] = col[1]; d[q + 2] = col[2]; d[q + 3] = 255;
+    }
+    x.putImageData(id, 0, 0);
+    // hanging drips under ceilings, small stalagmites
+    for (var cx = 0; cx < L.cols; cx++) for (var cy = 0; cy < L.rows - 1; cy++) {
+      if (L.solid(cx, cy) && !L.solid(cx, cy + 1) && PXS.hash(cx, cy, 61) < 0.35) { var len = 3 + Math.floor(PXS.hash(cx, cy, 63) * 6), sx = cx * T + 3 + Math.floor(PXS.hash(cx, cy, 65) * 10); x.fillStyle = '#31233a'; x.fillRect(sx, (cy + 1) * T, 3, len); x.fillRect(sx + 1, (cy + 1) * T + len, 1, 2); x.fillStyle = '#4c3a58'; x.fillRect(sx, (cy + 1) * T, 1, len - 1); }
+    }
+    return c;
+  }
+  function caveBack() {   // far layer: dark gradient + distant rock columns (parallax)
+    var c = document.createElement('canvas'); c.width = 512; c.height = 256; var x = c.getContext('2d');
+    var gr = x.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, '#120c1c'); gr.addColorStop(1, '#0a0812'); x.fillStyle = gr; x.fillRect(0, 0, 512, 256);
+    for (var i = 0; i < 14; i++) { var px = Math.floor(PXS.hash(i, 1, 71) * 512), w = 18 + Math.floor(PXS.hash(i, 2, 71) * 30); x.fillStyle = i % 2 ? '#171021' : '#1b1327'; for (var y = 0; y < 256; y++) { var ww = w + Math.round(Math.sin(y / 17 + i) * 4); x.fillRect(px - ww / 2, y, ww, 1); } }
+    for (var j = 0; j < 60; j++) { x.fillStyle = 'rgba(160,140,220,' + (0.08 + PXS.hash(j, 5, 3) * 0.12).toFixed(2) + ')'; x.fillRect(Math.floor(PXS.hash(j, 3, 3) * 512), Math.floor(PXS.hash(j, 4, 3) * 256), 1, 1); }
+    return c;
+  }
+
+  /* ---------- timeline (everything is a pure function of time, except what the minimap has explored) ---------- */
+  function routeLen(pts) { var s = 0; for (var i = 1; i < pts.length; i++) s += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); return s; }
+  function topHero(L, tms) {
+    var lead = 1200, d = Math.max(0, (tms - lead) / 1000 * L.speed / T), pts = L.route, i, seg = null;
+    for (i = 1; i < pts.length; i++) { var sl = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); if (d <= sl) { seg = [pts[i - 1], pts[i], d / sl]; break; } d -= sl; }
+    // pauses: at the shrine (index 7) the hero stops for a moment; handled by time warping below
+    if (!seg) { var e = pts[pts.length - 1], p2 = pts[pts.length - 2]; return { x: e[0] * T, y: e[1] * T, vx: 0, vy: 0, moving: false, dx: e[0] - p2[0], dy: e[1] - p2[1] }; }
+    var a = seg[0], b = seg[1], k = seg[2];
+    return { x: (a[0] + (b[0] - a[0]) * k) * T, y: (a[1] + (b[1] - a[1]) * k) * T, dx: b[0] - a[0], dy: b[1] - a[1], moving: tms > lead, vx: (b[0] - a[0]), vy: (b[1] - a[1]) };
+  }
+  function sideHero(L, tms) {
+    var lead = 900, s = Math.max(0, tms - lead) / 1000, i;
+    for (i = 0; i < L.tour.length; i++) {
+      var k = L.tour[i], dur = k.t === 'walk' ? Math.abs(k.b[0] - k.a[0]) / L.speed : k.t === 'jump' ? 0.62 : Math.max(0.3, Math.sqrt(2 * Math.abs(k.b[1] - k.a[1]) / 520) + 0.05);
+      if (s <= dur) {
+        var u = s / dur, x = k.a[0] + (k.b[0] - k.a[0]) * u, y, air = false;
+        if (k.t === 'walk') y = k.a[1];
+        else if (k.t === 'jump') { y = k.a[1] + (k.b[1] - k.a[1]) * u - k.h * 4 * u * (1 - u) - Math.max(0, k.a[1] - k.b[1]) * 0.6 * Math.sin(u * Math.PI); air = true; }
+        else { var uu = u * u; y = k.a[1] + (k.b[1] - k.a[1]) * uu; x = k.a[0] + (k.b[0] - k.a[0]) * Math.min(1, u * 1.6); air = true; }
+        return { x: x, y: y, vx: k.b[0] - k.a[0], air: air, moving: tms > lead };
+      }
+      s -= dur;
+    }
+    var e = L.tour[L.tour.length - 1]; return { x: e.b[0], y: e.b[1], vx: 0, air: false, moving: false, end: true };
+  }
+  function tourLen(L) { var s = 0; L.tour.forEach(function (k) { s += k.t === 'walk' ? Math.abs(k.b[0] - k.a[0]) / L.speed : k.t === 'jump' ? 0.62 : Math.max(0.3, Math.sqrt(2 * Math.abs(k.b[1] - k.a[1]) / 520) + 0.05); }); return s * 1000 + 900; }
+
+  /* ---------- the running game ---------- */
+  var SCENE = Q.get('scene') === 'side' ? 'side' : 'top', L = null, MM = null, clock = 0, hero = null, lastFace = 'right', taken = {}, durMs = 0, levelArt = null, back = null;
+  var opts = { corner: Q.get('corner') || 'tr', fog: Q.get('fog') || 'explore', enemies: Q.get('enemies') || 'on', shape: Q.get('shape') || 'square', theme: Q.get('theme') || 'auto',
+    size: +(Q.get('size') || 0.28), panel: Q.get('panel') || 'script' };
+  var manual = { zoom: null, full: null };   // user overrides of the scripted zoom / full map
+  var SCRIPT = { top: { zoom: [[0, 1], [24500, 0]], full: [[16200, 19600]], panel: [[19800, 23800]] },
+    side: { zoom: [[0, 1], [17000, 0]], full: [[21500, 25000]], panel: [[13000, 17000]] } };
+  function scriptAt(list, t) { var v = list[0][1]; list.forEach(function (e) { if (t >= e[0]) v = e[1]; }); return v; }
+  function inRanges(list, t) { return list.some(function (e) { return t >= e[0] && t < e[1]; }); }
+
+  function camera() {
+    var vw = W, vh = H - HUD, mw = L.cols * T, mh = L.rows * T;
+    var cx = Math.round(Math.max(0, Math.min(mw - vw, hero.x - vw / 2))), cy = Math.round(Math.max(0, Math.min(mh - vh, hero.y - (L.kind === 'side' ? vh * 0.66 : 6 + vh / 2))));
+    return { x: cx, y: cy, w: vw, h: vh };
+  }
+  function panelOn() { return opts.panel === 'on' || (opts.panel === 'script' && inRanges(SCRIPT[SCENE].panel, clock)); }
+  function panelRect() { return { x: W - 132, y: HUD + 4, w: 128, h: 30 }; }
+  function safeRects() { var s = [{ x: 0, y: 0, w: W, h: HUD }]; if (panelOn()) s.push(panelRect()); return s; }
+  function enemiesNow() {
+    var s = clock / 1000;
+    if (L.kind === 'top') return L.slimes.map(function (q) { return { id: q.id, x: (q.x + q.ax * Math.sin(s * q.w + q.ph)) * T + 8, y: (q.y + q.ay * Math.sin(s * q.w * 1.3 + q.ph * 1.7)) * T + 10, red: q.red, anim: Math.floor(clock / 260 + q.ph * 3) % 2 }; });
+    var out = L.bats.map(function (q) { return { id: q.id, bat: true, x: q.x + q.ax * Math.sin(s * q.w + q.ph), y: q.y + q.ay * Math.sin(s * q.w * 2.3 + q.ph), anim: Math.floor(clock / 130 + q.ph * 5) % 2 }; });
+    return out.concat(L.slimes.map(function (q) { return { id: q.id, x: q.x + q.ax * Math.sin(s * q.w + q.ph), y: q.y, anim: Math.floor(clock / 260 + q.ph * 3) % 2 }; }));
+  }
+  function markers() {
+    // the goal follows the quest: shrine (top) / relic (side) first, then the camp / the way out
+    var done = clock >= L.goalT;
+    var out = [{ id: L.goal.id, kind: done ? 'poi' : 'goal', x: L.goal.x, y: L.goal.y - 6 }, { id: L.exit.id, kind: done ? 'goal' : 'door', x: L.exit.x, y: L.exit.y - 4 }];
+    (L.pois || []).forEach(function (q) { out.push({ id: q.id, kind: 'poi', x: q.x, y: q.y }); });
+    L.npcs.forEach(function (n) { out.push({ id: n.id, kind: 'npc', x: n.x, y: n.y - 6 }); });
+    L.gems.forEach(function (q) { if (!taken[q.id]) out.push({ id: q.id, kind: 'item', x: q.x, y: q.y - 4 }); });
+    enemiesNow().forEach(function (e) { out.push({ id: e.id, kind: 'enemy', x: e.x, y: e.y - 5 }); });
+    return out;
+  }
+  var phone = false;
+  function sizeNow() { return phone ? Math.max(opts.size, 0.34) : opts.size; }
+  function heroRect() {   // the hero's sprite on screen: the minimap fades only when it really sits on it
+    var cam = camera(); return [{ x: hero.x - cam.x - 7, y: hero.y - cam.y + HUD - 17, w: 14, h: 18 }];
+  }
+  function heroAngle() {
+    if (L.kind === 'side') return { facing: lastFace };
+    return { angle: Math.atan2(hero.dy || 0, hero.dx || 0.0001) };
+  }
+  function build() {
+    L = SCENE === 'side' ? caverns() : meadow();
+    levelArt = SCENE === 'side' ? bakeCaves(L) : null; back = SCENE === 'side' ? caveBack() : null;
+    durMs = SCENE === 'side' ? tourLen(L) + 6000 : 1200 + routeLen(L.route) * T / L.speed * 1000 + 5000;
+    L.goalT = SCENE === 'side' ? tourLen(L) + 300 : 1200 + routeLen(L.route.slice(0, 8)) * T / L.speed * 1000 + 300;
+    document.getElementById('scrub').max = String(Math.ceil(durMs / 50) * 50);
+    MM = GameDNA_Minimap.create({
+      cols: L.cols, rows: L.rows, tile: T, cellAt: L.cellAt,
+      view: { x: 0, y: HUD, w: W, h: H - HUD }, safeRects: safeRects,
+      player: function () { var a = heroAngle(); return { x: hero.x, y: hero.y - (L.kind === 'side' ? 8 : 6), facing: a.facing, angle: a.angle }; },
+      camera: camera, markers: markers, obstacles: heroRect,
+      params: { mode: SCENE === 'side' ? 'side' : 'topdown', corner: opts.corner, fog: opts.fog, enemies: opts.enemies, shape: opts.shape, theme: opts.theme, size: sizeNow(), markSize: phone ? 1.5 : 1, reveal: SCENE === 'side' ? 4 : 5 }
+    });
+  }
+  function simTo(tms) {
+    clock = 0; taken = {}; lastFace = 'right'; MM.reset(); stepHero();
+    var n = Math.floor(tms / STEP); for (var i = 0; i < n; i++) step();
+  }
+  function stepHero() {
+    if (L.kind === 'top') { var h = topHero(L, clock); hero = h; if (h.moving) { if (Math.abs(h.dx) >= Math.abs(h.dy)) lastFace = h.dx > 0 ? 'right' : 'left'; else lastFace = h.dy > 0 ? 'down' : 'up'; } }
+    else { var s = sideHero(L, clock); hero = s; if (s.vx) lastFace = s.vx > 0 ? 'right' : 'left'; }
+    L.gems.forEach(function (q) { if (!taken[q.id] && Math.abs(q.x - hero.x) < 10 && Math.abs(q.y - hero.y) < 14) taken[q.id] = clock; });
+  }
+  function step() {
+    clock += STEP; stepHero();
+    if (manual.zoom == null) MM.setZoom(scriptAt(SCRIPT[SCENE].zoom, clock));
+    if (manual.full == null) MM.setFull(inRanges(SCRIPT[SCENE].full, clock));
+    MM.update(STEP);
+  }
+
+  /* ---------- drawing ---------- */
+  function heart(x, y, full) { var P = full ? ['#e8404a', '#ff8a8a', '#a8283a'] : ['#4a3a4e', '#5c4a60', '#2e2234']; g.fillStyle = '#160e1c'; g.fillRect(x + 1, y, 2, 1); g.fillRect(x + 4, y, 2, 1); g.fillRect(x, y + 1, 7, 3); g.fillRect(x + 1, y + 4, 5, 1); g.fillRect(x + 2, y + 5, 3, 1); g.fillRect(x + 3, y + 6, 1, 1);
+    g.fillStyle = P[0]; g.fillRect(x + 1, y + 1, 2, 2); g.fillRect(x + 4, y + 1, 2, 2); g.fillRect(x + 1, y + 3, 5, 1); g.fillRect(x + 2, y + 4, 3, 1); g.fillRect(x + 3, y + 5, 1, 1); g.fillStyle = P[1]; g.fillRect(x + 1, y + 1, 1, 1); g.fillStyle = P[2]; g.fillRect(x + 5, y + 2, 1, 2); }
+  function drawHud() {
+    g.fillStyle = '#1a1222'; g.fillRect(0, 0, W, HUD); g.fillStyle = '#3a2c4a'; g.fillRect(0, HUD - 1, W, 1); g.fillStyle = '#0c0812'; g.fillRect(0, HUD, W, 1);
+    for (var i = 0; i < 4; i++) heart(4 + i * 9, 3, i < 3);
+    g.drawImage(GEM[0], 46, 3); var got = Object.keys(taken).length; txt('x' + got, 55, 5, '#e9e0f4', '#000');
+    var q = L.kind === 'top' ? (clock < L.goalT ? 'Find the old shrine' : 'Return to the camp') : (clock < L.goalT ? 'Reach the relic chamber' : 'Climb back out');
+    txt(q, W - 4 - txtW(q), 5, '#ffe9a8', '#000'); g.fillStyle = '#ffcc33'; g.fillRect(W - 10 - txtW(q), 6, 3, 3);
+    if (panelOn()) {
+      var p = panelRect(); g.fillStyle = '#0c0812'; g.fillRect(p.x - 1, p.y - 1, p.w + 2, p.h + 2); g.fillStyle = '#251a32'; g.fillRect(p.x, p.y, p.w, p.h); g.fillStyle = '#4a3a62'; g.fillRect(p.x, p.y, p.w, 1); g.fillStyle = '#ffcc33'; g.fillRect(p.x, p.y + 1, 2, p.h - 1);
+      txt(L.kind === 'top' ? 'Quest updated' : 'Map fragment', p.x + 7, p.y + 5, '#ffcc33', '#000'); txt(L.kind === 'top' ? 'Bring the charm to camp' : 'Lower hall charted', p.x + 7, p.y + 15, '#e9e0f4', '#000');
+      g.fillStyle = '#ffcc33'; g.fillRect(p.x + 7, p.y + 23, Math.round((p.w - 14) * Math.min(1, (clock % 4000) / 4000 + 0.4)), 1);
+    }
+  }
+  function drawTop(cam) {
+    var ox = -cam.x, oy = HUD - cam.y, ex = [];
+    g.save(); g.beginPath(); g.rect(0, HUD, W, H - HUD); g.clip();
+    // the goal shrine glow + chest
+    ex.push({ y: L.goal.y, draw: function (gg) { PXS.drawProp(gg, 'chest', L.goal.x + ox, L.goal.y + oy, {}, clock); } });
+    L.gems.forEach(function (q) { if (taken[q.id]) return; var bob = Math.round(Math.sin(clock / 300 + q.x) * 1); ex.push({ y: q.y, draw: function (gg) { gg.fillStyle = 'rgba(16,10,30,0.35)'; gg.fillRect(q.x + ox - 2, q.y + oy, 5, 1); gg.drawImage(GEM[Math.floor(clock / 400 + q.x) % 2], Math.round(q.x + ox - 3), Math.round(q.y + oy - 8 + bob)); } }); });
+    enemiesNow().forEach(function (e) { ex.push({ y: e.y, draw: function (gg) { gg.fillStyle = 'rgba(16,10,30,0.35)'; gg.fillRect(Math.round(e.x + ox) - 5, Math.round(e.y + oy), 10, 1); gg.drawImage((e.red ? SLIME_R : SLIME)[e.anim], Math.round(e.x + ox - 6), Math.round(e.y + oy - 10)); } }); });
+    L.npcs.forEach(function (n) { var face = Math.abs(hero.x - n.x) > Math.abs(hero.y - n.y) ? (hero.x > n.x ? 'right' : 'left') : (hero.y > n.y ? 'down' : 'up'); n.face = face; ex.push({ y: n.y, draw: function (gg) { PXS.actor(gg, n.x + ox, n.y + oy, { pal: n.pal, dir: face, frame: Math.floor(clock / 600) % 2 }); } }); });
+    var hf = lastFace;
+    ex.push({ y: hero.y, draw: function (gg) { PXS.actor(gg, hero.x + ox, hero.y + oy, { pal: 'hero', dir: hf, frame: hero.moving ? Math.floor(clock / 160) % 2 : 0 }); } });
+    L.sc.draw(g, clock, ex, ox, oy);
+    g.restore();
+  }
+  function drawSide(cam) {
+    var ox = -cam.x, oy = HUD - cam.y;
+    g.save(); g.beginPath(); g.rect(0, HUD, W, H - HUD); g.clip();
+    var bx = -Math.round(cam.x * 0.35) % 512; for (var k = bx; k < W; k += 512) g.drawImage(back, k, HUD - Math.round(cam.y * 0.2) % 40 - 20);
+    // daylight shaft
+    var sx = 4 * T + ox, sy = oy; var gr = g.createLinearGradient(0, sy, 0, sy + 11 * T); gr.addColorStop(0, 'rgba(255,240,190,0.35)'); gr.addColorStop(1, 'rgba(255,240,190,0)'); g.fillStyle = gr; g.beginPath(); g.moveTo(sx, sy); g.lineTo(sx + 5 * T, sy); g.lineTo(sx + 7 * T, sy + 11 * T); g.lineTo(sx - 2 * T, sy + 11 * T); g.closePath(); g.fill();
+    g.fillStyle = '#9fd0f0'; g.fillRect(sx, sy, 5 * T, 3 * T); g.fillStyle = '#c8e8ff'; g.fillRect(sx, sy, 5 * T, 12);
+    // crystals glow behind the rock
+    L.gems.forEach(function (q) { if (taken[q.id]) return; var x = q.x + ox, y = q.y + oy; PXS.glow(g, Math.round(x), Math.round(y - 5), 14, '#6fe8ff', 0.6 + 0.2 * Math.sin(clock / 300 + q.x)); });
+    PXS.glow(g, Math.round(L.goal.x + ox), Math.round(L.goal.y + oy - 12), 26, '#ffd070', 0.9);
+    g.drawImage(levelArt, ox, oy);
+    g.drawImage(RELIC, Math.round(L.goal.x + ox - 7), Math.round(L.goal.y + oy - 14));
+    PXS.drawProp(g, 'torch', 75 * T + ox, 27 * T + oy - 2, {}, clock); PXS.drawProp(g, 'torch', 2 * T + 12 + ox, 11 * T + oy - 2, {}, clock);
+    L.gems.forEach(function (q) { if (taken[q.id]) return; g.drawImage(CRYSTAL, Math.round(q.x + ox - 4), Math.round(q.y + oy - 9)); });
+    L.npcs.forEach(function (n) { n.face = hero.x > n.x ? 'right' : 'left'; PXS.actor(g, n.x + ox, n.y + oy, { pal: n.pal, dir: n.face, frame: 0 }); });
+    enemiesNow().forEach(function (e) {
+      if (e.bat) g.drawImage(BAT[e.anim], Math.round(e.x + ox - 6), Math.round(e.y + oy - 4));
+      else { g.fillStyle = 'rgba(8,4,16,0.5)'; g.fillRect(Math.round(e.x + ox) - 5, Math.round(e.y + oy) - 1, 10, 1); g.drawImage(SLIME_R[e.anim], Math.round(e.x + ox - 6), Math.round(e.y + oy - 10)); }
+    });
+    PXS.actor(g, hero.x + ox, hero.y + oy, { pal: 'hero', dir: lastFace, frame: hero.air ? 1 : hero.moving && !hero.end ? Math.floor(clock / 140) % 2 : 0, noShadow: hero.air });
+    // vignette
+    var vg = g.createRadialGradient(W / 2, H / 2 + 10, 60, W / 2, H / 2 + 10, 260); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.45)'); g.fillStyle = vg; g.fillRect(0, HUD, W, H - HUD);
+    g.restore();
+  }
+  var lastRec = null;
+  function render() {
+    g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = false;
+    g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+    var cam = camera();
+    if (L.kind === 'top') drawTop(cam); else drawSide(cam);
+    drawHud();
+    lastRec = MM.draw(g);
+  }
+
+  /* ---------- text state for checks and critics ---------- */
+  window.__state = function () {
+    var cam = camera(), ox = -cam.x, oy = HUD - cam.y, actors = [];
+    var hf = lastFace, side = hf === 'left' || hf === 'right';
+    actors.push(side ? { id: 'hero', x: Math.round(hero.x + ox), y: Math.round(hero.y + oy), facing: hf, vx: hero.moving && !hero.end ? (L.kind === 'side' ? Math.sign(hero.vx) : Math.sign(hero.dx || 0)) * (Math.abs(L.kind === 'side' ? hero.vx : hero.dx) > 0 ? 1 : 0) : 0 }
+      : { id: 'hero', x: Math.round(hero.x + ox), y: Math.round(hero.y + oy), facing: null, noFace: 'top-down ' + hf + ' frame' });
+    L.npcs.forEach(function (n) { var f = n.face || 'down'; actors.push(f === 'left' || f === 'right' ? { id: n.id, x: Math.round(n.x + ox), y: Math.round(n.y + oy), facing: f, target: 'hero' } : { id: n.id, x: Math.round(n.x + ox), y: Math.round(n.y + oy), noFace: 'top-down ' + f + ' frame (looks at the hero)' }); });
+    enemiesNow().forEach(function (e) { actors.push({ id: e.id, x: Math.round(e.x + ox), y: Math.round(e.y + oy), noFace: 'frontal art' }); });
+    var st = MM.state();
+    return { t: Math.round(clock), scene: SCENE, camera: cam, safeRects: safeRects(), actors: actors, minimap: st };
+  };
+  window.__mm = function () { return MM; };
+  window.__minimapCast = { slime: SLIME, 'slime-red': SLIME_R, bat: BAT, hero: { actor: 'hero' }, elder: { actor: 'elder' }, merchant: { actor: 'merchant' }, miner: { actor: 'guard' } };
+
+  /* ---------- UI ---------- */
+  var playing = true, frozen = false;
+  function syncUi() {
+    document.querySelectorAll('#tabs button').forEach(function (b) { b.classList.toggle('on', b.dataset.scene === SCENE); });
+    ['corner', 'fog', 'enemies', 'shape', 'theme', 'panel'].forEach(function (k) { document.getElementById(k).value = opts[k]; });
+    document.getElementById('size').value = opts.size;
+  }
+  function applyParams() { MM.setParams({ corner: opts.corner, fog: opts.fog, enemies: opts.enemies, shape: opts.shape, theme: opts.theme, size: sizeNow(), markSize: phone ? 1.5 : 1 }); }
+  document.querySelectorAll('#tabs button').forEach(function (b) { b.onclick = function () { SCENE = b.dataset.scene; manual = { zoom: null, full: null }; build(); simTo(0); syncUi(); }; });
+  ['corner', 'fog', 'enemies', 'shape', 'theme', 'panel'].forEach(function (k) { document.getElementById(k).onchange = function (e) { opts[k] = e.target.value; applyParams(); }; });
+  document.getElementById('size').oninput = function (e) { opts.size = +e.target.value; applyParams(); };
+  document.getElementById('zin').onclick = function () { MM.zoomIn(); manual.zoom = MM.zoom(); };
+  document.getElementById('zout').onclick = function () { MM.zoomOut(); manual.zoom = MM.zoom(); };
+  document.getElementById('fullb').onclick = function () { MM.toggleFull(); manual.full = MM.isFull(); };
+  document.getElementById('play').onclick = function () { playing = !playing; this.textContent = playing ? 'Pause' : 'Play'; };
+  document.getElementById('scrub').oninput = function (e) { simTo(+e.target.value); render(); };
+  addEventListener('keydown', function (e) {
+    if (e.code === 'KeyM') { MM.toggleFull(); manual.full = MM.isFull(); }
+    else if (e.code === 'KeyZ' || e.code === 'Equal') { MM.zoomIn(); manual.zoom = MM.zoom(); }
+    else if (e.code === 'KeyX' || e.code === 'Minus') { MM.zoomOut(); manual.zoom = MM.zoom(); }
+    else if (e.code === 'Space') { playing = !playing; document.getElementById('play').textContent = playing ? 'Pause' : 'Play'; e.preventDefault(); }
+  });
+  cv.addEventListener('pointerdown', function (e) {
+    var r = cv.getBoundingClientRect(), x = (e.clientX - r.left) * W / r.width, y = (e.clientY - r.top) * H / r.height, h = MM.hit(x, y);
+    if (h) { MM.toggleFull(); manual.full = MM.isFull(); }
+  });
+  function fit() {
+    var avail = Math.min(document.getElementById('stage').clientWidth || W, 1180), dpr = window.devicePixelRatio || 1, k = Math.max(1, Math.floor(avail * dpr / W));
+    if (k < 3) k = avail * dpr / W;   // small screens: fill the width (nearest-neighbour), integer steps from 3x up
+    cv.style.width = (W * k / dpr) + 'px'; cv.style.height = (H * k / dpr) + 'px';
+    var ph = avail < 420; if (ph !== phone) { phone = ph; if (MM) applyParams(); }
+  }
+  addEventListener('resize', fit);
+
+  /* ---------- boot ---------- */
+  build(); syncUi(); fit();
+  var t0 = Q.has('t') ? Math.max(0, +Q.get('t') || 0) : 0;
+  if (Q.has('zoom')) { manual.zoom = +Q.get('zoom'); }
+  if (Q.has('full')) { manual.full = Q.get('full') === '1'; }
+  simTo(t0);
+  if (manual.zoom != null) MM.setZoom(manual.zoom); if (manual.full != null) MM.setFull(manual.full);
+  render();
+  document.getElementById('scrub').value = String(t0); document.getElementById('time').textContent = (clock / 1000).toFixed(1) + ' s';
+  if (Q.get('freeze') === '1') { frozen = true; window.__frozen = true; return; }
+  var acc = 0, prev = null;
+  function loop(now) {
+    if (prev == null) prev = now; var dt = Math.min(250, now - prev); prev = now;
+    if (playing) { acc += dt; while (acc >= STEP) { step(); acc -= STEP; } if (clock > durMs) { simTo(0); } }
+    render(); document.getElementById('time').textContent = (clock / 1000).toFixed(1) + ' s'; if (playing) document.getElementById('scrub').value = String(Math.round(clock / 50) * 50);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

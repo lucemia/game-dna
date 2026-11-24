@@ -1,0 +1,248 @@
+{
+  "id": "motion-inputs",
+  "code": "A-07",
+  "kind": "addon",
+  "name": "Motion-input special moves",
+  "family": "motion-inputs",
+  "oneLiner": "Reads the stick and buttons once per fixed step into a short input buffer and recognises special-move motions written relative to the way the hero faces: quarter circles (236, 214), the forward-down-diagonal (623, with the 3-2-3 shortcut), half circles, charge moves ([4]6: hold back, then forward) and an optional full turn (360), with leniency windows for gaps, late buttons and sloppy diagonals and a busy buffer that fires a special typed during the hero's recovery as soon as he can act. A recognised special calls the game's own attack through a callback and consumes the button so the normal attack does not also start. The notation mirrors when the hero turns. An input display in the game's style (pixel arrows and button coins on pixel games, smooth chips on HD games) lists the last inputs with how long each was held, lights the motion's rows gold, names the special in a callout (or says TOO SLOW), and can show a move list whose arrows mirror; it stays readable on phones (>= 10 CSS px) and keeps clear of the player and the HUD. Keyboard and gamepad (d-pad or stick).",
+  "fits": [
+    "side-view action games, brawlers and platformers that want fighting-game special moves on a few buttons",
+    "one-on-one fighting games and training modes (move list, input display, frame counts)",
+    "action RPGs with spell motions (a quarter circle casts, a charge dashes)",
+    "any fixed-step game that reads directions and at least one attack button"
+  ],
+  "notFor": [
+    "turn-based or menu-driven games (no stick motions to read)",
+    "touch-only games without a virtual stick (no directions)",
+    "games whose update is not fixed-step (the windows are counted in steps)",
+    "top-down games where the hero has no left / right facing (motions need a forward side; pass a fixed facing or use 8-way notation by hand)"
+  ],
+  "interfaces": {
+    "time": "realtime",
+    "coords": "side",
+    "layer": "ui",
+    "needs": [
+      "a fixed update step that reads the device input (left, right, up, down, the attack button fields) and the hero's facing, also run by ?t= fast-forward; mi.step(input) before the game uses it, {fire:false} under an autopilot",
+      "the game's own attack code for each special (projectile, rising hitbox, dash...) started from onSpecial(move, info); canAct() false while the hero cannot start one",
+      "the player's sprite box in view units every step (avoid) and the HUD / window rects (uiRects)",
+      "render: draw(ctx) last, in view units; reset() where a new run starts"
+    ],
+    "provides": [
+      "onSpecial(move, info) with info.facing and info.buffered; the returned input with the special's button consumed",
+      "an input display (history rows with hold counts, gold motion rows, a callout naming the special or TOO SLOW) and an optional mirrored move list",
+      "drive(notation) / frames(notation, facing) scripted motions for tests, demos and judges; pad() and merge() for gamepads",
+      "fired(), stats() (fired per move, buffered, dropped, too-slow attempts, cover counts, smallest text in CSS px), lastDrawn() rects"
+    ]
+  },
+  "params": [
+    {
+      "key": "moves",
+      "label": "Moves (notation + name)",
+      "type": "text",
+      "default": "'623A Rising Slash', '236A Ember Shot', '[4]6A Dash Strike'"
+    },
+    {
+      "key": "stepWindow",
+      "label": "Step window (steps)",
+      "type": "range",
+      "min": 4,
+      "max": 24,
+      "step": 1,
+      "default": 12
+    },
+    {
+      "key": "pressWindow",
+      "label": "Late button (steps)",
+      "type": "range",
+      "min": 0,
+      "max": 16,
+      "step": 1,
+      "default": 8
+    },
+    {
+      "key": "gap",
+      "label": "Gap through neutral (steps)",
+      "type": "range",
+      "min": 0,
+      "max": 8,
+      "step": 1,
+      "default": 4
+    },
+    {
+      "key": "motionWindow",
+      "label": "Whole motion (steps)",
+      "type": "range",
+      "min": 16,
+      "max": 48,
+      "step": 2,
+      "default": 30
+    },
+    {
+      "key": "chargeFrames",
+      "label": "Charge (steps)",
+      "type": "range",
+      "min": 20,
+      "max": 70,
+      "step": 2,
+      "default": 40
+    },
+    {
+      "key": "buffer",
+      "label": "Busy buffer (steps)",
+      "type": "range",
+      "min": 0,
+      "max": 24,
+      "step": 1,
+      "default": 12
+    },
+    {
+      "key": "shortcuts",
+      "label": "Shortcuts (3-2-3, diagonal end)",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "leniency",
+      "label": "Leniency",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "turnWithInput",
+      "label": "Hero turns with left / right (most side-scrollers: on)",
+      "type": "select",
+      "options": [
+        "off",
+        "on"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "display",
+      "label": "Input display",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "callout",
+      "label": "Special callout",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "moveList",
+      "label": "Move list",
+      "type": "select",
+      "options": [
+        "off",
+        "on"
+      ],
+      "default": "off"
+    },
+    {
+      "key": "rows",
+      "label": "Rows",
+      "type": "range",
+      "min": 3,
+      "max": 10,
+      "step": 1,
+      "default": 7
+    },
+    {
+      "key": "side",
+      "label": "Display side",
+      "type": "select",
+      "options": [
+        "left",
+        "right"
+      ],
+      "default": "left"
+    },
+    {
+      "key": "render",
+      "label": "Render",
+      "type": "select",
+      "options": [
+        "auto",
+        "pixel",
+        "smooth"
+      ],
+      "default": "auto"
+    },
+    {
+      "key": "theme",
+      "label": "Theme",
+      "type": "select",
+      "options": [
+        "ember",
+        "steel",
+        "jade"
+      ],
+      "default": "ember"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Classic fighter (default)",
+      "params": {
+        "leniency": "on",
+        "shortcuts": "on",
+        "moveList": "off"
+      }
+    },
+    {
+      "name": "Training mode",
+      "params": {
+        "moveList": "on",
+        "rows": 9
+      }
+    },
+    {
+      "name": "Platformer specials",
+      "params": {
+        "turnWithInput": "on",
+        "rows": 5
+      }
+    },
+    {
+      "name": "Tight (no leniency)",
+      "params": {
+        "leniency": "off"
+      }
+    },
+    {
+      "name": "Clean screen",
+      "params": {
+        "display": "off",
+        "callout": "on"
+      }
+    }
+  ],
+  "assets": [
+    "module/motion-inputs.js: the element as one dependency-free script (global GameDNA_MotionInputs): input history, notation parser, motion / charge / spin / tap recognisers with leniency windows and priority, busy buffer, facing mirror, drive() scripted motions, gamepad reader, input display (5x7 pixel font, pixel arrows and button coins, smooth vector chips), callout, move list, placement clear of the player and HUD",
+    "no image, font or audio files"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/motion-inputs.js",
+    "global": "GameDNA_MotionInputs",
+    "version": "1.0.4",
+    "docs": "module/README.md"
+  }
+}

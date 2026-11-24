@@ -1,0 +1,3 @@
+# generated source PNGs and the Codex console log stay local (sha256 in gen/cast/meta.json and assets.json)
+gen/**/*.png
+gen/**/run.log

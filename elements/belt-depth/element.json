@@ -1,0 +1,158 @@
+{
+  "id": "belt-depth",
+  "code": "K-04",
+  "kind": "addon",
+  "name": "Belt depth (beat-'em-up lanes)",
+  "family": "belt-depth",
+  "oneLiner": "Gives every character in a side-view game a depth z on a walkable floor band, as in classic street brawlers: characters walk left / right and up / down the floor, a jump is drawn as height above the floor while a contact shadow stays on the ground under the feet (narrower and lighter the higher, none over a pit), characters are drawn sorted by their floor contact line (floor + z, never the airborne y) so nearer ones overlap farther ones, and hits or touches connect only between characters within a depth tolerance. Ships the floor band drawing (several palettes, read from the game's tile grid), lane helpers for the player, the autopilot and foes (walk, steer, chase, seeded lanes), and a camera helper that keeps the active band in view. The game keeps its own x / y physics.",
+  "fits": [
+    "side-scrolling brawlers and beat-'em-ups (the genre's own depth model)",
+    "platformers and action games that want a shallow walkable band on the ground (dodging by sidestepping, crowds that overlap correctly)",
+    "side-view arenas, towns and hubs where characters should pass in front of and behind each other"
+  ],
+  "notFor": [
+    "top-down or isometric games (they already have depth)",
+    "pure 2D platformers whose challenge is exact vertical collision on thin ledges (a band thicker than the ledge looks wrong)",
+    "turn-based side-view battles with fixed positions (no free movement in depth)"
+  ],
+  "interfaces": {
+    "time": "realtime",
+    "coords": "side",
+    "layer": "actor",
+    "needs": [
+      "a fixed step where the player's up / down are read (belt.walk) and foes move (belt.chase), also run by ?t= fast-forward; belt.update() once per step",
+      "every damage test (sword, contact, projectiles) extended with belt.inReach(attacker, target)",
+      "the level's floor (a tile grid for gridFloors, or floor runs / floorAt)",
+      "render: belt.drawFloor(ctx) after the tiles; the character draw loop replaced by belt.render(ctx, items)",
+      "spawn / respawn: z on every new character (place, lane)"
+    ],
+    "provides": [
+      "z per character, clamped to the band; inReach(a, b) with the tolerance; walk / steer / chase / lane helpers",
+      "contact shadows on the floor under the feet; depth-sorted drawing with each character shifted by its z",
+      "the floor band (top face) on every floor run, palettes meadow / earth / stone / cobble / planks or custom",
+      "frameY(camY) for vertical cameras; stats(), lastDrawn(), reachLog() for checks and judges"
+    ]
+  },
+  "params": [
+    {
+      "key": "depth",
+      "label": "Band depth (px)",
+      "type": "range",
+      "min": 6,
+      "max": 64,
+      "step": 1,
+      "default": 24
+    },
+    {
+      "key": "tolerance",
+      "label": "Depth tolerance (px)",
+      "type": "range",
+      "min": 2,
+      "max": 20,
+      "step": 1,
+      "default": 6
+    },
+    {
+      "key": "laneSpeed",
+      "label": "Lane speed (px / step)",
+      "type": "range",
+      "min": 0.3,
+      "max": 3,
+      "step": 0.1,
+      "default": 1.2
+    },
+    {
+      "key": "chaseSpeed",
+      "label": "Foe lane speed (px / step)",
+      "type": "range",
+      "min": 0,
+      "max": 2,
+      "step": 0.1,
+      "default": 0.6
+    },
+    {
+      "key": "floor",
+      "label": "Floor palette",
+      "type": "select",
+      "options": [
+        "meadow",
+        "earth",
+        "stone",
+        "cobble",
+        "planks"
+      ],
+      "default": "meadow"
+    },
+    {
+      "key": "shadowAlpha",
+      "label": "Shadow strength",
+      "type": "range",
+      "min": 0.15,
+      "max": 0.8,
+      "step": 0.01,
+      "default": 0.45
+    },
+    {
+      "key": "cue",
+      "label": "Lane cue on attacks",
+      "type": "select",
+      "options": [
+        "off",
+        "on"
+      ],
+      "default": "off"
+    },
+    {
+      "key": "render",
+      "label": "Render",
+      "type": "select",
+      "options": [
+        "auto",
+        "pixel",
+        "smooth"
+      ],
+      "default": "auto"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Street brawler (default)",
+      "params": {
+        "depth": 24,
+        "tolerance": 6
+      }
+    },
+    {
+      "name": "Deep street (wide belt)",
+      "params": {
+        "depth": 48,
+        "tolerance": 8,
+        "floor": "cobble"
+      }
+    },
+    {
+      "name": "Platformer band (shallow)",
+      "params": {
+        "depth": 10,
+        "tolerance": 4
+      }
+    },
+    {
+      "name": "Teaching (lane cue)",
+      "params": {
+        "cue": "on"
+      }
+    }
+  ],
+  "assets": [
+    "module/belt-depth.js: the element as one dependency-free script (global GameDNA_BeltDepth): depth state and helpers, reach test, floor runs from a tile grid, floor band textures drawn in code (pixel and smooth), contact shadows, depth-sorted render, camera band helper, counters for judges",
+    "no image, font or audio files"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/belt-depth.js",
+    "global": "GameDNA_BeltDepth",
+    "version": "1.0.3",
+    "docs": "module/README.md"
+  }
+}

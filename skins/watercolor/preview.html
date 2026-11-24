@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Watercolor Storybook Skin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,600;1,700&family=IM+Fell+English:ital@0;1&family=Playfair+Display:wght@700&display=block" rel="stylesheet">
+<style>
+  :root { --bg: #2a231c; --panel: #f1e6cf; --ink: #3a2a1e; --muted: #c9b89a; --accent: #d9a35a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--muted); }
+  body { padding: 20px 16px 28px; font: 15px/1.5 'Cormorant Garamond', Georgia, serif; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  header { width: 100%; max-width: 1024px; display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 4px 16px; }
+  h1 { margin: 0; font: 400 26px/1.1 'IM Fell English', Georgia, serif; color: #f1e6cf; }
+  .tag { font-style: italic; color: var(--accent); }
+  .stage { width: 100%; max-width: 1024px; }
+  canvas { display: block; width: 100%; height: auto; aspect-ratio: 256 / 224; border-radius: 3px; box-shadow: 0 14px 44px rgba(0,0,0,.55); background: #f1e6cf; }
+  ul { width: 100%; max-width: 1024px; margin: 0; padding: 0 0 0 18px; columns: 2 320px; column-gap: 28px; }
+  li { margin: 0 0 4px; break-inside: avoid; }
+  code { font: 12px/1.4 ui-monospace, Menlo, monospace; color: #e8d9bc; }
+  @media (max-width: 540px) { h1 { font-size: 22px; } body { padding: 14px 16px 20px; } }
+</style>
+</head>
+<body>
+<header><h1>Hand-painted watercolor storybook</h1><span class="tag">skin <code>watercolor</code> · grid range + path arrow · damage numbers · window + pointer</span></header>
+<div class="stage"><canvas id="c" width="1024" height="896"></canvas></div>
+<ul>
+  <li>Range overlays are washes: pale body colour, boundary sides wobble and pool pigment; seams between tiles vanish.</li>
+  <li>The move path is a single brush stroke with dry-brush streaks, ending in a two-flick arrowhead.</li>
+  <li>Damage numbers are inked serif numerals over a wash splash; the crit adds spatter and an italic caps label.</li>
+  <li>Windows are parchment cards with deckled edges, an aged rim and a wobbly ink rule; the pointer is a pen nib.</li>
+  <li>All three modules draw through the skin: <code>grid-range-path</code> (overlays, path), <code>damage-numbers</code> (glyphs, bounce), <code>window-cursor</code> (menu, pointer). <code>?t=1400&amp;freeze=1</code> renders one deterministic moment; without <code>freeze</code> it plays a 4 s loop.</li>
+</ul>
+
+<script src="../skin-api.js"></script>
+<script src="watercolor.js"></script>
+<script src="../../elements/grid-range-path/module/grid-range-path.js"></script>
+<script src="../../elements/damage-numbers/module/damage-numbers.js"></script>
+<script src="../../elements/window-cursor/module/window-cursor.js"></script>
+<script>
+'use strict';
+/* Shared neutral scene (same as skins/gothic/preview.html): 16x14 tactics map at 256x224 native, seed 7.
+   Hero Rowan at (4,8), move 4, range 1-2; foes at (9,6) and (11,9); ally Ilsa at (1,10). Water: column 13, and column 12 below row 8.
+   Blocking props at (6,4) (6,10) (10,3) (2,5); cost-2 thickets at (7,9) (8,9) (5,6). Cursor walks to (8,7).
+   Numbers: MISS on Rowan at 1150 ms, 128 on foe A at 1200, crit 57 on foe B at 1240, +30 on Ilsa at 1300.
+   Menu 'Rowan' (Attack, Spells 12, Items, Wait disabled) at (168, 8) from 300 ms, selected row 0 -> 1 at 900 ms; pointer on foe A.
+   The style owns the look (here: river, standing stones, bramble thickets); the scene owns the place. */
+var Q = new URLSearchParams(location.search), FREEZE = Q.get('freeze') === '1', T0 = Q.has('t') ? +Q.get('t') : 1400;
+var SK = GameDNA_Skin.resolve('watercolor'), B = SK.brush, P = SK.palette;
+var W = 256, H = 224, TS = 16, COLS = 16, ROWS = 14, FRAME = 1000 / 60, LOOP = 4000;
+var cv = document.getElementById('c'), ctx = cv.getContext('2d');
+var WATER = {}, STONE = {}, THICKET = {};
+(function () {
+  for (var y = 0; y < ROWS; y++) { WATER[13 + ',' + y] = 1; if (y > 8) WATER[12 + ',' + y] = 1; }
+  ['6,4', '6,10', '10,3', '2,5'].forEach(function (k) { STONE[k] = 1; });
+  ['7,9', '8,9', '5,6'].forEach(function (k) { THICKET[k] = 1; });
+})();
+var UNITS = [
+  { id: 'rowan', name: 'Rowan', side: 'player', team: 'a', kind: 'knight', x: 4, y: 8, hp: 34, max: 40, move: 4, range: '1-2' },
+  { id: 'ilsa', name: 'Ilsa', side: 'player', team: 'a', kind: 'mage', x: 1, y: 10, hp: 12, max: 26, move: 3 },
+  { id: 'foeA', name: 'Ghoul', side: 'enemy', team: 'b', kind: 'fighter', x: 9, y: 6, hp: 18, max: 30, facing: -1 },
+  { id: 'foeB', name: 'Wraith', side: 'enemy', team: 'b', kind: 'mage', x: 11, y: 9, hp: 22, max: 28, facing: -1 }
+];
+function occ(x, y) { for (var i = 0; i < UNITS.length; i++) if (UNITS[i].x === x && UNITS[i].y === y) return UNITS[i]; return null; }
+function sprRect(u) { return { x: u.x * TS, y: u.y * TS - 8, w: TS, h: TS + 8, id: u.id }; }
+var wet = function (x, y) { return x >= 0 && y >= 0 && x < COLS && y < ROWS && !!WATER[x + ',' + y]; };
+
+/* ---------- the ground: one painted page (cached per backing size) ---------- */
+var groundCache = null, propsCache = null, groundK = 0;
+function paintGround(k) {
+  var c = document.createElement('canvas'); c.width = Math.round(W * k); c.height = Math.round(H * k); var g = c.getContext('2d'); g.setTransform(k, 0, 0, k, 0, 0);
+  var r = B.rng(7), x, y, i;
+  B.paper(g, { x: 0, y: 0, w: W, h: H }, { seed: 7, stains: 8 });
+  B.wash(g, [[-4, -4], [W + 4, -4], [W + 4, H + 4], [-4, H + 4]], '#bcd084', { layers: 6, alpha: 0.075, v: 0.08, seed: 11 });
+  for (i = 0; i < 30; i++) B.wash(g, B.blob(r() * W, r() * H, 10 + r() * 22, 8 + r() * 14, 8, r() * 3), r() < 0.55 ? '#a2c068' : '#dcd28e', { layers: 4, alpha: 0.06, v: 0.6, seed: 100 + i });
+  // a worn footpath across the meadow
+  B.wash(g, [[-4, 118], [60, 112], [120, 120], [180, 110], [196, 116], [120, 128], [60, 122], [-4, 128]], '#d8bf8e', { layers: 5, alpha: 0.09, v: 0.2, seed: 140, gran: 0.25 });
+  // river: pale wash per wet cell bleeding into its neighbours, a deeper current, ink banks, ripples
+  for (y = 0; y < ROWS; y++) for (x = 0; x < COLS; x++) if (wet(x, y)) B.wash(g, [[x * TS - 2.5, y * TS - 2.5], [x * TS + TS + 2.5, y * TS - 2.5], [x * TS + TS + 2.5, y * TS + TS + 2.5], [x * TS - 2.5, y * TS + TS + 2.5]], '#86b6d4', { layers: 5, alpha: 0.12, v: 0.25, seed: 300 + y * 16 + x, gran: 0.25 });
+  for (y = 0; y < ROWS; y++) for (x = 0; x < COLS; x++) if (wet(x, y)) B.wash(g, B.blob(x * TS + 8 + (r() - 0.5) * 3, y * TS + 8, 4.5, 7, 8), '#4f8cbc', { layers: 3, alpha: 0.07, v: 0.6, seed: 500 + y * 16 + x });
+  for (y = 0; y < ROWS; y++) for (x = 0; x < COLS; x++) {
+    if (!wet(x, y)) continue; var X = x * TS, Y = y * TS, o = { w: 0.55, a: 0.6, j: 0.7, seed: 700 + y * 16 + x };
+    if (!wet(x - 1, y) && x > 0) B.ink(g, [[X + 0.6, Y - 0.6], [X + 0.8, Y + TS + 0.6]], o);
+    if (!wet(x + 1, y) && x < COLS - 1) B.ink(g, [[X + TS - 0.6, Y - 0.6], [X + TS - 0.8, Y + TS + 0.6]], o);
+    if (!wet(x, y - 1) && y > 0) B.ink(g, [[X - 0.6, Y + 0.6], [X + TS + 0.6, Y + 0.8]], o);
+    if (!wet(x, y + 1) && y < ROWS - 1) B.ink(g, [[X - 0.6, Y + TS - 0.6], [X + TS + 0.6, Y + TS - 0.8]], o);
+    var rx = X + 3 + r() * 6, ry = Y + 5 + r() * 6; B.ink(g, [[rx, ry], [rx + 2, ry - 1], [rx + 4, ry], [rx + 6, ry - 0.8]], { w: 0.4, a: 0.5, j: 0.2, color: '#2c5d86', twice: false, seed: 900 + x + y * 16 });
+  }
+  // faint pencil grid
+  for (i = 1; i < COLS; i++) B.ink(g, [[i * TS, 0], [i * TS, H]], { w: 0.25, a: 0.1, j: 0.25, twice: false, seed: 1500 + i });
+  for (i = 1; i < ROWS; i++) B.ink(g, [[0, i * TS], [W, i * TS]], { w: 0.25, a: 0.1, j: 0.25, twice: false, seed: 1600 + i });
+  SK.atmosphere(g, { x: 0, y: 0, w: W, h: H }, 0, { phase: 'world' });
+  // thickets (cost 2): low bramble mounds
+  Object.keys(THICKET).forEach(function (k, n) {
+    var p = k.split(',').map(Number), cx = p[0] * TS + 8, cy = p[1] * TS + 9;
+    [[-4, 1.5, 3.4], [3.5, 1, 3.2], [0, -2, 3.6]].forEach(function (b, j) {
+      B.wash(g, B.blob(cx + b[0], cy + b[1], b[2], b[2] * 0.75, 9, j), '#7a9a4c', { layers: 4, alpha: 0.2, v: 0.4, edge: 0.4, seed: 2000 + n * 9 + j, gran: 0.3 });
+      B.ink(g, B.blob(cx + b[0], cy + b[1], b[2] * 1.02, b[2] * 0.78, 11, j).concat([[cx + b[0] + b[2] * 1.02, cy + b[1]]]), { w: 0.4, a: 0.6, j: 0.3, twice: false, seed: 2100 + n * 9 + j });
+    });
+    for (var d = 0; d < 4; d++) { g.fillStyle = 'rgba(168,40,30,0.7)'; g.beginPath(); g.arc(cx - 5 + r() * 10, cy - 3 + r() * 6, 0.55, 0, 7); g.fill(); }   // berries
+  });
+  return c;
+}
+// props that stand up off the page (drawn above the range washes, below the pawns)
+function paintProps(k) {
+  var c = document.createElement('canvas'); c.width = Math.round(W * k); c.height = Math.round(H * k); var g = c.getContext('2d'); g.setTransform(k, 0, 0, k, 0, 0);
+  var r = B.rng(77), i;
+  // standing stones (blocking)
+  Object.keys(STONE).forEach(function (k, n) {
+    var p = k.split(',').map(Number), cx = p[0] * TS + 8, by = p[1] * TS + 14, sd = 2500 + n * 7;
+    g.fillStyle = 'rgba(58,42,30,0.18)'; g.beginPath(); g.ellipse(cx + 1, by, 6.5, 2, 0, 0, 7); g.fill();
+    var st = [[cx - 4.5, by], [cx - 5, by - 8], [cx - 3, by - 14], [cx + 1.5, by - 15], [cx + 4.5, by - 11], [cx + 5, by]];
+    B.wash(g, st, '#8f9198', { layers: 5, alpha: 0.22, v: 0.1, edge: 0.35, seed: sd, gran: 0.45 });
+    B.wash(g, [[cx - 3.8, by - 1], [cx - 4, by - 8], [cx - 2.4, by - 13], [cx - 0.6, by - 13], [cx - 1, by - 1]], '#ffffff', { layers: 2, alpha: 0.18, v: 0.1, seed: sd + 1 });
+    B.ink(g, st, { w: 0.6, a: 0.85, j: 0.25, seed: sd + 2 }); B.ink(g, [[cx - 1, by - 10], [cx + 1, by - 6], [cx + 0.5, by - 3]], { w: 0.35, a: 0.5, j: 0.1, twice: false, seed: sd + 3 });
+    B.wash(g, B.blob(cx + 2.5, by - 9, 2, 1.4, 7), '#7a9a4c', { layers: 2, alpha: 0.3, v: 0.3, seed: sd + 4 });   // lichen
+  });
+  // far bank: a copse and hills (outside every range; decoration only)
+  [[14.5, 1.2], [15.4, 2], [14.6, 5.5], [15.3, 6.4], [14.8, 11.8], [15.5, 12.8]].forEach(function (q, n) {
+    var tx = q[0] * TS, ty = q[1] * TS, tr = 4.2;
+    B.ink(g, [[tx, ty + tr * 0.6], [tx + 0.2, ty + tr + 2]], { w: 0.6, a: 0.75, j: 0.1, twice: false, seed: 2700 + n });
+    B.wash(g, B.blob(tx, ty, tr, tr * 0.92, 9, n), '#5f8f46', { layers: 5, alpha: 0.2, v: 0.35, edge: 0.4, seed: 2800 + n, gran: 0.35 });
+    B.wash(g, B.blob(tx - tr * 0.3, ty - tr * 0.3, tr * 0.5, tr * 0.45, 7), '#a9c972', { layers: 2, alpha: 0.25, v: 0.4, seed: 2900 + n });
+    B.ink(g, B.blob(tx, ty, tr * 1.02, tr * 0.95, 11, n).concat([[tx + tr * 1.02, ty]]), { w: 0.45, a: 0.65, j: 0.35, twice: false, seed: 3000 + n });
+  });
+  // wildflowers
+  for (i = 0; i < 26; i++) { var fx = r() * 12 * TS, fy = r() * H; if (wet(fx / TS | 0, fy / TS | 0)) continue; g.fillStyle = ['rgba(216,169,64,0.75)', 'rgba(240,236,224,0.85)', 'rgba(176,74,58,0.6)'][i % 3]; g.beginPath(); g.arc(fx, fy, 0.6, 0, 7); g.fill(); }
+  return c;
+}
+
+/* ---------- one deterministic frame at time T (ms) ---------- */
+function render(T) {
+  var dpr = window.devicePixelRatio || 1, cssW = cv.clientWidth || 1024, bw = Math.round(cssW * dpr), bh = Math.round(bw * H / W);
+  if (cv.width !== bw || cv.height !== bh) { cv.width = bw; cv.height = bh; groundCache = null; }
+  var s = bw / W, t = T / 1000;
+  if (!groundCache || groundK !== s) { groundCache = paintGround(s); propsCache = paintProps(s); groundK = s; }
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(groundCache, 0, 0); ctx.setTransform(s, 0, 0, s, 0, 0);
+  GameDNA_Skin.setup(SK, ctx);
+
+  // B-01 grid-range-path: the real module, drawing its overlays and path arrow through the skin
+  var GR = GameDNA_GridRange.create({ cols: COLS, rows: ROWS, tile: TS, occupant: occ, skin: SK,
+    cost: function (x, y) { var k2 = x + ',' + y; return WATER[k2] || STONE[k2] ? 99 : THICKET[k2] ? 2 : 1; },
+    terrain: function () { return { name: 'Meadow', def: 0, avo: 5 }; }, setUnitPos: function (u, x, y) { u.x = x; u.y = y; }, onWait: function () {},
+    params: { overlay: 'pulsing' }, cursor: { x: 4, y: 8 } });
+  GR.confirm();
+  var steps = [[150, 5, 8], [300, 6, 8], [450, 7, 8], [600, 8, 8], [750, 8, 7]], N = Math.floor(T / FRAME);
+  for (var i = 0; i < N; i++) { var ms = i * FRAME; steps.forEach(function (st) { if (ms <= st[0] && st[0] < ms + FRAME) GR.setCursor(st[1], st[2]); }); GR.update(); }
+  // foe B's threat zone (radius 2, this side of the river), under the hero's range
+  var thr = new Set(); for (var dy = -2; dy <= 2; dy++) for (var dx = -2; dx <= 2; dx++) { var X2 = 11 + dx, Y2 = 9 + dy; if (Math.abs(dx) + Math.abs(dy) <= 2 && X2 < 12 && X2 >= 0) thr.add(Y2 * COLS + X2); }
+  thr.forEach(function (kk) { if (GR.reach && GR.reach.has(kk)) return; var tx = kk % COLS, ty = (kk / COLS) | 0, inT = function (q) { return thr.has(q) && !(GR.reach && GR.reach.has(q)); };
+    SK.overlay(ctx, { x: tx * TS, y: ty * TS, w: TS, h: TS }, 'threat', t, { tile: { x: tx, y: ty }, edges: { top: !inT(kk - COLS), bottom: !inT(kk + COLS), left: tx === 0 || !inT(kk - 1), right: !inT(kk + 1) } }); });
+  GR.drawUnder(ctx, { x: 0, y: 0 });
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(propsCache, 0, 0); ctx.restore();
+  UNITS.slice().sort(function (a, b) { return a.y - b.y; }).forEach(function (u) { SK.unitToken(ctx, { x: u.x * TS, y: u.y * TS - 4, w: TS, h: 20 }, { id: u.id, team: u.team, kind: u.kind, facing: u.facing, selected: u.id === 'rowan' }, t); });
+  var cur = GR.cursor; SK.cursor(ctx, { x: cur.px, y: cur.py, w: TS, h: TS }, 'bracket', t);
+
+  // C-01 window-cursor: the real module with the skin (pen-nib pointer = the skin's 'hand', selected row = frame role 'row')
+  var WC = GameDNA_WindowCursor.create({ view: { x: 0, y: 0, w: W, h: H }, skin: SK, getObstacles: function () { return UNITS.map(sprRect); }, params: { pointer: 'skin', rowH: 13 } });
+  var items = ['Attack', { label: 'Spells', note: '12' }, 'Items', { label: 'Wait', disabled: true }];
+  for (var j = 0; j * FRAME < T; j++) { var tm = j * FRAME; if (tm >= 300) { WC.menu('cmd', { x: 168, y: 8, title: 'Rowan', items: items, selected: tm >= 900 ? 1 : 0 }); WC.setCursor({ id: 'foeA' }); } WC.update(FRAME); }
+  var menuRect = WC.rect('cmd');
+
+  // E-01 damage-numbers: the real module places, bounces and fades; the skin draws every glyph and splash
+  var hud = [{ x: 4, y: 176, w: 96, h: 44 }].concat(menuRect ? [menuRect] : []);
+  var DN = GameDNA_DamageNumbers.create({ bounds: { x: 0, y: 0, w: W, h: 172 }, skin: SK,
+    getAnchor: function (id) { var u = UNITS.filter(function (q) { return q.id === id; })[0]; return u && { x: u.x * TS + 8, top: u.y * TS - 6, w: 16, h: 22 }; },
+    getObstacles: function () { return UNITS.map(sprRect).concat(hud); } });
+  var spawns = [[1200, 'foeA', 128, 'damage'], [1240, 'foeB', 57, 'crit'], [1300, 'ilsa', 30, 'heal'], [1150, 'rowan', 0, 'miss']];
+  for (var m = 0; m <= T; m += 10) { spawns.forEach(function (sp) { if (sp[0] === m) DN.spawn(sp[1], sp[2], sp[3]); }); if (m < T) DN.update(10); }
+  DN.draw(ctx);
+
+  // unit card and turn plate straight through the skin
+  var u = UNITS[0], px = 4, py = 176; SK.frame(ctx, { x: px, y: py, w: 96, h: 44 }, { role: 'window', team: 'a' });
+  SK.frame(ctx, { x: px + 5, y: py + 6, w: 20, h: 31 }, { role: 'backing' });
+  SK.unitToken(ctx, { x: px + 6, y: py + 12, w: 18, h: 24 }, { id: 'rowan', team: 'a', kind: 'knight' }, t);
+  SK.text(ctx, u.name, px + 29, py + 6, { font: 'title', color: P.text.title });
+  SK.text(ctx, 'HP', px + 29, py + 19, { font: 'label', color: P.text.label }); SK.text(ctx, u.hp + ' / ' + u.max, px + 90, py + 17.5, { align: 'right' });
+  SK.bar(ctx, { x: px + 29, y: py + 30, w: 61, h: 4 }, u.hp / u.max, 'hp', { style: 'meter' });
+  var pl = SK.measure('Turn 3', { font: 'plate' }); SK.frame(ctx, { x: 4, y: 4, w: pl + 14, h: 14 }, { role: 'plate' });
+  SK.text(ctx, 'Turn 3', 11, 7, { font: 'plate', color: P.text.plate });
+
+  WC.draw(ctx);
+  window.__preview = { t: T, menu: menuRect, path: GR.path, numbers: DN.lastDrawn().length, windows: WC.lastDrawn() };
+  document.documentElement.dataset.t = String(T);
+}
+
+(GameDNA_Skin.ready ? GameDNA_Skin.ready(SK) : (document.fonts ? document.fonts.ready : Promise.resolve())).then(function () {
+  if (FREEZE) { render(T0); document.documentElement.dataset.ready = '1'; return; }
+  var start = performance.now() - T0;
+  (function loop(now) { render((now - start) % LOOP); requestAnimationFrame(loop); })(performance.now());
+  document.documentElement.dataset.ready = '1';
+});
+window.addEventListener('resize', function () { if (FREEZE) render(T0); });
+</script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+{
+  "id": "art-direction-lock",
+  "code": "L-00",
+  "kind": "addon",
+  "name": "Art-direction lock",
+  "family": "generated-art",
+  "oneLiner": "Generate one style-reference sheet for the game (a character, a prop, a floor patch and an item), lock it, and pass it as a reference image to every later generation, so all generated bitmaps share one light, outline, palette and proportions; the game loads the saved files once at boot and draws them synchronously, falling back to its old art when one is missing.",
+  "fits": [
+    "top-down adventure / action RPG",
+    "side-scrolling platformer",
+    "tactics / strategy map",
+    "turn-based RPG battle",
+    "farming / life sim",
+    "any game moving from code-drawn to painted HD art"
+  ],
+  "notFor": [
+    "pixel-art styles (pixel8, pixel16, handheld4): generated art needs a snapping and palette pass first (planned L-08)",
+    "games that need art generated at runtime (no generator is called by the game)",
+    "exact reproduction of a look by prompt alone (there is no seed)"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "scene",
+    "needs": [
+      "the game's boot function (first step, ?t= fast-forward, first animation frame), moved into the onReady callback",
+      "each draw site to replace: hero, props, floor, item icons, with its drawn size and foot point in canvas px",
+      "optional: skins/skin-api.js v0.5 to route tile / prop / frame / icon / portrait / bg-layer roles"
+    ],
+    "provides": [
+      "GameDNA_Assets.get(key) / draw / drawFrame / fillTiled: synchronous bitmaps with anchor, baseline and grid metadata",
+      "GameDNA_Skin.bitmaps registration (useAssets) so skins draw bitmaps for tile, prop, frame9, icon, portrait, bg-layer roles",
+      "assets.json manifest: prompt, GEN.md, model, date and sha256 of every shipped file",
+      "tools/assets: gen.sh, namecheck.py, postproc.py, assetcheck.py, stylestats.py, genmeta.py"
+    ]
+  },
+  "params": [
+    {
+      "key": "set",
+      "label": "Art set",
+      "type": "select",
+      "options": [
+        "with",
+        "without"
+      ],
+      "default": "with"
+    },
+    {
+      "key": "hour",
+      "label": "Hour",
+      "type": "select",
+      "options": [
+        "dusk",
+        "night",
+        "day"
+      ],
+      "default": "dusk"
+    },
+    {
+      "key": "light",
+      "label": "Lantern light",
+      "type": "range",
+      "min": 0,
+      "max": 1.5,
+      "step": 0.05,
+      "default": 1
+    },
+    {
+      "key": "anchors",
+      "label": "Show anchors",
+      "type": "select",
+      "options": [
+        "0",
+        "1"
+      ],
+      "default": "0"
+    },
+    {
+      "key": "bg",
+      "label": "Backdrop (asset cards)",
+      "type": "select",
+      "options": [
+        "check",
+        "dark",
+        "light",
+        "grass"
+      ],
+      "default": "check"
+    }
+  ],
+  "promptParams": [
+    {
+      "key": "assets",
+      "default": "character, prop, ground tile, icon"
+    },
+    {
+      "key": "style",
+      "default": "modern hand-painted 2D game art"
+    },
+    {
+      "key": "light",
+      "default": "TOP-LEFT"
+    },
+    {
+      "key": "scale",
+      "default": "2 for an HD canvas, 1 for a fixed low-resolution canvas"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Locked set at dusk",
+      "params": {
+        "set": "with",
+        "hour": "dusk",
+        "light": 1
+      }
+    },
+    {
+      "name": "Same prompts, no reference",
+      "params": {
+        "set": "without",
+        "hour": "dusk",
+        "light": 1
+      }
+    },
+    {
+      "name": "Night, anchors shown",
+      "params": {
+        "set": "with",
+        "hour": "night",
+        "light": 1.2,
+        "anchors": "1"
+      }
+    }
+  ],
+  "assets": [
+    "module/art-direction-lock.js: GameDNA_Assets loader (one global, no dependencies)",
+    "assets/assets.json: manifest of 18 generated files (WebP), with prompts, GEN.md, meta and sha256 per Codex run under assets/gen/",
+    "assets/prompts/: style lock, sheet, derived-asset briefs and the general templates.md",
+    "tools/assets/ (shared): gen.sh, genmeta.py, namecheck.py + blocklist.txt, postproc.py, assetcheck.py, stylestats.py"
+  ],
+  "assetPack": {
+    "manifest": "assets/assets.json",
+    "generated": true,
+    "tool": "codex image_gen.imagegen (built-in)",
+    "date": "2026-11-16",
+    "budgetBytes": 600000,
+    "styles": "hd (non-pixel skins)",
+    "check": "tools/assets/assetcheck.py assets/assets.json",
+    "regenerate": "prompt.md + assets/prompts/templates.md + tools/assets"
+  },
+  "status": "draft",
+  "module": {
+    "file": "module/art-direction-lock.js",
+    "global": "GameDNA_Assets",
+    "version": "1.0.0",
+    "docs": "module/README.md"
+  },
+  "skinSpec": "v0.5 bitmap roles (skins/SPEC.md 2.7)"
+}

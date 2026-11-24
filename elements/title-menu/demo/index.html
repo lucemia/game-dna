@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Title Screen &amp; Menu Flow</title>
+<style>
+  :root { --bg: #120d18; --ink: #e8e2f0; --dim: #9a92ac; --line: #2c2238; --acc: #ffd870; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { padding: 14px 16px 6px; }
+  header h1 { margin: 0; font-size: 17px; letter-spacing: .02em; }
+  header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; }
+  #stage { padding: 8px 16px; }
+  #game { display: block; image-rendering: pixelated; image-rendering: crisp-edges; background: #000; margin: 0 auto; touch-action: none; }
+  #panel { max-width: 960px; margin: 10px auto 24px; padding: 0 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px 14px; }
+  #panel label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--dim); }
+  #panel select, #panel button { font: inherit; color: var(--ink); background: #1e1628; border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; }
+  #panel button { cursor: pointer; }
+  #panel button:hover { border-color: #5a4a70; }
+  #reads { grid-column: 1 / -1; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--dim); background: #18121f; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; overflow-wrap: anywhere; }
+  #reads b { color: var(--acc); font-weight: 600; }
+  .keys { grid-column: 1 / -1; color: var(--dim); font-size: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>C-07 &middot; Title screen &amp; menu flow</h1>
+  <p>Press start, a menu (continue, new game, options, quit), options that persist, transitions and a pause menu. Keyboard, mouse and touch.</p>
+</header>
+<div id="stage"><canvas id="game" width="320" height="180"></canvas></div>
+<div id="panel">
+  <label>Transition <select id="p-transition"><option>diamond</option><option>iris</option><option>fade</option></select></label>
+  <label>Window colour <select id="p-panel"><option>royal</option><option>night</option><option>ember</option><option>moss</option><option>slate</option></select></label>
+  <label>Logo colours <select id="p-logo"><option value="dawn">dawn gold</option><option value="frost">frost</option><option value="rose">rose</option></select></label>
+  <label>Pause button <select id="p-pauseButton"><option>on</option><option>auto</option><option>off</option></select></label>
+  <label>Continue <select id="p-continue"><option value="on">a save exists</option><option value="off">no save yet</option></select></label>
+  <label>Tour <button id="b-tour" type="button">Play the scripted tour</button></label>
+  <label>Stored options <button id="b-clear" type="button">Forget saved options</button></label>
+  <p class="keys">Keys: arrows choose, Z or Enter confirms, X or Esc goes back, P or Esc pauses in play. Mouse: hover and click; drag sliders. Touch: tap a row, tap the pause button.</p>
+  <div id="reads">The game reads: <span id="vals"></span></div>
+</div>
+<script src="../../../pixel-kit/pixel-scene.js"></script>
+<script src="../../procedural-sfx/module/procedural-sfx.js"></script>
+<script src="../module/title-menu.js"></script>
+<script>
+"use strict";
+(function () {
+  var W = 320, H = 180, STEP = 1000 / 60, T = 16;
+  var qs = new URLSearchParams(location.search);
+  var HAS_T = qs.has('t'), FREEZE = qs.get('freeze') === '1', AT = HAS_T ? Math.max(0, +qs.get('t') || 0) : 0;
+  var TOUR = HAS_T || qs.get('tour') === '1';
+  var canvas = document.getElementById('game'), g = canvas.getContext('2d');
+  function fit() {
+    var avail = Math.min(document.documentElement.clientWidth - 32, 1100), hAvail = Math.max(220, innerHeight - 200);
+    var k = Math.max(1, Math.floor(Math.min(avail / W, hAvail / H)));
+    var cssW = k * W; if (k < 2) cssW = Math.min(avail, W * 2);   // phones: fill the width (the menu keeps its own pixel size)
+    canvas.style.width = cssW + 'px'; canvas.style.height = Math.round(cssW * H / W) + 'px';
+  }
+  addEventListener('resize', fit); fit();
+
+  /* ---------- the little host game: a village road at dusk ---------- */
+  var PXS = window.GameDNA_PixelScene;
+  var map = [
+    'TTPTT,,,TTTTP,,,TTTT',
+    'Tt,,,..,,,,..,,,.,tT',
+    'P,.......u.....,..,P',
+    'T,..............u.,T',
+    ',...........,......,',
+    '....................',
+    '....................',
+    'pppppppppppppppppppp',
+    'pppppppppppppppppppp',
+    ',..F......,.....F..,',
+    ',,ww,....u....,,www,',
+    'wwwww,,,,,,,,,,wwwww'];
+  var scene = PXS.scene({ seed: 41, map: map, props: [
+    { k: 'house', x: 60, y: 104, o: { roof: 'red', lit: true } }, { k: 'house', x: 250, y: 104, o: { roof: 'blue', wall: 'stone', lit: true, w: 40 } },
+    { k: 'stall', x: 160, y: 108 }, { k: 'lantern', x: 112, y: 112 }, { k: 'lantern', x: 210, y: 112 }, { k: 'barrel', x: 92, y: 110 },
+    { k: 'crate', x: 282, y: 112 }, { k: 'well', x: 26, y: 112 }, { k: 'fence', x: 136, y: 166, o: { len: 48 } }] });
+  var ACT = { x: 140, dir: 1, moving: false, walk: 0 };
+  var NPC = { x: 172, y: 114 }, HY = 136;   // the merchant at the stall, the hero on the near lane of the road
+  var game = { scene: 'title', playMs: 0, coins: 0, clock: 0, msg: '', msgT: 0, typed: 0 };
+  var SPEED = { slow: 20, normal: 40, fast: 90, instant: 9999 };
+  function heroAt(ms) {   // a back-and-forth walk along the road: x and facing are pure functions of play time
+    var span = 230, per = 2 * span / 0.045, ph = (ms % per) / per, x = ph < 0.5 ? 45 + span * ph * 2 : 45 + span * (1 - ph) * 2;
+    return { x: x, dir: ph < 0.5 ? 1 : -1 };
+  }
+  function stepGame() {
+    game.clock += STEP;
+    if (game.scene !== 'play') { ACT.moving = false; ACT.x = 140; ACT.dir = 1; return; }
+    game.playMs += STEP;
+    var h = heroAt(game.playMs); ACT.moving = true; ACT.x = h.x; ACT.dir = h.dir; ACT.walk += STEP;
+    var near = Math.abs(ACT.x - NPC.x) < 34;
+    if (near && game.msgT <= 0) { game.msg = 'FRESH BREAD, WARM LAMPS!'; game.msgT = 150; game.typed = 0; }
+    if (game.msgT > 0) { game.msgT--; game.typed += (SPEED[menu.get('textSpeed')] || 40) / 60; }
+    if (Math.floor(game.playMs / 1900) > Math.floor((game.playMs - STEP) / 1900)) game.coins++;
+  }
+  var OX = 0, OY = -12;
+  function drawGame() {
+    g.imageSmoothingEnabled = false;
+    var t = game.clock;
+    var ex = [
+      { y: NPC.y, draw: function (gg) { PXS.actor(gg, NPC.x + OX, NPC.y + OY, { pal: 'merchant', dir: ACT.x > NPC.x ? 'right' : 'left', frame: 0 }); } },
+      { y: HY, draw: function (gg) { PXS.actor(gg, ACT.x + OX, HY + OY, { pal: 'hero', dir: ACT.dir > 0 ? 'right' : 'left', frame: ACT.moving ? Math.floor(ACT.walk / 150) % 2 : 0 }); } }];
+    scene.draw(g, t, ex, OX, OY);
+    PXS.glow(g, 112 + OX, 98 + OY, 22, '#ffd070', 0.85 + 0.1 * Math.sin(t / 300)); PXS.glow(g, 210 + OX, 98 + OY, 22, '#ffd070', 0.85 + 0.1 * Math.sin(t / 340 + 1));
+    // dusk tint
+    g.fillStyle = 'rgba(40,20,70,0.22)'; g.fillRect(0, 0, W, H);
+    if (game.scene === 'play') {
+      // HUD (a ui rect the pause button avoids)
+      g.fillStyle = 'rgba(12,8,24,0.72)'; g.fillRect(4, 4, 62, 14); g.fillStyle = '#ffe070'; g.fillRect(8, 8, 6, 6); g.fillStyle = '#b88a20'; g.fillRect(10, 10, 2, 2);
+      tiny(g, 'x' + game.coins, 18, 8, '#ffffff'); tiny(g, 'DAY 1', 40, 8, '#c8d4ff');
+      if (game.msgT > 0 && !menu.paused()) {   // the game hides its own world text while paused
+        var shown = game.msg.slice(0, Math.min(game.msg.length, Math.floor(game.typed)));
+        var bw = game.msg.length * 4 + 8, bx = Math.round(NPC.x - bw / 2), by = 70;
+        g.fillStyle = 'rgba(255,248,230,0.95)'; g.fillRect(bx, by, bw, 11); g.fillRect(NPC.x - 1, by + 11, 3, 2);
+        g.fillStyle = '#2a1428'; g.fillRect(bx, by - 1, bw, 1); g.fillRect(bx, by + 11, bw, 1); g.fillRect(bx - 1, by, 1, 11); g.fillRect(bx + bw, by, 1, 11);
+        tiny(g, shown, bx + 4, by + 3, '#2a1428');
+      }
+    } else {
+      // title backdrop: the same world, quiet, with the hero waiting by the stall (the menu draws logo and windows)
+      if (!menu.titleShown()) { tiny(g, 'LANTERN ROAD', 136, 40, '#ffffff'); tiny(g, 'PRESS Z', 146, 60, '#ffffff'); }
+    }
+  }
+  var F3 = { A: '25755', B: '65656', C: '34443', D: '65556', E: '74647', F: '74644', G: '34553', H: '55755', I: '72227', J: '11152', K: '55655', L: '44447', M: '57555', N: '65555', O: '25552', P: '65644', Q: '25573', R: '65655', S: '34216', T: '72222', U: '55557', V: '55552', W: '55575', X: '55255', Y: '55222', Z: '71247',
+    0: '75557', 1: '26227', 2: '61247', 3: '61216', 4: '55711', 5: '74616', 6: '34757', 7: '71222', 8: '75757', 9: '75716', '!': '22202', ',': '00024', '.': '00002', x: '00525' };
+  function tiny(gg, s, x, y, col) { gg.fillStyle = col; for (var i = 0; i < s.length; i++) { var gl = F3[s[i]] || F3[s[i].toUpperCase()]; if (gl) for (var r = 0; r < 5; r++) { var b = gl.charCodeAt(r) - 48; for (var c = 0; c < 3; c++) if (b & (4 >> c)) gg.fillRect(x + i * 4 + c, y + r, 1, 1); } } }
+
+  /* ---------- sound (F-02, if present) ---------- */
+  var sfx = null; try { sfx = window.GameDNA_Sfx ? GameDNA_Sfx.create({ seed: 7, params: { master: 0.5 } }) : null; } catch (e) { sfx = null; }
+  var SOUND = { move: 'menu-move', tick: 'menu-move', confirm: 'menu-confirm', start: 'powerup', back: 'menu-cancel', open: 'menu-confirm', close: 'menu-cancel', denied: 'menu-cancel' };
+
+  /* ---------- the menu ---------- */
+  var LOGOS = { dawn: ['#ffe890', '#ff8a3a'], frost: ['#e8fbff', '#58a8ff'], rose: ['#ffe0ec', '#e8508a'] };
+  function param(k, d) { var v = qs.get(k); return v == null || v === '' ? d : v; }
+  var menu = GameDNA_TitleMenu.create({
+    canvas: canvas, skip: false, storageKey: 'gamedna-demo-lantern-road' + (HAS_T ? '-still' : ''),
+    title: 'Lantern Road', tagline: 'A small tale of light',
+    colors: { logo: LOGOS[param('logo', 'dawn')] || LOGOS.dawn, panel: param('panel', 'royal') },
+    isTitle: function () { return game.scene === 'title'; },
+    canPause: function () { return game.scene === 'play'; },
+    canContinue: function () { return param('continue', 'on') === 'on'; },
+    onStart: function (kind) { game.scene = 'play'; if (kind === 'new') { game.playMs = 0; game.coins = 0; } else { game.playMs = 5200; game.coins = 7; } game.msgT = 0; },
+    onQuitToTitle: function () { game.scene = 'title'; ACT.x = 140; ACT.dir = 1; ACT.moving = false; },
+    onRestart: function () { game.playMs = 0; game.coins = 0; game.msgT = 0; },
+    onOption: function () { showVals(); },
+    onSound: function (name, v) { if (!sfx || HAS_T) return; try { sfx.setParams && sfx.setParams({ master: (v.master / 10) * (v.sfx / 10) }); sfx.play(SOUND[name] || 'menu-move'); } catch (e) { } },
+    uiRects: function () { return game.scene === 'play' ? [{ x: 4, y: 4, w: 62, h: 14 }] : []; },
+    obstacles: function () { return game.scene === 'title' ? [{ x: ACT.x - 8, y: HY + OY - 21, w: 16, h: 22 }, { x: NPC.x - 8, y: NPC.y + OY - 21, w: 16, h: 22 }] : []; },   // hero and merchant on the title
+    controls: [['Move', 'Arrows / WASD'], ['Confirm', 'Z / Enter'], ['Back', 'X / Esc'], ['Pause', 'P / Esc'], ['Touch', 'Tap a row']],
+    params: { transition: param('transition', 'diamond'), pauseButton: param('pauseButton', 'on'), version: 'v1.0', storage: HAS_T ? 'memory' : 'local', seed: 3 }
+  });
+  window.__menu = menu;
+  function showVals() { var o = menu.options(), s = []; for (var k in o) s.push(k + ' <b>' + o[k] + '</b>'); document.getElementById('vals').innerHTML = s.join(' &middot; '); }
+  showVals();
+
+  /* ---------- scripted tour (one clock for the script and ?t=) ---------- */
+  var SCRIPT = [
+    [2200, 'confirm'], [3000, 'down'], [3500, 'down'], [4000, 'confirm'], [4600, 'left'], [4800, 'left'], [5300, 'down'], [5600, 'down'], [5900, 'down'], [6200, 'right'],
+    [6900, 'back'], [7400, 'up'], [7900, 'confirm'],
+    [12000, 'pause'], [12800, 'down'], [13300, 'confirm'], [13800, 'down'], [14100, 'down'], [14400, 'down'], [14700, 'down'], [15000, 'confirm'],
+    [15900, 'back'], [16500, 'down'], [16800, 'down'], [17300, 'confirm'], [17800, 'right'], [18500, 'confirm'],
+    [21200, 'down'], [21500, 'down'], [21800, 'down'], [22300, 'confirm'], [22800, 'right'], [23300, 'confirm']];
+  var EVENTS = { 1700: 'title: press start', 3200: 'main menu: cursor on NEW GAME', 5000: 'options: master volume 8 -> 6', 6500: 'options: text speed FAST', 8100: 'diamond wipe into the game',
+    11000: 'play: hero walks, pause button clear of the HUD', 12500: 'pause menu over the frozen game', 15400: 'pause > options: screen shake OFF (scrolled list)',
+    18200: 'confirm: return to the title? YES', 20000: 'back on the title, menu shown at once', 23800: 'quit: thanks for playing' };
+  window.__events = EVENTS;
+  var si = 0, clock = 0;
+  function step() {
+    if (TOUR) while (si < SCRIPT.length && SCRIPT[si][0] <= clock) { menu.press(SCRIPT[si][1]); si++; }
+    menu.update(STEP);
+    if (!menu.busy()) stepGame(); else game.clock += STEP;
+    clock += STEP;
+  }
+  function render() { drawGame(); menu.draw(); }
+  window.__state = function () {
+    var m = menu.state();
+    return { t: Math.round(clock), menu: { mode: m.mode, screen: m.screen, selId: m.selId, scroll: m.scroll, trans: m.trans, starts: m.starts, options: m.options }, scene: game.scene,
+      actors: [{ id: 'hero', x: Math.round(ACT.x), y: HY, facing: ACT.dir > 0 ? 'right' : 'left', target: null, vx: game.scene === 'play' && !menu.busy() ? ACT.dir : 0, noteAsset: 'pixel-kit actor hero' },
+        { id: 'merchant', x: NPC.x, y: NPC.y, facing: ACT.x > NPC.x ? 'right' : 'left', target: 'hero', noteAsset: 'pixel-kit actor merchant' }] };
+  };
+  document.getElementById('b-tour').onclick = function () { qs.set('tour', '1'); location.search = qs.toString(); };
+  document.getElementById('b-clear').onclick = function () { try { localStorage.removeItem('gamedna-title-menu:gamedna-demo-lantern-road'); } catch (e) { } location.reload(); };
+  ['transition', 'panel', 'logo', 'pauseButton', 'continue'].forEach(function (k) {
+    var el = document.getElementById('p-' + k); if (qs.get(k)) el.value = qs.get(k);
+    el.onchange = function () { qs.set(k, el.value); location.search = qs.toString(); };
+  });
+
+  if (HAS_T) {
+    var n = Math.floor(AT / STEP); for (var i = 0; i < n; i++) step();
+    render();
+    if (FREEZE) { window.__frozen = true; return; }
+  }
+  var last = null, acc = 0;
+  function loop(ts) { if (last === null) last = ts; acc += Math.min(250, ts - last); last = ts; while (acc >= STEP) { step(); acc -= STEP; } render(); requestAnimationFrame(loop); }
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

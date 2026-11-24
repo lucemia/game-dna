@@ -1,0 +1,199 @@
+{
+ "id": "scripted-cutscenes",
+ "code": "H-04",
+ "kind": "addon",
+ "name": "Scripted cutscenes",
+ "family": "cutscenes",
+ "oneLiner": "A small script plays a scene in the game's own world: characters walk to points with real walk frames that advance with the distance they cover and always face their path, turn, speak (through the game's own dialogue box when it has one, else a typewriter box with a speaker plate and a tail that keeps off the cast), wait, emote, while the camera pans, cuts and zooms (clamped to the map) and letterbox bars slide in. Hold to skip: a quick fade lands on exactly the state playing through would reach (positions, facings, game flags), and control comes back exactly once.",
+ "fits": [
+  "top-down RPGs and adventures (story beats, quest hand-offs)",
+  "action games with a map (a boss reveal, a gate that opens)",
+  "side-view games whose characters walk on a ground line",
+  "any game with NPCs that should walk and talk on cue"
+ ],
+ "notFor": [
+  "pre-rendered video playback (this moves the game's own actors)",
+  "branching dialogue trees and choices (use a dialogue-choices element; a script line can still open it through the game's dialogue)",
+  "physics-driven cinematics (ragdolls, destruction): the module only moves actors along paths"
+ ],
+ "interfaces": {
+  "time": "any",
+  "coords": "screen",
+  "layer": "ui",
+  "needs": [
+   "actors: get() of each scripted character's feet in world px and facing, set(pose) to write position / facing / walking / walk frame back",
+   "the map bounds and the game's own camera rule (where the camera would be now), the view and stage rects, CSS px per canvas px",
+   "a fixed update step, called first in the step (also on the ?t= replay); the world and player input paused while locked()",
+   "optional: the game's dialogue box (open / isOpen / close), its wall test and tile size for routing, onCall / onCue handlers"
+  ],
+  "provides": [
+   "play(script, {id, once}), locked() / onStart / onEnd (exactly once) for control, camera() while a scene drives it, pose(id)",
+   "drawn letterbox bars, line box, emotes, fades and a hold-to-skip hint; bars() to fade the HUD",
+   "skip() to the play-through end state; seen() / load() for saves; state(), lastDrawn(), stats(), rects()"
+  ]
+ },
+ "params": [
+  {
+   "key": "bars",
+   "label": "Letterbox height (share of view)",
+   "type": "range",
+   "min": 0,
+   "max": 0.2,
+   "step": 0.01,
+   "default": 0.09
+  },
+  {
+   "key": "skip",
+   "label": "Skip",
+   "type": "select",
+   "options": [
+    "hold",
+    "press",
+    "off"
+   ],
+   "default": "hold"
+  },
+  {
+   "key": "holdMs",
+   "label": "Hold to skip (ms)",
+   "type": "range",
+   "min": 300,
+   "max": 1500,
+   "step": 50,
+   "default": 700
+  },
+  {
+   "key": "textSpeed",
+   "label": "Text speed (chars/s)",
+   "type": "range",
+   "min": 15,
+   "max": 90,
+   "step": 1,
+   "default": 42
+  },
+  {
+   "key": "speed",
+   "label": "Default walk speed (px/s)",
+   "type": "range",
+   "min": 20,
+   "max": 200,
+   "step": 5,
+   "default": 60
+  },
+  {
+   "key": "stride",
+   "label": "Px per walk frame",
+   "type": "range",
+   "min": 2,
+   "max": 16,
+   "step": 1,
+   "default": 6
+  },
+  {
+   "key": "runStride",
+   "label": "Px per run frame (0 = stride x 1.6)",
+   "type": "range",
+   "min": 0,
+   "max": 24,
+   "step": 1,
+   "default": 0
+  },
+  {
+   "key": "theme",
+   "label": "Box theme",
+   "type": "select",
+   "options": [
+    "night",
+    "parchment"
+   ],
+   "default": "night"
+  },
+  {
+   "key": "box",
+   "label": "Box side",
+   "type": "select",
+   "options": [
+    "auto",
+    "bottom",
+    "top"
+   ],
+   "default": "auto"
+  },
+  {
+   "key": "render",
+   "label": "Render",
+   "type": "select",
+   "options": [
+    "auto",
+    "pixel",
+    "smooth"
+   ],
+   "default": "auto"
+  },
+  {
+   "key": "compact",
+   "label": "Compact box on phones",
+   "type": "select",
+   "options": [
+    "auto",
+    "on",
+    "off"
+   ],
+   "default": "auto"
+  },
+  {
+   "key": "emotes",
+   "label": "Emote bubbles",
+   "type": "select",
+   "options": [
+    "auto",
+    "pixel",
+    "smooth"
+   ],
+   "default": "auto"
+  }
+ ],
+ "variants": [
+  {
+   "name": "Story RPG (default)",
+   "params": {
+    "bars": 0.09,
+    "skip": "hold",
+    "textSpeed": 42
+   }
+  },
+  {
+   "name": "Quick beats (action)",
+   "params": {
+    "bars": 0.08,
+    "skip": "press",
+    "textSpeed": 70
+   }
+  },
+  {
+   "name": "Storybook",
+   "params": {
+    "bars": 0.14,
+    "theme": "parchment",
+    "textSpeed": 30
+   }
+  },
+  {
+   "name": "Unskippable intro",
+   "params": {
+    "skip": "off"
+   }
+  }
+ ],
+ "assets": [
+  "module/scripted-cutscenes.js: the element as one dependency-free script (global GameDNA_Cutscenes): script runner (move, face, say, wait, cam, fade, emote, cue, call, all), tile routing, camera glide / cut / zoom with clamping, skip to the end state, letterbox bars, a typewriter line box (smooth and crisp bitmap font), code-drawn emote bubbles (8 icons)",
+  "demo only: hand-pixelled cast in demo/cast.js (traveller, guard captain, elder: 4 facings, 4-frame walk and run cycles) on pixel-kit village scenery"
+ ],
+ "status": "draft",
+ "module": {
+  "file": "module/scripted-cutscenes.js",
+  "global": "GameDNA_Cutscenes",
+  "version": "1.2.0",
+  "docs": "module/README.md"
+ }
+}

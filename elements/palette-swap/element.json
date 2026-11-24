@@ -1,0 +1,67 @@
+{
+  "id": "palette-swap",
+  "code": "D-01",
+  "kind": "addon",
+  "name": "Palette-swap variants",
+  "family": "sprite-variants",
+  "oneLiner": "One sprite, many looks without new art: the module finds the sprite's colour ramps (clothing, body, skin, steel, outline) and maps them dark-to-light onto new ramps, giving team colours (blue, red, green, yellow), elite and rare foes, poison, stone, frozen, a pulsing low-HP tint and a greyed 'already acted' look, combinable with '+'. Every (sprite, variant) is built once and cached; the game only changes the image it passes to drawImage.",
+  "fits": [
+    "tactics / strategy RPG (team colours, greyed after acting)",
+    "turn-based RPG battle (elite foes, status tints, low HP)",
+    "action RPG and roguelike (elite / rare enemies, status effects)",
+    "monster battler (rare colourings)",
+    "multiplayer or versus games with per-player colours"
+  ],
+  "notFor": [
+    "art that is drawn fresh every frame with no stable sprite object (bake it first)",
+    "photographic or heavily textured sprites (hundreds of colours: ramps are guessed from 5-bit buckets and look flatter)",
+    "looks that need new shapes (armour pieces, crowns): that is new art, not a palette"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "actor",
+    "needs": [
+      "the sprite the game already draws, as a long-lived canvas, loaded image or palette-indexed string sprite {rows, pal}",
+      "state that names the look: side or team, acted flag, elite flag, status, HP",
+      "the draw call of each sprite (the image argument is swapped)",
+      "optional: a fixed step clock (update(ms)) for the low-HP pulse"
+    ],
+    "provides": [
+      "a cached canvas per (sprite, variant) to draw instead of the sprite",
+      "detected colour ramps per sprite (ramps(sprite)) and explicit ramp mapping (setRamps)",
+      "cache statistics (stats(): calls, hits, builds)"
+    ]
+  },
+  "params": [
+    { "key": "uses", "label": "Which sprites get which looks (required; the designer's words)", "type": "text", "default": "units: team colour per side (player blue, enemy red); a unit that has already acted this turn: greyed; units below a quarter of their HP: low-HP pulse" },
+    { "key": "hueTol", "label": "Hue tolerance for one ramp (degrees)", "type": "range", "min": 8, "max": 60, "step": 2, "default": 24 },
+    { "key": "protectSkin", "label": "Keep skin-like colours out of team swaps", "type": "select", "options": ["auto", "on", "off"], "default": "auto" },
+    { "key": "target", "label": "Ramps a team / elite swap recolours", "type": "select", "options": ["primary", "primary+secondary", "all"], "default": "primary" },
+    { "key": "strength", "label": "Status tint strength", "type": "range", "min": 0.2, "max": 1, "step": 0.05, "default": 0.6 },
+    { "key": "pulseHz", "label": "Low-HP pulse rate (Hz)", "type": "range", "min": 0.5, "max": 4, "step": 0.25, "default": 2 },
+    { "key": "pulseSteps", "label": "Low-HP pulse steps", "type": "range", "min": 2, "max": 8, "step": 1, "default": 4 },
+    { "key": "spentDim", "label": "Brightness of the greyed 'spent' look", "type": "range", "min": 0.3, "max": 0.9, "step": 0.05, "default": 0.6 },
+    { "key": "keepOutline", "label": "Keep the outline colour", "type": "select", "options": ["on", "off"], "default": "on" },
+    { "key": "elite", "label": "Elite ramp", "type": "select", "options": ["violet", "crimson", "gold", "shadow"], "default": "violet" },
+    { "key": "eliteEdge", "label": "Tint the elite's outline", "type": "select", "options": ["on", "off"], "default": "on" }
+  ],
+  "variants": [
+    { "name": "Tactics sides", "params": { "uses": "units: team colour per side (player blue, enemy red); a unit that has acted this turn: greyed", "spentDim": 0.6 } },
+    { "name": "Battle foes and status", "params": { "uses": "the strongest foe of the last wave: elite; poisoned or cursed units: poison tint until it ends; heroes below a quarter HP: low-HP pulse", "elite": "violet", "strength": 0.6 } },
+    { "name": "Shiny rares", "params": { "uses": "enemies the game already marks as rare, or the first foe of every third wave (by wave number, no new roll): rare", "target": "primary+secondary" } },
+    { "name": "Gold champions", "params": { "uses": "champion enemies: elite", "elite": "gold", "eliteEdge": "on", "target": "all" } },
+    { "name": "Soft status", "params": { "strength": 0.4, "pulseHz": 1.25, "pulseSteps": 6 } }
+  ],
+  "assets": [
+    "module/palette-swap.js: the element as one dependency-free script (global GameDNA_PaletteSwap): ramp detection, 13 hand-picked target ramps, variant chains, cache, low-HP pulse, string-sprite baking, ramp inspector",
+    "no image or audio files"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/palette-swap.js",
+    "global": "GameDNA_PaletteSwap",
+    "version": "1.0.0",
+    "docs": "module/README.md"
+  }
+}

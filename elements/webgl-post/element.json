@@ -1,0 +1,69 @@
+{
+  "id": "webgl-post",
+  "code": "I-08",
+  "name": "WebGL post-process pipeline",
+  "kind": "addon",
+  "family": "render-pipeline",
+  "oneLiner": "The game keeps drawing on its own 2D canvas; each frame that canvas becomes a texture on a WebGL layer laid exactly over it, and a chain of fragment-shader passes runs at device resolution: a filmic grade with split toning and vignette, and a chromatic hit-pulse on hits. A pass registry lets later elements (bloom, colour LUT, 2D lights, depth of field) add their own passes and extra input textures. Without WebGL, or with ?webgl=0, nothing changes: the 2D canvas shows exactly as before.",
+  "fits": [
+    "any browser game drawn on one 2D canvas, pixel or HD, any resolution and CSS scaling",
+    "side-scrolling platformer / action",
+    "top-down adventure and action RPG",
+    "turn-based and tactics battles",
+    "shmups, puzzle and card games",
+    "the base for J-family light and post elements"
+  ],
+  "notFor": [
+    "games already drawn with WebGL or a 3D engine (add passes to their own pipeline instead)",
+    "games split over several stacked canvases (post-process only the one passed in)",
+    "a canvas with transparent areas that show the page behind it (the overlay is opaque)",
+    "cross-origin images drawn without CORS (a tainted canvas cannot be uploaded; the module turns itself off)"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "post",
+    "needs": [
+      "the canvas element the game draws on (any size, any CSS scaling)",
+      "render() once per drawn frame on every draw path (before or after the game's own drawing)",
+      "optional: the game's step-counted clock in ms (deterministic ?t=&freeze=1)",
+      "optional: HUD rects in canvas px (uiRects) or a shared uiMask input canvas: HUD pixels are never graded or colour-split",
+      "optional: hit events with a contact point in canvas px (the hit pulse)",
+      "optional: extra input canvases (depth map, light mask) for later passes"
+    ],
+    "provides": [
+      "a post-processing stage over the game canvas (WebGL2 / WebGL1; without WebGL the plain 2D canvas)",
+      "pass registry: addPass / enable / set / get / passes, ping-pong buffers, named outputs, setInput slots for J-family elements",
+      "pulse(strength, {at}): chromatic hit-pulse fading in game time",
+      "stats(): mode, frames, passes, overlay size, frame cost"
+    ]
+  },
+  "params": [
+    { "key": "passes", "label": "Built-in passes", "type": "select", "options": ["grade+pulse", "grade", "pulse", "none"], "default": "grade+pulse" },
+    { "key": "look", "label": "Grade look", "type": "select", "options": ["filmic", "warm", "cold", "punchy", "neutral"], "default": "filmic" },
+    { "key": "vignette", "label": "Vignette", "type": "range", "min": 0, "max": 1, "step": 0.05, "default": 0.35 },
+    { "key": "chroma", "label": "Hit pulse colour split (px)", "type": "range", "min": 0, "max": 16, "step": 0.5, "default": 5 },
+    { "key": "decay", "label": "Hit pulse fade (ms)", "type": "range", "min": 80, "max": 900, "step": 10, "default": 260 },
+    { "key": "sample", "label": "Magnify game canvas", "type": "select", "options": ["auto", "sharp", "nearest", "linear"], "default": "auto" }
+  ],
+  "variants": [
+    { "name": "Filmic (default)", "params": { "passes": "grade+pulse", "look": "filmic", "vignette": 0.35, "chroma": 5, "decay": 260 } },
+    { "name": "Golden hour", "params": { "look": "warm", "vignette": 0.45 } },
+    { "name": "Moonlit", "params": { "look": "cold", "vignette": 0.5 } },
+    { "name": "Arcade punch", "params": { "look": "punchy", "chroma": 9, "decay": 340 } },
+    { "name": "Crisp pixels, grade only", "params": { "passes": "grade", "sample": "sharp", "vignette": 0.25 } }
+  ],
+  "assets": [
+    "module/webgl-post.js: the element as one dependency-free script (global GameDNA_Post): overlay layout, texture upload, pass registry, ping-pong buffers, input slots, built-in grade and pulse passes, no-WebGL / lost-context fallback, render watchdog",
+    "checks/robust.py: browser robustness checks (alignment, resize, dpr, call order, watchdog, lost context, bad shaders, ?webgl=0, no WebGL, determinism)",
+    "no image or audio files"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/webgl-post.js",
+    "global": "GameDNA_Post",
+    "version": "1.1.0",
+    "docs": "module/README.md",
+    "skin": "optional: the vignette fades to the skin's palette.ink when skin-api.js is loaded and a skin is passed"
+  }
+}

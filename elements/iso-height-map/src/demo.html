@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B-04 Isometric Height and Jump</title>
+<style>
+:root{--bg:#0d0f1a;--panel:#161a2b;--line:#272d48;--ink:#e6e9f5;--mute:#8f97b8;--acc:#f0b838;--blue:#4078e8;--red:#e04838}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;min-height:100vh;background:radial-gradient(1200px 600px at 30% -10%,#1c2244 0,var(--bg) 60%) no-repeat,var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:1200px;margin:0 auto;padding:16px;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px}
+header{grid-column:1/-1;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.code{font:700 12px/1 ui-monospace,Menlo,monospace;color:#0d0f1a;background:var(--acc);padding:5px 7px;border-radius:4px;letter-spacing:.06em}
+h1{margin:0;font-size:20px;font-weight:700;letter-spacing:.01em}
+.sub{color:var(--mute);font-size:13px;flex-basis:100%}
+#stage{min-width:0;display:flex;flex-direction:column;align-items:center;gap:10px}
+.screen{padding:10px;border-radius:12px;background:linear-gradient(#1b2036,#10131f);border:1px solid var(--line);box-shadow:0 20px 50px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.05);max-width:100%}
+canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;background:#000;touch-action:none;cursor:crosshair;max-width:100%}
+.pad{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.btn{appearance:none;border:1px solid var(--line);background:#1d2238;color:var(--ink);border-radius:8px;padding:8px 14px;font:600 13px system-ui;cursor:pointer;touch-action:none;user-select:none}
+.btn:hover{border-color:#4a5482}.btn.a{background:#2a3f86;border-color:#4a6cd8}.btn.b{background:#5a2026;border-color:#a84048}
+aside{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 14px 10px;align-self:start}
+aside h2{margin:0 0 10px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 8px;margin:0 0 12px}
+.row label{font-size:13px}.row output{font:600 12px ui-monospace,Menlo,monospace;color:var(--acc)}
+.row input,.row select{grid-column:1/-1;width:100%}
+select{background:#0f1222;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px}
+input[type=range]{accent-color:var(--acc)}
+.keys{margin-top:6px;border-top:1px solid var(--line);padding-top:10px;color:var(--mute);font-size:12.5px}
+.keys b{color:var(--ink);font-weight:600}
+kbd{font:600 11px ui-monospace,Menlo,monospace;background:#0f1222;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:1px 5px;color:var(--ink)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;color:var(--mute);font-size:12.5px;justify-content:center}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+@media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr)}}
+</style></head>
+<body>
+<div class="wrap">
+  <header><span class="code">B-04</span><h1>Isometric height &amp; jump</h1>
+    <div class="sub">A 2:1 isometric tactics map where every tile has a height. A unit climbs at most its jump, drops at most jump + fall, shoots farther from high ground, hits harder from above or behind, and picks a facing when it is done. Blocks in front hide units behind them; the hidden unit gets an outline. The camera turns in 90&deg; steps.</div></header>
+  <div id="stage">
+    <div class="screen"><canvas id="screen" width="256" height="224"></canvas></div>
+    <div class="pad"><button class="btn a" data-k="a">A &middot; Select / Confirm</button><button class="btn b" data-k="b">B &middot; Cancel</button><button class="btn" data-k="rotl">&#8634; Rotate</button><button class="btn" data-k="rotr">Rotate &#8635;</button><button class="btn" id="replay">Replay tour</button></div>
+    <div class="legend"><span><i class="sw" style="background:var(--blue)"></i>reachable under the jump rule</span><span><i class="sw" style="background:var(--red)"></i>attack reach (high ground adds range)</span><span><i class="sw" style="background:var(--acc)"></i>path</span></div>
+  </div>
+  <aside>
+    <h2>Parameters</h2>
+    <div class="row"><label for="p-jump">Jump (hero)</label><output id="o-jump"></output><input id="p-jump" type="range" min="1" max="6" step="1"></div>
+    <div class="row"><label for="p-fall">Extra drop (fall)</label><output id="o-fall"></output><input id="p-fall" type="range" min="0" max="4" step="1"></div>
+    <div class="row"><label for="p-hgRange">Height per +1 range</label><output id="o-hgRange"></output><input id="p-hgRange" type="range" min="1" max="4" step="1"></div>
+    <div class="row"><label for="p-hgDamage">Damage per height step (%)</label><output id="o-hgDamage"></output><input id="p-hgDamage" type="range" min="0" max="20" step="5"></div>
+    <div class="row"><label for="p-side">Side hit multiplier</label><output id="o-side"></output><input id="p-side" type="range" min="1" max="1.5" step="0.05"></div>
+    <div class="row"><label for="p-back">Back hit multiplier</label><output id="o-back"></output><input id="p-back" type="range" min="1" max="2" step="0.1"></div>
+    <div class="row"><label for="p-step">Pixels per height level</label><select id="p-step"><option value="4">4 px (fine steps)</option><option value="6">6 px</option><option value="8">8 px (chunky)</option></select></div>
+    <div class="row"><label for="p-xray">Hidden-unit outline</label><select id="p-xray"><option value="active">Active, selected and cursor unit</option><option value="team">Every player unit</option><option value="all">Every unit</option><option value="off">Off</option></select></div>
+    <div class="row"><label for="p-overlay">Range overlay</label><select id="p-overlay"><option value="pulse">Pulsing</option><option value="solid">Solid</option></select></div>
+    <div class="keys"><b>Keyboard</b> <kbd>&larr;</kbd><kbd>&uarr;</kbd><kbd>&rarr;</kbd><kbd>&darr;</kbd> cursor in screen directions &middot; <kbd>Z</kbd> select a unit, then confirm a blue tile &middot; <kbd>X</kbd> cancel &middot; <kbd>Q</kbd>/<kbd>E</kbd> rotate &middot; <kbd>F</kbd> pick a facing<br>
+    <b>Mouse</b> hover aims (sprites and cliff faces pick their tile), click confirms<br><b>Tour</b> plays by itself until you press a key or click</div>
+  </aside>
+</div>
+<script>addEventListener("error", e => { document.documentElement.dataset.err = e.message + " @" + e.lineno; });</script>
+<script>
+/* ===== module/iso-height-map.js (verbatim) ===== */
+/*MODULE*/
+</script>
+<script>
+/*ART*/
+</script>
+<script>
+/*GAME*/
+</script>
+</body></html>

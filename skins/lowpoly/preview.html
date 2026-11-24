@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Low-poly 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root { --bg: #eef1f8; --fg: #33395a; --muted: #7c84a8; --line: #dde2ee; --accent: #ff8a5c; --card: #ffffff; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #1a1d33; --fg: #eef0f8; --muted: #a6acc6; --line: #2e3352; --card: #23284a; } }
+  :root[data-theme="dark"] { --bg: #1a1d33; --fg: #eef0f8; --muted: #a6acc6; --line: #2e3352; --card: #23284a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 20px 16px 32px; background: var(--bg); color: var(--fg); font: 14px/1.5 "Nunito", ui-rounded, system-ui, sans-serif; }
+  main { max-width: 800px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 900; margin: 0 0 2px; }
+  h1 span { color: var(--accent); font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; margin-left: 8px; }
+  p { margin: 0 0 14px; color: var(--muted); font-size: 13px; font-weight: 700; }
+  .tods { display: flex; gap: 6px; margin: 0 0 12px; flex-wrap: wrap; }
+  .tods a { padding: 4px 12px; border-radius: 999px; background: var(--card); color: var(--fg); text-decoration: none; font-weight: 800; font-size: 12px; border: 1px solid var(--line); }
+  .tods a.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+  figure { margin: 0 0 18px; }
+  canvas { display: block; width: 100%; max-width: 768px; height: auto; border-radius: 14px; box-shadow: 0 8px 24px rgba(40,46,90,.18); background: #cfe0f0; }
+  figcaption { color: var(--muted); font-size: 12px; margin-top: 8px; font-weight: 700; }
+  code { color: var(--accent); font-size: 12px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Low-poly 3D <span>skin: lowpoly</span></h1>
+  <p>A flat-shaded toy world faked in 2D: one colour per facet from the time-of-day light, bevelled glassy range slabs, an extruded path ribbon, chunky extruded numbers and rounded type on frosted cream panels.</p>
+  <div class="tods" id="tods"></div>
+  <figure><canvas id="scene" width="768" height="672"></canvas>
+    <figcaption>Shared scene (same map, seed and moments as every style). All three modules draw through this skin: <code>grid-range-path</code> (range, path arrow), <code>damage-numbers</code> (glyphs, bounce), <code>window-cursor</code> (menu, pointer). <code>?t=1400&amp;freeze=1&amp;tod=day|dusk|night</code></figcaption></figure>
+  <figure><canvas id="sheet" width="768" height="384"></canvas>
+    <figcaption>Skin sheet: every tile kind, plates, banner, gauges (every kind, haste / slow tags), HP meters, every number kind, the four overlay kinds, cursors, selected row, unit tokens.</figcaption></figure>
+</main>
+<script src="../skin-api.js"></script>
+<script src="../pixel16.js"></script>
+<script src="lowpoly.js"></script>
+<script src="../../elements/grid-range-path/module/grid-range-path.js"></script>
+<script src="../../elements/damage-numbers/module/damage-numbers.js"></script>
+<script src="../../elements/window-cursor/module/window-cursor.js"></script>
+<script src="../scene/shared-scene.js"></script>
+<script>
+'use strict';
+/* The map moment is the shared scene (scene/shared-scene.js), the same one compare.html shows; this page adds the skin sheet. */
+var Q = new URLSearchParams(location.search), FREEZE = Q.get('freeze') === '1', T0 = Q.has('t') ? +Q.get('t') : 1400;
+var SK = GameDNA_Skin.resolve('lowpoly'), P = SK.palette, mix = GameDNA_Skin.color.mix, rgba = GameDNA_Skin.color.rgba;
+var TODN = P.light[Q.get('tod')] ? Q.get('tod') : 'day'; SK.tod(TODN); var LT = P.light[TODN];
+var W = 256, H = 224, TS = 16, COLS = 16, ROWS = 14, FRAME = 1000 / 60, LOOP = 4000;
+var DPR = Math.max(1, Math.round(window.devicePixelRatio || 1)), S = Q.has('scale') ? Math.max(1, +Q.get('scale') | 0) : 3 * DPR;
+
+/* ---------- skin sheet: every method once ---------- */
+function drawSheet(T) {
+  var c = document.getElementById('sheet'), t = T / 1000; c.width = 256 * S; c.height = 128 * S; var g = c.getContext('2d');
+  g.setTransform(S, 0, 0, S, 0, 0); GameDNA_Skin.setup(SK, g);
+  var kinds = ['grass', 'forest', 'hill', 'mountain', 'road', 'sand', 'bridge', 'water', 'fort', 'wall', 'floor'];
+  for (var y = 0; y < 8; y++) for (var x = 0; x < 16; x++) SK.tile(g, { x: x * 16, y: y * 16, w: 16, h: 16 }, y === 7 && x >= 5 ? kinds[x - 5] : 'grass', t);
+  var pw = SK.measure('Active ×1.0', { font: 'plate' }); SK.frame(g, { x: 4, y: 4, w: pw + 14, h: 13 }, { role: 'plate' }); SK.text(g, 'Active ×1.0', 11, 7, { font: 'plate', color: P.text.plate });
+  var ww = SK.measure('Wait ×1.0', { font: 'plate' }); SK.frame(g, { x: pw + 22, y: 4, w: ww + 14, h: 13 }, { role: 'plate', alert: true }); SK.text(g, 'Wait ×1.0', pw + 29, 7, { font: 'plate', color: P.text.accent });
+  SK.frame(g, { x: 146, y: 3, w: 106, h: 16 }, { role: 'banner' }); SK.text(g, 'Fire Storm', 199, 7.5, { align: 'center', font: 'title', color: P.text.title });
+  SK.frame(g, { x: 4, y: 22, w: 124, h: 70 }, { role: 'window', team: 'n' });
+  SK.frame(g, { x: 8, y: 39, w: 116, h: 11 }, { role: 'row' });
+  [['Rowan', 0.62, 'charge', null], ['Mira', 0.35, 'haste', 'haste'], ['Bram', 1, 'ready', null], ['Ilsa', 1, 'queued', 'slow'], ['Osric', 0, null, null]].forEach(function (r, i) {
+    var yy = 28 + i * 12; SK.text(g, r[0], 11, yy); SK.bar(g, { x: 48, y: yy + 1.6, w: 72, h: 4.2 }, r[1], r[2], { tag: r[3], t: t });
+  });
+  SK.frame(g, { x: 134, y: 104, w: 118, h: 16 }, { role: 'window', team: 'b' });
+  SK.bar(g, { x: 142, y: 110, w: 50, h: 4 }, 0.45, 'enemy'); SK.bar(g, { x: 196, y: 110, w: 50, h: 4 }, 1, 'enemyFull', { t: t });
+  SK.number(g, '128', 154, 34, { kind: 'damage', align: 'center' }); SK.number(g, '57', 192, 36, { kind: 'crit', big: true, label: 'Critical', align: 'center' }); SK.number(g, '+30', 232, 34, { kind: 'heal', align: 'center' });
+  SK.number(g, '12', 150, 60, { kind: 'mp', suffix: 'MP', align: 'center' }); SK.number(g, 'Miss', 190, 62, { kind: 'miss', align: 'center' }); SK.number(g, 'Poison', 230, 62, { kind: 'status', align: 'center' });
+  ['move', 'attack', 'threat', 'heal'].forEach(function (k, i) { for (var j = 0; j < 2; j++) SK.overlay(g, { x: 138 + i * 30 + j * 13, y: 80, w: 13, h: 13 }, k, t, { tile: { x: j, y: 0 }, edges: { top: true, bottom: true, left: j === 0, right: j === 1 }, seams: { right: j === 0 } }); });
+  ['knight', 'mage', 'fighter', 'archer', 'monster'].forEach(function (k, i) { SK.unitToken(g, { x: 2 + i * 15, y: 98, w: 14, h: 14 + 8 }, { team: i % 2 ? 'b' : 'a', kind: k, id: k }, t); });
+  SK.cursor(g, { x: 84, y: 104, w: 7, h: 5 }, 'hand', t); SK.text(g, 'Pointer', 95, 102);
+}
+
+function render(T) { GameDNA_Scene.draw(document.getElementById('scene'), 'lowpoly', T, { width: 256 * S }); }   // the shared scene: identical to compare.html
+GameDNA_Skin.ready(SK).then(function () {
+  if (FREEZE) { render(T0); drawSheet(T0); document.documentElement.dataset.ready = '1'; return; }
+  var start = performance.now() - T0;
+  (function loop(now) { var T = (now - start) % LOOP; render(T); drawSheet(T); requestAnimationFrame(loop); })(performance.now());
+  document.documentElement.dataset.ready = '1';
+});
+var tods = document.getElementById('tods');
+['day', 'dusk', 'night'].forEach(function (n) { var a = document.createElement('a'); a.textContent = n[0].toUpperCase() + n.slice(1); var q = new URLSearchParams(location.search); q.set('tod', n); a.href = '?' + q.toString(); if (n === TODN) a.className = 'on'; tods.appendChild(a); });
+</script>
+</body>
+</html>

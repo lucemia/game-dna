@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rubber-Hose Skin Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=block" rel="stylesheet">
+<style>
+  :root { --bg: #e9dcc0; --fg: #16110c; --muted: #5e4f3a; --card: #16110c; --on-card: #fffbf0; --stage: #efe3c8; --line: #16110c; --accent: #c4532f; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #1d1711; --fg: #efe3c8; --muted: #b3a283; --card: #0c0906; --stage: #2a2118; --line: #000000; } }
+  :root[data-theme="dark"] { --bg: #1d1711; --fg: #efe3c8; --muted: #b3a283; --card: #0c0906; --stage: #2a2118; --line: #000000; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { padding: 16px; background: var(--bg); color: var(--fg); font: 14px/1.5 Georgia, 'Times New Roman', serif; }
+  header { max-width: 1120px; margin: 0 auto 14px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .card { background: var(--card); color: var(--on-card); border-radius: 10px; padding: 8px 20px 6px; position: relative;
+          box-shadow: 4px 4px 0 rgba(22,17,12,0.45); outline: 2px solid var(--on-card); outline-offset: -6px; }
+  .card::after { content: ''; position: absolute; inset: 9px; border: 1px solid var(--on-card); border-radius: 5px; pointer-events: none; }
+  h1 { margin: 0; font: 400 26px/1.1 'Luckiest Guy', 'Cooper Black', 'Arial Rounded MT Bold', sans-serif; letter-spacing: 0.04em; }
+  h1 span { display: inline-block; }
+  h1 span:nth-child(odd) { transform: translateY(-1px) rotate(-2deg); } h1 span:nth-child(even) { transform: translateY(1px) rotate(1.5deg); }
+  header p { margin: 0; color: var(--muted); flex: 1 1 280px; min-width: 0; }
+  main { max-width: 1120px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 1.25fr); gap: 16px; align-items: start; }
+  figure { margin: 0; min-width: 0; }
+  .stage { background: var(--stage); border: 3px solid var(--line); border-radius: 8px; padding: 6px; box-shadow: 3px 3px 0 var(--line); }
+  canvas { display: block; width: 100%; height: auto; border-radius: 4px; }
+  figcaption { color: var(--muted); font-size: 12px; margin-top: 8px; }
+  code { font: 12px ui-monospace, Menlo, monospace; }
+  @media (max-width: 760px) { main { grid-template-columns: minmax(0, 1fr); } h1 { font-size: 22px; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="card"><h1 aria-label="Rubber-hose"><span>R</span><span>u</span><span>b</span><span>b</span><span>e</span><span>r</span><span>-</span><span>h</span><span>o</span><span>s</span><span>e</span></h1></div>
+  <p>1930s rubber-hose cartoon skin on the shared scene (same map, seed and moments as every style). <code>?t=ms&amp;freeze=1</code> for a fixed moment, <code>&amp;focus=grid|numbers|window</code> for one element, <code>&amp;film=0</code> without the film post pass.</p>
+</header>
+<main>
+  <figure><div class="stage"><canvas id="rh"></canvas></div><figcaption>rubber-hose: grid-range-path, damage-numbers and window-cursor all drawing through the skin; map, props, units and the film pass from its tile / prop / unitToken / atmosphere hooks</figcaption></figure>
+  <figure><div class="stage"><canvas id="ref"></canvas></div><figcaption>same moment in pixel16 (reference)</figcaption></figure>
+</main>
+<script src="../skin-api.js"></script>
+<script src="../pixel16.js"></script>
+<script src="rubber-hose.js"></script>
+<script src="../../elements/grid-range-path/module/grid-range-path.js"></script>
+<script src="../../elements/damage-numbers/module/damage-numbers.js"></script>
+<script src="../../elements/window-cursor/module/window-cursor.js"></script>
+<script src="../scene/shared-scene.js"></script>
+<script>
+'use strict';
+var Q = new URLSearchParams(location.search), FREEZE = Q.get('freeze') === '1', T0 = Q.has('t') ? +Q.get('t') : GameDNA_Scene.DEFAULT_T;
+var FOCUS = ['grid', 'numbers', 'window'].indexOf(Q.get('focus')) >= 0 ? Q.get('focus') : 'all';
+var SK = GameDNA_Skin.get('rubber-hose');
+if (Q.get('film') === '0') SK.film = { grain: 0, flicker: 0, dust: false, scratch: false, vignette: 0, gate: 0, weave: 0 };
+if (Q.get('weave') === '0') SK.film.weave = 0;
+var rhC = document.getElementById('rh'), refC = document.getElementById('ref');
+function widthOf(c) { return Math.max(256, Math.round(c.parentNode.clientWidth * (window.devicePixelRatio || 1))); }
+function render(t) {
+  var info = GameDNA_Scene.draw(rhC, 'rubber-hose', t, { width: widthOf(rhC), focus: FOCUS });
+  GameDNA_Scene.draw(refC, 'pixel16', t, { width: widthOf(refC), focus: FOCUS });
+  window.__preview = { t: t, info: info };
+}
+GameDNA_Scene.ready(['rubber-hose', 'pixel16']).then(function () {
+  if (FREEZE) { render(T0); document.documentElement.dataset.ready = '1'; return; }
+  var t0 = performance.now() - T0;
+  (function loop(now) { render((now - t0) % GameDNA_Scene.LOOP); requestAnimationFrame(loop); })(performance.now());
+  document.documentElement.dataset.ready = '1';
+});
+document.documentElement.dataset.overflowX = String(document.documentElement.scrollWidth > document.documentElement.clientWidth);
+</script>
+</body>
+</html>

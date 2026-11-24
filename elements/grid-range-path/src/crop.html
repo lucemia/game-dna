@@ -1,0 +1,4 @@
+<!doctype html><body style="margin:0;background:#000"><canvas id=c></canvas><script>
+const q=new URLSearchParams(location.search),[x,y,w,h]=q.get('r').split(',').map(Number),z=+q.get('z')||3;
+const im=new Image();im.onload=()=>{const c=document.getElementById('c');c.width=w*z;c.height=h*z;const g=c.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(im,x,y,w,h,0,0,w*z,h*z);};im.src=q.get('src');
+</script></body>

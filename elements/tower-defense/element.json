@@ -1,0 +1,185 @@
+{
+  "id": "tower-defense",
+  "code": "A-16",
+  "kind": "system",
+  "name": "Tower placement & wave spawner",
+  "family": "Tower defense",
+  "oneLiner": "A tower-defense core: foes march along a fixed road through a grid (one or more paths from waypoint cells); towers go on the grass cells beside it, never on it, so the road can never be blocked. Pick a tower, see its range ring and a red warning on cells where it cannot stand, build, upgrade (three levels), sell (70% back), and give each tower a target priority (first, strong, near). Four built-in towers (single shot, splash, slow, chain), waves as plain data with the next wave previewed, gold, lives, speed x1 / x2, pause, win and lose. Seeded and frame-stepped, with a bot that builds and upgrades through the player's own input path.",
+  "fits": [
+    "tower defense and lane defense games",
+    "base or castle defense stages inside a strategy or adventure game",
+    "survival levels where the player prepares a route before waves arrive",
+    "puzzle-like defense maps with fixed build spots and a road"
+  ],
+  "notFor": [
+    "maze-building defense where towers reroute the foes (the road here is fixed by design)",
+    "games where the player's character fights the waves directly (use A-11 horde survival or A-05)",
+    "real-time strategy with units the player moves"
+  ],
+  "interfaces": {
+    "time": "realtime",
+    "coords": "grid",
+    "layer": "scene",
+    "needs": [
+      "a map: grid rows (grass, trees, rocks, water) and the road as waypoint cells per path",
+      "waves as data (groups of enemy ids with count, gap, delay, path), tower and enemy tables (built-ins ship)",
+      "a seed per field and a fixed 60 Hz update step",
+      "key or pointer input routed to the field while it runs",
+      "a place to go when the field is won or lost"
+    ],
+    "provides": [
+      "the rules: road cells and blocked cells, build / upgrade / sell with gold, three-level towers, targeting priorities, projectiles, splash, slow, chain lightning, armour, wave spawner with countdown and early-call bonus, lives, win / lose",
+      "the screen: painted grass field with road, props, burrow and gate, towers whose turrets turn to their target, top-view foes that turn with the road, range ring and placement ghost, red blocked-cell warning, HUD (lives, gold, wave bar, speed, pause), build panel, tower panel (upgrade, sell, target), next-wave preview, banners",
+      "hit site onHit per HP change on its impact frame (read-only), onEvent (build, upgrade, sell, target, fire, spawn, death, leak, waveStart, countdown, waveCleared, gold, end), onEnd(result, info)",
+      "a bot that picks cells by road coverage, builds, upgrades, sets priorities and calls waves through the input path",
+      "unit anchors (live, enemies and towers), unit rects, UI rects, field rect, actors() text state"
+    ]
+  },
+  "params": [
+    {
+      "key": "speed",
+      "label": "Game speed",
+      "type": "select",
+      "options": [
+        "1",
+        "2"
+      ],
+      "default": "1"
+    },
+    {
+      "key": "gold",
+      "label": "Starting gold (map default 200)",
+      "type": "range",
+      "min": 100,
+      "max": 600,
+      "step": 10,
+      "default": 200
+    },
+    {
+      "key": "lives",
+      "label": "Lives",
+      "type": "range",
+      "min": 1,
+      "max": 40,
+      "step": 1,
+      "default": 20
+    },
+    {
+      "key": "waveGap",
+      "label": "Seconds between waves",
+      "type": "range",
+      "min": 4,
+      "max": 30,
+      "step": 1,
+      "default": 12
+    },
+    {
+      "key": "earlyBonus",
+      "label": "Gold per second left when a wave is called early",
+      "type": "range",
+      "min": 0,
+      "max": 4,
+      "step": 0.5,
+      "default": 1
+    },
+    {
+      "key": "refund",
+      "label": "Sell refund",
+      "type": "range",
+      "min": 0.3,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.7
+    },
+    {
+      "key": "hpScale",
+      "label": "Enemy HP multiplier",
+      "type": "range",
+      "min": 0.5,
+      "max": 2,
+      "step": 0.05,
+      "default": 1
+    },
+    {
+      "key": "priority",
+      "label": "Default target priority",
+      "type": "select",
+      "options": [
+        "first",
+        "strong",
+        "near"
+      ],
+      "default": "first"
+    },
+    {
+      "key": "ring",
+      "label": "Range ring",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "preview",
+      "label": "Next-wave preview",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "layout",
+      "label": "Layout (compact = field only, host shows the panel; for phones)",
+      "type": "select",
+      "options": [
+        "wide",
+        "compact"
+      ],
+      "default": "wide"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Standard (default)",
+      "params": {}
+    },
+    {
+      "name": "Rich start, short breaks",
+      "params": {
+        "gold": 400,
+        "waveGap": 6
+      }
+    },
+    {
+      "name": "Hard: tough foes, no early bonus",
+      "params": {
+        "hpScale": 1.3,
+        "earlyBonus": 0
+      }
+    },
+    {
+      "name": "Strong-first towers",
+      "params": {
+        "priority": "strong"
+      }
+    },
+    {
+      "name": "Blind waves (no preview)",
+      "params": {
+        "preview": "off"
+      }
+    }
+  ],
+  "assets": "module/tower-defense.js (global GameDNA_TowerDefense, no dependencies; API in module/README.md). Everything is drawn in code: the grass field, road, trees, rocks, ponds, the burrow and the gate, four towers with three levels each, six top-view foes (mite, crawler, skitterling, moth, shellback, the Brood Matron boss) with walking legs or flapping wings, projectiles, explosions, frost, lightning, HUD and panels. No external files.",
+  "status": "v1-module",
+  "module": {
+    "file": "module/tower-defense.js",
+    "global": "GameDNA_TowerDefense",
+    "version": "1.1.1"
+  },
+  "starter": "starter/index.html"
+}

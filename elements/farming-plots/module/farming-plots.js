@@ -1,0 +1,1221 @@
+/* GameDNA_FarmingPlots (G-04 farming plots, system) - one plain script, no dependencies, one global.
+ *
+ * A farm loop on a tile grid: till, plant, water, crops grow one step per watered night (in season), harvest, ship in a bin
+ * (paid overnight), buy seeds at a stall, seasons wither out-of-season crops, a day clock from 6:00 to midnight with dusk and
+ * night, seeded rain. A farmer who walks tile by tile with a 4-frame walk (arm swing), turns before stepping, faces the tile
+ * he works and plays a raise / strike tool animation. A bot that plays through the same key path. Crops and tools are data.
+ *
+ *   var F = GameDNA_FarmingPlots.create({ seed, cols, rows, tile: 16, walkable(cx, cy), field: [[cx, cy], ...],
+ *       spots: { bin: [cx, cy], shop: [cx, cy], bed: [cx, cy] }, start: [cx, cy, 'down'], params, onEvent, onEnd });
+ *   F.update(16.67); F.key('left' | 'ok' | ...); F.drawSoil(ctx); F.sprites() -> [{y, draw(ctx)}]; F.drawFx(ctx);
+ *   F.drawSky(ctx, viewRect); F.drawUI(ctx, {w, h});  (API in module/README.md)
+ *
+ * Deterministic: every rule and the bot read only the seed and the update() clock (no Math.random, no Date).
+ * ASCII only. Works headless (node) for rule checks: drawing needs a document.
+ */
+(function (root) {
+  'use strict';
+  var VERSION = '1.2.0';
+
+  /* ---------- small helpers ---------- */
+  function num(v, d) { if (v == null || v === '') return d; v = +v; return isFinite(v) ? v : d; }
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function rngOf(seed) {
+    var s = (seed >>> 0) || 1;
+    var f = function () { s = (s + 0x6D2B79F5) >>> 0; var t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    f.state = function () { return s; };
+    return f;
+  }
+  function hsh(x, y, s) { var n = Math.imul(x | 0, 73856093) ^ Math.imul(y | 0, 19349663) ^ Math.imul((s | 0) + 1, 83492791); n = Math.imul(n ^ (n >>> 13), 0x5bd1e995); n ^= n >>> 15; return (n >>> 0) / 4294967296; }
+  function warn(where, e) { try { if (typeof console !== 'undefined') console.warn('[farming-plots] ' + where + ': ' + (e && e.message || e)); } catch (x) { } }
+  function safe(fn, args, where) { if (typeof fn !== 'function') return undefined; try { return fn.apply(null, args || []); } catch (e) { warn(where, e); return undefined; } }
+  function copy(o) { var r = {}; for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) r[k] = o[k]; return r; }
+  var DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+  var DIR_ORDER = ['up', 'right', 'down', 'left'];
+
+  /* ---------- content: seasons, crops, tools (the game may add its own as plain data) ---------- */
+  // A season: id, name, colours for the HUD. Days per season come from params.seasonDays.
+  var SEASONS = [
+    { id: 'spring', name: 'Spring', color: '#e86a9a', icon: 'blossom' },
+    { id: 'summer', name: 'Summer', color: '#f0a020', icon: 'sun' },
+    { id: 'fall', name: 'Fall', color: '#d8642a', icon: 'leaf' },
+    { id: 'winter', name: 'Winter', color: '#6aa8e0', icon: 'flake' }
+  ];
+  // A crop: name, seasons it grows in, days from seed to ripe (watered nights), stages drawn (>= 3: seed ... ripe),
+  // seed price, sell price, regrow (days back to ripe after a harvest; 0 = the plant is used up), yield, look.kind
+  // (root | leafy | vine | stalk | gourd | flower) and look colours (leaf ramp dark..light, fruit ramp dark..light).
+  var CROPS = {
+    turnip: { name: 'Turnip', seasons: ['spring'], days: 2, stages: 4, seed: 10, sell: 32, regrow: 0, yield: 1,
+      look: { kind: 'root', leaf: ['#1c4a2e', '#2f7a3a', '#58a444', '#8ccc5c'], fruit: ['#7a3a6a', '#c46aa0', '#f0e6f0', '#ffffff'] } },
+    cabbage: { name: 'Cabbage', seasons: ['spring'], days: 3, stages: 4, seed: 24, sell: 72, regrow: 0, yield: 1,
+      look: { kind: 'leafy', leaf: ['#1e5030', '#3a8a4a', '#78c070', '#c4ec9c'], fruit: ['#3a8a4a', '#9ad488', '#d8f4b8', '#f4fff0'] } },
+    tomato: { name: 'Tomato', seasons: ['summer'], days: 3, stages: 5, seed: 30, sell: 46, regrow: 1, yield: 2,
+      look: { kind: 'vine', leaf: ['#1a4428', '#2c6e34', '#4c9a3e', '#7cc256'], fruit: ['#7a1420', '#d03a32', '#ff7a5a', '#ffd0b8'] } },
+    corn: { name: 'Corn', seasons: ['summer', 'fall'], days: 3, stages: 5, seed: 36, sell: 104, regrow: 0, yield: 1,
+      look: { kind: 'stalk', leaf: ['#2a5226', '#4a8a34', '#7ab84a', '#b4dc78'], fruit: ['#a86a10', '#e8b830', '#ffe070', '#fff6c0'] } },
+    pumpkin: { name: 'Pumpkin', seasons: ['fall'], days: 3, stages: 5, seed: 50, sell: 150, regrow: 0, yield: 1,
+      look: { kind: 'gourd', leaf: ['#1c4426', '#30703a', '#58a048', '#8ccc64'], fruit: ['#8a3a10', '#e07020', '#ffa040', '#ffd890'] } }
+  };
+  // A tool: name, action (till | water | plant | harvest), area = cells it works as [forward, side] from the farmer
+  // ([1, 0] = the tile he faces; [1, -1] / [1, 1] = left / right of it), ms (raise + strike), icon (hoe | can | seeds |
+  // sickle | a function (ctx, x, y, size)), colors (metal, wood, accent), name shown on the hotbar.
+  var TOOLS = {
+    hoe: { name: 'Hoe', action: 'till', area: [[1, 0]], ms: 300, icon: 'hoe', colors: ['#8a94b4', '#a87240', '#d0d8ec'] },
+    can: { name: 'Watering Can', action: 'water', area: [[1, 0]], ms: 300, icon: 'can', colors: ['#3a8a7a', '#5cb8a0', '#a8ecd8'] },
+    seeds: { name: 'Seeds', action: 'plant', area: [[1, 0]], ms: 240, icon: 'seeds', colors: ['#c8a060', '#8a6030', '#f0d8a0'] },
+    sickle: { name: 'Sickle', action: 'harvest', area: [[1, 0]], ms: 260, icon: 'sickle', colors: ['#c8d0e0', '#7a4a2a', '#ffffff'] }
+  };
+  var WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  function cropDef(crops, id) {
+    var d = crops && crops[id]; if (!d) return null;
+    if (!d.__norm) {
+      d.name = d.name || id; d.seasons = Array.isArray(d.seasons) && d.seasons.length ? d.seasons : ['spring', 'summer', 'fall'];
+      d.days = Math.max(1, Math.round(num(d.days, 3))); d.stages = Math.max(3, Math.round(num(d.stages, 4)));
+      d.seed = Math.max(0, Math.round(num(d.seed, 20))); d.sell = Math.max(0, Math.round(num(d.sell, 40)));
+      d.regrow = Math.max(0, Math.round(num(d.regrow, 0))); d.yield = Math.max(1, Math.round(num(d.yield, 1)));
+      d.look = d.look || {}; d.look.kind = d.look.kind || 'leafy';
+      d.look.leaf = d.look.leaf || ['#1e5030', '#3a8a4a', '#78c070', '#c4ec9c']; d.look.fruit = d.look.fruit || ['#7a1420', '#d03a32', '#ff7a5a', '#ffd0b8'];
+      try { Object.defineProperty(d, '__norm', { value: true, enumerable: false }); } catch (e) { d.__norm = true; }
+    }
+    return d;
+  }
+  function toolDef(tools, id) {
+    var d = tools && tools[id]; if (!d) return null;
+    if (!d.__norm) {
+      d.name = d.name || id; d.action = d.action || 'till'; d.area = Array.isArray(d.area) && d.area.length ? d.area : [[1, 0]];
+      d.ms = Math.max(120, num(d.ms, 300)); d.icon = d.icon || ({ till: 'hoe', water: 'can', plant: 'seeds', harvest: 'sickle' }[d.action] || 'hoe');
+      d.colors = d.colors || TOOLS[{ till: 'hoe', water: 'can', plant: 'seeds', harvest: 'sickle' }[d.action] || 'hoe'].colors;
+      try { Object.defineProperty(d, '__norm', { value: true, enumerable: false }); } catch (e) { d.__norm = true; }
+    }
+    return d;
+  }
+
+  /* ---------- the rules, pure (the module and the checks use the same functions) ---------- */
+  var rules = {
+    // drawn stage of a crop: 0 = seed ... stages - 1 = ripe; a stage per day share, ripe only when growth >= days
+    stageOf: function (crop, def) {
+      if (!crop || !def) return 0;
+      if (crop.growth >= def.days) return def.stages - 1;
+      return Math.min(def.stages - 2, Math.floor(crop.growth * (def.stages - 1) / def.days));
+    },
+    ripe: function (crop, def) { return !!(crop && def && !crop.dead && crop.growth >= def.days); },
+    inSeason: function (def, seasonId) { return !!def && def.seasons.indexOf(seasonId) >= 0; },
+    // can a seed planted today ripen before its season (or the year) ends? daysLeft counts today (1 = the last day)
+    viable: function (def, seasonId, daysLeft) { return !!def && def.seasons.indexOf(seasonId) >= 0 && def.days <= daysLeft - 1; },
+    // dawn: the night's growth. A crop grows one day when its plot was watered yesterday and it is in season today;
+    // a crop out of season withers; every plot dries; rain waters every tilled plot for the new day.
+    dawn: function (plots, o) {
+      var ev = [], crops = o.crops, season = o.season;
+      for (var i = 0; i < plots.length; i++) {
+        var p = plots[i]; if (!p) continue;
+        var c = p.crop, d = c && cropDef(crops, c.id);
+        if (c && !c.dead) {
+          if (!d || d.seasons.indexOf(season) < 0) { c.dead = true; ev.push({ kind: 'wither', cell: [p.cx, p.cy], crop: c.id }); }
+          else if (p.watered && c.growth < d.days) {
+            var s0 = rules.stageOf(c, d); c.growth += 1; var s1 = rules.stageOf(c, d);
+            ev.push({ kind: 'grow', cell: [p.cx, p.cy], crop: c.id, growth: c.growth, stage: s1, from: s0 });
+            if (c.growth >= d.days) ev.push({ kind: 'ripe', cell: [p.cx, p.cy], crop: c.id });
+          }
+        }
+        p.watered = !!(o.rain && p.tilled);
+      }
+      return ev;
+    },
+    // would this action change the plot? (the bot and the "thunk" feedback use it)
+    useful: function (p, action, o) {
+      if (!p) return false;
+      var c = p.crop, d = c && cropDef(o.crops, c.id);
+      if (action === 'till') return !p.tilled || !!(c && c.dead);
+      if (action === 'water') return p.tilled && !p.watered && !!c && !c.dead && !rules.ripe(c, d);
+      if (action === 'plant') { var sd = cropDef(o.crops, o.seed); return p.tilled && !c && !!sd && (o.bag.seeds[o.seed] || 0) > 0 && sd.seasons.indexOf(o.season) >= 0; }
+      if (action === 'harvest') return !!c && (c.dead || rules.ripe(c, d));
+      return false;
+    },
+    // apply one action to one plot (mutates the plot and the bag); returns an event or null
+    apply: function (p, action, o) {
+      if (!rules.useful(p, action, o)) return null;
+      var c = p.crop, cell = [p.cx, p.cy];
+      if (action === 'till') { if (c && c.dead) { p.crop = null; return { kind: 'clear', cell: cell, crop: c.id }; } p.tilled = true; return { kind: 'till', cell: cell }; }
+      if (action === 'water') { p.watered = true; return { kind: 'water', cell: cell, crop: c ? c.id : null }; }
+      if (action === 'plant') { o.bag.seeds[o.seed] -= 1; p.crop = { id: o.seed, growth: 0, dead: false, day: o.day, harvests: 0 }; return { kind: 'plant', cell: cell, crop: o.seed }; }
+      if (action === 'harvest') {
+        if (c.dead) { p.crop = null; return { kind: 'clear', cell: cell, crop: c.id }; }
+        var d = cropDef(o.crops, c.id), n = d.yield;
+        o.bag.crops[c.id] = (o.bag.crops[c.id] || 0) + n;
+        if (d.regrow > 0) { c.growth = Math.max(0, d.days - d.regrow); c.harvests += 1; } else p.crop = null;
+        return { kind: 'harvest', cell: cell, crop: c.id, n: n };
+      }
+      return null;
+    },
+    // cells a tool works when the farmer stands at (cx, cy) facing dir: area [forward, side]; side +1 = the farmer's right
+    cellsFor: function (tool, cx, cy, dir) {
+      var f = DIRS[dir] || DIRS.down, r = [-f[1], f[0]], out = [];
+      (tool.area || [[1, 0]]).forEach(function (a) { var fw = num(a[0], 1), sd = num(a[1], 0); out.push([cx + f[0] * fw + r[0] * sd, cy + f[1] * fw + r[1] * sd]); });
+      return out;
+    },
+    // buying never takes gold below 0
+    buy: function (state, cropId, n, crops) {
+      var d = cropDef(crops, cropId); n = Math.max(0, n | 0); if (!d || !n) return 0;
+      var can = d.seed > 0 ? Math.min(n, Math.floor(state.gold / d.seed)) : n; if (can <= 0) return 0;
+      state.gold -= can * d.seed; state.bag.seeds[cropId] = (state.bag.seeds[cropId] || 0) + can; return can;
+    },
+    // the night's sale of what was put in the bin
+    sell: function (state, crops) {
+      var total = 0, lines = [];
+      for (var id in state.bin) { var n = state.bin[id] | 0, d = cropDef(crops, id); if (n <= 0 || !d) continue; var v = n * d.sell; total += v; lines.push({ crop: id, n: n, gold: v }); }
+      state.bin = {}; state.gold += total; state.earned += total; return { total: total, lines: lines };
+    }
+  };
+
+  /* =====================================================================================================
+     Art: everything drawn in code, 1 art px = 1 world px, light from the top left, cached canvases.
+     ===================================================================================================== */
+  var CACHE = {};
+  function mkCanvas(w, h) { if (typeof document === 'undefined') return null; var c = document.createElement('canvas'); c.width = Math.max(1, w); c.height = Math.max(1, h); return c; }
+  function cached(key, fn) { if (CACHE[key] !== undefined) return CACHE[key]; var v = null; try { v = fn(); } catch (e) { warn('art ' + key, e); } CACHE[key] = v; return v; }
+  function Pix(w, h, ox, oy) {
+    var px = new Array(w * h); ox = ox || 0; oy = oy || 0;
+    var P = {
+      w: w, h: h,
+      set: function (x, y, c) { x = (x | 0) + ox; y = (y | 0) + oy; if (x < 0 || y < 0 || x >= w || y >= h || !c) return; px[y * w + x] = c; },
+      get: function (x, y) { x = (x | 0) + ox; y = (y | 0) + oy; return x < 0 || y < 0 || x >= w || y >= h ? null : px[y * w + x] || null; },
+      del: function (x, y) { x = (x | 0) + ox; y = (y | 0) + oy; if (x >= 0 && y >= 0 && x < w && y < h) px[y * w + x] = null; },
+      r: function (x, y, ww, hh, c) { for (var j = 0; j < hh; j++) for (var i = 0; i < ww; i++) P.set(x + i, y + j, c); },
+      line: function (x0, y0, x1, y1, c, wd) {
+        x0 = Math.round(x0); y0 = Math.round(y0); x1 = Math.round(x1); y1 = Math.round(y1);
+        var dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1, e = dx + dy, n = 0;
+        while (n++ < 200) { P.set(x0, y0, c); if (wd > 1) P.set(x0 + 1, y0, c); if (x0 === x1 && y0 === y1) break; var e2 = 2 * e; if (e2 >= dy) { e += dy; x0 += sx; } if (e2 <= dx) { e += dx; y0 += sy; } }
+      },
+      // shaded ellipse, ramp dark..light (4), light from the upper left
+      ball: function (cx, cy, rx, ry, ramp, spec) {
+        for (var y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y++) for (var x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++) {
+          var nx = (x + 0.5 - cx) / Math.max(0.5, rx), ny = (y + 0.5 - cy) / Math.max(0.5, ry), d = nx * nx + ny * ny; if (d > 1) continue;
+          var nz = Math.sqrt(Math.max(0, 1 - d)), lum = -0.5 * nx - 0.6 * ny + 0.6 * nz, k = lum > 0.82 ? 3 : lum > 0.42 ? 2 : lum > 0.02 ? 1 : 0;
+          if (k === 3 && !spec) k = 2; P.set(x, y, ramp[k]);
+        }
+      },
+      outline: function (col) {
+        var add = [], x, y;
+        for (y = 0; y < h; y++) for (x = 0; x < w; x++) {
+          if (px[y * w + x]) continue;
+          var g = function (X, Y) { return X >= 0 && Y >= 0 && X < w && Y < h && px[Y * w + X]; };
+          if (g(x + 1, y) || g(x - 1, y) || g(x, y + 1) || g(x, y - 1)) add.push(y * w + x);
+        }
+        add.forEach(function (i) { px[i] = col; });
+      },
+      canvas: function () { var c = mkCanvas(w, h); if (!c) return null; var g = c.getContext('2d'); for (var i = 0; i < w * h; i++) if (px[i]) { g.fillStyle = px[i]; g.fillRect(i % w, (i / w) | 0, 1, 1); } return c; }
+    };
+    return P;
+  }
+  function mirror(c) { if (!c) return c; var o = mkCanvas(c.width, c.height), g = o.getContext('2d'); g.translate(c.width, 0); g.scale(-1, 1); g.drawImage(c, 0, 0); return o; }
+
+  /* ---------- the farmer: 18 x 24 canvas, feet on row 23, 4 facings, idle + 4 walk frames (arms swing against the legs),
+     tool poses raise / strike, a lift pose (holding a harvest over the head). The side art faces right; left is its
+     mirror (no asymmetric gear is baked in: tools are drawn by code, light comes from the top). ---------- */
+  var FC = { OL: '#2a1a22', SK: '#f4c8a0', SKD: '#d8966c', HR: '#7a4424', HRD: '#4e2a16', HRL: '#a86634', HAT: '#ecc664', HATL: '#fbe69a', HATD: '#b88c38',
+    BAND: '#c4483a', BANDD: '#8a2a26', SH: '#f2ead6', SHD: '#c9b896', OV: '#3e6ab0', OVL: '#5c8ed4', OVD: '#28487c', BT: '#6e4426', BTD: '#3e2416', EYE: '#2a1a22', BL: '#ec9a8a', BTN: '#f0d070', HND: '#f2c69e', HNDD: '#d6946a' };   // hands: their own (near-skin) keys, so checks can find them
+  var FARMER = { w: 18, h: 24, foot: 23, cx: 9 };
+  // Tool poses: 'raise' / 'strike' for long tools (hoe, sickle: both hands on the handle, raised overhead, then brought
+  // down onto the faced tile), 'hold' / 'pour' for carried tools (can, seed pouch: held in both hands at the chest, then
+  // tipped). Hand points in canvas px: the tool's grip is drawn from here; null = the tool is hidden by the body.
+  var HAND = {
+    down: { raise: [9, 1], strike: [9, 18], hold: [9, 15], pour: [9, 17], lift: [9, 5] },
+    up: { raise: [9, 1], strike: [9, 5], hold: null, pour: null, lift: [9, 5] },
+    right: { raise: [3, 0], strike: [13, 16], hold: [12, 14], pour: [13, 15], lift: [12, 5] }
+  };
+  function armLineP(P, sx, sy, hx, hy, sleeve) {
+    var n = Math.max(Math.abs(hx - sx), Math.abs(hy - sy)), i;
+    for (i = 0; i <= n; i++) { var x = Math.round(sx + (hx - sx) * i / Math.max(1, n)), y = Math.round(sy + (hy - sy) * i / Math.max(1, n)); P.r(x, y, 2, 1, sleeve); }
+  }
+  function paintFarmerFront(P, back, walk, pose) {
+    var C = FC, o = (walk === 1 || walk === 3) ? -1 : 0, toolPose = pose === 'raise' || pose === 'strike' || pose === 'hold' || pose === 'pour' || pose === 'lift';
+    var lift = walk === 0 ? [2, 0] : walk === 2 ? [0, 2] : [0, 0];
+    // legs and boots (not bobbed; a bob stretches the leg one row up)
+    [[4, lift[0]], [8, lift[1]]].forEach(function (L, i) {
+      var x0 = L[0], lf = L[1];
+      for (var y = 16 + o + 1; y <= 18 - lf; y++) { P.r(x0, y, 4, 1, C.OV); P.set(i ? x0 : x0 + 3, y, C.OVD); }
+      P.r(x0, 19 - lf, 4, 2, C.BT); P.set(x0, 19 - lf, '#8a5a34'); P.r(x0, 21 - lf, 4, 1, C.BTD);
+    });
+    // walking / idle / lift arms (behind the torso edge): swing against the legs
+    var sw = walk === 0 ? [-1, 1] : walk === 2 ? [1, -1] : [0, 0];
+    function arm(x0, s, shade) {
+      if (pose === 'lift') { P.r(x0, 6 + o, 2, 7, shade ? C.SHD : C.SH); P.r(x0, 4 + o, 2, 2, C.HND); return; }
+      var len = 4 + s; P.r(x0, 12 + o, 2, len, shade ? C.SHD : C.SH); P.r(x0, 12 + o + len, 2, 1, back ? C.HNDD : C.HND);
+    }
+    if (!toolPose) { arm(2, sw[0], false); arm(14, sw[1], true); }
+    // torso
+    P.r(4, 12 + o, 10, 4, C.SH); P.set(4, 13 + o, C.SHD); P.set(13, 13 + o, C.SHD); P.set(13, 14 + o, C.SHD);
+    if (!back) {
+      P.r(6, 12 + o, 6, 1, C.BAND); P.r(8, 13 + o, 2, 1, C.BANDD);
+      P.r(6, 13 + o, 6, 4, C.OV); P.r(6, 13 + o, 6, 1, C.OVL); P.set(11, 14 + o, C.OVD); P.set(11, 15 + o, C.OVD);
+      P.set(5, 12 + o, C.OVD); P.set(12, 12 + o, C.OVD); P.set(6, 13 + o, C.BTN); P.set(11, 13 + o, C.BTN); P.r(8, 15 + o, 2, 1, C.OVD);
+    } else {
+      P.r(8, 12 + o, 2, 1, C.BAND);
+      P.r(5, 14 + o, 8, 3, C.OV); P.set(5, 12 + o, C.OVD); P.set(6, 13 + o, C.OVD); P.set(12, 12 + o, C.OVD); P.set(11, 13 + o, C.OVD); P.set(7, 14 + o, C.OVD); P.set(10, 14 + o, C.OVD);
+      P.set(12, 15 + o, C.OVD); P.set(12, 16 + o, C.OVD);
+    }
+    P.r(5, 16 + o, 8, 1, C.OV); P.set(12, 16 + o, C.OVD);
+    // head
+    if (!back) {
+      P.r(5, 7 + o, 8, 5, C.SK); P.r(12, 7 + o, 1, 5, C.SKD); P.r(6, 11 + o, 6, 1, C.SK); P.set(5, 11 + o, C.SKD); P.set(12, 11 + o, C.SKD);
+      P.r(4, 6 + o, 10, 1, C.HRD); P.r(4, 7 + o, 1, 4, C.HR); P.r(13, 7 + o, 1, 4, C.HRD); P.set(5, 7 + o, C.HR); P.set(12, 7 + o, C.HRD);
+      P.r(6, 8 + o, 1, 2, C.EYE); P.r(11, 8 + o, 1, 2, C.EYE); P.set(5, 10 + o, C.BL); P.set(12, 10 + o, C.BL); P.r(8, 10 + o, 2, 1, C.SKD);
+    } else {
+      P.r(4, 6 + o, 10, 6, C.HR); P.r(4, 6 + o, 10, 1, C.HRD); P.r(6, 7 + o, 4, 1, C.HRL); P.set(5, 8 + o, C.HRL); P.r(5, 11 + o, 8, 1, C.HRD); P.set(13, 8 + o, C.HRD); P.set(13, 9 + o, C.HRD);
+    }
+    // straw hat: crown, band, brim
+    P.r(5, 1 + o, 8, 3, C.HAT); P.r(6, 1 + o, 6, 1, C.HATL); P.set(12, 2 + o, C.HATD); P.set(12, 3 + o, C.HATD);
+    P.r(5, 4 + o, 8, 1, C.BAND); P.set(12, 4 + o, C.BANDD);
+    P.r(2, 5 + o, 14, 1, C.HAT); P.r(3, 5 + o, 4, 1, C.HATL); P.set(15, 5 + o, C.HATD);
+    P.set(2, 5 + o, C.HATD); P.r(4, 6 + o, 1, 1, C.HATD); P.r(13, 6 + o, 1, 1, C.HATD);
+    // tool poses: both arms reach the grip; the hands are drawn last (over the brim when raised)
+    if (pose === 'raise' || pose === 'lift') {   // both hands overhead (a long tool's grip, or the harvest resting on them)
+      armLineP(P, 3, 12, 2, 7, C.SH); armLineP(P, 2, 7, 6, 1, C.SH); armLineP(P, 14, 12, 15, 7, C.SHD); armLineP(P, 15, 7, 11, 1, C.SHD);
+      P.r(7, -1, 4, 2, C.HND); P.set(10, 0, C.HNDD); P.r(7, 1, 1, 1, C.SH); P.r(10, 1, 1, 1, C.SHD);
+    } else if (pose === 'strike' && !back) {
+      armLineP(P, 3, 12, 6, 16, C.SH); armLineP(P, 14, 12, 11, 16, C.SHD); P.r(7, 16, 4, 2, C.HND); P.r(10, 17, 1, 1, C.HNDD);
+    } else if (pose === 'strike' && back) {
+      armLineP(P, 3, 12, 5, 6, C.SH); armLineP(P, 14, 12, 12, 6, C.SHD); P.r(7, 3, 4, 2, C.HND); P.set(10, 4, C.HNDD);
+    } else if ((pose === 'hold' || pose === 'pour') && !back) {
+      var hy = pose === 'hold' ? 13 : 15;
+      armLineP(P, 3, 12, 6, hy, C.SH); armLineP(P, 14, 12, 11, hy, C.SHD); P.r(7, hy, 4, 2, C.HND); P.set(10, hy + 1, C.HNDD);
+    } else if (pose === 'hold' || pose === 'pour') {
+      armLineP(P, 3, 12, 5, 13, C.SH); armLineP(P, 14, 12, 12, 13, C.SHD);
+    }
+  }
+  function paintFarmerSide(P, walk, pose) {
+    var C = FC, o = (walk === 1 || walk === 3) ? -1 : 0;
+    var a = walk === 0 ? 2 : walk === 2 ? -2 : 0, liftN = walk === 3 ? 1 : 0, liftF = walk === 1 ? 1 : 0;
+    var s = walk === 0 ? -1 : walk === 2 ? 1 : 0;           // near arm swings against the near leg
+    function leg(foot, lf, near) {
+      for (var y = 16 + o + 1; y <= 18 - lf; y++) { var t = (y - 16) / 3, x = 7 + Math.round(foot * t); P.r(x, y, 3, 1, near ? C.OV : C.OVD); if (near) P.set(x + 2, y, C.OVD); }
+      var fx = 7 + foot; P.r(fx, 19 - lf, 4, 2, near ? C.BT : C.BTD); if (near) P.set(fx + 3, 19 - lf, '#8a5a34'); P.r(fx, 21 - lf, 4, 1, near ? C.BTD : '#2a1810');
+    }
+    function armLine(sx, sy, hx, hy, sleeve, hand) {
+      var n = Math.max(Math.abs(hx - sx), Math.abs(hy - sy)), i;
+      for (i = 0; i <= n; i++) { var x = Math.round(sx + (hx - sx) * i / Math.max(1, n)), y = Math.round(sy + (hy - sy) * i / Math.max(1, n)); P.r(x, y, 2, 1, i >= n ? hand : sleeve); }
+    }
+    // far leg and far arm first (darker), then the body, then the near leg and arm
+    leg(-a, liftF, false);
+    if (!pose) armLine(7, 13 + o, 7 - 3 * s, 16 + o - Math.abs(s), C.SHD, C.HNDD);
+    // torso
+    P.r(5, 12 + o, 6, 5, C.OV); P.r(5, 12 + o, 2, 4, C.SH); P.set(5, 15 + o, C.SHD); P.r(8, 12 + o, 3, 1, C.OVL); P.set(7, 12 + o, C.OVD); P.set(7, 13 + o, C.OVD);
+    P.r(6, 12 + o, 4, 1, C.BAND); P.set(10, 13 + o, C.BTN); P.r(5, 16 + o, 6, 1, C.OVD);
+    leg(a, liftN, true);
+    if (pose === 'raise') { armLine(6, 12, 3, 7, C.SH, C.SH); armLine(3, 7, 2, 1, C.SH, C.SH); }   // both arms up behind the head
+    // head (faces right)
+    P.r(7, 7 + o, 5, 5, C.SK); P.r(12, 9 + o, 1, 1, C.SK); P.r(7, 11 + o, 4, 1, C.SK);
+    P.r(4, 6 + o, 3, 5, C.HR); P.r(4, 6 + o, 9, 1, C.HRD); P.set(4, 11 + o, C.HRD); P.set(5, 11 + o, C.HRD); P.set(5, 7 + o, C.HRL); P.set(7, 7 + o, C.HR);
+    P.r(10, 8 + o, 1, 2, C.EYE); P.r(6, 8 + o, 1, 2, C.SKD); P.set(9, 10 + o, C.BL); P.set(11, 11 + o, C.SKD);
+    // hat
+    P.r(4, 1 + o, 7, 3, C.HAT); P.r(5, 1 + o, 5, 1, C.HATL); P.set(10, 2 + o, C.HATD); P.set(10, 3 + o, C.HATD);
+    P.r(4, 4 + o, 7, 1, C.BAND); P.set(10, 4 + o, C.BANDD);
+    P.r(1, 5 + o, 14, 1, C.HAT); P.r(2, 5 + o, 4, 1, C.HATL); P.set(14, 5 + o, C.HATD); P.set(1, 5 + o, C.HATD);
+    // near arm (both hands on the tool: the far hand is hidden behind the near one)
+    if (pose === 'raise') { P.r(2, -1, 2, 2, C.HND); P.set(3, 0, C.HNDD); }
+    else if (pose === 'strike') { armLine(8, 13, 11, 15, C.SH, C.SH); P.r(12, 14, 2, 2, C.HND); }
+    else if (pose === 'hold') { armLine(8, 13, 10, 13, C.SH, C.SH); P.r(11, 12, 2, 2, C.HND); }
+    else if (pose === 'pour') { armLine(8, 13, 11, 14, C.SH, C.SH); P.r(12, 13, 2, 2, C.HND); }
+    else if (pose === 'lift') { P.r(12, 6 + o, 2, 7, C.SH); P.r(11, 12 + o, 1, 1, C.SH); P.r(12, 4 + o, 2, 2, C.HND); }
+    else armLine(7, 13 + o, 7 + 3 * s, 16 + o - Math.abs(s), C.SH, C.HND);
+  }
+  function farmerCanvas(dir, frame, pose) {
+    var walk = pose ? -1 : (frame == null ? -1 : frame & 3);
+    var side = dir === 'left' || dir === 'right';
+    return cached('farmer:' + (side ? 'side' : dir) + ':' + walk + ':' + (pose || '') + (dir === 'left' ? ':L' : ''), function () {
+      if (dir === 'left') return mirror(farmerCanvas('right', frame, pose));
+      var P = Pix(FARMER.w, FARMER.h, 0, 1);
+      if (side) paintFarmerSide(P, walk, pose); else paintFarmerFront(P, dir === 'up', walk, pose);
+      P.outline(FC.OL);
+      return P.canvas();
+    });
+  }
+  function handPoint(dir, pose) {
+    var t = HAND[dir === 'left' ? 'right' : dir] || HAND.down, h = t[pose];
+    if (h === undefined) h = [9, 14]; if (h === null) return null;
+    return dir === 'left' ? [FARMER.w - 1 - h[0], h[1]] : [h[0], h[1]];
+  }
+  function carried(tool) { return !!tool && (tool.icon === 'can' || tool.icon === 'seeds'); }
+  // the drawn pose for a use phase ('raise' | 'strike') and tool: {pose, hand (canvas px) or null, behind}
+  function toolPose(dir, phase, tool) {
+    if (phase === 'lift' || !phase) return { pose: phase || null, hand: null, behind: false };
+    var pose = carried(tool) ? (phase === 'raise' ? 'hold' : 'pour') : phase, hand = tool ? handPoint(dir, pose) : null;
+    return { pose: pose, hand: hand, behind: dir === 'up' || (dir === 'down' && pose === 'raise') };
+  }
+
+  /* ---------- tools in the hand (drawn in world px, pixel crisp) ---------- */
+  function px(ctx, x, y, c) { ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), 1, 1); }
+  function pline(ctx, x0, y0, x1, y1, c) {
+    x0 = Math.round(x0); y0 = Math.round(y0); x1 = Math.round(x1); y1 = Math.round(y1); ctx.fillStyle = c;
+    var dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1, e = dx + dy, n = 0;
+    while (n++ < 120) { ctx.fillRect(x0, y0, 1, 1); if (x0 === x1 && y0 === y1) break; var e2 = 2 * e; if (e2 >= dy) { e += dy; x0 += sx; } if (e2 <= dx) { e += dx; y0 += sy; } }
+  }
+  // a handle: dark edge + wood core, from the grip (x0, y0) to the head (x1, y1)
+  function handle(ctx, x0, y0, x1, y1, wood, vertical) { pline(ctx, x0 + (vertical ? 1 : 0), y0 + (vertical ? 0 : 1), x1 + (vertical ? 1 : 0), y1 + (vertical ? 0 : 1), '#3a2414'); pline(ctx, x0, y0, x1, y1, wood); }
+  // the tool in the hands at (hx, hy) (the grip), for a drawn pose (raise | strike | hold | pour)
+  function drawToolHeld(ctx, tool, dir, hx, hy, pose) {
+    var c = tool.colors || TOOLS.hoe.colors, metal = c[0], wood = c[1], hi = c[2], icon = tool.icon, side = dir === 'left' || dir === 'right', sg = dir === 'left' ? -1 : 1;
+    hx = Math.round(hx); hy = Math.round(hy);
+    if (typeof icon === 'function') icon = 'hoe';
+    if (icon === 'can' || icon === 'seeds') {
+      var pour = pose === 'pour', bx = side ? hx + sg * 2 : hx, by = hy + 3;
+      if (icon === 'can') {
+        // body 8 x 6 hanging from the hands; the spout points forward (side) or toward the viewer (front); tipped when pouring
+        ctx.fillStyle = '#16262a'; ctx.fillRect(bx - 4, by - 2, 9, 7);
+        ctx.fillStyle = metal; ctx.fillRect(bx - 3, by - 1, 7, 5); ctx.fillStyle = wood; ctx.fillRect(bx - 3, by - 1, 7, 1); ctx.fillStyle = hi; ctx.fillRect(bx - 2, by, 2, 2);
+        ctx.fillStyle = '#16262a'; ctx.fillRect(bx - 1, hy, 3, 1); ctx.fillStyle = metal; ctx.fillRect(bx, hy + 1, 1, 1);   // the bail handle up to the hands
+        if (side) { var sx = sg > 0 ? bx + 4 : bx - 4; pline(ctx, sx, by + 1, sx + sg * 3, by + (pour ? 4 : -1), metal); px(ctx, sx + sg * 3, by + (pour ? 5 : -2), hi); }
+        else { pline(ctx, bx + 4, by + 2, bx + 6, by + (pour ? 6 : 0), metal); px(ctx, bx + 6, by + (pour ? 7 : -1), hi); }
+      } else {
+        // the seed pouch held in both hands, mouth open toward the work
+        ctx.fillStyle = '#3a2414'; ctx.fillRect(bx - 3, by - 2, 7, 7); ctx.fillStyle = metal; ctx.fillRect(bx - 2, by - 1, 5, 5); ctx.fillStyle = hi; ctx.fillRect(bx - 2, by - 1, 2, 1); ctx.fillStyle = wood; ctx.fillRect(bx - 1, hy, 3, 1);
+        if (pour) { ctx.fillStyle = '#f0e0a8'; ctx.fillRect(bx + (side ? sg * 4 : 0), by + 5, 1, 1); ctx.fillRect(bx + (side ? sg * 5 : 1), by + 6, 1, 1); }
+      }
+      return;
+    }
+    // long tools: hoe and sickle; the shaft starts at the grip
+    var L = icon === 'sickle' ? 5 : 8, ex, ey, vertical = !side;
+    if (dir === 'down' && pose === 'raise') { ex = hx; ey = hy - 1 - L; handle(ctx, hx, hy - 1, ex, ey, wood, true); }
+    else if (dir === 'down') { ex = hx; ey = hy + 1 + L; handle(ctx, hx, hy + 1, ex, ey, wood, true); }
+    else if (dir === 'up' && pose === 'raise') { ex = hx; ey = hy - 1 - L; handle(ctx, hx, hy - 1, ex, ey, wood, true); }
+    else if (dir === 'up') { ex = hx; ey = hy - 1 - L - 5; handle(ctx, hx, hy - 1, ex, ey, wood, true); }
+    else if (pose === 'raise') { ex = hx - sg * 4; ey = hy - L; handle(ctx, hx - sg, hy - 1, ex, ey, wood, false); }
+    else { ex = hx + sg * (L - 1); ey = hy + 5; handle(ctx, hx + sg, hy + 1, ex, ey, wood, false); }
+    var X = Math.round(ex), Y = Math.round(ey), up = (dir === 'down' && pose === 'raise') || dir === 'up' || (side && pose === 'raise');
+    if (icon === 'sickle') {
+      // a crescent blade hooking forward from the shaft end (a 6 px arc with a bright edge)
+      var bs = side ? sg : 1, vy = up ? -1 : 1, arc = [[0, 0], [1, vy], [2, 2 * vy], [3, 2 * vy], [4, vy], [5, 0], [5, -vy]];
+      ctx.fillStyle = '#20202c'; arc.forEach(function (q) { ctx.fillRect(X + q[0] * bs - 1, Y + q[1] - 1, 3, 3); });
+      arc.forEach(function (q, i) { px(ctx, X + q[0] * bs, Y + q[1], i >= 4 ? hi : metal); }); px(ctx, X + 2 * bs, Y + 3 * vy, hi); px(ctx, X + 3 * bs, Y + 3 * vy, hi);
+    } else if (vertical) {
+      // hoe seen end-on: the blade across the shaft end
+      ctx.fillStyle = '#20202c'; ctx.fillRect(X - 3, Y - (up ? 2 : 0), 7, 3);
+      ctx.fillStyle = metal; ctx.fillRect(X - 2, Y - (up ? 1 : 0) + (up ? 0 : 0), 5, 1); ctx.fillStyle = hi; ctx.fillRect(X - 2, Y + (up ? 0 : 1), 5, 1);
+    } else {
+      // hoe from the side: the blade bends down (forward) from the shaft end
+      ctx.fillStyle = '#20202c'; ctx.fillRect(X - 1, Y - 1, 3, 6);
+      ctx.fillStyle = metal; ctx.fillRect(X, Y, 1, 4); ctx.fillStyle = hi; ctx.fillRect(X + (sg > 0 ? 0 : 0), Y, 1, 1); px(ctx, X + sg, Y + 4, metal);
+    }
+  }
+
+  // the harvest held overhead: the 14 px crop icon's top left in canvas px, its art resting on the hands (front / back: both
+  // hands together above the hat, rows 0-1; side: the raised hand, rows 5-6)
+  var LIFT = { n: 0 };   // world draws of a carried crop (checks: exactly one per lift frame)
+  function liftAnchor(dir) { return dir === 'right' ? [5, -7] : dir === 'left' ? [FARMER.w - 5 - 14, -7] : [2, -13]; }
+  // the farmer with the tool in his hands (tools away from the camera are drawn behind him); lift = a crop look held overhead
+  function drawFarmerFull(ctx, x, y, dir, frame, phase, useDef, liftLook) {
+    var tp = toolPose(dir, phase, useDef), im = farmerCanvas(dir, frame < 0 ? null : frame, tp.pose); if (!im) return false;
+    var X = Math.round(x) - FARMER.cx, Y = Math.round(y) - FARMER.foot, hp = useDef ? tp.hand : null;
+    ctx.fillStyle = 'rgba(20,14,10,0.28)'; ctx.fillRect(X + 4, Y + FARMER.foot - 1, 10, 2); ctx.fillRect(X + 5, Y + FARMER.foot, 8, 1);
+    if (hp && tp.behind) drawToolHeld(ctx, useDef, dir, X + hp[0], Y + hp[1], tp.pose);
+    if (phase === 'lift' && liftLook) { var la = liftAnchor(dir); LIFT.n++; drawIcon(ctx, 'crop', X + la[0], Y + la[1], 14, null, liftLook); }   // held in the hands, behind the fingers
+    ctx.drawImage(im, X, Y);
+    if (hp && !tp.behind) drawToolHeld(ctx, useDef, dir, X + hp[0], Y + hp[1], tp.pose);
+    return true;
+  }
+
+  /* ---------- crops: 16 x 32 canvases, the plot tile is rows 16..31, the plant stands on row 26 ---------- */
+  var DEAD_LEAF = ['#3a2a18', '#6a4a28', '#94703c', '#b8945a'], DEAD_FRUIT = ['#4a3420', '#7a5a38', '#a07c50', '#c0a070'];
+  function paintCrop(P, look, p, ripe, seed) {
+    var L = look.leaf, F = look.fruit, k = look.kind, bx = 8, by = 26, i;
+    if (p <= 0) {   // seed: a raked mound with seeds showing
+      P.ball(8, 26, 3.5, 1.6, ['#5a3a20', '#7a5232', '#94683e', '#b08452']); P.set(7, 25, '#e8d8a0'); P.set(9, 26, '#e8d8a0'); P.set(8, 26, '#c8b070'); return;
+    }
+    function leaf(ang, len, w, ox, oy) {   // a pointed leaf from (ox, oy) (default: the base), shaded along its length
+      var a = ang * Math.PI / 180, dx = Math.cos(a), dy = Math.sin(a), X0 = ox == null ? bx : ox, Y0 = oy == null ? by : oy;
+      for (var t = 0; t <= len; t += 0.5) { var x = X0 + dx * t, y = Y0 + dy * t, ww = Math.max(0, w * Math.sin(Math.PI * Math.min(1, (t + 0.6) / (len + 0.6)))); for (var s = -ww; s <= ww; s += 0.5) { var X = x - dy * s, Y = y + dx * s, sh = s < -ww * 0.3 ? 3 : s > ww * 0.4 ? 1 : 2; P.set(Math.round(X), Math.round(Y), L[t > len - 1 && sh === 3 ? 2 : sh]); } P.set(Math.round(x), Math.round(y), L[1]); }
+    }
+    if (k === 'root') {
+      var n = p < 0.5 ? 2 : 4, ln = 2 + p * 6;
+      if (n === 2) { leaf(-125, ln, 1.3); leaf(-55, ln, 1.3); } else { leaf(-150, ln * 0.75, 1.4); leaf(-115, ln, 1.6); leaf(-65, ln, 1.6); leaf(-30, ln * 0.75, 1.4); leaf(-90, ln * 0.9, 1.4); }
+      if (ripe) { P.ball(8, 27, 4, 2.6, F, true); P.set(8, 29, F[0]); P.r(6, 25, 5, 1, F[2]); P.set(7, 24, F[1]); }
+      else if (p > 0.6) { P.ball(8, 27, 2.5, 1.4, F); }
+      return;
+    }
+    if (k === 'leafy') {
+      var r = 1.6 + p * 4.6;
+      if (p < 0.3) { leaf(-130, 3, 1.2); leaf(-50, 3, 1.2); return; }
+      for (i = 0; i < 6; i++) { var aa = -180 + i * 36; leaf(aa, r + 1.2, 1.7); }
+      P.ball(8, 25.5 - r * 0.25, r * 0.9, r * 0.72, L, false);
+      if (ripe) { P.ball(8, 24.5, r * 0.75, r * 0.62, F, true); P.line(8, 22, 8, 26, F[0]); P.set(6, 23, F[3]); }
+      return;
+    }
+    if (k === 'vine') {
+      var h = 4 + p * 12, top = Math.round(by - h);
+      P.r(11, top - 1, 1, by - top + 2, '#7a5232'); P.r(12, top - 1, 1, by - top + 2, '#5a3a20'); P.set(11, top - 2, '#a87c4a');
+      for (var y = by - 1, n2 = 0; y > top + 1; y -= 3, n2++) { var side = n2 % 2 ? 1 : -1; leaf(side > 0 ? -25 : -155, 2.4 + p * 1.6, 1.3, side > 0 ? 12 : 11, y); }
+      leaf(-110, 2 + p * 2, 1.2, 11, top + 1);
+      bx = 8; by = 26;
+      if (p > 0.55 && !ripe && !look.dead) { P.set(9, top + 3, '#ffe070'); P.set(13, top + 6, '#ffe070'); P.set(8, top + 8, '#ffe070'); }
+      if (ripe) { [[7, top + 3], [13, top + 6], [8, top + 9], [12, top + 11]].forEach(function (q) { P.ball(q[0], q[1], 1.7, 1.7, F, true); P.set(q[0], q[1] - 2, L[2]); }); }
+      return;
+    }
+    if (k === 'stalk') {
+      var hh = 3 + p * 19, tp = Math.round(by - hh);
+      P.r(8, tp, 2, by - tp + 1, L[2]); P.r(9, tp, 1, by - tp + 1, L[1]);
+      for (var yy = by - 2, j = 0; yy > tp + 2; yy -= 4, j++) { var sd = j % 2 ? 1 : -1; for (var t2 = 0; t2 < 3 + p * 4; t2++) P.set(9 + sd * (t2 + 1), yy + Math.floor(t2 * t2 / 8), t2 > 3 ? L[1] : L[2 + (sd < 0 ? 1 : 0)]); }
+      if (p > 0.6) { P.set(8, tp - 1, '#c8a050'); P.set(7, tp - 2, '#c8a050'); P.set(10, tp - 2, '#a87c40'); P.set(9, tp - 3, '#e0c070'); }
+      if (ripe) { var cy = Math.round(by - hh * 0.55); P.ball(11, cy, 1.6, 3.2, F, true); P.set(10, cy + 3, L[2]); P.set(12, cy + 3, L[1]); P.set(11, cy - 4, '#d8b860'); }
+      return;
+    }
+    if (k === 'gourd') {
+      var rr = 2 + p * 5;
+      leaf(-170, rr, 1.8); leaf(-10, rr, 1.8); leaf(-120, rr * 0.8, 1.9); leaf(-60, rr * 0.8, 1.9);
+      if (ripe) { P.ball(8, 25.5, 5.5, 3.8, F, true); P.line(8, 22, 8, 29, F[0]); P.line(5, 23, 5, 28, F[1]); P.line(11, 23, 11, 28, F[1]); P.r(8, 21, 1, 2, '#5a3a20'); P.set(9, 21, L[2]); }
+      else if (p > 0.6) { P.ball(8, 26, 2.2, 1.7, L, true); }
+      return;
+    }
+    // flower (and unknown kinds)
+    var fh = 3 + p * 14, ft = Math.round(by - fh);
+    P.r(8, ft, 1, by - ft + 1, L[2]); P.r(9, ft + 1, 1, by - ft, L[1]);
+    for (var y3 = by - 2, j3 = 0; y3 > ft + 2; y3 -= 4, j3++) leaf(j3 % 2 ? -20 : -160, 2 + p * 2.5, 1.4, 8.5, y3);
+    if (ripe) { for (i = 0; i < 10; i++) { var a3 = i * Math.PI / 5; P.ball(8.5 + Math.cos(a3) * 3.2, ft + Math.sin(a3) * 3, 1.3, 1.3, F, true); } P.ball(8.5, ft, 2.2, 2.2, ['#3a2010', '#5a3418', '#7a4a20', '#9a6a30']); }
+    else if (p > 0.6) { P.ball(8.5, ft, 1.6, 1.8, L, true); }
+  }
+  function cropCanvas(id, def, stage, dead) {
+    return cached('crop:' + id + ':' + stage + ':' + (dead ? 1 : 0) + ':' + def.stages, function () {
+      if (typeof def.draw === 'function') return null;
+      var P = Pix(16, 32), look = def.look, ripe = stage >= def.stages - 1, p = stage / (def.stages - 1);
+      var lk = dead ? { kind: look.kind, leaf: DEAD_LEAF, fruit: DEAD_FRUIT, dead: true } : look;
+      paintCrop(P, lk, dead ? Math.max(p, 0.34) * 0.8 : p, ripe && !dead, hsh(stage, 1, 3));
+      P.outline(dead ? '#2a1c10' : '#14261a');
+      return P.canvas();
+    });
+  }
+
+  /* ---------- tilled soil: one 16 x 16 tile per neighbour mask (N E S W) and wetness ---------- */
+  var SOIL = { dry: ['#4a2e18', '#6e4a2c', '#8a603a', '#a47a4a', '#bc9460'], wet: ['#2e1c10', '#43291a', '#563622', '#6a442c', '#7e5638'] };
+  function soilCanvas(mask, wet, v) {
+    return cached('soil:' + mask + ':' + (wet ? 1 : 0) + ':' + (v & 3), function () {
+      var c = mkCanvas(16, 16); if (!c) return null; var g = c.getContext('2d'), R = wet ? SOIL.wet : SOIL.dry, N = mask & 1, E = mask & 2, S = mask & 4, W = mask & 8, x, y;
+      for (y = 0; y < 16; y++) for (x = 0; x < 16; x++) {
+        var fr = y % 5, col = fr === 0 ? R[1] : fr === 1 ? R[3] : fr === 4 ? R[1] : R[2];
+        var hv = hsh(x, y, 7 + v * 13); if (fr >= 2 && fr <= 3 && hv > 0.86) col = R[3]; if (fr === 2 && hv < 0.08) col = R[1];
+        if (!N && y === 0) col = R[0]; if (!N && y === 1) col = R[1];
+        if (!S && y === 15) col = R[4]; if (!S && y === 14) col = R[3];
+        if (!W && x === 0) col = R[1]; if (!E && x === 15) col = R[0];
+        if ((!N && !W && x === 0 && y === 0) || (!N && !E && x === 15 && y === 0) || (!S && !W && x === 0 && y === 15) || (!S && !E && x === 15 && y === 15)) continue;
+        g.fillStyle = col; g.fillRect(x, y, 1, 1);
+      }
+      if (wet) { for (var i = 0; i < 5; i++) { var sx = 2 + Math.floor(hsh(i, v, 31) * 12), sy = 2 + Math.floor(hsh(i, v, 37) * 12); g.fillStyle = 'rgba(150,190,230,0.55)'; g.fillRect(sx, sy, 1, 1); } }
+      return c;
+    });
+  }
+
+  /* ---------- icons (12 x 12 art, drawn scaled and crisp on the HUD) ---------- */
+  function iconCanvas(kind, colors, extra) {
+    return cached('icon:' + kind + ':' + (colors || []).join(',') + ':' + (extra || ''), function () {
+      var P = Pix(14, 14, 1, 1), c = colors || [], i;
+      if (kind === 'hoe') { P.line(2, 11, 9, 3, '#a87240', 1); P.line(3, 11, 10, 3, '#7a4a2a'); P.r(8, 1, 4, 2, '#8a94b4'); P.r(8, 1, 4, 1, '#d0d8ec'); P.r(10, 3, 2, 2, '#58607e'); }
+      else if (kind === 'can') { var m = c[0] || '#3a8a7a', l = c[1] || '#5cb8a0', h = c[2] || '#a8ecd8'; P.r(2, 4, 7, 6, m); P.r(2, 4, 7, 1, l); P.r(3, 5, 2, 3, h); P.line(9, 6, 11, 3, m); P.r(11, 2, 2, 2, l); P.r(3, 2, 5, 1, '#2a4a40'); P.set(2, 3, '#2a4a40'); P.set(8, 3, '#2a4a40'); P.r(2, 10, 7, 1, '#2a5a50'); }
+      else if (kind === 'seeds') { var fr = c[1] || '#58a444', fl = c[2] || '#8ccc5c'; P.r(2, 2, 8, 10, '#e8d8b0'); P.r(2, 2, 8, 1, '#f8f0d8'); P.r(9, 2, 1, 10, '#c0aa80'); P.r(3, 4, 6, 5, fl); P.ball(6, 6.5, 2.2, 2.2, [c[0] || '#2f7a3a', fr, fl, '#ffffff'], true); P.r(3, 10, 6, 1, '#a88a58'); P.set(5, 11, '#7a5a30'); }
+      else if (kind === 'sickle') { P.line(1, 11, 4, 7, '#7a4a2a'); P.line(2, 11, 5, 7, '#a87240'); for (i = 0; i <= 12; i++) { var a = Math.PI * (1.05 + i * 0.075); P.set(Math.round(7.5 + Math.cos(a) * 4.6), Math.round(6.5 + Math.sin(a) * 4.6), '#e8eef8'); P.set(Math.round(7.5 + Math.cos(a) * 3.6), Math.round(6.5 + Math.sin(a) * 3.6), i > 10 ? '#e8eef8' : '#8a94b4'); } P.set(12, 7, '#ffffff'); }
+      else if (kind === 'coin') { P.ball(6, 6, 4.5, 4.5, ['#a86a10', '#e8b030', '#ffd860', '#fff6c0'], true); P.r(5, 4, 1, 5, '#a86a10'); P.r(6, 4, 1, 5, '#ffe890'); }
+      else if (kind === 'blossom') { for (i = 0; i < 5; i++) { var a2 = -Math.PI / 2 + i * Math.PI * 2 / 5; P.ball(6 + Math.cos(a2) * 3, 6 + Math.sin(a2) * 3, 2.1, 2.1, ['#c04a7a', '#ec7aa8', '#ffc0d8', '#ffffff'], true); } P.ball(6, 6, 1.4, 1.4, ['#c88a10', '#f0c030', '#ffe070', '#fff']); }
+      else if (kind === 'sun') { for (i = 0; i < 8; i++) { var a3 = i * Math.PI / 4; P.line(6 + Math.cos(a3) * 4, 6 + Math.sin(a3) * 4, 6 + Math.cos(a3) * 5.6, 6 + Math.sin(a3) * 5.6, '#f0a020'); } P.ball(6, 6, 3.4, 3.4, ['#d87010', '#f8b020', '#ffe070', '#fff8d0'], true); }
+      else if (kind === 'leaf') { P.ball(6, 6, 4.5, 3.2, ['#8a2a10', '#d8642a', '#f8a040', '#ffd890'], true); P.line(2, 10, 10, 2, '#7a3010'); }
+      else if (kind === 'flake') { [[0, -5, 0, 5], [-5, 0, 5, 0], [-3, -3, 3, 3], [-3, 3, 3, -3]].forEach(function (q) { P.line(6 + q[0], 6 + q[1], 6 + q[2], 6 + q[3], '#d8ecff'); }); P.set(6, 6, '#ffffff'); }
+      else if (kind === 'rain') { P.ball(6, 4, 4.5, 2.6, ['#4a5a7a', '#7a8aaa', '#aab8d0', '#e0e8f4']); [[3, 8], [6, 9], [9, 8], [4, 11], [8, 11]].forEach(function (q) { P.set(q[0], q[1], '#5aa8f0'); P.set(q[0], q[1] + 1, '#2a78c8'); }); }
+      else if (kind === 'moon') { P.ball(6, 6, 4.4, 4.4, ['#8a8aa8', '#c8c8dc', '#f0f0f8', '#ffffff'], true); P.ball(8, 4.5, 3.4, 3.4, ['#1a1a30', '#1a1a30', '#1a1a30', '#1a1a30']); for (var y4 = 0; y4 < 14; y4++) for (var x4 = 0; x4 < 14; x4++) if (P.get(x4 - 1, y4 - 1) === '#1a1a30') P.del(x4 - 1, y4 - 1); }
+      else if (kind === 'crop' && extra) { var lk = extra; paintCropIcon(P, lk); }
+      P.outline('#2a1a22');
+      return P.canvas();
+    });
+  }
+  function paintCropIcon(P, look) {
+    var L = look.leaf || DEAD_LEAF, F = look.fruit || DEAD_FRUIT, k = look.kind;
+    if (k === 'root') { P.ball(6, 7.5, 4, 3.6, F, true); P.r(5, 1, 1, 4, L[2]); P.r(7, 1, 1, 4, L[1]); P.set(4, 2, L[2]); P.set(8, 2, L[3]); P.set(6, 11, F[0]); }
+    else if (k === 'leafy') { P.ball(6, 6.5, 5, 4.6, L, false); P.ball(6, 6, 3.4, 3.2, F, true); P.line(6, 3, 6, 9, F[0]); }
+    else if (k === 'vine') { P.ball(6, 7, 4.4, 4.2, F, true); P.r(4, 2, 5, 1, L[2]); P.r(6, 1, 1, 2, L[1]); }
+    else if (k === 'stalk') { P.ball(6, 6, 2.6, 5.2, F, true); P.line(3, 11, 5, 4, L[2]); P.line(9, 11, 7, 4, L[1]); }
+    else if (k === 'gourd') { P.ball(6, 7, 5.4, 4.2, F, true); P.line(6, 3, 6, 11, F[0]); P.line(3, 4, 3, 10, F[1]); P.line(9, 4, 9, 10, F[1]); P.r(6, 1, 1, 2, '#5a3a20'); }
+    else { for (var i = 0; i < 8; i++) { var a = i * Math.PI / 4; P.ball(6 + Math.cos(a) * 3.4, 6 + Math.sin(a) * 3.4, 1.6, 1.6, F, true); } P.ball(6, 6, 2.2, 2.2, ['#3a2010', '#5a3418', '#7a4a20', '#9a6a30']); }
+  }
+  function lookKey(look) { return look ? [look.kind].concat(look.leaf || [], look.fruit || []).join('/') : 'x'; }
+  function drawIcon(ctx, kind, x, y, size, colors, look) {
+    if (typeof kind === 'function') { safe(kind, [ctx, x, y, size], 'tool.icon'); return; }
+    var c = kind === 'crop' ? cached('icon:crop:' + lookKey(look), function () { var P = Pix(14, 14, 1, 1); paintCropIcon(P, look || {}); P.outline('#2a1a22'); return P.canvas(); }) : iconCanvas(kind, colors);
+    if (!c) return; var s = Math.max(1, Math.floor(size / 14)), w = 14 * s;
+    var sm = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false; ctx.drawImage(c, Math.round(x + (size - w) / 2), Math.round(y + (size - w) / 2), w, w); ctx.imageSmoothingEnabled = sm;
+  }
+
+  /* ---------- HUD panels: a wood frame with brass corners over parchment (CSS px) ---------- */
+  function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r); ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h); ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r); ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.closePath(); }
+  function panel(ctx, x, y, w, h, o) {
+    o = o || {}; x = Math.round(x); y = Math.round(y); w = Math.round(w); h = Math.round(h);
+    ctx.save();
+    ctx.fillStyle = 'rgba(20,10,8,0.35)'; rr(ctx, x + 1, y + 3, w, h, 7); ctx.fill();
+    ctx.fillStyle = '#3a2214'; rr(ctx, x, y, w, h, 7); ctx.fill();
+    var g = ctx.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, '#b47a42'); g.addColorStop(0.5, '#8e5a2e'); g.addColorStop(1, '#6e4222');
+    ctx.fillStyle = g; rr(ctx, x + 2, y + 2, w - 4, h - 4, 5); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,220,160,0.45)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x + 7, y + 2.5); ctx.lineTo(x + w - 7, y + 2.5); ctx.stroke();
+    var b = o.border == null ? 5 : o.border, pg = ctx.createLinearGradient(0, y + b, 0, y + h - b);
+    pg.addColorStop(0, o.dark ? '#3a2a22' : '#fbf0d4'); pg.addColorStop(1, o.dark ? '#2a1c16' : '#ecd9ac');
+    ctx.fillStyle = '#4a2c18'; rr(ctx, x + b - 1, y + b - 1, w - 2 * b + 2, h - 2 * b + 2, 4); ctx.fill();
+    ctx.fillStyle = pg; rr(ctx, x + b, y + b, w - 2 * b, h - 2 * b, 3); ctx.fill();
+    [[x + 4, y + 4], [x + w - 6, y + 4], [x + 4, y + h - 6], [x + w - 6, y + h - 6]].forEach(function (q) { ctx.fillStyle = '#5a3a14'; ctx.fillRect(q[0] - 1, q[1] - 1, 4, 4); ctx.fillStyle = '#f0c860'; ctx.fillRect(q[0], q[1], 2, 2); ctx.fillStyle = '#fff4c0'; ctx.fillRect(q[0], q[1], 1, 1); });
+    ctx.restore();
+  }
+  var TRUNC = { n: 0, last: '' };   // strings the HUD had to shorten (a check requires 0)
+  var FONT = '"Trebuchet MS", "Segoe UI", system-ui, -apple-system, sans-serif';
+  function text(ctx, s, x, y, o) {
+    o = o || {}; ctx.save(); ctx.font = (o.weight || 700) + ' ' + (o.size || 13) + 'px ' + FONT; ctx.textAlign = o.align || 'left'; ctx.textBaseline = o.base || 'alphabetic';
+    var str = String(s); if (o.max && ctx.measureText(str).width > o.max) { TRUNC.n++; TRUNC.last = str; while (str.length > 2 && ctx.measureText(str).width > o.max) str = str.slice(0, -2) + '.'; }
+    if (o.ow) { ctx.lineJoin = 'round'; ctx.lineWidth = o.ow; ctx.strokeStyle = o.oc || 'rgba(30,16,10,0.9)'; ctx.strokeText(str, x, y); }
+    ctx.fillStyle = o.color || '#4a2c18'; ctx.fillText(str, x, y); var w = ctx.measureText(str).width; ctx.restore(); return w;
+  }
+
+  /* =====================================================================================================
+     The instance
+     ===================================================================================================== */
+  var DEFAULTS = { dayMs: 28000, seasonDays: 4, seasons: 3, rain: 0.2, startGold: 120, walkMs: 180, turnMs: 110, toolSpeed: 1, botWait: 110,
+    botPlots: 16, botBuy: 8, nightMs: 2600, hud: 'on', night: 'on', cursor: 'on', growth: 'watered', wither: 'on' };
+
+  function create(opt) {
+    opt = opt || {};
+    var P = copy(DEFAULTS), k; for (k in (opt.params || {})) P[k] = opt.params[k];
+    ['dayMs', 'seasonDays', 'seasons', 'rain', 'startGold', 'walkMs', 'turnMs', 'toolSpeed', 'botWait', 'botPlots', 'botBuy', 'nightMs'].forEach(function (key) { P[key] = num(P[key], DEFAULTS[key]); });
+    P.seasonDays = Math.max(1, Math.round(P.seasonDays)); P.seasons = Math.max(1, Math.round(P.seasons)); P.dayMs = Math.max(4000, P.dayMs);
+    var T = Math.max(4, num(opt.tile, 16)), COLS = Math.max(1, num(opt.cols, 20) | 0), ROWS = Math.max(1, num(opt.rows, 12) | 0);
+    var CROPS_ = opt.crops || (function () { var o = {}; for (var id in CROPS) o[id] = copy(CROPS[id]); return o; })();
+    var TOOLS_ = opt.tools || (function () { var o = {}; for (var id in TOOLS) o[id] = copy(TOOLS[id]); return o; })();
+    var ORDER = (opt.toolOrder || Object.keys(TOOLS_)).slice();
+    var SEAS = opt.seasonList || SEASONS;
+    var SEED = (num(opt.seed, 1) >>> 0) || 1;
+    var walkFn = typeof opt.walkable === 'function' ? opt.walkable : function () { return true; };
+    var spots = {}; ['bin', 'shop', 'bed'].forEach(function (s) { var v = opt.spots && opt.spots[s]; if (v) spots[s] = [v[0] | 0, v[1] | 0]; });
+    var START = opt.start || [Math.floor(COLS / 2), Math.floor(ROWS / 2), 'down'];
+    var LIGHTS = opt.lights || [];
+    function emit(ev) { ev.day = S.day; ev.t = Math.round(S.clock); S.recent.push(ev.kind + (ev.tool ? ':' + ev.tool : ev.crop ? ':' + ev.crop : '') + '@' + Math.round(S.clock)); if (S.recent.length > 24) S.recent.shift(); safe(opt.onEvent, [ev], 'onEvent'); }
+
+    /* ---------- state ---------- */
+    var S, F;
+    function fieldCells() { var out = []; (opt.field || []).forEach(function (c) { if (c && c[0] >= 0 && c[1] >= 0 && c[0] < COLS && c[1] < ROWS) out.push([c[0] | 0, c[1] | 0]); }); return out; }
+    function reset(seed) {
+      if (seed != null) SEED = (num(seed, 1) >>> 0) || 1;
+      var wr = rngOf(SEED * 2654435761 + 17), lastDay = P.seasonDays * P.seasons, rain = [false];
+      for (var d = 1; d <= lastDay; d++) { var dos = (d - 1) % P.seasonDays + 1, r = wr(); rain.push(d > 1 && dos > 1 && r < P.rain); }
+      S = { clock: 0, day: 1, dayT: 0, phase: 'wake', phaseT: 0, gold: Math.max(0, Math.round(P.startGold)), earned: 0, bag: { seeds: {}, crops: {} }, bin: {}, shipped: {},
+        plots: new Array(COLS * ROWS), rain: rain, lastDay: lastDay, auto: !!S && S.auto, toolIdx: 0, seedId: null, shopCur: 0, recent: [], night: null, banner: null,
+        fx: [], fxId: 0, keyQ: [], held: {}, heldOrder: [], goal: null, botT: 0, planted: {}, ended: false, result: null, rng: rngOf(SEED + 99), notice: null, stats: { harvests: 0, shipped: 0, bought: 0, grew: 0, withered: 0 } };
+      fieldCells().forEach(function (c) { S.plots[c[1] * COLS + c[0]] = { cx: c[0], cy: c[1], tilled: false, watered: false, crop: null }; });
+      (opt.tilled || []).forEach(function (c) { var p = S.plots[c[1] * COLS + c[0]]; if (p) p.tilled = true; });
+      F = S.farmer = { cx: START[0] | 0, cy: START[1] | 0, dir: START[2] || 'down', x: 0, y: 0, mv: null, walk: 0, use: null, lift: null, holdT: 0, stopT: 1e9 };
+      placeFarmer(F.cx, F.cy, F.dir);
+      if (opt.startSeeds) for (var id in opt.startSeeds) S.bag.seeds[id] = opt.startSeeds[id] | 0;
+      S.seedId = firstSeed();
+      emit({ kind: 'day', season: seasonId(1), rain: !!S.rain[1], first: true });
+    }
+    function placeFarmer(cx, cy, dir) { F.cx = cx; F.cy = cy; F.dir = dir || F.dir; F.x = cx * T + T / 2; F.y = cy * T + T - 2; F.mv = null; F.use = null; }
+    function seasonIdx(day) { return Math.floor((day - 1) / P.seasonDays) % SEAS.length; }
+    function seasonId(day) { return SEAS[seasonIdx(day == null ? S.day : day)].id; }
+    function dayOfSeason(day) { return ((day == null ? S.day : day) - 1) % P.seasonDays + 1; }
+    function daysLeft() { return P.seasonDays - dayOfSeason() + 1; }
+    function hour() { return 6 + 18 * clamp(S.dayT / P.dayMs, 0, 1); }
+    function plotAt(cx, cy) { return cx < 0 || cy < 0 || cx >= COLS || cy >= ROWS ? null : S.plots[cy * COLS + cx] || null; }
+    function spotAt(cx, cy) { for (var s in spots) if (spots[s][0] === cx && spots[s][1] === cy) return s; return null; }
+    function walkable(cx, cy) {
+      if (cx < 0 || cy < 0 || cx >= COLS || cy >= ROWS) return false;
+      if (spotAt(cx, cy)) return false;
+      var p = plotAt(cx, cy); if (p && p.crop) return false;
+      return !!safe(walkFn, [cx, cy], 'walkable') || !!p;
+    }
+    function tool() { return toolDef(TOOLS_, ORDER[S.toolIdx]) || toolDef(TOOLS_, ORDER[0]); }
+    function seedsHeld() { var out = []; for (var id in CROPS_) if ((S.bag.seeds[id] || 0) > 0) out.push(id); return out; }
+    function firstSeed() { var h = seedsHeld(); return h.length ? h[0] : (S.seedId || null); }
+    function actx() { return { crops: CROPS_, season: seasonId(), bag: S.bag, seed: S.seedId, day: S.day }; }
+
+    /* ---------- input: everything (keys, taps, the bot) goes through key() ---------- */
+    function key(k) {
+      if (k == null) return false;
+      if (S.keyQ.length < 6) S.keyQ.push(String(k));
+      return true;
+    }
+    function setHeld(dir, on) {
+      if (!DIRS[dir]) return; S.held[dir] = !!on;
+      var i = S.heldOrder.indexOf(dir); if (i >= 0) S.heldOrder.splice(i, 1); if (on) S.heldOrder.push(dir);
+    }
+    function heldDir() { for (var i = S.heldOrder.length - 1; i >= 0; i--) if (S.held[S.heldOrder[i]]) return S.heldOrder[i]; return null; }
+    function busy() { return !!(F.mv || F.use); }
+    function handleKey(k) {
+      if (S.phase === 'shop') { shopKey(k); return true; }
+      if (S.phase === 'night') { if ((k === 'ok' || k === 'back') && S.phaseT > 700) { S.phase = 'wake'; S.phaseT = 0; } return true; }
+      if (S.phase !== 'play') return true;
+      if (/^[1-9]$/.test(k)) { var ix = (+k) - 1; if (ix < ORDER.length && ix !== S.toolIdx) { S.toolIdx = ix; emit({ kind: 'tool', tool: ORDER[ix] }); } return true; }
+      if (k === 'tool') { S.toolIdx = (S.toolIdx + 1) % ORDER.length; emit({ kind: 'tool', tool: ORDER[S.toolIdx] }); return true; }
+      if (k === 'seed') { var h = seedsHeld(); if (h.length) { var j = h.indexOf(S.seedId); S.seedId = h[(j + 1) % h.length]; emit({ kind: 'seed', crop: S.seedId }); } return true; }
+      if (k === 'back') { S.goal = null; return true; }
+      if (busy()) return false;     // directions and ok wait for the farmer (a 0 ms tap still counts)
+      if (DIRS[k]) { stepOrTurn(k); return true; }
+      if (k === 'ok') { act(); return true; }
+      return true;
+    }
+    function stepOrTurn(d) {
+      if (F.dir !== d) { F.dir = d; F.holdT = 0; emit({ kind: 'turn', dir: d }); return; }
+      var nx = F.cx + DIRS[d][0], ny = F.cy + DIRS[d][1];
+      if (!walkable(nx, ny)) { emit({ kind: 'bump', dir: d }); return; }
+      F.mv = { fx: F.x, fy: F.y, tx: nx * T + T / 2, ty: ny * T + T - 2, t: 0, ms: P.walkMs, cx: nx, cy: ny };
+    }
+    function front() { var d = DIRS[F.dir]; return [F.cx + d[0], F.cy + d[1]]; }
+    function act() {
+      var fc = front(), sp = spotAt(fc[0], fc[1]);
+      if (sp === 'bin') { var n = 0; for (var id in S.bag.crops) { var c = S.bag.crops[id] | 0; if (c > 0) { S.bin[id] = (S.bin[id] || 0) + c; S.shipped[id] = (S.shipped[id] || 0) + c; n += c; } } S.bag.crops = {}; S.stats.shipped += n; emit({ kind: 'ship', n: n, at: fc }); if (n) fxBurst(fc, 'ship', 6); return; }
+      if (sp === 'shop') { S.phase = 'shop'; S.phaseT = 0; S.shopCur = clamp(S.shopCur, 0, Math.max(0, shopList().length - 1)); emit({ kind: 'shopOpen' }); return; }
+      if (sp === 'bed') { sleep('bed'); return; }
+      var t = tool(); if (!t) return;
+      var cells = rules.cellsFor(t, F.cx, F.cy, F.dir);
+      F.use = { tool: ORDER[S.toolIdx], def: t, t: 0, ms: t.ms / Math.max(0.25, P.toolSpeed), cells: cells, applied: false, dir: F.dir };
+      emit({ kind: 'use', tool: ORDER[S.toolIdx], action: t.action, dir: F.dir, at: [F.cx, F.cy], target: fc, cells: cells });
+    }
+    function applyUse(u) {
+      var any = false, o = actx(), harvested = null;
+      u.cells.forEach(function (c) {
+        var p = plotAt(c[0], c[1]); if (!p) return;
+        var ev = rules.apply(p, u.def.action, o); if (!ev) return; any = true; ev.tool = undefined; emit(ev);
+        if (ev.kind === 'till') fxBurst(c, 'dirt', 5);
+        if (ev.kind === 'water') fxBurst(c, 'water', 7);
+        if (ev.kind === 'plant') { fxBurst(c, 'seed', 4); S.planted[seasonId() + ':' + ev.crop] = 1; if ((S.bag.seeds[ev.crop] || 0) <= 0) S.seedId = firstSeed(); }
+        if (ev.kind === 'clear') fxBurst(c, 'chaff', 12);
+        if (ev.kind === 'harvest') { S.stats.harvests++; fxBurst(c, 'leaf', 6); harvested = ev.crop; }   // no flying copy: the crop appears in the hands when the lift begins
+      });
+      if (!any) { emit({ kind: 'thunk', action: u.def.action, at: u.cells[0] }); if (u.def.action === 'plant' && !(S.bag.seeds[S.seedId] > 0)) emit({ kind: 'noSeed' }); }
+      return harvested;
+    }
+
+    /* ---------- the shop: seeds of the season, Z buys one, X leaves ---------- */
+    function shopList() { var out = [], sid = seasonId(); for (var id in CROPS_) { var d = cropDef(CROPS_, id); if (d && d.seasons.indexOf(sid) >= 0 && d.seed > 0) out.push(id); } return out; }
+    function shopKey(k) {
+      var L = shopList();
+      if (k === 'up') S.shopCur = (S.shopCur + L.length - 1) % Math.max(1, L.length);
+      else if (k === 'down') S.shopCur = (S.shopCur + 1) % Math.max(1, L.length);
+      else if (k === 'ok' || k === 'right') {
+        var id = L[S.shopCur]; if (!id) return; var n = rules.buy(S, id, k === 'right' ? 5 : 1, CROPS_);
+        if (n > 0) { S.stats.bought += n; S.boughtToday = (S.boughtToday || 0) + n; emit({ kind: 'buy', crop: id, n: n, gold: S.gold }); if (!S.seedId || !(S.bag.seeds[S.seedId] > 0)) S.seedId = id; }
+        else emit({ kind: 'poor', crop: id });
+      } else if (k === 'back' || k === 'left') { S.phase = 'play'; S.phaseT = 0; emit({ kind: 'shopClose' }); }
+    }
+
+    /* ---------- the night ---------- */
+    function sleep(why) { if (S.phase !== 'play') return; S.phase = 'sleep'; S.phaseT = 0; F.mv = null; F.use = null; S.goal = null; emit({ kind: 'sleep', why: why }); }
+    function night() {
+      var sale = rules.sell(S, CROPS_); emit({ kind: 'sell', gold: sale.total, lines: sale.lines });
+      var info = { day: S.day, season: seasonId(), sale: sale, why: S.lastSleep, grew: 0, ripe: 0, withered: 0 };
+      if (S.day >= S.lastDay) {
+        S.phase = 'end'; S.phaseT = 0; S.night = info; S.ended = true;
+        S.result = { earned: S.earned, gold: S.gold, shipped: copy(S.shipped), harvests: S.stats.harvests, days: S.day };
+        emit({ kind: 'end', earned: S.earned, gold: S.gold }); safe(opt.onEnd, [S.result], 'onEnd'); return;
+      }
+      var prevSeason = seasonId(); S.day += 1; S.dayT = 0; S.boughtToday = 0;
+      var evs = rules.dawn(S.plots, { crops: CROPS_, season: seasonId(), rain: S.rain[S.day] });
+      evs.forEach(function (e) { if (e.kind === 'grow') info.grew++; if (e.kind === 'ripe') info.ripe++; if (e.kind === 'wither') info.withered++; emit(e); });
+      S.stats.grew += info.grew; S.stats.withered += info.withered;
+      info.rain = !!S.rain[S.day]; info.next = { day: S.day, season: seasonId(), dos: dayOfSeason() }; info.newSeason = seasonId() !== prevSeason;
+      S.night = info; S.phase = 'night'; S.phaseT = 0;
+      placeFarmer(START[0] | 0, START[1] | 0, START[2] || 'down');
+      emit({ kind: 'day', season: seasonId(), rain: info.rain, newSeason: info.newSeason });
+      if (info.newSeason) { emit({ kind: 'season', season: seasonId(), withered: info.withered }); S.banner = { t: 0, season: seasonId(), withered: info.withered }; }
+      if (!(S.bag.seeds[S.seedId] > 0)) S.seedId = firstSeed();
+    }
+
+    /* ---------- particles (state lives in update, so ?t= stills equal play) ---------- */
+    function fxBurst(c, kind, n) {
+      var cx = c[0] * T + T / 2, cy = c[1] * T + T / 2 + 2;
+      for (var i = 0; i < n; i++) { var a = S.rng() * Math.PI * 2, sp = 0.02 + S.rng() * 0.04; S.fx.push({ id: S.fxId++, kind: kind, x: cx + (S.rng() - 0.5) * 8, y: cy + (S.rng() - 0.5) * 6, z: kind === 'water' ? 6 + S.rng() * 4 : 1, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * 0.5, vz: kind === 'water' ? -0.01 : 0.05 + S.rng() * 0.05, t: 0, life: 420 + S.rng() * 220 }); }
+    }
+    // the harvest jumps from the plot into the farmer's hands; it ends on the frame the lift pose (the crop held overhead) begins
+    function fxPop(c, crop, n, u) { var la = liftAnchor(F.dir); S.fx.push({ id: S.fxId++, kind: 'pop', crop: crop, n: n, x: c[0] * T + T / 2 - 7, y: c[1] * T + 2, tx: Math.round(F.x) - FARMER.cx + la[0], ty: Math.round(F.y) - FARMER.foot + la[1], t: 0, life: Math.max(1, u ? u.ms - u.t : 100) }); }
+    function stepFx(dt) {
+      for (var i = S.fx.length - 1; i >= 0; i--) {
+        var f = S.fx[i]; f.t += dt;
+        if (f.kind !== 'pop') { f.x += f.vx * dt; f.y += f.vy * dt; f.z += f.vz * dt; f.vz -= 0.00025 * dt; if (f.z < 0) { f.z = 0; f.vz = 0; f.vx *= 0.5; f.vy *= 0.5; } }
+        if (f.t >= f.life) S.fx.splice(i, 1);
+      }
+      if (S.fx.length > 160) S.fx.splice(0, S.fx.length - 160);
+    }
+
+    /* ---------- paths (BFS over walkable tiles) and the job driver used by the bot and taps ---------- */
+    function bfs() {
+      var dist = new Int32Array(COLS * ROWS).fill(-1), prev = new Int32Array(COLS * ROWS).fill(-1), q = [F.cy * COLS + F.cx]; dist[q[0]] = 0;
+      for (var h = 0; h < q.length; h++) {
+        var i = q[h], x = i % COLS, y = (i / COLS) | 0;
+        for (var d = 0; d < 4; d++) { var v = DIRS[DIR_ORDER[d]], nx = x + v[0], ny = y + v[1], j = ny * COLS + nx; if (nx < 0 || ny < 0 || nx >= COLS || ny >= ROWS || dist[j] >= 0 || !walkable(nx, ny)) continue; dist[j] = dist[i] + 1; prev[j] = i; q.push(j); }
+      }
+      return { dist: dist, prev: prev };
+    }
+    function firstStep(B, cx, cy) {
+      var j = cy * COLS + cx; if (B.dist[j] < 0) return null; var me = F.cy * COLS + F.cx; if (j === me) return null;
+      while (B.prev[j] !== me && B.prev[j] >= 0) j = B.prev[j];
+      var x = j % COLS, y = (j / COLS) | 0; return x > F.cx ? 'right' : x < F.cx ? 'left' : y > F.cy ? 'down' : 'up';
+    }
+    // job = {stand: [cx, cy], face: dir, toolIdx | null, seed | null, then: 'ok'}; returns the next key to press, or 'done'
+    function drive(job, B) {
+      if (job.stand[0] !== F.cx || job.stand[1] !== F.cy) { var st = firstStep(B, job.stand[0], job.stand[1]); return st || 'stuck'; }
+      if (job.toolIdx != null && job.toolIdx !== S.toolIdx) return String(job.toolIdx + 1);
+      if (job.seed && S.seedId !== job.seed) return 'seed';
+      if (F.dir !== job.face) return job.face;
+      return job.then || 'ok';
+    }
+    // the best stand / face / tool for working the target cells with an action
+    function planWork(B, targets, action) {
+      var best = null, o = actx();
+      ORDER.forEach(function (tid, ti) {
+        var td = toolDef(TOOLS_, tid); if (!td || td.action !== action) return;
+        targets.forEach(function (c) {
+          DIR_ORDER.forEach(function (dn) {
+            var v = DIRS[dn], sx = c[0] - v[0], sy = c[1] - v[1], j = sy * COLS + sx;
+            if (sx < 0 || sy < 0 || sx >= COLS || sy >= ROWS || B.dist[j] < 0) return;
+            // the tool's cells from that stand must include the target cell
+            var cells = rules.cellsFor(td, sx, sy, dn), hit = 0, useful = 0;
+            cells.forEach(function (q) { if (q[0] === c[0] && q[1] === c[1]) hit = 1; var p = plotAt(q[0], q[1]); if (p && rules.useful(p, action, o)) useful++; });
+            if (!hit || !useful) return;
+            var score = B.dist[j] + (F.dir === dn ? 0 : 0.4) - useful * 3 + ti * 0.01 - (S.botPrev && S.botPrev[0] === sx && S.botPrev[1] === sy && S.botPrev[2] === dn ? 0.9 : 0);
+            if (!best || score < best.score - 1e-9) best = { stand: [sx, sy], face: dn, toolIdx: ti, score: score, cell: c, useful: useful };
+          });
+        });
+      });
+      return best;
+    }
+    function spotJob(B, name) {
+      var s = spots[name]; if (!s) return null; var best = null;
+      DIR_ORDER.forEach(function (dn) { var v = DIRS[dn], sx = s[0] - v[0], sy = s[1] - v[1], j = sy * COLS + sx; if (sx < 0 || sy < 0 || sx >= COLS || sy >= ROWS || B.dist[j] < 0) return; if (!best || B.dist[j] < best.d) best = { stand: [sx, sy], face: dn, d: B.dist[j], then: 'ok', spot: name }; });
+      return best;
+    }
+    function plotsWhere(fn) { var out = []; for (var i = 0; i < S.plots.length; i++) { var p = S.plots[i]; if (p && fn(p)) out.push([p.cx, p.cy]); } return out; }
+    function viableSeeds() { var out = [], sid = seasonId(), dl = daysLeft(); for (var id in CROPS_) { var d = cropDef(CROPS_, id); if (d && rules.viable(d, sid, dl)) out.push(id); } return out; }
+    function botWantSeed() {
+      if (hour() >= 17 || (S.boughtToday || 0) >= P.botBuy) return null;
+      var V = viableSeeds(); if (!V.length) return null;
+      var held = 0; V.forEach(function (id) { held += S.bag.seeds[id] || 0; });
+      var planted = plotsWhere(function (p) { return !!p.crop; }).length, cap = Math.min(P.botPlots, plotsWhere(function () { return true; }).length) - planted;
+      if (held >= cap) return null;
+      var sid = seasonId(), pick = null, bestV = -1e9;
+      V.forEach(function (id) { var d = cropDef(CROPS_, id); if (d.seed > S.gold) return; var fresh = !S.planted[sid + ':' + id] && !(S.bag.seeds[id] > 0); var val = (fresh ? 1e6 : 0) + (d.sell * d.yield - d.seed) / d.days - d.seed * (fresh ? 0.001 : 0); if (val > bestV) { bestV = val; pick = id; } });
+      return pick;
+    }
+    function botJob(B) {
+      var o = actx(), h = hour(), late = h >= 23;
+      if (late) return spotJob(B, 'bed');
+      var ripe = plotsWhere(function (p) { return rules.useful(p, 'harvest', o); });
+      if (ripe.length) { var j1 = planWork(B, ripe, 'harvest'); if (j1) return j1; }
+      var carry = 0; for (var id in S.bag.crops) carry += S.bag.crops[id] | 0;
+      if (carry > 0) { var j2 = spotJob(B, 'bin'); if (j2) return j2; }
+      if (botWantSeed()) { var j3 = spotJob(B, 'shop'); if (j3) return j3; }
+      if (h >= 18) { var dry0 = plotsWhere(function (p) { return rules.useful(p, 'water', o); }); if (dry0.length) { var jw = planWork(B, dry0, 'water'); if (jw) return jw; } return spotJob(B, 'bed'); }
+      var V = viableSeeds(), held = 0, seedId = null; V.forEach(function (id) { var n = S.bag.seeds[id] || 0; held += n; if (n > 0 && !seedId) seedId = id; });
+      var empty = plotsWhere(function (p) { return p.tilled && !p.crop; });
+      if (held > empty.length) {
+        var planted = plotsWhere(function (p) { return !!p.crop; }).length;
+        if (planted + empty.length < P.botPlots) { var till = plotsWhere(function (p) { return !p.tilled; }); if (till.length) { var j4 = planWork(B, till, 'till'); if (j4) return j4; } }
+      }
+      if (held > 0 && empty.length) {
+        // plant the freshest seed first (each kind of the season goes in the ground at least once)
+        var sid = seasonId(); V.forEach(function (id) { if ((S.bag.seeds[id] || 0) > 0 && !S.planted[sid + ':' + id] && seedId && S.planted[sid + ':' + seedId]) seedId = id; });
+        var saved = S.seedId; S.seedId = seedId; var j5 = planWork(B, empty, 'plant'); S.seedId = saved;
+        if (j5) { j5.seed = seedId; return j5; }
+      }
+      var dry = plotsWhere(function (p) { return rules.useful(p, 'water', o); });
+      if (dry.length) { var j6 = planWork(B, dry, 'water'); if (j6) return j6; }
+      return spotJob(B, 'bed');
+    }
+    function think(dt) {
+      if (S.phase === 'shop') {
+        S.botT += dt; if (S.botT < P.botWait || S.keyQ.length) return; S.botT = 0;
+        var want = botWantSeed(), L = shopList();
+        if (!want) { key('back'); return; }
+        var ix = L.indexOf(want); if (ix < 0) { key('back'); return; }
+        if (S.shopCur !== ix) key(ix > S.shopCur ? 'down' : 'up'); else key('ok');
+        return;
+      }
+      if (S.phase !== 'play' || busy() || S.keyQ.length || F.lift) { S.botT = 0; return; }
+      S.botT += dt; if (S.botT < (S.botStep ? 0 : P.botWait)) return; S.botT = 0;
+      var B = bfs(), job = botJob(B); if (!job) return;
+      var k2 = drive(job, B); S.botPrev = [job.stand[0], job.stand[1], job.face];
+      if (k2 === 'stuck') { S.botStep = false; emit({ kind: 'stuck', job: job.spot || job.cell }); return; }
+      S.botStep = !!DIRS[k2] && F.dir === k2;
+      key(k2);
+    }
+    // a tap on a tile: walk there, or work it / use the spot from the nearest side
+    function tapCell(cx, cy) {
+      if (S.phase === 'night') { key('ok'); return; }
+      if (S.phase !== 'play') return;
+      cx |= 0; cy |= 0; var sp = spotAt(cx, cy), p = plotAt(cx, cy);
+      // a tap on a blocked tile near a spot (the stall's roof, the house) goes to that spot
+      if (!sp && !p && !walkable(cx, cy)) { var bd = 3; for (var nm in spots) { var dd = Math.max(Math.abs(spots[nm][0] - cx), Math.abs(spots[nm][1] - cy)); if (dd < bd) { bd = dd; sp = nm; } } }
+      if (sp) S.goal = { spot: sp }; else if (p) S.goal = { cell: [cx, cy] }; else if (walkable(cx, cy)) S.goal = { walk: [cx, cy] }; else S.goal = null;
+    }
+    function goalStep() {
+      if (!S.goal || S.phase !== 'play' || busy() || S.keyQ.length) return;
+      var B = bfs(), g = S.goal, job = null;
+      if (g.spot) job = spotJob(B, g.spot);
+      else if (g.walk) { if (g.walk[0] === F.cx && g.walk[1] === F.cy) { S.goal = null; return; } var st = firstStep(B, g.walk[0], g.walk[1]); if (!st) { S.goal = null; return; } key(st); return; }
+      else if (g.cell) {
+        var t = tool(), best = null;
+        DIR_ORDER.forEach(function (dn) { var v = DIRS[dn], sx = g.cell[0] - v[0], sy = g.cell[1] - v[1], j = sy * COLS + sx; if (sx < 0 || sy < 0 || sx >= COLS || sy >= ROWS || B.dist[j] < 0) return; if (!best || B.dist[j] < best.d) best = { stand: [sx, sy], face: dn, d: B.dist[j], then: 'ok' }; });
+        job = best;
+      }
+      if (!job) { S.goal = null; return; }
+      var k = drive(job, B);
+      if (k === 'stuck') { S.goal = null; return; }
+      if (k === 'ok') S.goal = null;
+      key(k);
+    }
+
+    /* ---------- the fixed step ---------- */
+    function update(dt) {
+      dt = num(dt, 0); if (!(dt > 0)) return;
+      S.clock += dt; S.phaseT += dt;
+      if (S.banner && (S.phase === 'play' || S.phase === 'wake' || S.phase === 'shop')) { S.banner.t += dt; if (S.banner.t > 4600) S.banner = null; }
+      stepFx(dt);
+      if (S.phase === 'end') return;
+      if (S.phase === 'sleep') { if (S.phaseT >= 700) night(); return; }
+      if (S.phase === 'night') { if (S.phaseT >= P.nightMs) { S.phase = 'wake'; S.phaseT = 0; } while (S.keyQ.length) handleKey(S.keyQ.shift()); if (S.auto) S.keyQ.length = 0; return; }
+      if (S.phase === 'wake') { S.keyQ.length = 0; if (S.phaseT >= 600) { S.phase = 'play'; S.phaseT = 0; } return; }
+      if (S.auto) think(dt); else goalStep();
+      // keys: menu keys at once, moves and actions when the farmer is free
+      var guard = 0;
+      while (S.keyQ.length && guard++ < 6) { if (handleKey(S.keyQ[0]) === false) break; S.keyQ.shift(); if (S.phase !== 'play') break; }
+      if (S.phase === 'play') {
+        S.dayT += dt;
+        // movement
+        if (F.mv) {
+          var m = F.mv, ox = F.x, oy = F.y; m.t += dt; var q = clamp(m.t / m.ms, 0, 1);
+          F.x = m.fx + (m.tx - m.fx) * q; F.y = m.fy + (m.ty - m.fy) * q; F.walk += Math.abs(F.x - ox) + Math.abs(F.y - oy);
+          if (q >= 1) { F.cx = m.cx; F.cy = m.cy; F.mv = null; F.stopT = 0; emit({ kind: 'step', at: [F.cx, F.cy], dir: F.dir }); }
+        } else F.stopT += dt;
+        if (F.use) {
+          var u = F.use; u.t += dt;
+          if (!u.applied && u.t >= u.ms * 0.62) { u.applied = true; var hv = applyUse(u); if (hv) F.lift = { crop: hv, t: 0, ms: 420 }; }
+          if (u.t >= u.ms) F.use = null;
+        } else if (F.lift) { F.lift.t += dt; if (F.lift.t >= F.lift.ms) F.lift = null; }
+        // a held direction keeps walking (after the turn delay)
+        var hd = heldDir();
+        if (hd && !busy() && !F.lift && !S.keyQ.length && !S.auto) {
+          if (F.dir !== hd) stepOrTurn(hd); else { F.holdT += dt; if (F.holdT >= P.turnMs || F.stopT < 40) stepOrTurn(hd); }
+        } else if (!hd) F.holdT = 0;
+        if (S.dayT >= P.dayMs) { S.lastSleep = 'late'; sleep('late'); }
+      }
+    }
+
+    /* ---------- drawing (world px; the host translates by its camera) ---------- */
+    function cropSprite(p) {
+      var c = p.crop, d = cropDef(CROPS_, c.id); if (!d) return null;
+      var st = rules.stageOf(c, d);
+      return { y: p.cy * T + 10, draw: function (ctx) {
+        if (typeof d.draw === 'function') { safe(d.draw, [ctx, p.cx * T, p.cy * T, st, { dead: c.dead, ripe: rules.ripe(c, d), stages: d.stages, tile: T }], 'crop.draw'); return; }
+        var im = cropCanvas(c.id, d, st, c.dead); if (!im) return;
+        var sway = !c.dead && st > 0 ? Math.round(Math.sin(S.clock / 700 + p.cx * 1.7 + p.cy) * 0.6) : 0;
+        ctx.drawImage(im, p.cx * T + (T - 16) / 2 + sway * 0, p.cy * T + T - 32);
+        if (rules.ripe(c, d) && !c.dead) { var tw = (Math.floor(S.clock / 180) + p.cx * 3 + p.cy) % 14; if (tw < 2) { ctx.fillStyle = '#fffbe0'; ctx.fillRect(p.cx * T + 3 + (p.cx * 5 + p.cy) % 9, p.cy * T - 2 + (p.cy * 3) % 6, 1, 1); } }
+      } };
+    }
+    function drawSoil(ctx) {
+      try {
+        for (var i = 0; i < S.plots.length; i++) {
+          var p = S.plots[i]; if (!p || !p.tilled) continue;
+          var t = function (x, y) { var q = plotAt(x, y); return q && q.tilled; };
+          var mask = (t(p.cx, p.cy - 1) ? 1 : 0) | (t(p.cx + 1, p.cy) ? 2 : 0) | (t(p.cx, p.cy + 1) ? 4 : 0) | (t(p.cx - 1, p.cy) ? 8 : 0);
+          var im = soilCanvas(mask, p.watered, (p.cx * 7 + p.cy * 3) & 3); if (im) ctx.drawImage(im, p.cx * T, p.cy * T);
+          if (p.watered && p.crop && !p.crop.dead) { ctx.fillStyle = 'rgba(120,170,220,0.18)'; ctx.fillRect(p.cx * T + 3, p.cy * T + 12, 10, 2); }
+        }
+        // the work cursor: the tile the farmer faces (only where something can happen)
+        if (P.cursor !== 'off' && S.phase === 'play' && !F.mv) {
+          var fc = front(), pf = plotAt(fc[0], fc[1]), sp = spotAt(fc[0], fc[1]);
+          if (pf || sp) {
+            var useful = sp ? true : rules.useful(pf, tool().action, actx()), a = 0.75 + 0.25 * Math.sin(S.clock / 160), x = fc[0] * T, y = fc[1] * T;
+            ctx.globalAlpha = a; ctx.fillStyle = useful ? '#fff4c0' : 'rgba(255,255,255,0.55)';
+            [[0, 0, 4, 1], [0, 0, 1, 4], [T - 4, 0, 4, 1], [T - 1, 0, 1, 4], [0, T - 1, 4, 1], [0, T - 4, 1, 4], [T - 4, T - 1, 4, 1], [T - 1, T - 4, 1, 4]].forEach(function (r) { ctx.fillRect(x + r[0], y + r[1], r[2], r[3]); });
+            ctx.globalAlpha = 1;
+          }
+        }
+      } catch (e) { warn('drawSoil', e); }
+    }
+    function farmerPose() {
+      if (F.use) return F.use.t < F.use.ms * 0.42 ? 'raise' : 'strike';
+      if (F.lift) return 'lift';
+      return null;
+    }
+    function farmerFrame() { return F.mv || F.stopT < 40 ? Math.floor(F.walk / 6) & 3 : -1; }
+    function drawFarmerAt(ctx, x, y, dir, frame, pose, useDef, lift) { var d = lift && cropDef(CROPS_, lift); drawFarmerFull(ctx, x, y, dir, frame, pose, useDef, d ? d.look : null); }
+    function sprites() {
+      var out = [];
+      for (var i = 0; i < S.plots.length; i++) { var p = S.plots[i]; if (p && p.crop) { var s = cropSprite(p); if (s) out.push(s); } }
+      if (S.phase !== 'sleep' && S.phase !== 'night' && S.phase !== 'end' || (S.phase === 'sleep' && S.phaseT < 200)) {
+        out.push({ y: F.y, farmer: true, draw: function (ctx) {
+          var pose = farmerPose();
+          if (typeof opt.drawFarmer === 'function' && safe(opt.drawFarmer, [ctx, { x: F.x, y: F.y, dir: F.dir, frame: farmerFrame(), pose: pose, tool: F.use ? F.use.tool : null, lift: F.lift ? F.lift.crop : null }], 'drawFarmer') === true) return;
+          drawFarmerAt(ctx, F.x, F.y, F.dir, farmerFrame(), pose, F.use ? F.use.def : null, F.lift ? F.lift.crop : null);
+        } });
+      }
+      return out;
+    }
+    function drawFx(ctx) {
+      try {
+        S.fx.forEach(function (f) {
+          var a = 1 - f.t / f.life, X = Math.round(f.x), Y = Math.round(f.y - f.z);
+          if (f.kind === 'pop') {
+            var q = clamp(f.t / f.life, 0, 1), e = 1 - (1 - q) * (1 - q), x = f.x + (f.tx - f.x) * e, y = f.y + (f.ty - f.y) * e - Math.sin(q * Math.PI) * 6;
+            var d = cropDef(CROPS_, f.crop); if (d) { LIFT.n++; drawIcon(ctx, 'crop', Math.round(x), Math.round(y), 14, null, d.look); }
+            return;
+          }
+          ctx.globalAlpha = clamp(a * 1.4, 0, 1);
+          if (f.kind === 'water') { ctx.fillStyle = '#bfe6ff'; ctx.fillRect(X, Y, 1, 2); ctx.fillStyle = '#4a9ae0'; ctx.fillRect(X, Y + 2, 1, 1); if (f.z <= 0) { ctx.fillStyle = 'rgba(160,210,255,0.6)'; ctx.fillRect(X - 1, Y + 1, 3, 1); } }
+          else if (f.kind === 'dirt') { ctx.fillStyle = '#6e4a2c'; ctx.fillRect(X, Y, 2, 2); ctx.fillStyle = '#a47a4a'; ctx.fillRect(X, Y, 1, 1); }
+          else if (f.kind === 'seed') { ctx.fillStyle = '#f0e0a8'; ctx.fillRect(X, Y, 1, 1); }
+          else if (f.kind === 'leaf') { ctx.fillStyle = '#7cc256'; ctx.fillRect(X, Y, 2, 1); ctx.fillStyle = '#2c6e34'; ctx.fillRect(X + 1, Y + 1, 1, 1); }
+          else if (f.kind === 'chaff') { ctx.fillStyle = '#94703c'; ctx.fillRect(X, Y, 2, 2); ctx.fillStyle = '#c8a46a'; ctx.fillRect(X, Y, 1, 1); }
+          else if (f.kind === 'ship') { ctx.fillStyle = '#ffe070'; ctx.fillRect(X, Y - 4, 1, 1); ctx.fillStyle = '#fff8d0'; ctx.fillRect(X, Y - 5, 1, 1); }
+          ctx.globalAlpha = 1;
+        });
+      } catch (e) { warn('drawFx', e); }
+    }
+    // dusk, night, rain and lamp glows over the world rect r (world px) on the world context
+    // the light of the day: a colour the world is multiplied by, keyed by the hour (white until 16:00, warm late
+    // afternoon, a red-violet sunset at 18:30, blue night from 20:00); darkness() = 1 - its mean brightness
+    var GRADE = [[0, 255, 255, 255], [16, 255, 255, 255], [17.5, 255, 226, 186], [18.5, 236, 164, 138], [19.5, 140, 122, 182], [20.5, 92, 92, 150], [24, 70, 74, 132]];
+    function grade() {
+      if (P.night === 'off') return [255, 255, 255];
+      var h = hour(), i = 1; while (i < GRADE.length - 1 && GRADE[i][0] < h) i++;
+      var a = GRADE[i - 1], b = GRADE[i], q = clamp((h - a[0]) / Math.max(0.001, b[0] - a[0]), 0, 1);
+      return [0, 1, 2].map(function (k) { return Math.round(a[k + 1] + (b[k + 1] - a[k + 1]) * q); });
+    }
+    function darkness() { var c = grade(); return 1 - (c[0] + c[1] + c[2]) / 765; }
+    function drawSky(ctx, r) {
+      try {
+        r = r || { x: 0, y: 0, w: COLS * T, h: ROWS * T };
+        var dk = darkness(), c = grade(), rain = S.rain[S.day] && S.phase !== 'end';
+        ctx.save();
+        if (rain) {
+          // a grey, cooler, darker day: desaturate, then dim toward slate blue
+          ctx.globalCompositeOperation = 'saturation'; ctx.fillStyle = 'rgba(128,128,128,0.55)'; ctx.fillRect(r.x, r.y, r.w, r.h);
+          ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = 'rgb(168,178,200)'; ctx.fillRect(r.x, r.y, r.w, r.h);
+        }
+        if (c[0] < 255 || c[1] < 255 || c[2] < 255) { ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = 'rgb(' + c.join(',') + ')'; ctx.fillRect(r.x, r.y, r.w, r.h); }
+        ctx.globalCompositeOperation = 'source-over';
+        if (rain) {
+          var t = S.clock;
+          for (var i = 0; i < 150; i++) {
+            var sx = r.x + ((hsh(i, 1, 5) * (r.w + 40) + t * 0.06) % (r.w + 40)) - 20, sy = r.y + ((hsh(i, 2, 5) * r.h + t * 0.34) % r.h);
+            ctx.fillStyle = 'rgba(214,226,255,0.55)'; ctx.fillRect(Math.round(sx), Math.round(sy), 1, 4); ctx.fillStyle = 'rgba(214,226,255,0.3)'; ctx.fillRect(Math.round(sx) - 1, Math.round(sy) + 4, 1, 2);
+            if (i % 5 === 0) { var ph = (t / 260 + hsh(i, 3, 5) * 10) % 1, rx = r.x + Math.floor(hsh(i, 4, Math.floor(t / 260 + hsh(i, 3, 5) * 10)) * r.w), ry = r.y + Math.floor(hsh(i, 6, Math.floor(t / 260 + hsh(i, 3, 5) * 10)) * r.h); ctx.fillStyle = 'rgba(220,232,255,' + (0.5 * (1 - ph)).toFixed(2) + ')'; ctx.fillRect(rx - 1 - Math.round(ph * 2), ry, 3 + Math.round(ph * 4), 1); }
+          }
+        }
+        var lit = clamp((dk - 0.12) / 0.4, 0, 1);
+        if (lit > 0) {
+          // lamp pools: warm light added back where the lamps stand (and a little around the farmer's lantern-lit path)
+          ctx.globalCompositeOperation = 'lighter';
+          LIGHTS.forEach(function (L, li) {
+            var rad = (L[2] || 30) * 1.5, fl = 1 + 0.04 * Math.sin(S.clock / 90 + li * 2), g = ctx.createRadialGradient(L[0], L[1], 1, L[0], L[1], rad * fl);
+            g.addColorStop(0, 'rgba(255,196,120,' + (0.55 * lit).toFixed(3) + ')'); g.addColorStop(0.35, 'rgba(255,160,80,' + (0.26 * lit).toFixed(3) + ')'); g.addColorStop(1, 'rgba(255,140,60,0)');
+            ctx.fillStyle = g; ctx.fillRect(L[0] - rad * 1.1, L[1] - rad * 1.1, rad * 2.2, rad * 2.2);
+          });
+          var gf = ctx.createRadialGradient(F.x, F.y - 8, 1, F.x, F.y - 8, 22); gf.addColorStop(0, 'rgba(255,220,170,' + (0.16 * lit).toFixed(3) + ')'); gf.addColorStop(1, 'rgba(255,200,150,0)'); ctx.fillStyle = gf; ctx.fillRect(F.x - 24, F.y - 32, 48, 48);
+        }
+        ctx.restore();
+      } catch (e) { warn('drawSky', e); }
+    }
+
+    /* ---------- HUD (CSS px; view = {w, h, cam: {x, y, scale}}) ---------- */
+    function farmerScreen(view) {
+      var c = view && view.cam; if (!c) return null; var s = c.scale || 1;
+      return { x: (F.x - 9 - c.x) * s, y: (F.y - 24 - c.y) * s, w: 18 * s, h: 26 * s };
+    }
+    function layout(view) {
+      view = view || { w: 640, h: 360 };
+      var W = view.w, H = view.h, narrow = W < 520, m = narrow ? 6 : 10, R = {};
+      R.clock = { x: W - m - (narrow ? 156 : 178), y: m, w: narrow ? 156 : 178, h: 84 };
+      var n = ORDER.length, s = narrow ? 40 : 46, gap = 4, hw = n * s + (n - 1) * gap + 16;
+      R.hotbar = { x: Math.round((W - hw) / 2), y: H - m - (s + 16), w: hw, h: s + 16 };
+      R.label = { x: Math.round(W / 2 - (narrow ? 120 : 140)), y: R.hotbar.y - 30, w: narrow ? 240 : 280, h: 26 };
+      if (S.phase === 'shop') {
+        var L = shopList(), rowH = 40, sw = Math.min(narrow ? W - 2 * m : 330, W - 2 * m), sh = 66 + L.length * rowH + 36, fr = farmerScreen(view);
+        var x = Math.round((W - sw) / 2), y = Math.round((H - sh) / 2) - 10;
+        if (fr) {
+          if (!narrow) { x = fr.x + fr.w / 2 > W / 2 ? m + 6 : W - sw - m - 6; y = clamp(Math.round((H - sh) / 2) - 16, R.clock.y + R.clock.h + 8, Math.max(R.clock.y + R.clock.h + 8, R.label.y - sh - 8)); }
+          else {
+            var topY = R.clock.y + R.clock.h + 8, botY = R.label.y - 8, above = fr.y - 10 - topY, below = botY - (fr.y + fr.h + 10);
+            y = above >= below ? Math.max(topY, fr.y - 10 - sh) : fr.y + fr.h + 10; sh = Math.min(sh, Math.max(above, below)); if (sh < 66 + rowH * 2) sh = Math.max(above, below);
+          }
+        }
+        R.shop = { x: x, y: y, w: sw, h: sh };
+      }
+      if (S.banner) {
+        // the season banner: under the clock on phones, high on wide screens; never over the farmer (then above the label, else beside him)
+        var bw = Math.min(W - 2 * m, 320), bx = Math.round((W - bw) / 2), fs = farmerScreen(view), cands = [narrow ? R.clock.y + R.clock.h + 10 : Math.round(H * 0.16)];
+        if (fs) cands.push(R.label.y - 8 - 58, Math.round(fs.y + fs.h + 14), Math.round(fs.y - 14 - 58 - 16 * (view.cam.scale || 1)));
+        var by = cands[0];
+        for (var ci = 0; ci < cands.length; ci++) { var cy0 = cands[ci], r0 = { x: bx, y: cy0, w: bw, h: 58 }; if (cy0 < m || cy0 + 58 > R.label.y - 4) continue; if (narrow && cy0 < R.clock.y + R.clock.h + 6 && bx + bw > R.clock.x) continue; if (fs && r0.x < fs.x + fs.w && fs.x < r0.x + r0.w && r0.y < fs.y + fs.h && fs.y - 16 * (view.cam.scale || 1) < r0.y + r0.h) continue; by = cy0; break; }
+        R.banner = { x: bx, y: by, w: bw, h: 58 };
+      }
+      if (S.phase === 'night' || S.phase === 'end') { var cw = Math.min(W - 2 * m, 340), nl = S.night && S.night.sale ? Math.max(1, Math.min(4, S.night.sale.lines.length)) : 1, ch = 150 + nl * 24 + (S.phase === 'end' ? 0 : 28); R.card = { x: Math.round((W - cw) / 2), y: Math.round((H - ch) / 2), w: cw, h: ch }; }
+      return R;
+    }
+    function uiRects(view) {
+      if (P.hud === 'off') return [];
+      var R = layout(view), out = [];
+      var awake = S.phase === 'play' || S.phase === 'shop' || S.phase === 'wake';
+      for (var k in R) { if (k === 'label' && !labelText()) continue; if (k === 'hotbar' && !awake) continue; if (k === 'clock' && S.phase === 'night') continue; out.push({ name: k, x: R[k].x, y: R[k].y, w: R[k].w, h: R[k].h }); }
+      return out;
+    }
+    function labelText() {
+      if (S.phase !== 'play') return '';
+      var fc = front(), sp = spotAt(fc[0], fc[1]);
+      if (sp === 'bin') { var n = 0; for (var id in S.bag.crops) n += S.bag.crops[id] | 0; return n ? 'Z  Ship ' + n + ' crop' + (n > 1 ? 's' : '') : 'Shipping bin: paid at night'; }
+      if (sp === 'shop') return 'Z  Buy seeds';
+      if (sp === 'bed') return 'Z  Sleep (end the day)';
+      var t = tool(); if (!t) return '';
+      if (t.action === 'plant') { var d = S.seedId && cropDef(CROPS_, S.seedId), c = S.seedId ? (S.bag.seeds[S.seedId] || 0) : 0; return d ? d.name + ' seeds x' + c + (seedsHeld().length > 1 ? '   Q: next' : '') : 'No seeds: buy at the stall'; }
+      return t.name;
+    }
+    function fmtTime() { var mins = Math.floor((hour() * 60) / 10) * 10, hh = Math.floor(mins / 60) % 24, mm = mins % 60, ap = hh >= 12 ? 'pm' : 'am', h12 = hh % 12 === 0 ? 12 : hh % 12; return h12 + ':' + (mm < 10 ? '0' : '') + mm + ' ' + ap; }
+    function fmtGold(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+    function drawUI(ctx, view) {
+      if (P.hud === 'off') return;
+      try {
+        var R = layout(view), W = view.w, H = view.h, narrow = W < 520, sea = SEAS[seasonIdx(S.day)];
+        // fades
+        if (S.phase === 'sleep') { ctx.fillStyle = 'rgba(6,6,16,' + clamp(S.phaseT / 650, 0, 1).toFixed(3) + ')'; ctx.fillRect(0, 0, W, H); }
+        if (S.phase === 'night') { ctx.fillStyle = '#06060f'; ctx.fillRect(0, 0, W, H); }
+        if (S.phase === 'end') { ctx.fillStyle = 'rgba(10,8,20,' + (0.55 * clamp(S.phaseT / 500, 0, 1)).toFixed(3) + ')'; ctx.fillRect(0, 0, W, H); }
+        if (S.phase === 'wake') { ctx.fillStyle = 'rgba(6,6,16,' + clamp(1 - S.phaseT / 600, 0, 1).toFixed(3) + ')'; ctx.fillRect(0, 0, W, H); }
+        // clock panel
+        var c = R.clock;
+        if (S.phase !== 'night') {
+        panel(ctx, c.x, c.y, c.w, c.h);
+        drawIcon(ctx, sea.icon, c.x + 9, c.y + 8, 28, null);
+        text(ctx, sea.name + ' ' + dayOfSeason() + '  ' + WEEKDAYS[(S.day - 1) % 7], c.x + 40, c.y + 25, { size: narrow ? 14 : 15, weight: 800, color: '#4a2410', max: c.w - 48 });
+        var h = hour(), nightIcon = h >= 19 ? 'moon' : S.rain[S.day] ? 'rain' : 'sun';
+        drawIcon(ctx, nightIcon, c.x + 39, c.y + 30, 15, null);
+        text(ctx, fmtTime(), c.x + 58, c.y + 43, { size: 13, weight: 700, color: '#5a3418' });
+        if (S.rain[S.day]) text(ctx, 'rain', c.x + c.w - 12, c.y + 43, { size: 11, weight: 700, align: 'right', color: '#3a5a8a' });
+        // the day bar: 6 am .. midnight
+        var bx = c.x + 40, bw = c.w - 52, q = clamp(S.dayT / P.dayMs, 0, 1), by0 = c.y + 49;
+        ctx.fillStyle = '#4a2c18'; ctx.fillRect(bx, by0, bw, 5); var gg = ctx.createLinearGradient(bx, 0, bx + bw, 0); gg.addColorStop(0, '#ffd870'); gg.addColorStop(0.6, '#f0a040'); gg.addColorStop(0.78, '#c05a4a'); gg.addColorStop(1, '#3a3a8a'); ctx.fillStyle = gg; ctx.fillRect(bx + 1, by0 + 1, Math.max(0, (bw - 2) * q), 3);
+        drawIcon(ctx, 'coin', c.x + 12, c.y + c.h - 29, 20, null);
+        text(ctx, fmtGold(S.gold) + ' g', c.x + 40, c.y + c.h - 13, { size: 15, weight: 800, color: '#6a3a08' });
+        }
+        // hotbar (hidden while the farmer sleeps)
+        var hb = R.hotbar, n = ORDER.length, s = narrow ? 40 : 46, awake = S.phase === 'play' || S.phase === 'shop' || S.phase === 'wake';
+        if (awake) panel(ctx, hb.x, hb.y, hb.w, hb.h, { border: 4, dark: true });
+        for (var i = 0; i < n && awake; i++) {
+          var td = toolDef(TOOLS_, ORDER[i]), sx = hb.x + 8 + i * (s + 4), sy = hb.y + 8, sel = i === S.toolIdx;
+          ctx.fillStyle = sel ? '#f8e0a0' : '#5a3e2c'; ctx.fillRect(sx - (sel ? 2 : 0), sy - (sel ? 2 : 0), s + (sel ? 4 : 0), s + (sel ? 4 : 0));
+          ctx.fillStyle = sel ? '#fff4d0' : '#3a281e'; ctx.fillRect(sx + 2, sy + 2, s - 4, s - 4);
+          if (td.action === 'plant' && S.seedId && cropDef(CROPS_, S.seedId)) { var cd = cropDef(CROPS_, S.seedId); drawIcon(ctx, 'seeds', sx + 4, sy + 3, s - 8, cd.look.fruit ? [cd.look.leaf[1], cd.look.fruit[1], cd.look.fruit[2]] : null); }
+          else drawIcon(ctx, td.icon, sx + 4, sy + 3, s - 8, td.colors);
+          text(ctx, String(i + 1), sx + 4, sy + 13, { size: 11, weight: 800, color: sel ? '#6a3a10' : '#e8d8b8', ow: sel ? 0 : 2.5 });
+          if (td.action === 'plant') { var cnt = S.seedId ? (S.bag.seeds[S.seedId] || 0) : 0; text(ctx, 'x' + cnt, sx + s - 4, sy + s - 5, { size: 12, weight: 900, align: 'right', color: '#fff8e8', ow: 3 }); }
+        }
+        // label / prompt above the hotbar
+        var lt = labelText();
+        if (lt && S.phase === 'play') { var lb = R.label; ctx.save(); ctx.font = '800 13px ' + FONT; var lw = Math.min(lb.w, ctx.measureText(lt).width + 26); ctx.restore(); var lx = Math.round(W / 2 - lw / 2); ctx.fillStyle = 'rgba(30,18,12,0.82)'; rr(ctx, lx, lb.y, lw, lb.h, 8); ctx.fill(); ctx.strokeStyle = 'rgba(240,200,130,0.6)'; ctx.lineWidth = 1; rr(ctx, lx + 0.5, lb.y + 0.5, lw - 1, lb.h - 1, 8); ctx.stroke(); text(ctx, lt, W / 2, lb.y + 18, { size: 13, weight: 800, align: 'center', color: '#fff2d8', max: lb.w - 16 }); }
+        // shop
+        if (R.shop) { ctx.save(); ctx.globalAlpha = clamp(S.phaseT / 140, 0, 1); drawShop(ctx, R.shop); ctx.restore(); }
+        // season banner (crossfades in and out)
+        if (R.banner && S.phase !== 'night') {
+          var bb = R.banner, bt = S.banner.t, ba = clamp(bt / 300, 0, 1) * clamp((4600 - bt) / 400, 0, 1), bs = SEAS[seasonIdx(S.day)];
+          ctx.save(); ctx.globalAlpha = ba; panel(ctx, bb.x, bb.y, bb.w, bb.h);
+          drawIcon(ctx, bs.icon, bb.x + 12, bb.y + 13, 32, null);
+          text(ctx, bs.name.toUpperCase() + ' HAS COME', bb.x + 52, bb.y + 26, { size: 17, weight: 900, color: '#4a2410', max: bb.w - 60 });
+          text(ctx, S.banner.withered ? S.banner.withered + ' crop' + (S.banner.withered > 1 ? 's' : '') + ' out of season withered' : 'New seeds at the stall', bb.x + 52, bb.y + 45, { size: 12, weight: 700, color: '#7a4a28', max: bb.w - 60 });
+          ctx.restore();
+        }
+        if (R.card) drawCard(ctx, R.card);
+      } catch (e) { warn('drawUI', e); }
+    }
+    function drawShop(ctx, r) {
+      panel(ctx, r.x, r.y, r.w, r.h);
+      text(ctx, 'Seed Stall', r.x + 16, r.y + 30, { size: 17, weight: 900, color: '#4a2410' });
+      text(ctx, SEAS[seasonIdx(S.day)].name + ' seeds', r.x + r.w - 16, r.y + 29, { size: 12, weight: 700, align: 'right', color: '#8a5a30' });
+      var L = shopList(), rowH = 40, maxRows = Math.max(1, Math.floor((r.h - 102) / rowH)), first = clamp(S.shopCur - maxRows + 1, 0, Math.max(0, L.length - maxRows));
+      for (var i = first; i < Math.min(L.length, first + maxRows); i++) {
+        var id = L[i], d = cropDef(CROPS_, id), y = r.y + 44 + (i - first) * rowH, sel = i === S.shopCur, afford = S.gold >= d.seed;
+        if (sel) { ctx.fillStyle = 'rgba(190,120,40,0.22)'; rr(ctx, r.x + 10, y, r.w - 20, rowH - 4, 6); ctx.fill(); ctx.strokeStyle = '#b8742c'; ctx.lineWidth = 1.5; rr(ctx, r.x + 10.5, y + 0.5, r.w - 21, rowH - 5, 6); ctx.stroke(); }
+        drawIcon(ctx, 'crop', r.x + 16, y + 3, 28, null, d.look);
+        text(ctx, d.name, r.x + 50, y + 16, { size: 14, weight: 800, color: '#4a2410', max: r.w - 150 });
+        text(ctx, d.days + ' days, sells ' + d.sell + 'g' + (d.regrow ? ', regrows' : ''), r.x + 50, y + 31, { size: 11, weight: 600, color: '#7a5030', max: r.w - 150 });
+        text(ctx, d.seed + 'g', r.x + r.w - 62, y + 22, { size: 14, weight: 900, align: 'right', color: afford ? '#6a3a08' : '#b03a2a' });
+        text(ctx, 'own ' + (S.bag.seeds[id] || 0), r.x + r.w - 18, y + 22, { size: 11, weight: 700, align: 'right', color: '#7a5030' });
+      }
+      ctx.fillStyle = 'rgba(90,50,20,0.25)'; ctx.fillRect(r.x + 14, r.y + r.h - 34, r.w - 28, 1);
+      drawIcon(ctx, 'coin', r.x + 14, r.y + r.h - 29, 18, null);
+      text(ctx, fmtGold(S.gold) + ' g', r.x + 36, r.y + r.h - 15, { size: 13, weight: 800, color: '#6a3a08' });
+      text(ctx, 'Z buy   X leave', r.x + r.w - 16, r.y + r.h - 15, { size: 12, weight: 700, align: 'right', color: '#7a5030' });
+    }
+    function drawCard(ctx, r) {
+      var nt = S.night; if (!nt) return;
+      var a = S.phase === 'end' ? clamp(S.phaseT / 500, 0, 1) : clamp(S.phaseT / 300, 0, 1);
+      ctx.save(); ctx.globalAlpha = a;
+      panel(ctx, r.x, r.y, r.w, r.h);
+      var sea = SEAS[seasonIdx(nt.day)];
+      text(ctx, S.phase === 'end' ? 'The Harvest Fair' : 'Night of ' + sea.name + ' ' + dayOfSeason(nt.day), r.x + r.w / 2, r.y + 34, { size: 18, weight: 900, align: 'center', color: '#4a2410', max: r.w - 24 });
+      var y = r.y + 62, lines = nt.sale.lines.slice(0, 4);
+      if (!lines.length) { text(ctx, 'Nothing shipped today', r.x + r.w / 2, y + 6, { size: 13, weight: 700, align: 'center', color: '#8a5a30' }); y += 26; }
+      lines.forEach(function (ln) { var d = cropDef(CROPS_, ln.crop); if (d) drawIcon(ctx, 'crop', r.x + 22, y - 12, 20, null, d.look); text(ctx, (d ? d.name : ln.crop) + ' x' + ln.n, r.x + 48, y + 3, { size: 13, weight: 800, color: '#4a2410' }); text(ctx, '+' + ln.gold + 'g', r.x + r.w - 22, y + 3, { size: 13, weight: 900, align: 'right', color: '#3a7a1a' }); y += 24; });
+      ctx.fillStyle = 'rgba(90,50,20,0.3)'; ctx.fillRect(r.x + 18, y - 6, r.w - 36, 1);
+      if (S.phase === 'end') {
+        text(ctx, 'Earned this year: ' + fmtGold(S.earned) + 'g', r.x + r.w / 2, y + 14, { size: 14, weight: 900, align: 'center', color: '#6a3a08' });
+        var rank = S.earned >= 1200 ? 'Gold ribbon' : S.earned >= 700 ? 'Silver ribbon' : 'Bronze ribbon';
+        text(ctx, rank, r.x + r.w / 2, y + 36, { size: 13, weight: 800, align: 'center', color: '#8a4a10' });
+      } else {
+        text(ctx, 'Sold ' + nt.sale.total + 'g    Gold ' + fmtGold(S.gold) + 'g', r.x + r.w / 2, y + 14, { size: 13, weight: 800, align: 'center', color: '#6a3a08', max: r.w - 24 });
+        text(ctx, nt.grew + ' crop' + (nt.grew === 1 ? '' : 's') + ' grew' + (nt.ripe ? ', ' + nt.ripe + ' ripe' : '') + (nt.withered ? ', ' + nt.withered + ' withered' : ''), r.x + r.w / 2, y + 36, { size: 12, weight: 700, align: 'center', color: '#5a3418', max: r.w - 24 });
+        var nx = nt.next; text(ctx, 'Tomorrow: ' + SEAS[seasonIdx(nx.day)].name + ' ' + nx.dos + (nt.rain ? ', rain' : ', clear'), r.x + r.w / 2, y + 56, { size: 12, weight: 700, align: 'center', color: '#5a3418', max: r.w - 24 });
+        drawIcon(ctx, nt.rain ? 'rain' : 'sun', r.x + r.w / 2 - 12, r.y + r.h - 40, 24, null);
+      }
+      ctx.restore();
+    }
+
+    /* ---------- read-only views ---------- */
+    function plotsString() { var s = ''; for (var i = 0; i < S.plots.length; i++) { var p = S.plots[i]; if (!p) continue; s += !p.tilled ? '.' : !p.crop ? (p.watered ? 'w' : 't') : p.crop.dead ? 'x' : String(Math.min(9, p.crop.growth)); } return s; }
+    function state() {
+      return { phase: S.phase, day: S.day, season: seasonId(), dayOfSeason: dayOfSeason(), hour: +hour().toFixed(2), time: fmtTime(), gold: S.gold, earned: S.earned, rain: !!S.rain[S.day],
+        bag: { seeds: copy(S.bag.seeds), crops: copy(S.bag.crops) }, bin: copy(S.bin), tool: ORDER[S.toolIdx], seed: S.seedId, auto: S.auto,
+        farmer: { cx: F.cx, cy: F.cy, x: +F.x.toFixed(2), y: +F.y.toFixed(2), dir: F.dir, frame: farmerFrame(), pose: farmerPose(), busy: busy(), walk: +F.walk.toFixed(2) },
+        plots: plotsString(), shopCur: S.shopCur, recent: S.recent.slice(-8), ended: S.ended, result: S.result, stats: copy(S.stats), lastDay: S.lastDay };
+    }
+    function hash() { var s = JSON.stringify([S.day, Math.round(S.clock), S.rain.slice(0, S.day + 1), S.gold, S.earned, plotsString(), S.bag, F.cx, F.cy, F.dir]), h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(16); }
+    function actors() {
+      var fc = front(), side = F.dir === 'left' || F.dir === 'right', working = !!F.use;
+      return [{ id: 'farmer', kind: 'farmer', x: +F.x.toFixed(1), y: +F.y.toFixed(1), facing: side ? F.dir : F.dir, dir: F.dir,
+        target: working ? fc[0] * T + T / 2 : null, vx: F.mv ? (F.mv.tx - F.mv.fx) : 0, tile: [F.cx, F.cy], workTile: working ? fc : null,
+        noFace: side ? undefined : 'top-down ' + F.dir + ' frame' }];
+    }
+
+    var inst = {
+      version: VERSION, tile: T, cols: COLS, rows: ROWS, params: P, crops: CROPS_, tools: TOOLS_, toolOrder: ORDER, seasons: SEAS,
+      update: update, key: key, setHeld: setHeld, tapCell: tapCell, busy: busy,
+      setAuto: function (on) { S.auto = !!on; S.keyQ.length = 0; S.goal = null; S.botT = 0; }, auto: function () { return !!S.auto; },
+      reset: function (seed) { var a = S && S.auto; reset(seed); S.auto = a; },
+      drawSoil: drawSoil, sprites: sprites, drawFx: drawFx, drawSky: drawSky, drawUI: drawUI, uiRects: uiRects, layout: layout,
+      drawWorld: function (ctx) { drawSoil(ctx); sprites().sort(function (a, b) { return a.y - b.y; }).forEach(function (s) { s.draw(ctx); }); drawFx(ctx); },
+      state: state, hash: hash, actors: actors, farmer: function () { return F; }, plot: plotAt, plots: function () { return S.plots; }, front: front,
+      clock: function () { return { day: S.day, dayT: S.dayT, hour: hour(), season: seasonId(), dayOfSeason: dayOfSeason(), daysLeft: daysLeft(), lastDay: S.lastDay, phase: S.phase, darkness: darkness() }; },
+      phase: function () { return S.phase; }, gold: function () { return S.gold; }, bag: function () { return S.bag; },
+      addCrop: function (id, def) { CROPS_[id] = def; cropDef(CROPS_, id); return id; },
+      addTool: function (id, def) { TOOLS_[id] = def; toolDef(TOOLS_, id); if (ORDER.indexOf(id) < 0) ORDER.push(id); return id; },
+      giveSeeds: function (id, n) { S.bag.seeds[id] = (S.bag.seeds[id] || 0) + (n | 0); if (!S.seedId) S.seedId = id; },
+      // set a plot directly (demo scenes, a loaded save): {tilled, watered, crop: {id, growth, dead}} or crop: null
+      setPlot: function (cx, cy, o) { var p = plotAt(cx, cy); if (!p || !o) return false; if (o.tilled != null) p.tilled = !!o.tilled; if (o.watered != null) p.watered = !!o.watered; if (o.crop !== undefined) p.crop = o.crop ? { id: o.crop.id, growth: o.crop.growth | 0, dead: !!o.crop.dead, day: S.day, harvests: 0 } : null; if (p.crop) p.tilled = true; return true; },
+      sleep: function () { sleep('bed'); }, spots: spots, walkable: walkable, darkness: darkness,
+      // the raw state for checks (do not write)
+      _S: function () { return S; }
+    };
+    reset();
+    return inst;
+  }
+
+  /* ---------- the global ---------- */
+  var API = {
+    version: VERSION, create: create, rules: rules, CROPS: CROPS, TOOLS: TOOLS, SEASONS: SEASONS, DEFAULTS: DEFAULTS,
+    cropDef: cropDef, toolDef: toolDef, rng: rngOf,
+    // art, for previews and checks (the same painters the instance uses)
+    farmerCanvas: farmerCanvas, FARMER: FARMER, handPoint: handPoint, toolPose: toolPose, drawTool: function (ctx, tool, dir, hx, hy, pose) { drawToolHeld(ctx, toolDef({ t: tool }, 't'), dir, hx, hy, pose); }, FC: FC, cropCanvas: function (id, def, stage, dead) { return cropCanvas(id, cropDef({ x: def }, 'x'), stage, dead); },
+    drawFarmer: function (ctx, x, footY, o) { o = o || {}; return drawFarmerFull(ctx, x, footY, o.dir || 'down', o.frame == null ? -1 : o.frame, o.pose || null, o.tool ? toolDef({ t: o.tool }, 't') : null, o.lift || null); },
+    liftDraws: function () { return LIFT.n; }, liftAnchor: liftAnchor,
+    truncations: function () { return { n: TRUNC.n, last: TRUNC.last }; },
+    drawIcon: drawIcon, panel: panel, soilCanvas: soilCanvas
+  };
+  root.GameDNA_FarmingPlots = API;
+  if (typeof module !== 'undefined' && module.exports) module.exports = API;
+})(typeof window !== 'undefined' ? window : typeof globalThis !== 'undefined' ? globalThis : this);

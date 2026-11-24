@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Thornvale</title>
+<style>
+  html, body { margin: 0; background: #0a0814; color: #b8b0cc; font: 12px/1.4 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; overflow-x: hidden; }
+  #wrap { display: flex; flex-direction: column; align-items: center; padding: 10px 8px; }
+  #view { display: block; image-rendering: pixelated; image-rendering: crisp-edges; background: #000; touch-action: none; max-width: 100%; box-shadow: 0 0 0 2px #2a2040, 0 16px 40px #000c; }
+  .hint { margin: 8px; text-align: center; max-width: 768px; }
+  #pad { display: none; width: 100%; max-width: 520px; justify-content: space-between; align-items: center; margin-top: 10px; user-select: none; -webkit-user-select: none; }
+  #pad button { appearance: none; border: 2px solid #3a3058; background: linear-gradient(#2e2648, #1a1530); color: #e8e0f8; font: 700 14px ui-monospace, Menlo, monospace; border-radius: 10px; width: 56px; height: 56px; touch-action: none; }
+  #pad .dpad { display: grid; grid-template-columns: repeat(3, 56px); grid-template-rows: repeat(2, 56px); gap: 4px; }
+  #pad .sword { width: 84px; height: 84px; border-radius: 50%; border-color: #c8963a; color: #ffd23a; }
+  @media (pointer: coarse) { #pad { display: flex; } .hint { display: none; } }
+  kbd { font: 11px ui-monospace, Menlo, monospace; background: #1e1830; border: 1px solid #3a3058; border-radius: 3px; padding: 0 4px; color: #e8e0f8; }
+</style>
+</head>
+<body>
+<div id="wrap">
+<canvas id="view" width="256" height="224"></canvas>
+<div id="pad"><div class="dpad"><span></span><button data-k="up">&#9650;</button><span></span><button data-k="left">&#9664;</button><button data-k="down">&#9660;</button><button data-k="right">&#9654;</button></div><button class="sword" data-k="ok">SWORD</button></div>
+<p class="hint"><kbd>Arrows</kbd> walk &middot; <kbd>Z</kbd> swing (tap again in rhythm for a 3-hit combo) &middot; <kbd>P</kbd> autoplay &middot; <kbd>H</kbd> hitboxes &middot; <kbd>Esc</kbd> pause</p>
+</div>
+<script>addEventListener("error", e => { document.documentElement.dataset.err = e.message + " @" + e.lineno; });</script>
+<!-- 1. Skin API + pixel16 (shared GameDNA look: text, windows) -->
+<script>
+/*SKINAPI*/
+</script>
+<script>
+/*PIXEL16*/
+</script>
+<!-- 2. GameDNA_SwordCombat: module/sword-combat.js, verbatim. It owns swings, hitboxes, enemies, projectiles, knockback, i-frames, drops. -->
+<script>
+/*MODULE*/
+</script>
+<!-- 3. Art kit: hero sprite and tiles (original procedural pixel art) -->
+<script>
+/*ART*/
+</script>
+<!-- 3b. Pixel scene kit (GameDNA_PixelScene): paints the outdoor rooms (grass, path, pond, trees). Drawing only; the game also runs without it. -->
+<script>
+/*PIXELSCENE*/
+</script>
+<!-- 4. The game: rooms, scenes, input, autoplay, drawing and the extension points (window.GAME). Sections "=== n." -->
+<script>
+/*GAME*/
+</script>
+<!-- ===================================================================== ADDONS SLOT =====================================================================
+     Put addon modules here (<script src="..."> or pasted unchanged) and register them with GAME.addons.push({...}).
+     This runs after window.GAME exists and BEFORE the game boots, so addons see the first room and every ?t= frame.
+     See starter/README.md "Extension points". -->
+<script>
+/* ADDONS SLOT */
+</script>
+<!-- ===================================================================== END ADDONS SLOT ================================================================= -->
+<script>window.GAME.boot();
+// on-screen controls (shown on touch screens): they feed the same input queue as the keyboard
+document.querySelectorAll('#pad button').forEach(b => {
+  const k = b.dataset.k, up = e => { e.preventDefault(); GAME.virtualKey(k, false); };
+  b.addEventListener('pointerdown', e => { e.preventDefault(); GAME.virtualKey(k, true); });
+  b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up);
+});
+</script>
+</body>
+</html>

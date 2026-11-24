@@ -1,0 +1,366 @@
+{
+  "id": "camera-director",
+  "code": "K-01",
+  "name": "Camera director",
+  "kind": "addon",
+  "family": "camera",
+  "oneLiner": "Replaces a hard-follow camera with a directed one: a critically damped spring with a dead zone, eased look-ahead in the facing or moving direction, vertical re-framing only on landing for side-scrollers, the hero and a boss kept in frame together (blended in by distance, zoom out without shrinking the hero, or a lean when the game cannot zoom), zoom punches and trauma shake (noise from game time, translation plus a small roll, capped) on big hits, level and room edges without jitter, and clean cuts on teleports. Sub-pixel for HD games, whole pixels for pixel games. View only: the game keeps its own camera for gameplay, so rules and autoplay endings never change.",
+  "fits": [
+    "side-scrolling platformer / action",
+    "metroidvania",
+    "run-and-gun",
+    "top-down action RPG / adventure",
+    "twin-stick or arena shooter",
+    "beat-'em-up",
+    "any scrolling game with a boss or a second player to frame"
+  ],
+  "notFor": [
+    "single-screen games with no scrolling (only the shake and punch would apply: use hit-stop-shake)",
+    "grid tactics whose camera jumps tile by tile on cursor moves (the cursor, not a hero, is the target)",
+    "games whose rules depend on exactly what is on screen and cannot keep their own camera for those checks",
+    "3D or WebGL scenes with their own camera"
+  ],
+  "interfaces": {
+    "time": "realtime",
+    "coords": "side",
+    "layer": "post",
+    "needs": [
+      "a fixed update step that calls update(dt) once (also run by ?t= fast-forward and ?auto=1)",
+      "the followed target per step in world px: position, optional velocity, on-ground flag (side view) and facing",
+      "the level size (bounds); optional rooms or arenas",
+      "the world drawing wrapped by apply/restore (translate-style) or reading cam.x / cam.y (subtract-style); drawing culled with visible()",
+      "optional: extra targets to frame (boss, second player)",
+      "optional hit event: strength and contact point (hit), slams / explosions (trauma), teleports and respawns (cut)",
+      "optional: the game's own camera each step as legacy (mode off, tests)",
+      "optional: HUD and label rects (uiRects, screen px) the target must never be framed under"
+    ],
+    "provides": [
+      "the drawn camera: x, y, cx, cy, zoom, angle; apply / applyScreen / restore",
+      "visible() / inView() for draw culling; toScreen() / toWorld() for pointers and screen effects",
+      "trauma shake and zoom punch (hit, trauma, punch; shake(px, ms) for other elements' onShake)",
+      "cut() for teleports; auto cut on a target jump",
+      "debug(ctx) overlay (safe frame, dead zone, look-ahead, framing box, ground line, edges, trauma); stats() and state() for tests"
+    ]
+  },
+  "params": [
+    {
+      "key": "view",
+      "label": "View",
+      "type": "select",
+      "options": [
+        "side",
+        "top"
+      ],
+      "default": "side"
+    },
+    {
+      "key": "follow",
+      "label": "Follow spring (Hz)",
+      "type": "range",
+      "min": 0.2,
+      "max": 10,
+      "step": 0.1,
+      "default": 1.8
+    },
+    {
+      "key": "followY",
+      "label": "Vertical follow spring (Hz)",
+      "type": "range",
+      "min": 0.2,
+      "max": 10,
+      "step": 0.1,
+      "default": 1.4
+    },
+    {
+      "key": "deadW",
+      "label": "Dead zone width (fraction of view)",
+      "type": "range",
+      "min": 0,
+      "max": 0.5,
+      "step": 0.01,
+      "default": 0.08
+    },
+    {
+      "key": "deadH",
+      "label": "Dead zone height (fraction of view)",
+      "type": "range",
+      "min": 0,
+      "max": 0.5,
+      "step": 0.01,
+      "default": 0.12
+    },
+    {
+      "key": "look",
+      "label": "Look-ahead (fraction of view width)",
+      "type": "range",
+      "min": 0,
+      "max": 0.45,
+      "step": 0.01,
+      "default": 0.15
+    },
+    {
+      "key": "lookHz",
+      "label": "Look-ahead ease (Hz)",
+      "type": "range",
+      "min": 0.1,
+      "max": 5,
+      "step": 0.05,
+      "default": 0.7
+    },
+    {
+      "key": "idleLook",
+      "label": "Look-ahead kept at rest",
+      "type": "range",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.4
+    },
+    {
+      "key": "platform",
+      "label": "Vertical re-framing (side view)",
+      "type": "select",
+      "options": [
+        "auto",
+        "on",
+        "off"
+      ],
+      "default": "auto"
+    },
+    {
+      "key": "farY",
+      "label": "Vertical band in the air (fraction of view height)",
+      "type": "range",
+      "min": 0.05,
+      "max": 0.45,
+      "step": 0.01,
+      "default": 0.28
+    },
+    {
+      "key": "biasY",
+      "label": "Camera above target (fraction of view height)",
+      "type": "range",
+      "min": -0.3,
+      "max": 0.3,
+      "step": 0.01,
+      "default": 0.06
+    },
+    {
+      "key": "safe",
+      "label": "Safe frame (fraction of view)",
+      "type": "range",
+      "min": 0.3,
+      "max": 0.98,
+      "step": 0.01,
+      "default": 0.8
+    },
+    {
+      "key": "frame",
+      "label": "Multi-target framing",
+      "type": "select",
+      "options": [
+        "zoom",
+        "bias",
+        "off"
+      ],
+      "default": "zoom"
+    },
+    {
+      "key": "minZoom",
+      "label": "Furthest zoom-out",
+      "type": "range",
+      "min": 0.4,
+      "max": 1,
+      "step": 0.01,
+      "default": 0.72
+    },
+    {
+      "key": "minSize",
+      "label": "Smallest target on screen (fraction of view height)",
+      "type": "range",
+      "min": 0,
+      "max": 0.4,
+      "step": 0.01,
+      "default": 0.1
+    },
+    {
+      "key": "blend",
+      "label": "Framing / room blend (Hz)",
+      "type": "range",
+      "min": 0.2,
+      "max": 5,
+      "step": 0.05,
+      "default": 0.9
+    },
+    {
+      "key": "pad",
+      "label": "Framing margin (fraction of view)",
+      "type": "range",
+      "min": 0,
+      "max": 0.3,
+      "step": 0.01,
+      "default": 0.1
+    },
+    {
+      "key": "punch",
+      "label": "Zoom punch (finisher)",
+      "type": "range",
+      "min": 0,
+      "max": 0.25,
+      "step": 0.005,
+      "default": 0.06
+    },
+    {
+      "key": "shake",
+      "label": "Max trauma shake (% of view height)",
+      "type": "range",
+      "min": 0,
+      "max": 10,
+      "step": 0.1,
+      "default": 3
+    },
+    {
+      "key": "roll",
+      "label": "Max trauma roll (deg)",
+      "type": "range",
+      "min": 0,
+      "max": 6,
+      "step": 0.1,
+      "default": 1.2
+    },
+    {
+      "key": "decay",
+      "label": "Trauma decay (per s)",
+      "type": "range",
+      "min": 0.2,
+      "max": 8,
+      "step": 0.1,
+      "default": 1.6
+    },
+    {
+      "key": "freq",
+      "label": "Shake noise frequency (Hz)",
+      "type": "range",
+      "min": 1,
+      "max": 40,
+      "step": 1,
+      "default": 14
+    },
+    {
+      "key": "snap",
+      "label": "Pixel snap",
+      "type": "select",
+      "options": [
+        "auto",
+        "pixel",
+        "smooth"
+      ],
+      "default": "auto"
+    },
+    {
+      "key": "reduced",
+      "label": "Reduced motion",
+      "type": "select",
+      "options": [
+        "system",
+        "on",
+        "off"
+      ],
+      "default": "system"
+    },
+    {
+      "key": "mode",
+      "label": "Mode",
+      "type": "select",
+      "options": [
+        "director",
+        "off"
+      ],
+      "default": "director"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Director",
+      "params": {
+        "view": "side",
+        "follow": 1.8,
+        "look": 0.15,
+        "punch": 0.06,
+        "shake": 3,
+        "roll": 1.2
+      }
+    },
+    {
+      "name": "Snappy action",
+      "params": {
+        "follow": 3,
+        "followY": 2.4,
+        "deadW": 0.04,
+        "look": 0.12,
+        "lookHz": 1.2,
+        "punch": 0.05,
+        "shake": 2.5,
+        "roll": 0.8,
+        "decay": 2.2
+      }
+    },
+    {
+      "name": "Cinematic",
+      "params": {
+        "follow": 1.1,
+        "followY": 0.9,
+        "deadW": 0.12,
+        "look": 0.2,
+        "lookHz": 0.45,
+        "minZoom": 0.62,
+        "punch": 0.08,
+        "shake": 3.5,
+        "roll": 1.8,
+        "decay": 1.2
+      }
+    },
+    {
+      "name": "Heavy impacts",
+      "params": {
+        "punch": 0.11,
+        "shake": 5.5,
+        "roll": 2.4,
+        "decay": 1.1
+      }
+    },
+    {
+      "name": "Top-down",
+      "params": {
+        "view": "top",
+        "deadW": 0.1,
+        "deadH": 0.12,
+        "look": 0.12
+      }
+    },
+    {
+      "name": "Pixel-snapped",
+      "params": {
+        "snap": "pixel"
+      }
+    },
+    {
+      "name": "Reduced motion",
+      "params": {
+        "reduced": "on"
+      }
+    }
+  ],
+  "assets": [
+    "module/camera-director.js: the element as one dependency-free script (global GameDNA_Camera): exact critically damped springs, dead zone, look-ahead spring, platform snapping, multi-target framing with log-zoom spring, safe-frame catch-up, level clamp with zero speed, soft rooms, zoom punches, trauma shake from seeded value noise of game time, pixel snapping, debug overlay; the skin only sets the overlay accent and the pixel default",
+    "no image or audio files (the demo's level, hero, golem and backdrop are painted in code, original)"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/camera-director.js",
+    "global": "GameDNA_Camera",
+    "version": "1.2",
+    "docs": "module/README.md",
+    "skin": "optional: skins/skin-api.js + a skin before it (overlay accent, pixel snap default)"
+  }
+}

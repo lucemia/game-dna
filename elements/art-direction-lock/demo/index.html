@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Art-direction lock</title>
+<style>
+  :root {
+    --bg: #0d1014; --panel: #151a21; --panel2: #1b222b; --line: #27303b; --fg: #e9edf2; --muted: #93a0ae; --dim: #6b7785;
+    --amber: #f2b45a; --moss: #8fbf6a; --teal: #5fb3a8; --bad: #ff7a66; --good: #7fd49a;
+    --checker-a: #20262e; --checker-b: #181d24;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  body { overflow-x: hidden; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px 64px; }
+  header { padding: 28px 0 8px; }
+  .eyebrow { color: var(--amber); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; font-weight: 600; }
+  h1 { font-size: 30px; line-height: 1.15; margin: 6px 0 8px; letter-spacing: -.01em; }
+  header p { color: var(--muted); max-width: 760px; margin: 0; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .chip { font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; background: var(--panel); }
+  section { margin-top: 34px; }
+  h2 { font-size: 18px; margin: 0 0 4px; }
+  .lede { color: var(--muted); margin: 0 0 14px; max-width: 820px; }
+  .stage { position: relative; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); background: #000; box-shadow: 0 20px 60px rgba(0,0,0,.45); }
+  #scene { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin-top: 12px; padding: 10px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+  .controls label { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+  .seg button { background: transparent; color: var(--muted); border: 0; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+  .seg button.on { background: var(--panel2); color: var(--fg); box-shadow: inset 0 -2px 0 var(--amber); }
+  input[type=range] { accent-color: var(--amber); width: 120px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+  .sheetbox { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 14px; }
+  .checker { background-color: var(--checker-a); background-image: linear-gradient(45deg, var(--checker-b) 25%, transparent 25%, transparent 75%, var(--checker-b) 75%), linear-gradient(45deg, var(--checker-b) 25%, transparent 25%, transparent 75%, var(--checker-b) 75%); background-size: 20px 20px; background-position: 0 0, 10px 10px; border-radius: 10px; }
+  .bg-light .tilebg { background: #f3efe6; } .bg-dark .tilebg { background: #0b0e12; } .bg-grass .tilebg { background: #4d6b3a; }
+  .bg-check .tilebg { background-color: var(--checker-a); background-image: linear-gradient(45deg, var(--checker-b) 25%, transparent 25%, transparent 75%, var(--checker-b) 75%), linear-gradient(45deg, var(--checker-b) 25%, transparent 25%, transparent 75%, var(--checker-b) 75%); background-size: 20px 20px; background-position: 0 0, 10px 10px; }
+  .sheetimg { display: block; width: 100%; height: auto; padding: 10px; }
+  .lock { font-size: 13px; color: var(--muted); }
+  .lock code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+  .lock blockquote { margin: 8px 0; padding: 10px 12px; border-left: 3px solid var(--amber); background: var(--panel2); border-radius: 0 8px 8px 0; color: #c9d1da; font-size: 12.5px; }
+  .cmp { display: grid; grid-template-columns: 110px repeat(4, minmax(0, 1fr)); gap: 10px; align-items: stretch; }
+  .bars { display: grid; gap: 8px; max-width: 760px; }
+  .bar { display: grid; grid-template-columns: 130px 1fr 60px; gap: 10px; align-items: center; font-size: 13px; }
+  .bar .track { height: 14px; background: var(--panel2); border-radius: 7px; overflow: hidden; border: 1px solid var(--line); }
+  .bar .fill { height: 100%; border-radius: 7px; background: linear-gradient(90deg, var(--amber), #e08a3a); }
+  .bar.locked .fill { background: linear-gradient(90deg, var(--moss), var(--teal)); }
+  .bar b { font-variant-numeric: tabular-nums; text-align: right; }
+  .group { margin-bottom: 18px; }
+  .group h3 { font-size: 14px; margin: 0 0 8px; }
+  .grow { display: grid; grid-template-columns: 110px repeat(6, minmax(0, 1fr)); gap: 8px; margin-bottom: 8px; }
+  .grow .cell .tilebg { min-height: 120px; } .grow .cell img { max-height: 130px; }
+  .gstat { font-size: 12.5px; color: var(--muted); margin: 0 0 6px 118px; font-variant-numeric: tabular-nums; }
+  .gstat b { color: var(--fg); }
+  .cmp .hd { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; padding: 0 2px; align-self: end; }
+  .rowlabel { display: flex; flex-direction: column; justify-content: center; font-weight: 600; }
+  .rowlabel small { display: block; color: var(--dim); font-weight: 400; font-size: 12px; }
+  .cell { position: relative; border-radius: 10px; border: 1px solid var(--line); overflow: hidden; display: flex; flex-direction: column; }
+  .cell .tilebg { flex: 1; min-height: 150px; display: flex; align-items: center; justify-content: center; padding: 10px; }
+  .cell img { max-width: 100%; max-height: 160px; display: block; }
+  .cell img.tile { width: 100%; max-height: none; aspect-ratio: 1; object-fit: cover; image-rendering: auto; }
+  .cell .tilegrid { width: 100%; aspect-ratio: 2 / 1; background-size: 50% auto; background-repeat: repeat; border-radius: 6px; }
+  .pill { font-size: 11.5px; padding: 6px 8px; background: var(--panel2); color: var(--muted); border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: 6px; }
+  .pill b { color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .pill .better { color: var(--good); } .pill .worse { color: var(--bad); }
+  .stat { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 10px; font-size: 12.5px; color: var(--muted); display: flex; flex-direction: column; justify-content: center; }
+  .stat b { color: var(--fg); font-size: 18px; font-variant-numeric: tabular-nums; }
+  .skins { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .skins canvas { width: 100%; height: auto; display: block; border-radius: 10px; border: 1px solid var(--line); background: #000; }
+  figcaption { color: var(--muted); font-size: 12.5px; margin-top: 6px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+  th { color: var(--muted); font-weight: 600; }
+  td.mono { color: #b7c2cf; }
+  .tablewrap { overflow-x: auto; }
+  .note { color: var(--dim); font-size: 12.5px; margin-top: 8px; }
+  @media (max-width: 760px) {
+    h1 { font-size: 24px; }
+    .sheetbox, .skins { grid-template-columns: 1fr; }
+    .cmp { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .cmp .rowlabel { grid-column: 1 / -1; flex-direction: row; gap: 8px; align-items: baseline; }
+    .pill { flex-direction: column; gap: 0; padding: 5px 6px; font-size: 10.5px; }
+    .pill b { font-size: 12px; }
+    .cmp .hd.first { display: none; }
+    .cmp { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+    .grow { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grow .rowlabel { grid-column: 1 / -1; flex-direction: row; gap: 8px; align-items: baseline; }
+    .gstat { margin-left: 0; }
+    .bar { grid-template-columns: 96px 1fr 44px; font-size: 12px; }
+    .cell .tilebg { min-height: 110px; }
+    .cell img { max-height: 120px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="eyebrow">L-00 · Generated art</div>
+  <h1>Art-direction lock</h1>
+  <p>Generate one style-reference sheet for your game, lock it, and pass it as a reference image to every later generation. The whole set then shares one hand: the same light, outline, palette and proportions. The game only loads the saved files, so every frame stays reproducible.</p>
+  <div class="chips"><span class="chip">AI image generator</span><span class="chip">generated 2026-11-16</span><span class="chip" id="chipBytes">sample pack</span><span class="chip">module: GameDNA_Assets</span><span class="chip">skin SPEC v0.5 bitmap roles</span></div>
+</header>
+
+<section id="sec-scene">
+  <h2>A scene composed from the locked set</h2>
+  <p class="lede">Ground, trees, well, lantern post, both villagers and the item icons are generated bitmaps. Light, shadow, fireflies and motion are drawn live. Switch the art set: <b>Paragraph only</b> regenerates 4 of the 8 images without the sheet (herbalist, well, ground, key); <b>Words only</b> regenerates all 8 from plain one-line prompts, with neither the paragraph nor the sheet. The sheet's cobble patches under the path are left out in Words only (there is no words-only patch), so part of that difference is a missing layer.</p>
+  <div class="stage"><canvas id="scene" width="960" height="540"></canvas></div>
+  <div class="controls">
+    <label>Art set <span class="seg" id="setSeg"><button data-v="with" class="on">Locked</button><button data-v="without">Paragraph only</button><button data-v="words">Words only</button></span></label>
+    <label>Hour <span class="seg" id="hourSeg"><button data-v="dusk" class="on">Dusk</button><button data-v="night">Night</button><button data-v="day">Day</button></span></label>
+    <label>Lantern light <input type="range" id="light" min="0" max="1.5" step="0.05" value="1"></label>
+    <label><input type="checkbox" id="anchors"> Anchors</label>
+    <label><input type="checkbox" id="pause"> Pause</label>
+  </div>
+</section>
+
+<section id="sec-sheet">
+  <h2>1 · Lock one reference sheet</h2>
+  <p class="lede">One image with a character, a prop, a ground patch and an icon, made from a fixed style paragraph. Its file and sha256 are saved; from now on every prompt carries the same paragraph <em>and</em> this sheet as <span class="mono">referenced_image_paths</span>.</p>
+  <div class="sheetbox">
+    <div class="checker"><img class="sheetimg" id="sheetImg" alt="Style reference sheet: a lantern-keeper, a lantern post, a mossy cobble patch and a lamp-oil vial"></div>
+    <div class="card lock">
+      <div><b style="color:var(--fg)">Style lock paragraph</b> (identical in every prompt)</div>
+      <blockquote id="lockText">modern hand-painted 2D game art for an original top-down adventure game; soft painterly brushwork over clean readable shapes; camera looking down at about 35 degrees; one key light from the top-left, warm lantern-amber highlights against cool blue-green forest shadows; a thin dark warm-brown outline; muted earthy palette: moss green, slate blue, warm amber, cream, walnut brown; contact shadows under feet only; characters about 3.5 heads tall. Original, no resemblance to any existing game, film or franchise character, no text, no logo, no watermark.</blockquote>
+      <div>Sheet: <span class="mono" id="sheetSha"></span></div>
+      <div class="note">The sheet is the art director. Words alone describe a style; the image pins down the exact brushwork, value range and head-to-body ratio the words leave open.</div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-derive">
+  <h2>2 · What locking buys, and what it does not</h2>
+  <p class="lede">Three ways to prompt the same assets. <b>Words only</b>: a plain one-line prompt per asset, the way most people start. <b>Paragraph only</b>: every prompt ends with the same STYLE LOCK paragraph, no sheet. <b>Locked</b>: the paragraph and the sheet as a reference image. The bars are the mean palette distance of the scene's assets to the matching sheet item (<span class="mono">stylestats.py</span>, lower is closer). Toggle the same three sets in the scene above.</p>
+  <div class="bars" id="bars"></div>
+  <p class="note" id="barsNote"></p>
+  <div class="controls" style="margin:14px 0 12px">
+    <label>Backdrop <span class="seg" id="bgSeg"><button data-v="check" class="on">Checker</button><button data-v="dark">Dark</button><button data-v="light">Light</button><button data-v="grass">Grass</button></span></label>
+  </div>
+  <div class="cmp bg-check" id="cmp">
+    <div class="hd first"></div><div class="hd">Sheet item</div><div class="hd">Locked</div><div class="hd">Paragraph only</div><div class="hd">Words only</div>
+  </div>
+  <p class="note">The ground row compares an earth-and-moss texture with the sheet's cobble patch: there the sheet gives nothing measurable (locked 0.501 vs paragraph 0.482). Judge the floor in the scene instead.</p>
+</section>
+
+<section id="sec-repeat">
+  <h2>3 · Where the sheet matters: new characters next to the existing cast</h2>
+  <p class="lede">No seed: each run is a new picture, so assets are saved as files. Below, repeated runs of one prompt, all ending with the STYLE LOCK paragraph, with and without the sheet. Without the sheet the runs still agree with each other (the guards even more than with it: spread 0.010 vs 0.021), but they agree on a look that is further from the keeper already in the game: the guards' palette distance to the keeper doubles (0.205 vs 0.107), and the herbalists come out wider and stooped (width/height 0.634 vs the keeper's 0.567) with twice the run-to-run spread in shape (± 0.039 vs ± 0.018). Not everything improves: lightness is not closer to the keeper with the sheet, and part of the guards' gain is costume colour: the locked guards borrow the keeper's moss-green hooded cape. For one village cast that is acceptable; if a new character must not echo an existing outfit, add "do not reuse the reference character's clothing" to its prompt. So the paragraph keeps a set consistent with itself; the sheet keeps new assets consistent with art you already have.</p>
+  <div id="groups"></div>
+</section>
+
+<section id="sec-skin">
+  <h2>4 · Skin hook: bitmap roles (SPEC v0.5)</h2>
+  <p class="lede">The same map drawn by the <span class="mono">flat</span> skin. Left: its procedural tiles and props. Right: after <span class="mono">GameDNA_Skin.bitmaps.useAssets(GameDNA_Assets, map)</span>, <span class="mono">skin.tile('grass')</span> and <span class="mono">skin.prop('well' | 'tree')</span> draw the generated bitmaps. With nothing registered every skin draws exactly as before.</p>
+  <div class="skins">
+    <figure style="margin:0"><canvas id="skinA" width="384" height="224"></canvas><figcaption>Procedural (no bitmap registered)</figcaption></figure>
+    <figure style="margin:0"><canvas id="skinB" width="384" height="224"></canvas><figcaption>Bitmap roles: tile:grass, prop:well, prop:tree. Road, water and the bush keep the skin's own art, which is why every role of a game should come from one locked set.</figcaption></figure>
+  </div>
+</section>
+
+<section id="sec-record">
+  <h2>Record</h2>
+  <p class="lede">Every shipped file with its role, drawn size, bytes and sha256 (from <span class="mono">assets/assets.json</span>). Each comes from a Codex run whose prompt, GEN.md and verified model are stored next to it.</p>
+  <div class="tablewrap card" style="padding:4px 8px"><table id="rec"><tr><th>key</th><th>role</th><th>size</th><th>bytes</th><th>sha256</th><th>run</th></tr></table></div>
+</section>
+</div>
+
+<script src="manifest.js"></script>
+<script src="metrics.js"></script>
+<script src="compare.js"></script>
+<script src="../module/art-direction-lock.js"></script>
+<script src="../../../skins/skin-api.js"></script>
+<script src="../../../skins/flat/flat.js"></script>
+<script>
+"use strict";
+(() => {
+  const Q = new URLSearchParams(location.search);
+  const S = {
+    set: ['with', 'without', 'words'].includes(Q.get('set')) ? Q.get('set') : 'with',
+    hour: ['dusk', 'night', 'day'].includes(Q.get('hour')) ? Q.get('hour') : 'dusk',
+    light: Q.has('light') ? Math.max(0, Math.min(1.5, +Q.get('light'))) : 1,
+    anchors: Q.get('anchors') === '1',
+    bg: ['check', 'dark', 'light', 'grass'].includes(Q.get('bg')) ? Q.get('bg') : 'check',
+    t0: Q.has('t') ? Math.max(0, +Q.get('t') || 0) : null,
+    freeze: Q.get('freeze') === '1',
+  };
+  const M = window.ADL_MANIFEST || { assets: [] }, CMP = window.ADL_COMPARE || { assets: [] }, MET = window.ADL_METRICS || { rows: {}, scene: {}, groups: {} };
+  const ALL = { assets: M.assets.concat(CMP.assets) };
+  const byKey = {}; ALL.assets.forEach(e => byKey[e.key] = e);
+  const A = window.GameDNA_Assets;
+  const url = k => '../assets/' + (byKey[k] ? byKey[k].file : '');
+
+  // ------------------------------------------------------------- static panels
+  document.getElementById('chipBytes').textContent = 'sample pack ' + Math.round(M.assets.reduce((s, e) => s + (e.bytes || 0), 0) / 1024) + ' KB · ' + M.assets.length + ' files';
+  document.getElementById('sheetImg').src = url('sheet');
+  document.getElementById('sheetSha').textContent = 'sha256 ' + (byKey.sheet && byKey.sheet.sha256 || '').slice(0, 16) + '…';
+  const fmt = v => v == null ? '–' : v.toFixed(3);
+  // bars: whole scene sets vs the sheet
+  const bars = document.getElementById('bars'), SC = MET.scene || {}, maxD = Math.max(0.001, ...['words', 'paragraph', 'locked'].map(k => (SC[k] || {}).meanToSheet || 0));
+  [['words', 'Words only'], ['paragraph', 'Paragraph only'], ['locked', 'Locked']].forEach(([k, label]) => {
+    const v = (SC[k] || {}).meanToSheet, d = document.createElement('div'); d.className = 'bar' + (k === 'locked' ? ' locked' : '');
+    d.innerHTML = '<span>' + label + '</span><div class="track"><div class="fill" style="width:' + (100 * (v || 0) / maxD).toFixed(1) + '%"></div></div><b>' + fmt(v) + '</b>';
+    bars.appendChild(d);
+  });
+  if (SC.words && SC.paragraph && SC.locked) document.getElementById('barsNote').textContent =
+    'Honest reading: the shared paragraph does most of the work (' + fmt(SC.words.meanToSheet) + ' → ' + fmt(SC.paragraph.meanToSheet) + '); the sheet adds a smaller step (→ ' + fmt(SC.locked.meanToSheet) + '). Words only drifts away from the locked look: its images agree with each other, but on a different, more saturated look (a tree seen from straight above, a red-roofed well, a heavier lamp post). The sheet\'s own job shows in section 3.';
+  const ROWS = [
+    ['character', 'Character', 'herbalist', 'keeper', 'herbalist', 'herbalist-nr', 'w-herbalist'],
+    ['prop', 'Prop', 'stone well', 'lamppost', 'well', 'well-nr', 'w-well'],
+    ['tile', 'Ground tile', 'seamless, 2×2', 'patch', 'ground', 'ground-nr', 'w-ground'],
+    ['icon', 'Icon', 'brass key', 'vial', 'key', 'key-nr', 'w-key'],
+  ];
+  const cmp = document.getElementById('cmp');
+  const cell = (k, pillHtml) => {
+    const c = document.createElement('div'); c.className = 'cell';
+    const isTile = byKey[k] && byKey[k].role === 'tile';
+    c.innerHTML = '<div class="tilebg">' + (isTile ? '<div class="tilegrid" style="background-image:url(' + url(k) + ')"></div>' : '<img alt="' + k + '" src="' + url(k) + '">') + '</div>' + (pillHtml ? '<div class="pill">' + pillHtml + '</div>' : '');
+    return c;
+  };
+  ROWS.forEach(([id, label, sub, ref, l, p, w]) => {
+    const r = (MET.rows || {})[id] || {}, best = Math.min(r.locked, r.paragraph, r.words);
+    const lab = document.createElement('div'); lab.className = 'rowlabel'; lab.innerHTML = label + ' <small>' + sub + '</small>'; cmp.appendChild(lab);
+    cmp.appendChild(cell(ref, '<span>ref</span><b>' + (byKey[ref] ? byKey[ref].w + '×' + byKey[ref].h : '') + '</b>'));
+    [['locked', l], ['paragraph', p], ['words', w]].forEach(([c, k]) => cmp.appendChild(cell(k, '<span>dist</span><b class="' + (r[c] === best ? 'better' : '') + '">' + fmt(r[c]) + '</b>')));
+  });
+  // groups: repeated runs
+  const G = MET.groups || {};
+  const gw = document.getElementById('groups');
+  [['Village guard (a new character type, 3 runs each)', [['guard-locked', 'Locked'], ['guard-paragraph', 'Paragraph only']]],
+   ['Herbalist (6 runs each) · subtle: the gain is in the numbers more than at a glance', [['herbalist-locked', 'Locked'], ['herbalist-paragraph', 'Paragraph only']]]].forEach(([title, rows]) => {
+    const box = document.createElement('div'); box.className = 'group'; box.innerHTML = '<h3>' + title + '</h3>';
+    // the keeper every row is measured against, shown next to the runs
+    const refRow = document.createElement('div'); refRow.className = 'grow bg-dark refrow';
+    const refLab = document.createElement('div'); refLab.className = 'rowlabel'; refLab.innerHTML = 'Keeper <small>already in the game: the target</small>'; refRow.appendChild(refLab);
+    refRow.appendChild(cell('keeper', '<span>ref</span><b>keeper</b>'));
+    box.appendChild(refRow);
+    rows.forEach(([gk, label]) => {
+      const g = G[gk]; if (!g) return;
+      const row = document.createElement('div'); row.className = 'grow bg-dark';
+      const lab = document.createElement('div'); lab.className = 'rowlabel'; lab.innerHTML = label + ' <small>n = ' + g.n + '</small>'; row.appendChild(lab);
+      g.files.forEach(f => { const k = (ALL.assets.find(e => e.file === f) || {}).key; row.appendChild(cell(k)); });
+      box.appendChild(row);
+      const st = document.createElement('p'); st.className = 'gstat';
+      st.innerHTML = 'distance to the keeper <b>' + fmt(g.toKeeper.mean) + '</b> · width/height <b>' + fmt(g.aspect.mean) + '</b> ± ' + fmt(g.aspect.sd) + ' · lightness <b>' + g.lightness.mean.toFixed(1) + '</b> · spread between runs <b>' + fmt(g.pairwisePalette.mean) + '</b>';
+      box.appendChild(st);
+    });
+    gw.appendChild(box);
+  });
+  const rec = document.getElementById('rec');
+  M.assets.forEach(e => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + e.key + '</td><td>' + e.role + '</td><td>' + e.w + '×' + e.h + '</td><td>' + (e.bytes / 1024).toFixed(1) + ' KB</td><td class="mono">' + (e.sha256 || '').slice(0, 12) + '</td><td class="mono">' + (e.file || '').split('/')[0] + '</td>';
+    rec.appendChild(tr);
+  });
+  function seg(id, key, onChange) {
+    const el = document.getElementById(id);
+    const sync = () => el.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === S[key]));
+    el.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S[key] = b.dataset.v; sync(); onChange && onChange(); });
+    sync();
+  }
+  const applyBg = () => { cmp.className = 'cmp bg-' + S.bg; };
+  seg('bgSeg', 'bg', applyBg); applyBg();
+
+  // ------------------------------------------------------------- scene
+  const cv = document.getElementById('scene'), g = cv.getContext('2d');
+  const VW = 960, VH = 540;
+  function sizeCanvas() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    if (cv.width !== VW * dpr) { cv.width = VW * dpr; cv.height = VH * dpr; }
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  const hash = (i, k) => { let h = Math.imul(i * 374761393 + k * 668265263, 3266489917); h ^= h >>> 13; h = Math.imul(h, 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; };
+  // three art sets: locked (sheet + paragraph), paragraph only (4 of 8 regenerated without the sheet), words only (all 8
+  // regenerated from plain prompts: no shared paragraph, no sheet). Keys of the last two come from assets/compare.json.
+  const SETS = {
+    with: { herb: 'herbalist', well: 'well', ground: 'ground', key: 'key', keeper: 'keeper', post: 'lamppost', oak: 'oak', vial: 'vial', patch: 'patch' },
+    without: { herb: 'herbalist-nr', well: 'well-nr', ground: 'ground-nr', key: 'key-nr', keeper: 'keeper', post: 'lamppost', oak: 'oak', vial: 'vial', patch: 'patch' },
+    words: { herb: 'w-herbalist', well: 'w-well', ground: 'w-ground', key: 'w-key', keeper: 'w-keeper', post: 'w-lamppost', oak: 'w-oak', vial: 'w-vial', patch: null },
+  };
+  const ART = () => SETS[S.set] || SETS.with;
+  // lantern positions relative to each image (fractions of drawn width/height from the foot point); measured on the files
+  const LANTERN = { lamppost: [-0.30, -0.60], well: [-0.26, -0.68], 'well-nr': [-0.27, -0.66], keeper: [0.33, -0.36], 'w-lamppost': [0.28, -0.45], 'w-well': [0.4, -0.6], 'w-keeper': [0.35, -0.25] };
+  /* Native facing (tools/sprites/README.md rule 2): every painting records the side it looks at; the mirror is computed in ONE place,
+     flipOf(), as want !== facing, and never typed in the draw list. Keeper and herbalist (all three sets) are 3/4 views that look RIGHT and
+     hold a lit lantern / a basket and stick: mirror 'never', and no left-facing painting exists. The scene is staged so they are only ever
+     drawn on that side: the herbalist stands at the left and looks right at the keeper; the keeper only walks to the right (in from the
+     lower left along the cobbles, a stop by the path, out at the right edge). Oaks and cobble patches carry nothing: mirror 'ok'. */
+  const FACING = {
+    keeper: { facing: 'right', mirror: 'never', why: 'carries a lit lantern in one hand' },
+    herb: { facing: 'right', mirror: 'never', why: 'basket and walking stick' },
+    post: { mirror: 'never', why: 'lit lantern hangs on one arm' }, well: { mirror: 'never', why: 'lit lantern on one side' },
+    oak: { facing: 'right', mirror: 'ok', why: 'tree used as set dressing: no gear, no lantern, soft top light' },
+    patch: { facing: 'right', mirror: 'ok', why: 'flat ground decal' }
+  };
+  let mirrorRefused = 0;   // a draw asked a mirror 'never' painting for its other side (stays 0 while the staging holds)
+  function flipOf(role, want) {
+    const a = FACING[role]; if (!a || !want || !a.facing || want === a.facing) return false;
+    if (a.mirror === 'never') { mirrorRefused++; return false; }
+    return true;
+  }
+  const drawnSide = (role, want) => flipOf(role, want) ? want : FACING[role].facing;
+  const HERB = { x: 96, y: 404, want: 'right' };
+  // keeper: one pass per 12 s, x never decreases. in: lower-left edge -> the cobbles; stop; out: past the well -> right edge
+  const KP = { period: 12000, a: [150, 668], b: [470, 440], c: [1010, 404], tIn: 3200, tStay: 4700 };
+  function keeperState(t) {
+    const c = t % KP.period;
+    let x, y, moving = true;
+    if (c < KP.tIn) { const e = c / KP.tIn, k = e * (2 - e) * 0.6 + e * 0.4; x = KP.a[0] + (KP.b[0] - KP.a[0]) * k; y = KP.a[1] + (KP.b[1] - KP.a[1]) * k; moving = e < 0.97; }
+    else if (c < KP.tStay) { x = KP.b[0]; y = KP.b[1]; moving = false; }
+    else { const e = (c - KP.tStay) / (KP.period - KP.tStay), k = e * e * 0.5 + e * 0.5; x = KP.b[0] + (KP.c[0] - KP.b[0]) * k; y = KP.b[1] + (KP.c[1] - KP.b[1]) * k - Math.sin(e * Math.PI) * 10; moving = e > 0.02; }
+    return { x, y, want: 'right', moving };
+  }
+  function drawShadow(x, y, w, a) {
+    g.save(); const gr = g.createRadialGradient(x, y, 0, x, y, w);
+    gr.addColorStop(0, 'rgba(10,14,20,' + a + ')'); gr.addColorStop(1, 'rgba(10,14,20,0)');
+    g.fillStyle = gr; g.scale(1, 0.32); g.beginPath(); g.arc(x, y / 0.32, w, 0, 7); g.fill(); g.restore();
+  }
+  function render(t) {
+    sizeCanvas();
+    const art = ART(), ts = t / 1000;
+    g.clearRect(0, 0, VW, VH);
+    // ground: seamless tile, 128 px, world-aligned, slow drift of the camera
+    const camX = Math.sin(ts * 0.08) * 18, camY = Math.cos(ts * 0.06) * 8;
+    if (!A.fillTiled(g, art.ground, { x: 0, y: 0, w: VW, h: VH }, { tileW: 224, tileH: 224, ox: -camX, oy: -camY })) { g.fillStyle = '#4a5d3a'; g.fillRect(0, 0, VW, VH); }
+    g.save(); g.translate(-camX, -camY);
+    // cobble patches from the sheet under the path
+    if (art.patch) [[300, 520, 120, 1], [420, 478, 132, 0], [545, 452, 112, 1], [640, 418, 96, 0]].forEach(([x, y, h, f]) => A.draw(g, art.patch, x, y, { h, flip: flipOf('patch', f ? 'left' : 'right'), alpha: 0.92 }));
+    const keeper = keeperState(t), step = ts * 7.5, bob = keeper.moving ? Math.abs(Math.sin(step)) * 3 : Math.sin(ts * 2) * 0.6;
+    const sway = keeper.moving ? Math.sin(step) * 0.045 : Math.sin(ts * 1.3) * 0.01, squash = keeper.moving ? 1 - 0.035 * (1 - Math.abs(Math.sin(step))) : 1;
+    const breathe = 1 + Math.sin(ts * 1.6) * 0.012;
+    const items = [
+      { y: 215, x: 110, role: 'oak', h: 250 },
+      { y: 175, x: 840, role: 'oak', h: 230, want: 'left' },
+      { y: 150, x: 640, role: 'oak', h: 190 },
+      { y: 300, x: 300, role: 'post', h: 175 },
+      { y: 360, x: 640, role: 'well', h: 150 },
+      { y: HERB.y, x: HERB.x, role: 'herb', h: 112 * breathe, want: HERB.want, shadow: 30 },
+      { y: keeper.y, x: keeper.x, role: 'keeper', h: 116 * squash, want: keeper.want, dy: -bob, shadow: 28, rot: sway, dust: keeper.moving },
+    ];
+    items.forEach(it => { it.key = art[it.role]; it.flip = flipOf(it.role, it.want); });   // the only place a sprite's mirror is decided
+    items.sort((a, b) => a.y - b.y).forEach(it => {
+      if (it.shadow) drawShadow(it.x, it.y - 2, it.shadow, S.hour === 'day' ? 0.35 : 0.5);
+      if (it.dust) for (let k = 0; k < 3; k++) {   // foot dust: puffs left behind, fading over 0.4 s of game time
+        const age = ((ts * 7.5 / Math.PI + k / 3) % 1), dx = (drawnSide('keeper', keeper.want) === 'left' ? 1 : -1) * (6 + age * 18);
+        g.fillStyle = 'rgba(214,196,160,' + (0.35 * (1 - age)) + ')'; g.beginPath(); g.ellipse(it.x + dx, it.y - 2 - age * 6, 3 + age * 6, 2 + age * 3, 0, 0, 7); g.fill();
+      }
+      let drawn;
+      if (it.rot) { g.save(); g.translate(it.x, it.y + (it.dy || 0)); g.rotate(it.rot); drawn = A.draw(g, it.key, 0, 0, { h: it.h, flip: it.flip }); g.restore(); }
+      else drawn = A.draw(g, it.key, it.x, it.y + (it.dy || 0), { h: it.h, flip: it.flip });
+      if (!drawn) { g.fillStyle = '#c44'; g.fillRect(it.x - 8, it.y - 30, 16, 30); }
+      if (S.anchors) {
+        // overlay styled as UI: corner brackets for the art box, a ringed diamond on the foot anchor
+        const r = A.get(it.key); if (r) {
+          const s = it.h / r.h, w = r.w * s, x = it.x - w / 2, y = it.y + (it.dy || 0) - it.h, h = it.h, c = Math.min(12, w * 0.22, h * 0.22);
+          g.lineCap = 'round'; g.lineJoin = 'round'; g.beginPath();
+          g.moveTo(x, y + c); g.lineTo(x, y); g.lineTo(x + c, y); g.moveTo(x + w - c, y); g.lineTo(x + w, y); g.lineTo(x + w, y + c);
+          g.moveTo(x + w, y + h - c); g.lineTo(x + w, y + h); g.lineTo(x + w - c, y + h); g.moveTo(x + c, y + h); g.lineTo(x, y + h); g.lineTo(x, y + h - c);
+          g.lineWidth = 3.5; g.strokeStyle = 'rgba(8,12,18,0.55)'; g.stroke(); g.lineWidth = 1.5; g.strokeStyle = 'rgba(126,214,200,0.95)'; g.stroke();
+        }
+        g.beginPath(); g.moveTo(it.x, it.y - 5); g.lineTo(it.x + 5, it.y); g.lineTo(it.x, it.y + 5); g.lineTo(it.x - 5, it.y); g.closePath();
+        g.fillStyle = '#f2b45a'; g.fill(); g.lineWidth = 1.5; g.strokeStyle = 'rgba(8,12,18,0.8)'; g.stroke();
+      }
+    });
+    g.restore();
+    // lights (game-time flicker only: deterministic)
+    const fl = (i) => 0.86 + 0.08 * Math.sin(ts * 9.1 + i * 2.3) + 0.06 * Math.sin(ts * 23.7 + i * 5.1);
+    const L = [];
+    const addL = (key, x, y, h, flip, r, i) => { const rr = A.get(key); if (!rr) return; const w = rr.w * h / rr.h, o = LANTERN[key] || [0, -0.5]; L.push({ x: x - camX + (flip ? -o[0] : o[0]) * w, y: y - camY + o[1] * h, r, i: fl(i) * S.light }); };
+    addL(art.post, 300, 300, 175, false, 210, 0);
+    addL(art.well, 640, 360, 150, false, 150, 1);
+    addL(art.keeper, keeper.x, keeper.y - bob, 116, flipOf('keeper', keeper.want), 170, 2);
+    // a dim cool fill around the herbalist so she stays readable at night (lifts the darkness only, adds no glow)
+    L.push({ x: HERB.x - camX, y: HERB.y - 40 - camY, r: 120, i: 0.55, fill: true });
+    const night = S.hour === 'night' ? 0.74 : S.hour === 'dusk' ? 0.38 : 0.0;
+    if (night > 0) {
+      const off = getLayer(); const o = off.getContext('2d');
+      o.setTransform(1, 0, 0, 1, 0, 0); o.clearRect(0, 0, off.width, off.height);
+      o.fillStyle = S.hour === 'night' ? 'rgba(8,14,34,' + night + ')' : 'rgba(26,30,58,' + night + ')'; o.fillRect(0, 0, VW, VH);
+      o.globalCompositeOperation = 'destination-out';
+      L.forEach(l => { const gr = o.createRadialGradient(l.x, l.y, 0, l.x, l.y, l.r); gr.addColorStop(0, 'rgba(0,0,0,' + Math.min(1, 0.95 * l.i) + ')'); gr.addColorStop(0.55, 'rgba(0,0,0,' + Math.min(1, 0.45 * l.i) + ')'); gr.addColorStop(1, 'rgba(0,0,0,0)'); o.fillStyle = gr; o.beginPath(); o.arc(l.x, l.y, l.r, 0, 7); o.fill(); });
+      o.globalCompositeOperation = 'source-over';
+      g.drawImage(off, 0, 0, VW, VH);
+    }
+    if (S.hour !== 'day') {
+      g.save(); g.globalCompositeOperation = 'lighter';
+      L.filter(l => !l.fill).forEach(l => { const gr = g.createRadialGradient(l.x, l.y, 0, l.x, l.y, l.r * 0.75); gr.addColorStop(0, 'rgba(255,196,110,' + (0.55 * l.i) + ')'); gr.addColorStop(0.3, 'rgba(255,150,60,' + (0.22 * l.i) + ')'); gr.addColorStop(1, 'rgba(255,140,40,0)'); g.fillStyle = gr; g.beginPath(); g.arc(l.x, l.y, l.r, 0, 7); g.fill(); });
+      // fireflies
+      for (let i = 0; i < 26; i++) {
+        const bx = hash(i, 1) * VW, by = 80 + hash(i, 2) * (VH - 140), sp = 0.2 + hash(i, 3) * 0.5;
+        const x = bx + Math.sin(ts * sp + i) * 40, y = by + Math.cos(ts * sp * 1.3 + i * 2) * 22, a = Math.max(0, Math.sin(ts * (0.8 + hash(i, 4)) + i * 1.7));
+        const gr = g.createRadialGradient(x, y, 0, x, y, 9); gr.addColorStop(0, 'rgba(220,255,150,' + (0.85 * a) + ')'); gr.addColorStop(1, 'rgba(180,255,120,0)');
+        g.fillStyle = gr; g.beginPath(); g.arc(x, y, 9, 0, 7); g.fill();
+      }
+      g.restore();
+    } else {
+      g.save(); g.globalCompositeOperation = 'soft-light'; g.fillStyle = 'rgba(255,230,180,0.25)'; g.fillRect(0, 0, VW, VH); g.restore();
+    }
+    // vignette
+    const vg = g.createRadialGradient(VW / 2, VH / 2, VH * 0.35, VW / 2, VH / 2, VH * 0.95);
+    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.45)'); g.fillStyle = vg; g.fillRect(0, 0, VW, VH);
+    drawHud(art, ts);
+  }
+  let layer = null;
+  function getLayer() { if (!layer) { layer = document.createElement('canvas'); layer.width = VW; layer.height = VH; } return layer; }
+  function rrect(x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+  function drawHud(art, ts) {
+    // location plate
+    g.save();
+    g.font = '600 15px system-ui, -apple-system, Segoe UI, sans-serif';
+    const label = 'Lanternwood', sub = S.set === 'with' ? 'art: locked (sheet + style paragraph)' : S.set === 'without' ? 'art: paragraph only, 4 of 8 regenerated' : 'art: words only, all 8 regenerated';
+    g.font = 'italic 600 17px Georgia, "Times New Roman", serif';
+    const lw = g.measureText(label).width;
+    rrect(20, 18, lw + 58, 36, 10); g.fillStyle = 'rgba(12,16,22,0.66)'; g.fill(); g.strokeStyle = 'rgba(242,180,90,0.4)'; g.lineWidth = 1; g.stroke();
+    g.fillStyle = '#f2b45a'; g.beginPath(); g.moveTo(36, 30); g.lineTo(42, 36); g.lineTo(36, 42); g.lineTo(30, 36); g.closePath(); g.fill();
+    g.fillStyle = '#f2e6cf'; g.textBaseline = 'middle'; g.fillText(label, 50, 37);
+    // art-set badge (same language as the MODULE OFF / ON badges of the other demos); sub is the full wording for the page
+    const bt = S.set === 'with' ? 'LOCKED SET' : S.set === 'without' ? 'PARAGRAPH ONLY' : 'WORDS ONLY', bs = S.set === 'with' ? 'sheet + style paragraph' : S.set === 'without' ? '4 of 8 images redone' : 'all 8 images redone';
+    g.font = '800 12px system-ui, -apple-system, Segoe UI, sans-serif'; const bw = Math.max(g.measureText(bt).width + 22, 0);
+    g.font = '11px system-ui, -apple-system, Segoe UI, sans-serif'; const sw2 = g.measureText(bs).width, W2 = Math.max(bw, sw2) + 28, bx = VW - 20 - W2;
+    rrect(bx, 18, W2, 46, 10); g.fillStyle = 'rgba(12,16,22,0.72)'; g.fill(); g.strokeStyle = 'rgba(255,255,255,0.10)'; g.stroke();
+    g.fillStyle = S.set === 'with' ? '#6fe3b4' : S.set === 'without' ? '#f2b45a' : '#ff7a8a'; g.beginPath(); g.arc(bx + 18, 33, 4.5, 0, 7); g.fill();
+    g.font = '800 12px system-ui, -apple-system, Segoe UI, sans-serif'; g.fillStyle = '#f4f1ea'; g.fillText(bt, bx + 30, 34);
+    g.font = '11px system-ui, -apple-system, Segoe UI, sans-serif'; g.fillStyle = '#a9b4bf'; g.fillText(bs, bx + 14, 52);
+    g.textBaseline = 'alphabetic';
+    // inventory slots
+    const slots = [[art.key, 1], [art.vial, 3]], sx = 20, sy = VH - 86, sw = 64;
+    rrect(sx, sy, slots.length * (sw + 10) + 10, 70, 14); g.fillStyle = 'rgba(12,16,22,0.62)'; g.fill(); g.strokeStyle = 'rgba(255,255,255,0.08)'; g.stroke();
+    slots.forEach(([k, n], i) => {
+      const x = sx + 10 + i * (sw + 10), y = sy + 7, pulse = i === 0 ? 0.5 + 0.5 * Math.sin(ts * 2.4) : 0;
+      rrect(x, y, sw, 56, 10); g.fillStyle = 'rgba(255,255,255,0.05)'; g.fill(); g.strokeStyle = 'rgba(242,180,90,' + (0.25 + 0.35 * pulse) + ')'; g.stroke();
+      const r = A.get(k); if (r) { const s = Math.min(44 / r.w, 44 / r.h); g.drawImage(r.img, x + sw / 2 - r.w * s / 2, y + 28 - r.h * s / 2, r.w * s, r.h * s); }
+      g.font = '700 12px system-ui, -apple-system, Segoe UI, sans-serif'; g.fillStyle = '#fff'; g.textAlign = 'right'; g.fillText('×' + n, x + sw - 6, y + 52); g.textAlign = 'left';
+    });
+    g.restore();
+  }
+
+  // ------------------------------------------------------------- skin hook panel
+  function drawSkinMaps() {
+    const SK = window.GameDNA_Skin, flat = SK && SK.get('flat');
+    if (!flat) return;
+    const T = 32, cols = 12, rows = 7;
+    const map = (c, r) => (r === 3 || (c === 5 && r > 3)) ? 'road' : (c === 10 && r < 3) ? 'water' : 'grass';
+    const props = [[2, 2, 'tree'], [8, 2, 'tree'], [4, 5, 'well'], [10, 6, 'tree'], [1, 6, 'bush']];
+    const draw = (cvs) => {
+      const c = cvs.getContext('2d'); c.setTransform(1, 0, 0, 1, 0, 0); SK.setup(flat, c);
+      for (let r = 0; r < rows; r++) for (let q = 0; q < cols; q++) flat.tile(c, { x: q * T, y: r * T, w: T, h: T }, map(q, r), 0.5);
+      props.slice().sort((a, b) => a[1] - b[1]).forEach(([q, r, k]) => flat.prop(c, { x: q * T, y: r * T, w: T, h: T }, k, 0.5, { lights: [], light: null, seed: q * 7 + r }));
+    };
+    SK.bitmaps.clear();
+    draw(document.getElementById('skinA'));
+    SK.bitmaps.useAssets(A, { 'tile:grass': 'ground', 'prop:well': 'well' });
+    SK.bitmaps.set('prop', 'tree', A.get('oak'), { cellsTall: 2 });   // a 2-cell tree on this 32 px map (the pack's 3 suits bigger cells)
+    draw(document.getElementById('skinB'));
+    SK.bitmaps.clear();
+  }
+
+  // ------------------------------------------------------------- controls + loop
+  seg('setSeg', 'set', () => { if (paused || S.freeze) render(clock); });
+  seg('hourSeg', 'hour', () => { if (paused || S.freeze) render(clock); });
+  const lightEl = document.getElementById('light'); lightEl.value = S.light;
+  lightEl.addEventListener('input', () => { S.light = +lightEl.value; if (paused || S.freeze) render(clock); });
+  const anchorsEl = document.getElementById('anchors'); anchorsEl.checked = S.anchors;
+  anchorsEl.addEventListener('change', () => { S.anchors = anchorsEl.checked; if (paused || S.freeze) render(clock); });
+  const pauseEl = document.getElementById('pause');
+  let paused = false, clock = S.t0 || 0, last = null;
+  /* text state for critics and tools/sprites/statecheck.py. Both painted villagers are 3/4 views whose art looks RIGHT
+     (all three sets) and neither is ever mirrored; facing comes from drawnSide(), the same flipOf() the draw list uses. */
+  window.__state = () => {
+    const k = keeperState(clock), n = keeperState(clock + 16), ts = clock / 1000, camX = Math.sin(ts * 0.08) * 18, camY = Math.cos(ts * 0.06) * 8;
+    return { t: Math.round(clock), mirrorRefused, actors: [
+      { id: 'keeper', x: Math.round(k.x - camX), y: Math.round(k.y - camY), facing: drawnSide('keeper', k.want), target: null, vx: k.moving && n.x > k.x ? Math.round((n.x - k.x) * 100) / 100 : 0, asset: { facing: FACING.keeper.facing, mirror: FACING.keeper.mirror }, flipX: flipOf('keeper', k.want) },
+      { id: 'herbalist', x: Math.round(HERB.x - camX), y: Math.round(HERB.y - camY), facing: drawnSide('herb', HERB.want), target: 'keeper', asset: { facing: FACING.herb.facing, mirror: FACING.herb.mirror }, flipX: flipOf('herb', HERB.want) }] };
+  };
+  pauseEl.addEventListener('change', () => { paused = pauseEl.checked; last = null; if (!paused && !S.freeze) requestAnimationFrame(loop); });
+  function loop(now) {
+    if (paused || S.freeze) return;
+    if (last !== null) clock += Math.min(100, now - last);
+    last = now; render(clock); requestAnimationFrame(loop);
+  }
+  function boot() {
+    drawSkinMaps();
+    window.__adl = () => ({ ready: A.isReady(), status: A.status(), set: S.set, t: clock });
+    render(clock);
+    if (S.freeze) { pauseEl.checked = true; paused = true; window.__frozen = true; document.documentElement.dataset.ready = '1'; return; }
+    document.documentElement.dataset.ready = '1';
+    requestAnimationFrame(loop);
+  }
+  // 3-line pattern: load once, boot from onReady, draw with fallbacks
+  A.load(ALL, { base: '../assets/', onReady: boot });
+})();
+</script>
+</body>
+</html>

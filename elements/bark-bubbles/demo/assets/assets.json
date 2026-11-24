@@ -1,0 +1,741 @@
+{
+ "format": "gamedna-assets/1",
+ "pack": "bark-bubbles demo art: Lanternwood villagers, jellies, a market stall, the village gate and two walk cycles generated for this demo, plus vendored copies of the L-00 / L-06 files the scene uses (demo scene only; the module draws no bitmaps)",
+ "budgetBytes": 600000,
+ "generated": {
+  "tool": "codex image_gen.imagegen (built-in)",
+  "model": "image generator",
+  "effort": "high",
+  "date": "2026-11-17"
+ },
+ "styleLock": {
+  "text": "../../../art-direction-lock/assets/prompts/style-lock.txt",
+  "note": "L-00 Lanternwood lock: every image here was generated with the Lanternwood reference sheet passed as referenced_image_paths",
+  "referenceFile": "../../../art-direction-lock/assets/gen/sheet/sheet.png (sha256 d910612f64f895374bf309019a8141d0df309621cde274e89aef3d32f02e8d84)"
+ },
+ "assets": [
+  {
+   "key": "guard",
+   "role": "sprite",
+   "kind": "guard",
+   "file": "art/guard.webp",
+   "source": {
+    "run": "gen/cast",
+    "file": "guard.png",
+    "sha256": "c3fc2c92dda6bc02974b3001571ff38e586d0a93e0753e66e96bca802514d061"
+   },
+   "prompt": [
+    "gen/cast/PROMPT.md",
+    "gen/cast/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 264
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "drawH": 66,
+   "w": 122,
+   "h": 264,
+   "bytes": 11484,
+   "sha256": "8870190c78580c96134db950752c425b06b8b1f026db724f66474fb4181cbf88",
+   "baseline": 264
+  },
+  {
+   "key": "elder",
+   "role": "sprite",
+   "kind": "elder",
+   "file": "art/elder.webp",
+   "source": {
+    "run": "gen/cast",
+    "file": "elder.png",
+    "sha256": "6b581e32dfa66e33745f999afdac3577beca48cac66e98b68bda1332c20b15e9"
+   },
+   "prompt": [
+    "gen/cast/PROMPT.md",
+    "gen/cast/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 216
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "drawH": 54,
+   "w": 111,
+   "h": 216,
+   "bytes": 9586,
+   "sha256": "0f8e80b2934acc27f4e1e87efe1e7f2048bf4842d1a3d115788c2c8535940a4c",
+   "baseline": 216
+  },
+  {
+   "key": "girl",
+   "role": "sprite",
+   "kind": "girl",
+   "file": "art/girl.webp",
+   "source": {
+    "run": "gen/cast",
+    "file": "girl.png",
+    "sha256": "b5eeb767846734b9dabbdbe63f6623b327dd2c55f15d4b3f1df7718845198c18"
+   },
+   "prompt": [
+    "gen/cast/PROMPT.md",
+    "gen/cast/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 208
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "drawH": 52,
+   "w": 79,
+   "h": 208,
+   "bytes": 7452,
+   "sha256": "42ef78aea8bff2f5499887893617137d9f89dc2f5b7b5f23e9f365751f2850cc",
+   "baseline": 208
+  },
+  {
+   "key": "jelly-amber",
+   "role": "sprite",
+   "kind": "jelly-amber",
+   "file": "art/jelly-amber.webp",
+   "source": {
+    "run": "gen/cast",
+    "file": "jellies.png",
+    "sha256": "e81ffa874e848c73f623d8a39a32a81f50de2a7de42679b0742659aa4ca824d2"
+   },
+   "prompt": [
+    "gen/cast/PROMPT.md",
+    "gen/cast/GEN.md"
+   ],
+   "post": [
+    {
+     "pick": {
+      "index": 0
+     }
+    },
+    "trim",
+    {
+     "resize": {
+      "h": 120
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "drawH": 30,
+   "w": 111,
+   "h": 120,
+   "bytes": 4080,
+   "sha256": "7403d6ffdcacd5effe3393ab1f6a65c4593a989dd178834b7dd6b5c4904cffdf",
+   "baseline": 120
+  },
+  {
+   "key": "jelly-teal",
+   "role": "sprite",
+   "kind": "jelly-teal",
+   "file": "art/jelly-teal.webp",
+   "source": {
+    "run": "gen/cast",
+    "file": "jellies.png",
+    "sha256": "e81ffa874e848c73f623d8a39a32a81f50de2a7de42679b0742659aa4ca824d2"
+   },
+   "prompt": [
+    "gen/cast/PROMPT.md",
+    "gen/cast/GEN.md"
+   ],
+   "post": [
+    {
+     "pick": {
+      "index": 1
+     }
+    },
+    "trim",
+    {
+     "resize": {
+      "h": 120
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "drawH": 30,
+   "w": 114,
+   "h": 120,
+   "bytes": 4078,
+   "sha256": "1e98410d22645558845f7fd57fef64f92696c0a27efca8cbd67733258dc34053",
+   "baseline": 119
+  },
+  {
+   "key": "stall",
+   "role": "prop",
+   "kind": "stall",
+   "file": "art/stall.webp",
+   "source": {
+    "run": "gen/cast",
+    "file": "stall.png",
+    "sha256": "50be365318082b66f074c1734a1d660ed436fe6443b255f5b4c441bb9f4df130"
+   },
+   "prompt": [
+    "gen/cast/PROMPT.md",
+    "gen/cast/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 320
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "drawH": 106,
+   "w": 297,
+   "h": 320,
+   "bytes": 27660,
+   "sha256": "1edeb9b77fe7c9d107c5a40f9736f3f83a9481b3633b4e92060646ea1d5af48e",
+   "baseline": 319
+  },
+  {
+   "key": "gate",
+   "role": "prop",
+   "kind": "gate",
+   "file": "art/gate.webp",
+   "source": {
+    "run": "gen/cast",
+    "file": "gate.png",
+    "sha256": "8fc62eb643eac21c6b20906e2905a59b86bbca30ef0044b2515fab81fd9d3a2b"
+   },
+   "prompt": [
+    "gen/cast/PROMPT.md",
+    "gen/cast/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "w": 640
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "drawH": 110,
+   "w": 640,
+   "h": 359,
+   "bytes": 48674,
+   "sha256": "300d17ae119ae525f814c85556bf9be86872496e9bff8a98e0ee5992960a97e7",
+   "baseline": 359
+  },
+  {
+   "key": "ground",
+   "role": "tile",
+   "file": "art/ground.webp",
+   "w": 256,
+   "h": 256,
+   "bytes": 25926,
+   "sha256": "45c4ef937d8e11ef7c17b44c52f9c248254bc41f745afbf22310794d4a5e8c5b",
+   "alpha": false,
+   "from": {
+    "element": "art-direction-lock",
+    "key": "ground",
+    "file": "../../../art-direction-lock/assets/with/ground.webp",
+    "note": "byte-identical copy, vendored so the demo runs without sibling element folders; prompts and generation record are in that element's assets.json"
+   },
+   "tileW": 128,
+   "tileH": 128,
+   "source": {
+    "run": "../../../art-direction-lock/assets/gen/with",
+    "file": "ground.png",
+    "sha256": "1c7f6e91cc5275cdd0c6de8885f0273bcc004eafabd6d0b6d25fec9cf472a502"
+   },
+   "prompt": [
+    "../../../art-direction-lock/assets/gen/with/PROMPT.md",
+    "../../../art-direction-lock/assets/gen/with/GEN.md"
+   ],
+   "post": [
+    {
+     "seam": {
+      "mode": "tile"
+     }
+    },
+    {
+     "resize": {
+      "size": "256x256",
+      "wrap": "xy"
+     }
+    },
+    {
+     "export": {
+      "quality": 95
+     }
+    }
+   ]
+  },
+  {
+   "key": "patch",
+   "role": "decal",
+   "file": "art/patch.webp",
+   "w": 214,
+   "h": 200,
+   "bytes": 9906,
+   "sha256": "f5c61343a9aca94f2025b2b3e1fe90873760666c976a201d9d01a9af1366ddb4",
+   "alpha": true,
+   "from": {
+    "element": "art-direction-lock",
+    "key": "patch",
+    "file": "../../../art-direction-lock/assets/sheet-parts/patch.webp",
+    "note": "byte-identical copy, vendored so the demo runs without sibling element folders; prompts and generation record are in that element's assets.json"
+   },
+   "source": {
+    "run": "../../../art-direction-lock/assets/gen/sheet",
+    "file": "sheet.png",
+    "sha256": "d910612f64f895374bf309019a8141d0df309621cde274e89aef3d32f02e8d84"
+   },
+   "prompt": [
+    "../../../art-direction-lock/assets/gen/sheet/PROMPT.md",
+    "../../../art-direction-lock/assets/gen/sheet/GEN.md"
+   ],
+   "post": [
+    {
+     "pick": {
+      "index": 2
+     }
+    },
+    "trim",
+    {
+     "resize": {
+      "h": 200
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ]
+  },
+  {
+   "key": "oak",
+   "role": "prop",
+   "file": "art/oak.webp",
+   "w": 337,
+   "h": 360,
+   "bytes": 28946,
+   "sha256": "47cfc49a40fee11ae1934930397120750e230873f288ea012e714d467e238794",
+   "alpha": true,
+   "from": {
+    "element": "art-direction-lock",
+    "key": "oak",
+    "file": "../../../art-direction-lock/assets/with/oak.webp",
+    "note": "byte-identical copy, vendored so the demo runs without sibling element folders; prompts and generation record are in that element's assets.json"
+   },
+   "source": {
+    "run": "../../../art-direction-lock/assets/gen/with",
+    "file": "oak.png",
+    "sha256": "6b0e53ff108e6f518e82529f82848a68b9b71f093da833d31274ba50b488729e"
+   },
+   "prompt": [
+    "../../../art-direction-lock/assets/gen/with/PROMPT.md",
+    "../../../art-direction-lock/assets/gen/with/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 360
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ]
+  },
+  {
+   "key": "well",
+   "role": "prop",
+   "file": "art/well.webp",
+   "w": 183,
+   "h": 260,
+   "bytes": 16500,
+   "sha256": "0399e034ed7ba4c2f46bc9476cbe9213450bbde0e5cf228656b66cdc2ec66292",
+   "alpha": true,
+   "from": {
+    "element": "art-direction-lock",
+    "key": "well",
+    "file": "../../../art-direction-lock/assets/with/well.webp",
+    "note": "byte-identical copy, vendored so the demo runs without sibling element folders; prompts and generation record are in that element's assets.json"
+   },
+   "source": {
+    "run": "../../../art-direction-lock/assets/gen/with",
+    "file": "well.png",
+    "sha256": "55169162d54b7a0967b72d86e3d0af3ddff55ba014c7dafd514c5097e6dc363e"
+   },
+   "prompt": [
+    "../../../art-direction-lock/assets/gen/with/PROMPT.md",
+    "../../../art-direction-lock/assets/gen/with/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 260
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ]
+  },
+  {
+   "key": "lamppost",
+   "role": "prop",
+   "file": "art/lamppost.webp",
+   "w": 122,
+   "h": 300,
+   "bytes": 9898,
+   "sha256": "fc41d0f8af28810e077821ffc1d8d396c1d8d0328bd8b95106c1bb50bdfa0165",
+   "alpha": true,
+   "from": {
+    "element": "art-direction-lock",
+    "key": "lamppost",
+    "file": "../../../art-direction-lock/assets/sheet-parts/lamppost.webp",
+    "note": "byte-identical copy, vendored so the demo runs without sibling element folders; prompts and generation record are in that element's assets.json"
+   },
+   "source": {
+    "run": "../../../art-direction-lock/assets/gen/sheet",
+    "file": "sheet.png",
+    "sha256": "d910612f64f895374bf309019a8141d0df309621cde274e89aef3d32f02e8d84"
+   },
+   "prompt": [
+    "../../../art-direction-lock/assets/gen/sheet/PROMPT.md",
+    "../../../art-direction-lock/assets/gen/sheet/GEN.md"
+   ],
+   "post": [
+    {
+     "pick": {
+      "index": 1
+     }
+    },
+    "trim",
+    {
+     "resize": {
+      "h": 300
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ]
+  },
+  {
+   "key": "herbalist",
+   "role": "sprite",
+   "file": "art/herbalist.webp",
+   "w": 134,
+   "h": 240,
+   "bytes": 12928,
+   "sha256": "91b509113c440051fe82cb3860a68f897f38929db92f43f3ad35cd8629d43ec6",
+   "alpha": true,
+   "from": {
+    "element": "art-direction-lock",
+    "key": "herbalist",
+    "file": "../../../art-direction-lock/assets/with/herbalist.webp",
+    "note": "byte-identical copy, vendored so the demo runs without sibling element folders; prompts and generation record are in that element's assets.json"
+   },
+   "source": {
+    "run": "../../../art-direction-lock/assets/gen/with",
+    "file": "herbalist.png",
+    "sha256": "d96fbbf9170c80eee72f8bae01b8ebebc7cd5ddca7f07854c1015d19da23bc15"
+   },
+   "prompt": [
+    "../../../art-direction-lock/assets/gen/with/PROMPT.md",
+    "../../../art-direction-lock/assets/gen/with/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 240
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ]
+  },
+  {
+   "key": "frame-small",
+   "role": "frame9",
+   "file": "art/frame-small.webp",
+   "w": 58,
+   "h": 56,
+   "bytes": 1426,
+   "sha256": "c4ef06ac01496e119ae5fbf7aa80d030d267cbd20043b733886e7c0276589368",
+   "alpha": true,
+   "from": {
+    "element": "painted-ui",
+    "key": "frame-small",
+    "file": "../../../painted-ui/assets/kit/frame-small.webp",
+    "note": "byte-identical copy, vendored so the demo runs without sibling element folders; prompts and generation record are in that element's assets.json"
+   },
+   "slice": [
+    17,
+    16,
+    17,
+    16
+   ],
+   "source": {
+    "run": "../../../painted-ui/assets/gen/frames-brass",
+    "file": "frame-small.png",
+    "sha256": "e2ee60f2896f4d8add8a89c9b2b5f29b52015e3f1ac8fc59cf8aa322b7d3c9d0"
+   },
+   "prompt": [
+    "../../../painted-ui/assets/gen/frames-brass/PROMPT.md",
+    "../../../painted-ui/assets/gen/frames-brass/GEN.md"
+   ],
+   "post": [
+    "uikit.py frame9 <src> <out> --size 256 --mid 24 --hard"
+   ]
+  },
+  {
+   "key": "frame-window",
+   "role": "frame9",
+   "file": "art/frame-window.webp",
+   "w": 174,
+   "h": 164,
+   "bytes": 11068,
+   "sha256": "67871955056184e6364117b666a5d3dcca0e71fa068267e2e0726e0d59fbb998",
+   "alpha": true,
+   "from": {
+    "element": "painted-ui",
+    "key": "frame-window",
+    "file": "../../../painted-ui/assets/kit/frame-window.webp",
+    "note": "byte-identical copy, vendored so the demo runs without sibling element folders; prompts and generation record are in that element's assets.json"
+   },
+   "slice": [
+    71,
+    66,
+    71,
+    66
+   ],
+   "source": {
+    "run": "../../../painted-ui/assets/gen/frames",
+    "file": "frame-window.png",
+    "sha256": "903f9456df06510d6ebcadde65db43aad5d1a77aeb9ddce5a6017fce3e39d528"
+   },
+   "prompt": [
+    "../../../painted-ui/assets/gen/frames/PROMPT.md",
+    "../../../painted-ui/assets/gen/frames/GEN.md"
+   ],
+   "post": [
+    "uikit.py frame9 <src> <out> --size 384 --mid 32"
+   ]
+  },
+  {
+   "key": "walk-keeper",
+   "role": "sheet",
+   "kind": "walk cycle: idle + 4 walk poses",
+   "file": "art/walk-keeper.webp",
+   "w": 710,
+   "h": 235,
+   "bytes": 51738,
+   "sha256": "aa9d217d0bb210604500fb0465f88009457329adb20493a04114df367a0d56dc",
+   "alpha": true,
+   "grid": {
+    "cols": 5,
+    "rows": 1,
+    "frames": 5,
+    "cellW": 142,
+    "cellH": 235
+   },
+   "anchor": [
+    0.5218,
+    1
+   ],
+   "drawH": 58,
+   "source": {
+    "run": "gen/walk-keeper",
+    "file": "walk-keeper.png",
+    "sha256": "e9b43fe1789b8a5135167866ec2743a190da8b70e07ee8c405b0ce2962894774"
+   },
+   "prompt": [
+    "gen/walk-keeper/PROMPT.md",
+    "gen/walk-keeper/GEN.md"
+   ],
+   "postTool": "tools/walksheet.py (split by transparent gaps, alpha cleanup, one scale for all poses, aligned by foot line and torso centre)"
+  },
+  {
+   "key": "walk-girl",
+   "role": "sheet",
+   "kind": "walk cycle: idle + 4 walk poses",
+   "file": "art/walk-girl.webp",
+   "w": 510,
+   "h": 210,
+   "bytes": 39468,
+   "sha256": "f7da54e14763710a5f51f218d5e2e237b50c321ea5e6fc94fb7b0318368a9910",
+   "alpha": true,
+   "grid": {
+    "cols": 5,
+    "rows": 1,
+    "frames": 5,
+    "cellW": 102,
+    "cellH": 210
+   },
+   "anchor": [
+    0.5797,
+    1
+   ],
+   "drawH": 52,
+   "source": {
+    "run": "gen/walk-girl",
+    "file": "walk-girl.png",
+    "sha256": "eb379b2c2e4a1c91f5089e837608549ebdc740452397df52e2456302b8d6d0e8"
+   },
+   "prompt": [
+    "gen/walk-girl/PROMPT.md",
+    "gen/walk-girl/GEN.md"
+   ],
+   "postTool": "tools/walksheet.py (split by transparent gaps, alpha cleanup, one scale for all poses, aligned by foot line and torso centre)"
+  }
+ ],
+ "totalBytes": 320818
+}

@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Styles, One Scene</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- web fonts the canvas-font skins name (doc pages only; games fall back to system stacks) -->
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@800&family=M+PLUS+Rounded+1c:wght@800&family=Cinzel:wght@500;700;900&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,600;1,700&family=IM+Fell+English:ital@0;1&family=Playfair+Display:wght@700&family=Inter:wght@500;600;700;800&family=Nunito:wght@700;800;900&display=block" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=block" rel="stylesheet"><!-- rubber-hose -->
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700;800&family=Marcellus&display=block" rel="stylesheet"><!-- lit-hd -->
+<link href="https://fonts.googleapis.com/css2?family=Alegreya+SC:wght@700;800&family=Alegreya+Sans:wght@500;700;900&display=block" rel="stylesheet"><!-- painted-impasto -->
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&display=block" rel="stylesheet"><!-- glass-ui -->
+<style>
+  :root {
+    --bg: #141517; --surface: #1b1c1f; --stage: #0e0f11; --line: #2a2c30; --line-strong: #3a3d42;
+    --fg: #e7e7e9; --muted: #9a9ca3; --faint: #6c6f76; --accent: #e7e7e9; --on-accent: #141517;
+    --radius: 10px; --gap: 24px;
+  }
+  @media (prefers-color-scheme: light) {
+    :root { --bg: #f4f4f5; --surface: #ffffff; --stage: #e9e9ec; --line: #e1e1e5; --line-strong: #cfd0d5;
+      --fg: #18181b; --muted: #5f6168; --faint: #8c8e95; --accent: #18181b; --on-accent: #ffffff; }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); }
+  body { font: 14px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 32px 24px 48px; }
+  header h1 { font-size: 22px; font-weight: 650; letter-spacing: -0.01em; margin: 0 0 6px; }
+  header p { margin: 0; color: var(--muted); max-width: 68ch; }
+  header p code, footer code { font: 12.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--fg); }
+
+  .bar { position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px); margin: 20px -24px 24px; padding: 12px 24px; border-bottom: 1px solid var(--line);
+    display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+  .seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line-strong); border-radius: 8px; overflow: hidden; }
+  .seg button { appearance: none; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 13px; padding: 6px 12px; cursor: pointer; }
+  .seg button + button { border-left: 1px solid var(--line-strong); }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+  .seg button:focus-visible, .btn:focus-visible, input[type=range]:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+  .time { display: flex; align-items: center; gap: 10px; flex: 1 1 280px; min-width: 0; }
+  .btn { appearance: none; border: 1px solid var(--line-strong); background: transparent; color: var(--fg); border-radius: 8px; font: inherit; font-size: 13px;
+    height: 32px; padding: 0 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .btn svg { width: 12px; height: 12px; fill: currentColor; }
+  input[type=range] { flex: 1 1 auto; min-width: 80px; accent-color: var(--fg); }
+  .readout { font: 13px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); min-width: 5.2ch; text-align: right; }
+
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--gap); }
+  .cell { min-width: 0; margin: 0; }
+  .stage { background: var(--stage); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; display: flex; justify-content: center; align-items: flex-start; overflow: hidden; }
+  .stage canvas { display: block; max-width: 100%; height: auto; image-rendering: pixelated; }
+  .stage canvas.smooth { image-rendering: auto; }
+  figcaption { padding: 10px 2px 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 16px; align-items: baseline; }
+  .name { font-weight: 600; font-size: 15px; }
+  .name code { font: 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--faint); font-weight: 400; margin-left: 8px; }
+  .links { display: flex; gap: 12px; font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+  .links a { text-decoration: none; border-bottom: 1px solid var(--line-strong); }
+  .links a:hover { color: var(--fg); border-color: var(--fg); }
+  .line { grid-column: 1 / -1; color: var(--muted); font-size: 13.5px; }
+
+  .only .grid { grid-template-columns: minmax(0, 1fr); }
+  .switch { display: flex; flex-wrap: wrap; gap: 6px; margin: -8px 0 20px; }
+  .switch a { text-decoration: none; font-size: 13px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; }
+  .switch a[aria-current="true"] { color: var(--on-accent); background: var(--accent); border-color: var(--accent); }
+  .switch a:hover { color: var(--fg); border-color: var(--line-strong); }
+  footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--faint); font-size: 12.5px; }
+  footer p { margin: 4px 0; }
+
+  @media (max-width: 760px) {
+    .wrap { padding: 20px 16px 36px; }
+    .bar { margin: 16px -16px 18px; padding: 10px 16px; }
+    .grid { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+    .stage { padding: 8px; }
+    header h1 { font-size: 19px; }
+    figcaption { grid-template-columns: minmax(0, 1fr); }
+    .seg button { padding: 6px 9px; font-size: 12.5px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Same element, <span class="n-styles">twelve</span> styles</h1>
+    <p>One tactics moment (seed 7) drawn by the real grid-range, damage-number and window modules through <span class="n-styles">twelve</span> skins. Only the skin changes: the reach, the path, where each number lands and when the menu opens are identical in every cell.</p>
+  </header>
+
+  <div class="bar" role="toolbar" aria-label="Scene controls">
+    <div class="seg" id="focus" role="group" aria-label="Element focus">
+      <button type="button" data-focus="all">All three</button>
+      <button type="button" data-focus="grid">Range + path</button>
+      <button type="button" data-focus="numbers">Damage numbers</button>
+      <button type="button" data-focus="window">Window + pointer</button>
+    </div>
+    <div class="time">
+      <button type="button" class="btn" id="play" aria-label="Play"></button>
+      <input type="range" id="scrub" min="0" max="3990" step="10" aria-label="Scene time in milliseconds">
+      <span class="readout" id="readout">1.40 s</span>
+    </div>
+  </div>
+
+  <nav class="switch" id="switch" hidden aria-label="Styles"></nav>
+  <main class="grid" id="grid"></main>
+
+  <footer>
+    <p>Deterministic: <code>?t=&lt;ms&gt;&amp;freeze=1</code> renders one moment, <code>?only=&lt;slug&gt;</code> shows one style large, <code>?focus=grid|numbers|window</code> picks the element. The scene is <code>scene/shared-scene.js</code>; the contract is <a href="SPEC.md">SPEC.md</a>.</p>
+    <p>Map cells, units and mood come from each skin's <code>tile</code>, <code>unitToken</code> and <code>atmosphere</code> hooks; a skin without them gets the generic ones from <code>skin-api.js</code>.</p>
+  </footer>
+</div>
+
+<script src="skin-api.js"></script>
+<script src="pixel16.js"></script>
+<script src="pixel8/pixel8.js"></script>
+<script src="hd-diorama/hd-diorama.js"></script>
+<script src="flat/flat.js"></script>
+<script src="watercolor/watercolor.js"></script>
+<script src="cel/cel.js"></script>
+<script src="lowpoly/lowpoly.js"></script>
+<script src="gothic/gothic.js"></script>
+<script src="rubber-hose/rubber-hose.js"></script>
+<script src="neon-vector/neon-vector.js"></script>
+<script src="handheld4/handheld4.js"></script>
+<script src="lit-hd/lit-hd.js"></script>
+<script src="painted-impasto/painted-impasto.js"></script>
+<script src="glass-ui/glass-ui.js"></script>
+<script src="../elements/grid-range-path/module/grid-range-path.js"></script>
+<script src="../elements/damage-numbers/module/damage-numbers.js"></script>
+<script src="../elements/window-cursor/module/window-cursor.js"></script>
+<script src="scene/shared-scene.js"></script>
+<script>
+'use strict';
+var STYLES = [
+  { id: 'pixel8', name: '8-bit console pixel', line: 'Fixed master palette, three colours a sprite, checker dither and 8×8 capitals.' },
+  { id: 'pixel16', name: '16-bit console pixel', line: 'Shaded ramps, bevelled gradient windows and 5×7 bitmap type. The reference look.', docs: { style: 'SPEC.md#5-pixel16-what-it-reproduces', styleLabel: 'SPEC §5', src: 'pixel16.js' } },
+  { id: 'hd-diorama', name: 'HD pixel diorama', line: 'Pixel cards in a lit miniature: warm point lights, tilt-shift, dust, dark glass windows.' },
+  { id: 'flat', name: 'Flat vector', line: 'A calm mobile-strategy board: pastel geometry, white rounded cards, one indigo accent.' },
+  { id: 'watercolor', name: 'Watercolor storybook', line: 'Transparent washes on toothy paper, a wavering sepia pen, parchment cards.' },
+  { id: 'cel', name: 'Cel-shaded anime', line: 'A TV-anime key frame: saturated flats, bold violet ink, one hard shadow, slanted UI.' },
+  { id: 'lowpoly', name: 'Low-poly 3D', line: 'A toy world of flat-shaded triangles: glass range slabs, chunky extruded numbers.' },
+  { id: 'gothic', name: 'Dark gothic painterly', line: 'A candle-lit crypt in oils: near-black, blood red and old gold, iron-and-leather plates.' }
+];
+STYLES.push({ id: 'handheld4', name: '4-shade handheld pixel', line: 'Four shades only: pattern-coded ranges, inverted numbers and plates, an 8×8 font, double-line windows.' });
+STYLES.push({ id: 'lit-hd', name: 'Lit HD 2D', line: 'Painted HD under real-time light: dusk-glass windows, rim-lit figures, glowing range rims; add I-08 + J-01 + J-03 (+ J-06) for the full look.' });
+STYLES.push({ id: 'neon-vector', name: 'Neon vector arcade', line: 'A vector-display cabinet: glowing wireframe on black, seven-segment numerals, scanlines.' });
+STYLES.push({ id: 'rubber-hose', name: '1930s rubber-hose cartoon', line: 'A sepia film print: noodle limbs, pie-cut eyes, white gloves, boiling ink lines, title-card windows.' });
+STYLES.push({ id: 'painted-impasto', name: 'Painted impasto HD', line: 'Thick oil strokes under a warm key light: umber-outlined figures, lacquer-and-gold framed windows, painted swashes behind crits; a small generated pack locked to one style sheet.' });
+STYLES.push({ id: 'glass-ui', name: 'Glass & gradient UI', line: 'A modern mobile-game HUD: frosted-glass panels that blur the board behind them, soft layered shadows, cyan-violet-pink gradients, springy motion over a clean bright board.' });
+(function () { var W = ['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen'], n = STYLES.length, w = W[n] || String(n);   // style count from STYLES, not hand-written
+  document.title = w.charAt(0).toUpperCase() + w.slice(1) + ' Styles, One Scene';
+  document.querySelectorAll('.n-styles').forEach(function (el) { el.textContent = w; }); })();
+var S = GameDNA_Scene, Q = new URLSearchParams(location.search);
+var FOCI = ['all', 'grid', 'numbers', 'window'];
+var state = {
+  t: Q.has('t') ? Math.max(0, Math.min(S.LOOP - 10, +Q.get('t') || 0)) : S.DEFAULT_T,
+  playing: Q.get('freeze') !== '1' && (Q.get('play') === '1' || !Q.has('t')),
+  focus: FOCI.indexOf(Q.get('focus')) >= 0 ? Q.get('focus') : 'all',
+  only: STYLES.some(function (s) { return s.id === Q.get('only'); }) ? Q.get('only') : null
+};
+var FREEZE = Q.get('freeze') === '1';
+
+/* ---------- cells ---------- */
+var grid = document.getElementById('grid'), cells = [];
+function el(tag, attrs, kids) { var e = document.createElement(tag); for (var k in attrs || {}) if (k === 'text') e.textContent = attrs[k]; else e.setAttribute(k, attrs[k]); (kids || []).forEach(function (c) { e.appendChild(c); }); return e; }
+function onlyHref(id) { var q = new URLSearchParams(location.search); if (id) q.set('only', id); else q.delete('only'); q.set('t', String(state.t)); q.set('freeze', '1'); if (state.focus !== 'all') q.set('focus', state.focus); else q.delete('focus'); return '?' + q.toString(); }
+STYLES.filter(function (s) { return !state.only || s.id === state.only; }).forEach(function (st) {
+  var SK = GameDNA_Skin.get(st.id);
+  var cv = el('canvas', { 'aria-label': st.name + ' style: the shared tactics scene' }); if (!(SK && SK.pixel)) cv.className = 'smooth';
+  var d = st.docs || {}, links = el('span', { class: 'links' });
+  links.appendChild(el('a', { href: d.style || (st.id + '/STYLE.md'), text: d.styleLabel || 'STYLE.md' }));
+  links.appendChild(el('a', { href: d.src || (st.id + '/prompt.md'), text: d.src ? 'skin source' : 'prompt.md' }));
+  if (!state.only) links.appendChild(el('a', { href: onlyHref(st.id), class: 'enlarge', text: 'Enlarge' }));
+  var cap = el('figcaption', {}, [el('span', { class: 'name' }, [document.createTextNode(st.name), el('code', { text: st.id })]), links, el('span', { class: 'line', text: st.line })]);
+  var fig = el('figure', { class: 'cell', id: 'cell-' + st.id }, [el('div', { class: 'stage' }, [cv]), cap]);
+  grid.appendChild(fig); cells.push({ id: st.id, cv: cv, stage: fig.firstChild });
+});
+if (state.only) {
+  document.body.classList.add('only');
+  var sw = document.getElementById('switch'); sw.hidden = false;
+  sw.appendChild(el('a', { href: onlyHref(null), text: '← All styles' }));
+  STYLES.forEach(function (s) { var a = el('a', { href: onlyHref(s.id), text: s.name }); if (s.id === state.only) a.setAttribute('aria-current', 'true'); sw.appendChild(a); });
+}
+
+/* ---------- sizing: every cell gets the same whole-number multiple of the 256 px native width ---------- */
+var displayW = 0;
+function measure() {
+  var dpr = window.devicePixelRatio || 1, st = cells[0].stage, cs = getComputedStyle(st);
+  var inner = st.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight), D = Math.floor(inner * dpr);
+  var cap = state.only ? 4 : 99, k = Math.min(cap, Math.floor(D / S.W));
+  displayW = k >= 2 ? k * S.W : Math.max(S.W, D);   // smooth skins: below 2x the cell is too small for whole multiples, so they fill it
+  // pixel skins (pixel16, pixel8, hd-diorama) never stretch by a non-integer factor: the largest whole multiple of their native
+  // width that fits (at least 1x), letterboxed in the stage (the stage centres it)
+  cells.forEach(function (c) {
+    var SK = GameDNA_Skin.resolve(c.id), nw = (SK.native && SK.native.w) || S.W;
+    c.w = SK.pixel ? Math.max(1, Math.min(cap, Math.floor(D / nw))) * nw : displayW;
+    var sz = S.size(c.id, c.w); c.cv.style.width = (sz.w / dpr) + 'px'; c.cv.style.aspectRatio = sz.w + ' / ' + sz.h;
+  });
+}
+
+/* ---------- render ---------- */
+var last = {};
+function renderAll(T) {
+  cells.forEach(function (c) {
+    try { last[c.id] = S.draw(c.cv, c.id, T, { width: c.w || displayW, focus: state.focus }); }
+    catch (e) { last[c.id] = { error: String(e && e.message || e) }; if (window.console) console.error(c.id, e); }
+  });
+  window.__compare = { t: T, focus: state.focus, only: state.only, width: displayW, cells: last };
+  document.documentElement.dataset.t = String(T);
+  document.documentElement.dataset.errors = String(cells.filter(function (c) { return last[c.id] && last[c.id].error; }).map(function (c) { return c.id + ': ' + last[c.id].error; }).join(' | ') || 0);
+}
+
+/* ---------- controls ---------- */
+var scrub = document.getElementById('scrub'), readout = document.getElementById('readout'), playBtn = document.getElementById('play');
+var ICON_PLAY = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 1l9 5-9 5z"/></svg>', ICON_PAUSE = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 1h3v10H2zM7 1h3v10H7z"/></svg>';
+function showTime(T) { scrub.value = String(Math.round(T / 10) * 10); readout.textContent = (T / 1000).toFixed(2) + ' s'; }
+function syncUrl() {
+  var q = new URLSearchParams(location.search);
+  q.set('t', String(Math.round(state.t))); if (state.playing) { q.delete('freeze'); q.set('play', '1'); } else { q.set('freeze', '1'); q.delete('play'); }
+  if (state.focus !== 'all') q.set('focus', state.focus); else q.delete('focus');
+  try { history.replaceState(null, '', '?' + q.toString()); } catch (e) { }
+  document.querySelectorAll('a.enlarge, .switch a').forEach(function (a) { var u = new URLSearchParams(a.getAttribute('href').slice(1)), id = u.get('only'); a.setAttribute('href', onlyHref(id)); });
+}
+function setPlaying(p) {
+  state.playing = p; playBtn.innerHTML = (p ? ICON_PAUSE : ICON_PLAY) + (p ? 'Pause' : 'Play'); playBtn.setAttribute('aria-label', p ? 'Pause' : 'Play');
+  if (p) { startAt = performance.now() - state.t; requestAnimationFrame(loop); }
+  syncUrl();
+}
+document.querySelectorAll('#focus button').forEach(function (b) {
+  b.setAttribute('aria-pressed', String(b.dataset.focus === state.focus));
+  b.addEventListener('click', function () {
+    state.focus = b.dataset.focus;
+    document.querySelectorAll('#focus button').forEach(function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+    if (!state.playing) renderAll(state.t); syncUrl();
+  });
+});
+scrub.addEventListener('input', function () { if (state.playing) setPlaying(false); state.t = +scrub.value; showTime(state.t); renderAll(state.t); });
+scrub.addEventListener('change', syncUrl);
+playBtn.addEventListener('click', function () { setPlaying(!state.playing); });
+
+var startAt = 0;
+function loop(now) {
+  if (!state.playing) return;
+  state.t = (now - startAt) % S.LOOP; showTime(state.t); renderAll(state.t);
+  requestAnimationFrame(loop);
+}
+var resizeTimer = 0;
+window.addEventListener('resize', function () { clearTimeout(resizeTimer); resizeTimer = setTimeout(function () { var w = displayW; measure(); if (w !== displayW && !state.playing) renderAll(state.t); }, 120); });
+
+/* ---------- start: fonts first (canvas-font skins measure after they load), then one frame ---------- */
+showTime(state.t); playBtn.innerHTML = ICON_PLAY + 'Play';
+S.ready(cells.map(function (c) { return c.id; })).then(function () {
+  measure(); renderAll(state.t);
+  document.documentElement.dataset.ready = '1';
+  document.documentElement.dataset.overflowX = String(document.documentElement.scrollWidth > document.documentElement.clientWidth);
+  if (!FREEZE && state.playing) setPlaying(true);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+{
+  "id": "time-rewind",
+  "code": "E-16",
+  "kind": "addon",
+  "name": "Time rewind",
+  "family": "time-rewind",
+  "oneLiner": "Hold a key (or the touch button) and the world runs backwards: every fixed step the game's state is deep-copied into a ring buffer, and while the key is held older copies are restored at 1x-3x speed under a rewind filter (desaturate, tint, scanlines, ripple, rolling band) with a REWIND indicator and a history scrubber. On release play continues from that moment and the newer copies are dropped. An energy meter or charges limit it; nothing is recorded while paused or in menus. Characters keep their recorded facing, so they walk backwards in time instead of turning around. The module is a gate at the top of the step: without the key the game runs exactly as before.",
+  "fits": [
+    "side-scrolling platformers and action games (undo a missed jump or a hit)",
+    "top-down action and adventure games",
+    "puzzle games with physics or timing (an undo that plays backwards)",
+    "racing and arcade games (rewind a crash)",
+    "any real-time 2D game on a canvas whose state can be copied (plain objects, arrays, Maps, typed arrays)"
+  ],
+  "notFor": [
+    "turn-based games where a plain undo stack of moves is clearer",
+    "online multiplayer (other players' state cannot be rewound)",
+    "states that live outside JavaScript objects (WebGL buffers, physics engines with hidden native state, audio positions) unless the game can save and load them itself",
+    "very large worlds (thousands of objects): memory is roughly the state size x 60 per second; use stride or a smaller history"
+  ],
+  "interfaces": {
+    "time": "realtime",
+    "coords": "screen",
+    "layer": "post",
+    "needs": [
+      "a fixed update step (also run by ?t= fast-forward and ?auto=1) whose world update can be skipped: if (rewind.step(STEP_MS)) return; after input is read",
+      "the game state: snapshot() returning every variable the update writes and restore(s) assigning them back, or targets() listing the live state objects",
+      "canRecord(): true only while the world runs (not on title, pause, menus, dialogue, end screens)",
+      "the end of render: rewind.draw(ctx) after the HUD; HUD rects through uiRects()",
+      "rewind.clear() where a new game, level or restart begins",
+      "facing and animation phase stored in the state (drawn from state, never from on-screen motion)"
+    ],
+    "provides": [
+      "hold-to-rewind on a key (default R), a touch button and hold(on) for any other input",
+      "rewind playback at 0.25x-4x with an energy meter or charges, refilled while playing",
+      "rewind filter, REWIND indicator with the time rewound, history scrubber, energy meter",
+      "stats(): history length, bytes per second, cursor, restored entry, energy (for tests); onStart / onEnd / onRestore events"
+    ]
+  },
+  "params": [
+    { "key": "speed", "label": "Rewind speed (x)", "type": "range", "min": 1, "max": 3, "step": 0.25, "default": 2 },
+    { "key": "seconds", "label": "History (s)", "type": "range", "min": 1, "max": 20, "step": 1, "default": 6 },
+    { "key": "energy", "label": "Energy", "type": "select", "options": ["meter", "charges", "free"], "default": "meter" },
+    { "key": "meter", "label": "Meter (s of rewind)", "type": "range", "min": 0.5, "max": 8, "step": 0.5, "default": 3 },
+    { "key": "charges", "label": "Charges", "type": "range", "min": 1, "max": 6, "step": 1, "default": 3 },
+    { "key": "recharge", "label": "Recharge (s)", "type": "range", "min": 1, "max": 20, "step": 1, "default": 6 },
+    { "key": "filter", "label": "Filter", "type": "select", "options": ["full", "light", "off"], "default": "full" },
+    { "key": "ripple", "label": "Ripple", "type": "range", "min": 0, "max": 1, "step": 0.05, "default": 0.5 },
+    { "key": "scanlines", "label": "Scanlines", "type": "range", "min": 0, "max": 1, "step": 0.05, "default": 0.5 },
+    { "key": "tint", "label": "Tint", "type": "select", "options": ["cool", "sepia", "violet", "mono"], "default": "cool" },
+    { "key": "render", "label": "Render", "type": "select", "options": ["auto", "smooth", "pixel"], "default": "auto" },
+    { "key": "touch", "label": "Touch button", "type": "select", "options": ["auto", "on", "off"], "default": "auto" },
+    { "key": "reduced", "label": "Reduced motion", "type": "select", "options": ["system", "on", "off"], "default": "system" },
+    { "key": "key", "label": "Rewind key", "type": "select", "options": ["r", "q", "shift", "backspace"], "default": "r" }
+  ],
+  "variants": [
+    { "name": "Classic (default)", "params": { "speed": 2, "seconds": 6, "energy": "meter", "meter": 3, "tint": "cool" } },
+    { "name": "Sands of time", "params": { "tint": "sepia", "speed": 1.5, "meter": 4 } },
+    { "name": "Three charges", "params": { "energy": "charges", "charges": 3, "speed": 2.5 } },
+    { "name": "Fast scrub", "params": { "speed": 3, "seconds": 10, "ripple": 0.8 } },
+    { "name": "Quiet", "params": { "filter": "light", "ripple": 0, "scanlines": 0.25, "tint": "mono" } },
+    { "name": "Calm (reduced)", "params": { "reduced": "on" } }
+  ],
+  "assets": [
+    "module/time-rewind.js: the element as one dependency-free script (global GameDNA_TimeRewind): deep copy (objects, class instances, arrays, typed arrays, Map, Set, Date, shared references, cycles), ring buffer with seconds and byte caps, restore by replacement or in place, energy meter and charges, key / touch / hold input, rewind filter, indicator, scrubber, meter, 3x5 pixel font for low-res canvases",
+    "no image, font or audio files"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/time-rewind.js",
+    "global": "GameDNA_TimeRewind",
+    "version": "1.0.0",
+    "docs": "module/README.md"
+  }
+}

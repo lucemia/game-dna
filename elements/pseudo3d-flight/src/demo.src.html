@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pseudo-3D Flight Ground</title>
+<style>
+  :root { --bg: #0b0d1c; --panel: #151a33; --edge: #2c3462; --text: #d4d8ec; --dim: #8a90b0; --accent: #ffd86a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font: 13px/1.45 system-ui, -apple-system, sans-serif; }
+  header { padding: 14px 16px 6px; max-width: 1180px; margin: 0 auto; }
+  header h1 { margin: 0; font-size: 18px; letter-spacing: .02em; }
+  header p { margin: 4px 0 0; color: var(--dim); max-width: 820px; }
+  main { display: flex; gap: 16px; padding: 10px 16px 24px; max-width: 1180px; margin: 0 auto; flex-wrap: wrap; align-items: flex-start; }
+  #stage { flex: 0 0 auto; max-width: 100%; }
+  #screen { display: block; image-rendering: pixelated; background: #000; border-radius: 4px; box-shadow: 0 0 0 1px var(--edge), 0 10px 40px #0008; max-width: 100%; touch-action: none; }
+  #status { margin-top: 8px; color: var(--dim); font: 12px ui-monospace, monospace; height: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 768px; }
+  #stage { width: min(768px, 100%); }
+  #status b { color: var(--accent); font-weight: 600; }
+  aside { flex: 1 1 280px; min-width: 260px; max-width: 420px; background: var(--panel); border: 1px solid var(--edge); border-radius: 8px; padding: 12px 14px; }
+  aside h2 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); }
+  .row { display: grid; grid-template-columns: 112px 1fr 46px; align-items: center; gap: 8px; margin: 6px 0; }
+  .row label { color: var(--text); }
+  .row output { text-align: right; color: var(--accent); font: 12px ui-monospace, monospace; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  select { width: 100%; background: #0e1228; color: var(--text); border: 1px solid var(--edge); border-radius: 4px; padding: 3px 4px; }
+  .btns { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; }
+  button { font: 600 12px system-ui; padding: 7px 10px; min-height: 34px; border-radius: 6px; border: 1px solid var(--edge); background: #1e2448; color: var(--text); cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  .keys { color: var(--dim); font-size: 12px; margin-top: 10px; }
+  .keys kbd { background: #0e1228; border: 1px solid var(--edge); border-radius: 3px; padding: 0 4px; font: 11px ui-monospace, monospace; color: var(--text); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Pseudo-3D flight ground <span style="color:var(--dim);font-weight:400">(B-06)</span></h1>
+  <p>The top-down tile map below the hero becomes a perspective, scanline-scaled ground with a horizon sky band. Take off and the view zooms and tilts into flight; turn to bank (the horizon tilts slightly), speed up, slow down; land only on flat ground. Billboards scale with distance; the mount casts a shadow; the world wraps.</p>
+</header>
+<main>
+  <div id="stage">
+    <canvas id="screen" width="256" height="224"></canvas>
+    <div id="status"></div>
+  </div>
+  <aside>
+    <h2>Parameters</h2>
+    <div id="ctl"></div>
+    <div class="btns">
+      <button id="bTake">Take off (X)</button><button id="bLand">Land (Z)</button><button id="bReplay">Replay script</button><button id="bAuto">Autopilot home</button>
+    </div>
+    <div class="keys">Walking: <kbd>arrows</kbd> move, <kbd>X</kbd> take off. Flying: <kbd>&larr;</kbd><kbd>&rarr;</kbd> turn and bank, <kbd>&uarr;</kbd> faster, <kbd>&darr;</kbd> slower, <kbd>Z</kbd> land (green corners = flat ground). Any key stops the scripted tour. URL: <kbd>?t=ms&amp;freeze=1</kbd> for a deterministic frame, <kbd>?speed=</kbd> <kbd>?sky=dusk</kbd> &hellip; for any parameter.</div>
+  </aside>
+</main>
+
+<script src="../../../skins/skin-api.js"></script>
+<script src="../../../skins/pixel16.js"></script>
+<script src="../../../pixel-kit/pixel-scene.js"></script>
+<script src="../module/pseudo3d-flight.js"></script>
+<script>
+'use strict';
+const W = 256, H = 224, T = 16, N = 64, WPX = N * T;
+const cv = document.getElementById('screen'), g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
+const Q = new URLSearchParams(location.search);
+const FREEZE = Q.get('freeze') === '1', T_AT = Q.has('t') ? Math.max(0, +Q.get('t') || 0) : null;
+/*@WORLD*/
+
+/* ---------- demo-only ground art: the same MAP drawn by the shared pixel scene kit (pixel-kit/pixel-scene.js) ----------
+   The tile ids, walkability and billboards above are untouched; only the pictures change. The whole 64x64 world is baked once:
+   KIT.tex (ground with canopy tops on forest cells) feeds the flight floor, KIT.scene draws the walking view with
+   depth-sorted trees. */
+const KIT = (() => {
+  const PXS = window.GameDNA_PixelScene; if (!PXS) return null;
+  const CH = { [DEEP]: 'w', [SHALLOW]: 'w', [SAND]: 's', [GRASS]: '.', [FLOWERS]: 'F', [ROAD]: 'p', [TOWN]: 'c' };
+  const rows = [];
+  for (let y = 0; y < N; y++) { let r = ''; for (let x = 0; x < N; x++) { const v = at(x, y);
+    r += v === FOREST ? (hashN(x, y, 31) < 0.72 ? 'T' : hashN(x, y, 32) < 0.5 ? 'P' : ',') : v === ROCK ? ((x + y) % 2 === 0 ? 'M' : hashN(x, y, 33) < 0.35 ? 'R' : '^') : CH[v]; } rows.push(r); }
+  // rock cells stand on raised ground: swap the prop chars' ground by listing the props instead
+  const props = [];
+  for (let y = 0; y < N; y++) { let r = ''; for (let x = 0; x < N; x++) { const c = rows[y][x]; if (at(x, y) === ROCK && c !== '^') { props.push({ k: c === 'M' ? 'peak' : 'boulder', x: x * T + 8, y: y * T + 14, o: { v: (x * 3 + y) % 4 } }); r += '^'; } else r += c; } rows[y] = r; }
+  TOWNS.forEach((t, i) => { const roofs = ['red', 'blue', 'thatch', 'slate'];
+    props.push({ k: 'house', x: t.cx - 1, y: t.cy + 12, o: { w: 30, wallH: 15, roofH: 15, roof: roofs[i % 4], windows: [5], door: 16, boxes: false } });
+    props.push({ k: 'smalltree', x: t.cx - 20, y: t.cy + 14, o: { v: i } }); props.push({ k: 'barrel', x: t.cx + 19, y: t.cy + 13 }); props.push({ k: 'sign', x: t.cx + 24, y: t.cy + 30 }); });
+  props.push({ k: 'tower', x: ISLANDS[4].x * T + 8, y: ISLANDS[4].y * T + 14, o: { roof: 'red', lit: true } });
+  const scene = PXS.scene({ seed: 9, pines: true, map: rows, props });
+  const tex = document.createElement('canvas'); tex.width = WPX; tex.height = WPX; const q = tex.getContext('2d');
+  // flight floor: ground only (upright props would smear on the tilted plane; the module's billboards stand there instead),
+  // with canopy tops seen from above on forest cells
+  scene.drawGround(q, 0);
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (at(x, y) === FOREST) { const n = 2 + (hashN(x, y, 35) < 0.5 ? 1 : 0);
+    for (let i = 0; i < n; i++) PXS.drawProp(q, 'bush', x * T + 3 + Math.floor(hashN(x * 5 + i, y, 36) * 11), y * T + 8 + Math.floor(hashN(x, y * 5 + i, 37) * 9), { v: (x + y + i) % 2 === 0 ? 0 : 2 }); }
+  // towns on the flight floor: roofs in plan view (lit north slope, shaded south slope, ridge), so the block is not bare under the billboard
+  const roofPlan = (x, y, w, h, R) => { q.fillStyle = '#1a1024'; q.fillRect(x - 1, y - 1, w + 2, h + 3); const hh = h >> 1;
+    for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { const top = j < hh, jr = (i + (j % 2) * 2) % 4 === 0; q.fillStyle = j === hh - 1 || j === hh ? R[4] : top ? (jr ? R[2] : R[3]) : (jr ? R[0] : j === h - 1 ? R[0] : R[1]); if (i === 0 && top) q.fillStyle = R[4]; q.fillRect(x + i, y + j, 1, 1); }
+    q.fillStyle = 'rgba(16,10,30,0.3)'; q.fillRect(x + 1, y + h + 2, w, 2); };
+  TOWNS.forEach((t, i) => { const RF = PXS.PAL.roof, names = ['red', 'blue', 'thatch', 'slate'], x0 = t.tx * T, y0 = t.ty * T;
+    roofPlan(x0 + 2, y0 + 3, 17, 12, RF[names[i % 4]]); roofPlan(x0 + 18, y0 + 17, 12, 10, RF[names[(i + 1) % 4]]);
+    PXS.drawProp(q, 'bush', x0 + 25, y0 + 12, { v: 0 }); PXS.drawProp(q, 'bush', x0 + 8, y0 + 29, { v: 2 }); });
+  const cache = new Map();
+  const tile = (x, y) => { x = wrapT(x); y = wrapT(y); const k = y * N + x; let c = cache.get(k); if (!c) { c = document.createElement('canvas'); c.width = c.height = T; c.getContext('2d').drawImage(tex, -x * T, -y * T); cache.set(k, c); } return c; };
+  return { scene, tex, tile };
+})();
+const kitTile = (id, x, y) => KIT ? KIT.tile(x, y) : tileArt(id, x, y);
+
+/* ---------- parameters (element.json defaults; ?key= overrides) ---------- */
+const PARAMS = [
+  ['speed', 'Cruise speed', 40, 140, 2, 72], ['turn', 'Turn rate (deg/s)', 60, 180, 5, 100], ['bank', 'Bank / tilt (deg)', 0, 10, 1, 5],
+  ['height', 'Camera height', 32, 96, 2, 56], ['horizon', 'Horizon', 0.2, 0.45, 0.01, 0.3], ['transition', 'Transition (ms)', 300, 1200, 50, 600],
+  ['fog', 'Distance fog', 0, 1, 0.05, 0.6], ['sky', 'Sky', ['day', 'dusk'], 'day'], ['mount', 'Mount', ['bird', 'glider'], 'bird'], ['minimap', 'Mini-map', ['on', 'off'], 'on']
+];
+const P = {};
+const ctl = document.getElementById('ctl');
+PARAMS.forEach(d => {
+  const key = d[0], isSel = Array.isArray(d[2]), def = isSel ? d[3] : d[5];
+  let v = Q.has(key) ? Q.get(key) : def; if (!isSel) v = Math.min(d[3], Math.max(d[2], +v || def)); else if (!d[2].includes(v)) v = def;
+  P[key] = v;
+  const row = document.createElement('div'); row.className = 'row';
+  row.innerHTML = `<label for="p-${key}">${d[1]}</label>` + (isSel ? `<select id="p-${key}">${d[2].map(o => `<option${o === v ? ' selected' : ''}>${o}</option>`).join('')}</select><output></output>`
+    : `<input type="range" id="p-${key}" min="${d[2]}" max="${d[3]}" step="${d[4]}" value="${v}"><output>${v}</output>`);
+  ctl.appendChild(row);
+  const inp = row.querySelector('input,select'), out = row.querySelector('output');
+  inp.addEventListener('input', () => { P[key] = isSel ? inp.value : +inp.value; if (!isSel) out.textContent = inp.value; fl.setParams({ [key]: P[key] }); });
+});
+
+/* ---------- the element ---------- */
+const fl = GameDNA_Flight.create({
+  cols: N, rows: N, tile: T, wrap: true, skin: 'pixel16', params: P,
+  tileAt: (x, y) => at(x, y), tileImage: (id, x, y) => kitTile(id, x, y), canLand: (x, y) => LANDABLE.has(at(x, y)),
+  billboards: STATIC_BB, markers: () => TOWNS.map((t, i) => ({ x: t.cx, y: t.cy, color: i ? '#ffffff' : '#ffe070', blink: !i })),
+  topdown: () => camera(),
+  onLand: L => { hero.x = L.x - 5; hero.y = L.y - 4; hero.face = 'down'; },
+  onLandDenied: () => { log('landing refused: not flat ground'); }
+});
+
+/* ---------- a minimal walking host for the transitions ---------- */
+
+const START = { x: HOME.gate.x * T + 3, y: (HOME.gate.y + 2) * T + 4 };
+let hero, frame, script, keys = new Set(), taps = new Set(), lastLog = '';
+function reset(scripted) { hero = { x: START.x, y: START.y, w: 10, h: 8, face: 'right', walk: 0, moving: false }; frame = 0; script = scripted; fl.reset(); keys.clear(); taps.clear(); }
+function log(s) { lastLog = s; }
+function camera() { return { x: Math.round(hero.x + 5 - W / 2), y: Math.round(hero.y + 4 - H / 2) }; }
+const blocked = (x, y, w, h) => [[x, y], [x + w - 0.01, y], [x, y + h - 0.01], [x + w - 0.01, y + h - 0.01]].some(([px, py]) => !WALKABLE.has(at(Math.floor(px / T), Math.floor(py / T))));
+// the scripted tour (deterministic, 60 Hz frames): walk, take off, bank left, boost, try to land over water, fly home, land, loop
+function scripted(f) {
+  const i = { left: false, right: false, up: false, down: false, land: false, mount: false };
+  if (f < 54) i.right = true;
+  else if (f === 66) i.mount = true;
+  else if (f >= 120 && f < 196) i.left = true;
+  else if (f >= 196 && f < 300) i.up = true;
+  else if (f >= 300 && f < 340) i.right = true;
+  else if (f === 360) i.land = true;
+  else if (f === 380) fl.autopilot({ x: HOME.gate.x * T + 16, y: (HOME.gate.y + 2) * T + 8, radius: 26 });
+  return i;
+}
+function step() {
+  frame++;
+  const human = { left: keys.has('left'), right: keys.has('right'), up: keys.has('up'), down: keys.has('down'), land: taps.has('land'), mount: taps.has('mount') }; taps.clear();
+  const inp = script ? scripted(frame) : human;
+  if (script && frame > 60 * 15 && !fl.busy()) reset(true);
+  fl.setInput(fl.phase === 'flying' && !fl.autopiloting ? inp : null);
+  fl.update();
+  if (!fl.busy()) {
+    const mx = (inp.right ? 1 : 0) - (inp.left ? 1 : 0), my = (inp.down ? 1 : 0) - (inp.up ? 1 : 0);
+    if (mx || my) { hero.face = mx ? (mx > 0 ? 'right' : 'left') : (my > 0 ? 'down' : 'up'); let m = false;
+      if (mx && !blocked(hero.x + mx * 1.25, hero.y, 10, 8)) { hero.x = wrapP(hero.x + mx * 1.25); m = true; }
+      if (my && !blocked(hero.x, hero.y + my * 1.25, 10, 8)) { hero.y = wrapP(hero.y + my * 1.25); m = true; } hero.moving = m; if (m) hero.walk++; } else hero.moving = false;
+    if (inp.mount) fl.takeOff({ x: hero.x + 5, y: hero.y + 4, facing: hero.face });
+  }
+}
+function draw() {
+  g.imageSmoothingEnabled = false;
+  if (!fl.draw(g)) {
+    const c = camera(), c0 = Math.floor(c.x / T), r0 = Math.floor(c.y / T);
+    const hx = Math.round(wrapD(hero.x - c.x)), hy = Math.round(wrapD(hero.y - c.y));
+    if (KIT) {   // ground from the baked kit scene (wrapped), then the props in view depth-sorted with the hero
+      for (let r = r0; r <= r0 + 14; r++) for (let q = c0; q <= c0 + 16; q++) g.drawImage(KIT.scene.ground(frame * 1000 / 60), wrapT(q) * T, wrapT(r) * T, T, T, q * T - c.x, r * T - c.y, T, T);
+      const list = [{ y: hy + 9, d: () => GameDNA_PixelScene.actor(g, hx + 5, hy + 9, { pal: 'green', dir: hero.face, frame: hero.moving ? (hero.walk >> 3) & 1 : 0 }) }];
+      KIT.scene.items.forEach(it => { const dx = wrapD(it.x - c.x - W / 2) + W / 2, dy = wrapD(it.y - c.y - H / 2) + H / 2; if (dx < -40 || dx > W + 40 || dy < -8 || dy > H + 60) return; list.push({ y: it.flat ? -1e6 : dy, d: () => it.draw(g, frame * 1000 / 60, dx - it.x, dy - it.y) }); });
+      list.sort((a, b) => a.y - b.y).forEach(o => o.d());
+    } else {
+      for (let r = r0; r <= r0 + 14; r++) for (let q = c0; q <= c0 + 16; q++) g.drawImage(tileArt(at(q, r), q, r), q * T - c.x, r * T - c.y);
+      g.fillStyle = 'rgba(16,18,40,0.3)'; g.fillRect(hx - 1, hy + 9, 12, 2); g.drawImage(HERO[hero.face][hero.moving ? (hero.walk >> 3) & 1 : 0], hx - 2, hy - 9);
+    }
+    const sk = GameDNA_Skin.resolve('pixel16'), lab = 'X TAKE OFF', w = sk.measure(lab, { font: 'ui' }) + 14;
+    sk.frame(g, { x: W - 4 - w, y: H - 21, w, h: 17 }, { role: 'window', team: 'n' }); sk.text(g, lab, W - 4 - w + 7, H - 16, { font: 'ui', color: '#d8ffb8', color2: '#88e070' });
+  }
+}
+/* text state for critics and tools/sprites/statecheck.py (canvas px, feet): one character. On foot it is the pixel kit's 4-way actor drawn with
+   hero.face (noFace on its up / down frames). In the flight view the module draws the rider on its mount from behind (no side). */
+window.__state = () => { const t = Math.round(frame * 1000 / 60);
+  if (fl.busy()) { const A = fl.anchor() || { x: W / 2, footY: Math.round(H * 0.75) }; return { t, phase: fl.phase, actors: [{ id: 'hero', x: Math.round(A.x), y: A.footY, facing: null, target: null, noFace: 'flying: seen from behind, drawn by the module (' + fl.phase + ')' }] }; }
+  const c = camera(), side = hero.face === 'left' || hero.face === 'right', mx = hero.moving && side ? (hero.face === 'right' ? 1.25 : -1.25) : 0;
+  return { t, phase: fl.phase, actors: [{ id: 'hero', x: Math.round(wrapD(hero.x - c.x)) + 5, y: Math.round(wrapD(hero.y - c.y)) + 9, facing: side ? hero.face : null, target: null, vx: mx, noFace: side ? undefined : hero.face + ' frame' }] }; };
+function wrapD(d) { d %= WPX; if (d > WPX / 2) d -= WPX; if (d < -WPX / 2) d += WPX; return d; }
+const status = document.getElementById('status');
+function showStatus() {
+  const st = fl.stats;
+  status.innerHTML = `phase <b>${fl.phase}</b>${fl.busy() ? ` &middot; heading <b>${Math.round(fl.heading * 180 / Math.PI)}&deg;</b> &middot; speed <b>${Math.round(fl.speed)}</b> &middot; tile <b>${fl.tile.x},${fl.tile.y}</b> ${fl.canLandHere() ? '(flat)' : ''}` : ''} &middot; draw <b>${st.avgMs.toFixed(2)} ms</b> (max ${st.maxMs.toFixed(1)})${script ? ' &middot; scripted tour' : ''}${lastLog ? ' &middot; ' + lastLog : ''}`;
+}
+
+/* ---------- input & boot ---------- */
+const BIND = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', KeyA: 'left', KeyD: 'right', KeyW: 'up', KeyS: 'down', KeyZ: 'land', Space: 'land', Enter: 'land', KeyX: 'mount', KeyC: 'mount' };
+addEventListener('keydown', e => { const b = BIND[e.code]; if (!b || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return; e.preventDefault(); if (script) { script = false; fl.autopilot(null); } if (!keys.has(b)) taps.add(b); keys.add(b); });
+addEventListener('keyup', e => { const b = BIND[e.code]; if (b) keys.delete(b); });
+document.getElementById('bTake').onclick = () => { script = false; taps.add('mount'); };
+document.getElementById('bLand').onclick = () => { script = false; fl.land(); };
+document.getElementById('bReplay').onclick = () => reset(true);
+document.getElementById('bAuto').onclick = () => { script = false; if (!fl.busy()) fl.takeOff({ x: hero.x + 5, y: hero.y + 4, facing: hero.face }); fl.autopilot({ x: HOME.gate.x * T + 16, y: (HOME.gate.y + 2) * T + 8, radius: 26 }); };
+function fit() { const s = Math.max(1, Math.min(3, Math.floor((Math.min(innerWidth, 1180) - 32 - (innerWidth > 900 ? 300 : 0)) / W))); cv.style.width = W * s + 'px'; cv.style.height = H * s + 'px'; }
+fit(); addEventListener('resize', fit);
+reset(!Q.has('manual'));
+if (T_AT !== null) { for (let n = Math.round(T_AT * 60 / 1000); n > 0; n--) step(); draw(); showStatus();
+  document.documentElement.dataset.state = JSON.stringify({ phase: fl.phase, progress: +fl.progress.toFixed(3), x: Math.round(fl.x), y: Math.round(fl.y), heading: +fl.heading.toFixed(3), frame }); }
+if (!FREEZE) { let acc = 0, prev = null; const loop = now => { if (prev === null) prev = now; acc += Math.min(250, now - prev); prev = now; while (acc >= 1000 / 60) { step(); acc -= 1000 / 60; } draw(); if ((frame & 7) === 0) showStatus(); requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
+</script>
+</body>
+</html>

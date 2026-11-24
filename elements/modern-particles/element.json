@@ -1,0 +1,69 @@
+{
+  "id": "modern-particles",
+  "code": "E-11",
+  "kind": "addon",
+  "name": "Modern particle system",
+  "family": "particle-engine",
+  "oneLiner": "One pooled, seeded engine for thousands of smooth particles: emitter shapes (point, line, circle, rect, sprite outline), size / alpha / colour curves over life, additive glow that backs off on bright frames, gravity, drag, wind, ground bounce and orbiting motion, with presets for bursts, bouncing sparks, fountains, smoke, magic swirls, dust, pickups, embers and auras. Smooth soft sprites on HD canvases, whole-pixel particles on native pixel canvases; deterministic from a seed and game time.",
+  "fits": [
+    "platformer / action side-scroller",
+    "top-down action RPG",
+    "roguelite / bullet heaven",
+    "metroidvania",
+    "twin-stick shooter",
+    "turn-based RPG battle (spell and defeat effects)",
+    "tactics (skill effects)",
+    "idle / clicker"
+  ],
+  "notFor": [
+    "ambient weather over the whole screen (use E-06 weather)",
+    "the few-frame impact flash on each blow (E-02 hit sparks does that in one call; this engine is the general layer under such effects)",
+    "fluid or smoke simulation with collisions between particles",
+    "games that must render on canvases without 2D context (WebGL-only engines)"
+  ],
+  "interfaces": {
+    "time": "realtime",
+    "coords": "side",
+    "layer": "fx",
+    "needs": [
+      "fixed update step to advance the particle clock (the same step ?t= fast-forward runs); 0 or skipped while paused",
+      "event sites in the step: hit accepted (contact point, attacker facing), defeat (centre, optional sprite image), pickup, landing / jump (feet), hurt, checkpoint / heal / respawn",
+      "camera offset in the draw pass (particles are in world px)",
+      "optional: ground(x, y) in world px from the game's collision test, so sparks and drops bounce on it",
+      "optional: ui rects (HUD, message boxes, end panels) in screen px, clipped out"
+    ],
+    "provides": [
+      "emit(preset, x, y, opts) one-shot effects and start(...) continuous emitters with move / stop handles",
+      "define(name, layers) custom presets (curves, shapes, blend, physics)",
+      "stats() (live, peak, recycled, update and draw ms) and signature() for determinism tests"
+    ]
+  },
+  "params": [
+    { "key": "budget", "label": "Budget (pool size)", "type": "range", "min": 200, "max": 8000, "step": 100, "default": 2000 },
+    { "key": "density", "label": "Density", "type": "range", "min": 0.25, "max": 2, "step": 0.05, "default": 1 },
+    { "key": "scale", "label": "Scale (0 = auto)", "type": "range", "min": 0, "max": 4, "step": 0.25, "default": 0 },
+    { "key": "render", "label": "Render", "type": "select", "options": ["auto", "smooth", "crisp"], "default": "auto" },
+    { "key": "glow", "label": "Additive glow", "type": "select", "options": ["auto", "on", "off"], "default": "auto" },
+    { "key": "gravity", "label": "Gravity", "type": "range", "min": 0, "max": 2, "step": 0.05, "default": 1 },
+    { "key": "wind", "label": "Wind (px/s)", "type": "range", "min": -120, "max": 120, "step": 5, "default": 0 },
+    { "key": "bounce", "label": "Bounce", "type": "range", "min": 0, "max": 1.5, "step": 0.05, "default": 1 }
+  ],
+  "variants": [
+    { "name": "Modern indie (default)", "params": { "budget": 2000, "density": 1, "render": "auto", "glow": "auto" } },
+    { "name": "Phone saver", "params": { "budget": 800, "density": 0.6 } },
+    { "name": "Spectacle", "params": { "budget": 6000, "density": 1.6, "glow": "on" } },
+    { "name": "Pixel host", "params": { "render": "crisp", "glow": "off" } },
+    { "name": "Windy, floaty", "params": { "gravity": 0.5, "wind": 40, "bounce": 0.6 } }
+  ],
+  "assets": [
+    "module/modern-particles.js: the element as one dependency-free script (global GameDNA_Particles): pool, emitters, presets, curves, physics, smooth and crisp renderers",
+    "no image, font or audio files (sprites are generated in code at load)"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/modern-particles.js",
+    "global": "GameDNA_Particles",
+    "version": "1.0.0",
+    "docs": "module/README.md"
+  }
+}

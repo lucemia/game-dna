@@ -1,0 +1,64 @@
+{
+  "id": "battle-transition",
+  "code": "E-04",
+  "name": "Shatter battle transition",
+  "kind": "addon",
+  "family": "scene-transition",
+  "oneLiner": "When a battle starts, the current frame is captured, cracks from the point of contact and breaks into shards that spin and fall (or swirls, pixelates or irises closed); the game switches scenes at the midpoint under full cover, and the new scene is revealed. Input waits until it ends.",
+  "fits": [
+    "turn-based RPG with random or touch encounters",
+    "monster battler",
+    "action RPG entering an arena",
+    "wave-based battles (wave change)",
+    "any game with a title-to-play or map-to-battle switch"
+  ],
+  "notFor": [
+    "games where the world must keep running during a scene change (online play, real-time competitive)",
+    "seamless battles fought on the map itself (nothing to switch to)",
+    "very frequent switches (every few seconds) where a 1 s cover becomes tiring: use reveal 'cut' and a short duration, or none"
+  ],
+  "interfaces": {
+    "time": "realtime",
+    "coords": "side",
+    "layer": "post",
+    "needs": [
+      "scene switch: the place where the game enters (and optionally leaves) a battle or starts a wave",
+      "a way to draw the current frame on demand (or the screen canvas) for the capture",
+      "fixed-step clock in ms, called every step, also while the transition runs",
+      "the last draw of every frame (after scene, HUD and dialogs), live loop and freeze path",
+      "optional: focus point (player or touched enemy) in screen pixels"
+    ],
+    "provides": [
+      "busy flag: input and world logic wait while true",
+      "mid-point callback (screen fully covered) to switch scenes",
+      "done callback"
+    ]
+  },
+  "params": [
+    { "key": "variant", "label": "Enter effect", "type": "select", "options": ["shatter", "swirl", "mosaic", "iris"], "default": "shatter" },
+    { "key": "reveal", "label": "Reveal of the new scene", "type": "select", "options": ["match", "fade", "iris", "mosaic", "swirl", "cut"], "default": "match" },
+    { "key": "duration", "label": "Duration (ms)", "type": "range", "min": 600, "max": 1200, "step": 50, "default": 900 },
+    { "key": "pieces", "label": "Shards across", "type": "range", "min": 4, "max": 10, "step": 1, "default": 6 },
+    { "key": "spin", "label": "Shard spin (degrees)", "type": "range", "min": 0, "max": 720, "step": 30, "default": 240 },
+    { "key": "flash", "label": "Impact flash", "type": "select", "options": ["on", "off"], "default": "on" },
+    { "key": "leave", "label": "Leave effect (battle to map, next wave)", "type": "select", "options": ["iris", "mosaic", "swirl", "shatter", "none"], "default": "iris" }
+  ],
+  "variants": [
+    { "name": "Glass shatter (default)", "params": { "variant": "shatter", "reveal": "match", "duration": 900, "pieces": 6, "spin": 240, "flash": "on", "leave": "iris" } },
+    { "name": "Fine glass, slow fall", "params": { "variant": "shatter", "duration": 1200, "pieces": 9, "spin": 480, "reveal": "mosaic" } },
+    { "name": "Swirl into battle", "params": { "variant": "swirl", "reveal": "match", "duration": 1000, "flash": "off" } },
+    { "name": "Mosaic", "params": { "variant": "mosaic", "reveal": "match", "duration": 800, "flash": "off", "leave": "mosaic" } },
+    { "name": "Iris close", "params": { "variant": "iris", "reveal": "iris", "duration": 800, "flash": "off" } }
+  ],
+  "assets": [
+    "module/battle-transition.js: the element as one dependency-free script (global GameDNA_BattleTransition): capture, shard geometry and bevels, cracks, dust, swirl, mosaic, iris, timeline and callbacks; colours through GameDNA_Skin with a built-in pixel16 fallback",
+    "no image or audio files"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/battle-transition.js",
+    "global": "GameDNA_BattleTransition",
+    "version": "1.0.0",
+    "docs": "module/README.md"
+  }
+}

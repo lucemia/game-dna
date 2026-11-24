@@ -1,0 +1,868 @@
+{
+ "format": "gamedna-assets/1",
+ "pack": "card-art (L-07): 15 painted 2:3 card illustrations, one per G-07 tag, in three backdrop families (ivy ruin arch, cliff above the clouds, forest floor)",
+ "budgetBytes": 600000,
+ "generated": {
+  "tool": "codex image_gen.imagegen (built-in)",
+  "model": "image generator",
+  "effort": "high",
+  "date": "2026-11-17",
+  "runner": "tools/assets/gen.sh"
+ },
+ "styleLock": {
+  "text": "prompts/style-lock.txt",
+  "reference": "blade",
+  "referenceSource": "gen/key/blade.png",
+  "lockedTo": "L-00 art-direction-lock style sheet (elements/art-direction-lock/assets/gen/sheet/sheet.png, passed as a reference in every run)"
+ },
+ "cardSet": {
+  "maxBottomDetail": 0.8,
+  "maxSubjectY": 0.52,
+  "maxSubjectDX": 0.16,
+  "maxEdgeDetail": 1.1,
+  "maxLightFlip": 0.1,
+  "maxLumaDev": 0.35
+ },
+ "assets": [
+  {
+   "key": "blade",
+   "role": "card",
+   "file": "cards/blade.webp",
+   "alpha": false,
+   "source": {
+    "run": "gen/key",
+    "file": "blade.png",
+    "sha256": "16be042515edec350e16cf6ba15574be1879cc96265b4655a326f2291807b131"
+   },
+   "prompt": [
+    "gen/key/PROMPT.md",
+    "gen/key/GEN.md"
+   ],
+   "post": [
+    {
+     "crop23": {}
+    },
+    {
+     "resize": {
+      "size": "360x540"
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "subject": "an original short sword with a leaf-shaped blade over a mossy pedestal",
+   "accent": "ember red",
+   "safeArea": {
+    "subject": [
+     0.15,
+     0.04,
+     0.85,
+     0.55
+    ],
+    "textZone": [
+     0,
+     0.55,
+     1,
+     1
+    ],
+    "focusY": 0.28
+   },
+   "skinRole": {
+    "role": "card",
+    "kind": "blade"
+   },
+   "w": 360,
+   "h": 540,
+   "bytes": 15994,
+   "sha256": "dc52a9be3ccb3d63a3c86468345667c8bec67dc766d61c719bc18aa079eefe82",
+   "backdrop": "ivy ruin arch"
+  },
+  {
+   "key": "fire",
+   "role": "card",
+   "file": "cards/fire.webp",
+   "alpha": false,
+   "source": {
+    "run": "gen/set-a",
+    "file": "fire.png",
+    "sha256": "8ae1e4c5b6ab54d79eb32f01a55c38700974c946023f2b2fe81efaf0bbbb7f20"
+   },
+   "prompt": [
+    "gen/set-a/PROMPT.md",
+    "gen/set-a/GEN.md"
+   ],
+   "post": [
+    {
+     "crop23": {}
+    },
+    {
+     "resize": {
+      "size": "360x540"
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "subject": "a wide cracked clay brazier bowl on three short iron legs, holding a tall living flame that curls into a soft spiral at its tip, a few ember sparks rising",
+   "accent": "flame orange",
+   "safeArea": {
+    "subject": [
+     0.15,
+     0.04,
+     0.85,
+     0.55
+    ],
+    "textZone": [
+     0,
+     0.55,
+     1,
+     1
+    ],
+    "focusY": 0.28
+   },
+   "skinRole": {
+    "role": "card",
+    "kind": "fire"
+   },
+   "w": 360,
+   "h": 540,
+   "bytes": 15290,
+   "sha256": "eeb397f8864ff94c37d5cd50e8ec337588c50f02528182b854636d67ae892521",
+   "backdrop": "ivy ruin arch"
+  },
+  {
+   "key": "frost",
+   "role": "card",
+   "file": "cards/frost.webp",
+   "alpha": false,
+   "source": {
+    "run": "gen/set-sky",
+    "file": "frost.png",
+    "sha256": "09a7c0128efaf0820a3d84f9994948a619dfa264606d5b7ffdd490dc1fa2086f"
+   },
+   "prompt": [
+    "gen/set-sky/PROMPT.md",
+    "gen/set-sky/GEN.md"
+   ],
+   "post": [
+    {
+     "crop23": {}
+    },
+    {
+     "resize": {
+      "size": "360x540"
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "subject": "a cluster of clear blue ice crystals growing out of a frost-covered stone, a fine six-pointed frost pattern spreading on the stone, cold mist curling around it",
+   "accent": "icy cyan",
+   "safeArea": {
+    "subject": [
+     0.15,
+     0.04,
+     0.85,
+     0.55
+    ],
+    "textZone": [
+     0,
+     0.55,
+     1,
+     1
+    ],
+    "focusY": 0.28
+   },
+   "skinRole": {
+    "role": "card",
+    "kind": "frost"
+   },
+   "w": 360,
+   "h": 540,
+   "bytes": 18660,
+   "sha256": "acf5ccc429c9b37187d4b7581be0eaf6685dd1d878c5743571fe842e4ac2d0a0",
+   "backdrop": "cliff above the clouds at dusk"
+  },
+  {
+   "key": "storm",
+   "role": "card",
+   "file": "cards/storm.webp",
+   "alpha": false,
+   "source": {
+    "run": "gen/set-sky",
+    "file": "storm.png",
+    "sha256": "be9266797315f28b36b6b1ee1fe2c5eddad384521145f8e9b88efb2422ec1585"
+   },
+   "prompt": [
+    "gen/set-sky/PROMPT.md",
+    "gen/set-sky/GEN.md"
+   ],
+   "post": [
+    {
+     "crop23": {}
+    },
+    {
+     "resize": {
+      "size": "360x540"
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "subject": "a tall twisted brass rod with a copper ring at its tip, a small dark storm cloud above it and a forked yellow lightning bolt striking the tip, tiny sparks",
+   "accent": "electric yellow",
+   "safeArea": {
+    "subject": [
+     0.15,
+     0.04,
+     0.85,
+     0.55
+    ],
+    "textZone": [
+     0,
+     0.55,
+     1,
+     1
+    ],
+    "focusY": 0.28
+   },
+   "skinRole": {
+    "role": "card",
+    "kind": "storm"
+   },
+   "w": 360,
+   "h": 540,
+   "bytes": 14568,
+   "sha256": "d972211820a63d63214c9b14cd74f7f894a59657aeed586a9fa00c231bc02c2f",
+   "backdrop": "cliff above the clouds at dusk"
+  },
+  {
+   "key": "guard",
+   "role": "card",
+   "file": "cards/guard.webp",
+   "alpha": false,
+   "source": {
+    "run": "gen/set-a",
+    "file": "guard.png",
+    "sha256": "359f32fa2b0a0168f1cd94e71db51eb25d276ab671cdea30e544007f8baa1785"
+   },
+   "prompt": [
+    "gen/set-a/PROMPT.md",
+    "gen/set-a/GEN.md"
+   ],
+   "post": [
+    {
+     "crop23": {}
+    },
+    {
+     "resize": {
+      "size": "360x540"
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "subject": "a round wooden shield with an iron rim and riveted bands, a plain domed brass boss in the centre and a carved oak-leaf pattern on the wood, standing slightly tilted",
+   "accent": "steel blue",
+   "safeArea": {
+    "subject": [
+     0.15,
+     0.04,
+     0.85,
+     0.55
+    ],
+    "textZone": [
+     0,
+     0.55,
+     1,
+     1
+    ],
+    "focusY": 0.28
+   },
+   "skinRole": {
+    "role": "card",
+    "kind": "guard"
+   },
+   "w": 360,
+   "h": 540,
+   "bytes": 17850,
+   "sha256": "8b986568f5b3aab6f3070691707635d82b292394f0a2fa797e6a876abb83adbc",
+   "backdrop": "ivy ruin arch"
+  },
+  {
+   "key": "heart",
+   "role": "card",
+   "file": "cards/heart.webp",
+   "alpha": false,
+   "source": {
+    "run": "gen/set-grove",
+    "file": "heart.png",
+    "sha256": "516d6982ea469bbd38478e2afb21f492148d640720d631964b6a85ed2abd5f39"
+   },
+   "prompt": [
+    "gen/set-grove/PROMPT.md",
+    "gen/set-grove/GEN.md"
+   ],
+   "post": [
+    {
+     "crop23": {}
+    },
+    {
+     "resize": {
+      "size": "360x540"
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "subject": "a glowing heart-shaped red seed pod cradled by twisting pale roots that rise from the ground, soft warm light pulsing inside the pod",
+   "accent": "rose red",
+   "safeArea": {
+    "subject": [
+     0.15,
+     0.04,
+     0.85,
+     0.55
+    ],
+    "textZone": [
+     0,
+     0.55,
+     1,
+     1
+    ],
+    "focusY": 0.28
+   },
+   "skinRole": {
+    "role": "card",
+    "kind": "heart"
+   },
+   "w": 360,
+   "h": 540,
+   "bytes": 15542,
+   "sha256": "2f7aa808e1cdb8b6a423496d92f8c55d846be1ef5b5a6cb32b86b7d7fc251126",
+   "backdrop": "forest floor clearing"
+  },
+  {
+   "key": "speed",
+   "role": "card",
+   "file": "cards/speed.webp",
+   "alpha": false,
+   "source": {
+    "run": "gen/set-sky",
+    "file": "speed.png",
+    "sha256": "1846e9a464ca5d20277f948b7409c80c88c2d758b214c9401be602c3150ee71a"
+   },
+   "prompt": [
+    "gen/set-sky/PROMPT.md",
+    "gen/set-sky/GEN.md"
+   ],
+   "post": [
+    {
+     "crop23": {}
+    },
+    {
+     "resize": {
+      "size": "360x540"
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "subject": "a pair of soft brown leather boots with small white feathered wings at the ankles, mid-stride in the air, pale green motion wisps trailing behind them",
+   "accent": "mint green",
+   "safeArea": {
+    "subject": [
+     0.15,
+     0.04,
+     0.85,
+     0.55
+    ],
+    "textZone": [
+     0,
+     0.55,
+     1,
+     1
+    ],
+    "focusY": 0.28
+   },
+   "skinRole": {
+    "role": "card",
+    "kind": "speed"
+   },
+   "w": 360,
+   "h": 540,
+   "bytes": 16886,
+   "sha256": "a9f59f53db178d02fb4023fa223b0bd040ef4de402541af41cdcabd4519e4cf7",
+   "backdrop": "cliff above the clouds at dusk"
+  },
+  {
+   "key": "gold",
+   "role": "card",
+   "file": "cards/gold.webp",
+   "alpha": false,
+   "source": {
+    "run": "gen/set-grove",
+    "file": "gold.png",
+    "sha256": "45410982de567672d0ce413aa8cacf3568610a3958bd5584ef69913c3396d0c3"
+   },
+   "prompt": [
+    "gen/set-grove/PROMPT.md",
+    "gen/set-grove/GEN.md"
+   ],
+   "post": [
+    {
+     "crop23": {}
+    },
+    {
+     "resize": {
+      "size": "360x540"
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "subject": "a worn leather coin pouch tied with cord, tipped over and spilling plain gold coins (smooth faces, no symbols) onto a small stone ledge, a warm glint on the coins",
+   "accent": "gold yellow",
+   "safeArea": {
+    "subject": [
+     0.15,
+     0.04,
+     0.85,
+     0.55
+    ],
+    "textZone": [
+     0,
+     0.55,
+     1,
+     1
+    ],
+    "focusY": 0.28
+   },
+   "skinRole": {
+    "role": "card",
+    "kind": "gold"
+   },
+   "w": 360,
+   "h": 540,
+   "bytes": 16858,
+   "sha256": "a4d2d6df930d78e1045e32ae8d2a16c7e51d4753a6d44e8c438c4e912a41e0e0",
+   "backdrop": "forest floor clearing"
+  },
+  {
+   "key": "magic",
+   "role": "card",
+   "file": "cards/magic.webp",
+   "alpha": false,
+   "source": {
+    "run": "gen/set-b",
+    "file": "magic.png",
+    "sha256": "e6ca16afd272ed8b11c7b9ea3e0356c6939dcda71ac600ae5e48611d29acdbeb"
+   },
+   "prompt": [
+    "gen/set-b/PROMPT.md",
+    "gen/set-b/GEN.md"
+   ],
+   "post": [
+    {
+     "crop23": {}
+    },
+    {
+     "resize": {
+      "size": "360x540"
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "subject": "an old leather-bound book floating open, its pages blank and softly glowing, a small eight-pointed violet star of light hovering above the pages with thin swirls of light around it",
+   "accent": "arcane violet",
+   "safeArea": {
+    "subject": [
+     0.15,
+     0.04,
+     0.85,
+     0.55
+    ],
+    "textZone": [
+     0,
+     0.55,
+     1,
+     1
+    ],
+    "focusY": 0.28
+   },
+   "skinRole": {
+    "role": "card",
+    "kind": "magic"
+   },
+   "w": 360,
+   "h": 540,
+   "bytes": 16114,
+   "sha256": "9a9d41050139e437c75873bfd5a81042e6e537cad0dcb39a6c582f0f5c941cac",
+   "backdrop": "ivy ruin arch"
+  },
+  {
+   "key": "luck",
+   "role": "card",
+   "file": "cards/luck.webp",
+   "alpha": false,
+   "source": {
+    "run": "gen/set-grove",
+    "file": "luck.png",
+    "sha256": "3d7518f8c9616742242e50a5e9d83fd388e3ddfefac2ba01fca9a0d9628a25d9"
+   },
+   "prompt": [
+    "gen/set-grove/PROMPT.md",
+    "gen/set-grove/GEN.md"
+   ],
+   "post": [
+    {
+     "crop23": {}
+    },
+    {
+     "resize": {
+      "size": "360x540"
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "subject": "a small brass charm pendant on a short cord, a four-leaf clover pressed under a round glass cabochon in its centre, a soft green shimmer around it",
+   "accent": "clover green",
+   "safeArea": {
+    "subject": [
+     0.15,
+     0.04,
+     0.85,
+     0.55
+    ],
+    "textZone": [
+     0,
+     0.55,
+     1,
+     1
+    ],
+    "focusY": 0.28
+   },
+   "skinRole": {
+    "role": "card",
+    "kind": "luck"
+   },
+   "w": 360,
+   "h": 540,
+   "bytes": 18010,
+   "sha256": "c9d12079772527413bbba589f2fb7d1f9265e450cdda2594957a0b9d84720ae2",
+   "backdrop": "forest floor clearing"
+  },
+  {
+   "key": "poison",
+   "role": "card",
+   "file": "cards/poison.webp",
+   "alpha": false,
+   "source": {
+    "run": "gen/set-grove",
+    "file": "poison.png",
+    "sha256": "83220b19c8ca68faf9585f39feaadc2750f97944d75033b2128d8c8fe55e7b5f"
+   },
+   "prompt": [
+    "gen/set-grove/PROMPT.md",
+    "gen/set-grove/GEN.md"
+   ],
+   "post": [
+    {
+     "crop23": {}
+    },
+    {
+     "resize": {
+      "size": "360x540"
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "subject": "a round stoppered glass flask of bubbling bright green liquid with a cork and wax seal, one thick green drop sliding down its side, faint green fumes",
+   "accent": "venom lime",
+   "safeArea": {
+    "subject": [
+     0.15,
+     0.04,
+     0.85,
+     0.55
+    ],
+    "textZone": [
+     0,
+     0.55,
+     1,
+     1
+    ],
+    "focusY": 0.28
+   },
+   "skinRole": {
+    "role": "card",
+    "kind": "poison"
+   },
+   "w": 360,
+   "h": 540,
+   "bytes": 18512,
+   "sha256": "af7f639beb09df5748536d53d3eef67f9883feab1961950d7cfd0cf0210a787b",
+   "backdrop": "forest floor clearing"
+  },
+  {
+   "key": "light",
+   "role": "card",
+   "file": "cards/light.webp",
+   "alpha": false,
+   "source": {
+    "run": "gen/set-sky",
+    "file": "light.png",
+    "sha256": "92370250c15182950fc0cfea25288d087a5323efd3100de559dffb058aec5a64"
+   },
+   "prompt": [
+    "gen/set-sky/PROMPT.md",
+    "gen/set-sky/GEN.md"
+   ],
+   "post": [
+    {
+     "crop23": {}
+    },
+    {
+     "resize": {
+      "size": "360x540"
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "subject": "a single long golden feather floating upright inside a soft beam of light falling from the upper left, tiny motes of light around it",
+   "accent": "pale gold",
+   "safeArea": {
+    "subject": [
+     0.15,
+     0.04,
+     0.85,
+     0.55
+    ],
+    "textZone": [
+     0,
+     0.55,
+     1,
+     1
+    ],
+    "focusY": 0.28
+   },
+   "skinRole": {
+    "role": "card",
+    "kind": "light"
+   },
+   "w": 360,
+   "h": 540,
+   "bytes": 13744,
+   "sha256": "4b176f444e3ed46b12a6df9af99079a8914adad09f677fc18c831b4bfce666bf",
+   "backdrop": "cliff above the clouds at dusk"
+  },
+  {
+   "key": "crit",
+   "role": "card",
+   "file": "cards/crit.webp",
+   "alpha": false,
+   "source": {
+    "run": "gen/set-sky",
+    "file": "crit.png",
+    "sha256": "367ab6a3badd98d38c8a684350a76d5b09734063c380765ec1cd1fd618941022"
+   },
+   "prompt": [
+    "gen/set-sky/PROMPT.md",
+    "gen/set-sky/GEN.md"
+   ],
+   "post": [
+    {
+     "crop23": {}
+    },
+    {
+     "resize": {
+      "size": "360x540"
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "subject": "a brass amulet shaped like an open eye with a sharp crimson gem as its pupil, hanging on a short chain, two thin bright glints flashing off the gem",
+   "accent": "crimson",
+   "safeArea": {
+    "subject": [
+     0.15,
+     0.04,
+     0.85,
+     0.55
+    ],
+    "textZone": [
+     0,
+     0.55,
+     1,
+     1
+    ],
+    "focusY": 0.28
+   },
+   "skinRole": {
+    "role": "card",
+    "kind": "crit"
+   },
+   "w": 360,
+   "h": 540,
+   "bytes": 17138,
+   "sha256": "a86a4d57342c5adfa6ba8b95369e2a5f617b66d85532b9c7857d88eefe0f9b44",
+   "backdrop": "cliff above the clouds at dusk"
+  },
+  {
+   "key": "arrow",
+   "role": "card",
+   "file": "cards/arrow.webp",
+   "alpha": false,
+   "source": {
+    "run": "gen/set-sky",
+    "file": "arrow.png",
+    "sha256": "fb372bb38038a11fea85b285930822771fb9913e8978535c33b37d47a586f15a"
+   },
+   "prompt": [
+    "gen/set-sky/PROMPT.md",
+    "gen/set-sky/GEN.md"
+   ],
+   "post": [
+    {
+     "crop23": {}
+    },
+    {
+     "resize": {
+      "size": "360x540"
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "subject": "a short curved wooden bow with a leather grip and three arrows with white fletching crossed in front of it, slightly tilted",
+   "accent": "tan leather",
+   "safeArea": {
+    "subject": [
+     0.15,
+     0.04,
+     0.85,
+     0.55
+    ],
+    "textZone": [
+     0,
+     0.55,
+     1,
+     1
+    ],
+    "focusY": 0.28
+   },
+   "skinRole": {
+    "role": "card",
+    "kind": "arrow"
+   },
+   "w": 360,
+   "h": 540,
+   "bytes": 16838,
+   "sha256": "8737ce8730be1f05521154d8ccb2e4010871dd827bff0ae91746cf7557234df9",
+   "backdrop": "cliff above the clouds at dusk"
+  },
+  {
+   "key": "regen",
+   "role": "card",
+   "file": "cards/regen.webp",
+   "alpha": false,
+   "source": {
+    "run": "gen/set-grove",
+    "file": "regen.png",
+    "sha256": "491937a6f114c6ea1abed61412a7cae68f95eff39c2aca33af253706043d06e9"
+   },
+   "prompt": [
+    "gen/set-grove/PROMPT.md",
+    "gen/set-grove/GEN.md"
+   ],
+   "post": [
+    {
+     "crop23": {}
+    },
+    {
+     "resize": {
+      "size": "360x540"
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "subject": "a small cracked clay pot with a young green sprout of three leaves growing out of it, dew drops on the leaves, a gentle green glow around the sprout",
+   "accent": "spring green",
+   "safeArea": {
+    "subject": [
+     0.15,
+     0.04,
+     0.85,
+     0.55
+    ],
+    "textZone": [
+     0,
+     0.55,
+     1,
+     1
+    ],
+    "focusY": 0.28
+   },
+   "skinRole": {
+    "role": "card",
+    "kind": "regen"
+   },
+   "w": 360,
+   "h": 540,
+   "bytes": 15384,
+   "sha256": "06175c159abbc2465554510b5700e5e4fe390ed127ba7336a678ff51a0244efe",
+   "backdrop": "forest floor clearing"
+  }
+ ]
+}

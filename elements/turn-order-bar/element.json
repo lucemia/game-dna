@@ -1,0 +1,68 @@
+{
+  "id": "turn-order-bar",
+  "code": "C-02",
+  "kind": "addon",
+  "name": "Turn-order bar",
+  "family": "ui-turn-order",
+  "oneLiner": "A strip of small portraits showing who acts next: the current actor sits first in a gold frame and bounces, the next 6-10 units follow in team-coloured frames, the strip slides forward when a turn ends, new units pop in, fallen units crumble out, hovered or targeted units blink, and optional wait numbers show how soon each one acts. The game hands over the order; the strip never computes turn rules.",
+  "fits": [
+    "turn-based RPG battle (speed order, charge time, rounds)",
+    "tactics / strategy RPG (phases: units that have not acted yet)",
+    "monster battler",
+    "dungeon crawler and roguelike with initiative",
+    "card battler with an initiative track"
+  ],
+  "notFor": [
+    "real-time games with no turn order",
+    "games that hide the enemy's order on purpose (surprise mechanics)",
+    "simultaneous-turn games (everyone plans at once, no order to show)"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "the turn order as an array of unit ids, given whenever it changes (or every step), plus the id acting now",
+      "a fixed 60 Hz update step (dt in ms, the strip animates on it)",
+      "the screen area the strip stays inside (native px)",
+      "optional: drawPortrait(ctx, id, rect) or the unit sprites (spritePortrait helper), teamOf(id), wait numbers, ids that just died",
+      "optional: rectangles to avoid (HUD rects without id, sprites with id)"
+    ],
+    "provides": [
+      "the strip's rectangle on screen (ui rect for other overlays to avoid)",
+      "slotAt(x, y) for hover / tap hit tests on portraits",
+      "a spritePortrait helper that turns the game's own sprites into portraits"
+    ]
+  },
+  "params": [
+    { "key": "layout", "label": "Layout", "type": "select", "options": ["top", "bottom", "left", "right"], "default": "top" },
+    { "key": "align", "label": "Align along the edge", "type": "select", "options": ["start", "center", "end"], "default": "start" },
+    { "key": "slots", "label": "Slots shown", "type": "range", "min": 4, "max": 12, "step": 1, "default": 8 },
+    { "key": "size", "label": "Portrait size (px)", "type": "range", "min": 12, "max": 24, "step": 2, "default": 16 },
+    { "key": "gap", "label": "Gap (px)", "type": "range", "min": 0, "max": 4, "step": 1, "default": 2 },
+    { "key": "slide", "label": "Slide (ms)", "type": "range", "min": 0, "max": 500, "step": 20, "default": 240 },
+    { "key": "pop", "label": "Join / leave (ms)", "type": "range", "min": 0, "max": 400, "step": 20, "default": 220 },
+    { "key": "bounce", "label": "Current bounce (px)", "type": "range", "min": 0, "max": 4, "step": 1, "default": 2 },
+    { "key": "waits", "label": "Wait numbers", "type": "select", "options": ["auto", "off"], "default": "auto" },
+    { "key": "label", "label": "Label", "type": "select", "options": ["TURN", "NEXT", "none"], "default": "TURN" },
+    { "key": "fade", "label": "Fade over sprites", "type": "select", "options": ["on", "off"], "default": "on" },
+    { "key": "portrait", "label": "Portraits", "type": "select", "options": ["auto", "token"], "default": "auto" }
+  ],
+  "variants": [
+    { "name": "Classic top strip", "params": { "layout": "top", "align": "start", "slots": 8, "size": 16, "gap": 2, "slide": 240, "pop": 220, "bounce": 2, "label": "TURN" } },
+    { "name": "Side column", "params": { "layout": "left", "slots": 7, "size": 16, "gap": 2, "label": "NEXT" } },
+    { "name": "Big portraits", "params": { "layout": "top", "align": "center", "slots": 6, "size": 22, "gap": 3, "bounce": 3, "slide": 300 } },
+    { "name": "Compact tokens", "params": { "slots": 10, "size": 12, "gap": 1, "portrait": "token", "label": "none", "waits": "off", "bounce": 1, "slide": 180, "pop": 160 } }
+  ],
+  "assets": [
+    "module/turn-order-bar.js: the element as one dependency-free script (global GameDNA_TurnOrder): plate, slots, team frames, gold current frame, tokens, 3x5 wait digits, slide / join / leave / hop animation, placement off HUD rects, spritePortrait helper; draws through GameDNA_Skin when skin-api.js is loaded, otherwise with its built-in copy of the pixel16 look",
+    "no image or audio files"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/turn-order-bar.js",
+    "global": "GameDNA_TurnOrder",
+    "version": "1.0.0",
+    "docs": "module/README.md"
+  }
+}

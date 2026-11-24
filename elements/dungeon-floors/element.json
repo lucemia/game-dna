@@ -1,0 +1,203 @@
+{
+  "id": "dungeon-floors",
+  "code": "B-12",
+  "kind": "system",
+  "name": "Procedural dungeon floors",
+  "family": "Dungeon crawl",
+  "oneLiner": "A turn-based dungeon crawl on seeded floors: rooms placed at random, joined by a minimum spanning tree of corridors plus a few loops, doors and arches, autotiled walls and floors (faces, caps, edges, inner and outer corners), torches, decor per room type, chests, loose items and monsters placed by a per-room budget, stairs down in the room farthest from the start and a boss throne on the last floor. The hero steps in 8 directions without cutting corners, bumps monsters to fight, bumps doors and chests to open them; then every awake monster acts. Field of view by shadowcasting with a lantern and torch light, explored cells remembered, unknown cells black, a minimap and a full map. Seeded and frame-stepped (same seed = same run at any view size), with a bot that plays through the same rules.",
+  "fits": [
+    "roguelikes and roguelites with turn-based exploration",
+    "dungeon levels inside an RPG or an adventure game",
+    "daily-seed challenge runs",
+    "short mobile dungeon dives (tap to walk)"
+  ],
+  "notFor": [
+    "hand-made levels where every room is designed (use your own map and only the fog and turn ideas)",
+    "real-time action combat (the rules are turn-based; use A-05 sword combat or A-11 horde survival)",
+    "side-view platformers"
+  ],
+  "interfaces": {
+    "time": "turn",
+    "coords": "grid",
+    "layer": "scene",
+    "needs": [
+      "a seed per run and a fixed 60 Hz update step (turns are input-driven; animation runs on the step)",
+      "key or tap input routed to the dungeon while it runs (8 directions, wait, tonic, map), and held direction keys",
+      "a canvas 2D context and a logical view rect, ideally an integer number of device px per art px",
+      "optional: room types, monsters and items as data",
+      "a place to go when the run is won or lost"
+    ],
+    "provides": [
+      "the floors: rooms, MST + loop corridors, doors, walls, stairs, room types, decor, torches, chests, items, monster budgets, boss throne",
+      "the rules: 8-way steps without corner cutting, bump attacks, doors, chests, fountains, tonics, XP and levels, monster wake / chase / erratic AI, speed 2 and 0.5",
+      "sight: shadowcasting, lit cells only, explored memory, fog",
+      "the screen: three-quarter pixel tiles, hero with walk frames and a sword (ready, wind-up, strike), combat numbers pinned to the defender's cell (damage, crit, miss, heal), hopping / flying / gliding monsters facing the hero, light grid with torches, HUD, minimap, boss bar, message log, floor banner, full map",
+      "hit site onHit on the impact frame (read-only), onEvent (floorStart, turn, move, wake, door, chest, pickup, potion, heal, fountain, death, levelUp, descend, end), onEnd(result, info)",
+      "a bot that explores, fights, loots and descends through the same rules",
+      "anchors (hero and monsters, live), unit rects, UI rects, field rect, actors() text state"
+    ]
+  },
+  "params": [
+    {
+      "key": "floors",
+      "label": "Floors per run",
+      "type": "range",
+      "min": 1,
+      "max": 9,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "key": "rooms",
+      "label": "Rooms per floor",
+      "type": "range",
+      "min": 4,
+      "max": 18,
+      "step": 1,
+      "default": 10
+    },
+    {
+      "key": "loops",
+      "label": "Extra loop corridors",
+      "type": "range",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.25
+    },
+    {
+      "key": "doors",
+      "label": "Share of doorways with a door",
+      "type": "range",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.6
+    },
+    {
+      "key": "density",
+      "label": "Monster budget",
+      "type": "range",
+      "min": 0,
+      "max": 2.5,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "chests",
+      "label": "Chest chance",
+      "type": "range",
+      "min": 0,
+      "max": 3,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "light",
+      "label": "Lantern radius (cells)",
+      "type": "range",
+      "min": 3,
+      "max": 10,
+      "step": 0.5,
+      "default": 6.5
+    },
+    {
+      "key": "width",
+      "label": "Map width (cells)",
+      "type": "range",
+      "min": 30,
+      "max": 72,
+      "step": 2,
+      "default": 46
+    },
+    {
+      "key": "height",
+      "label": "Map height (cells)",
+      "type": "range",
+      "min": 24,
+      "max": 52,
+      "step": 2,
+      "default": 34
+    },
+    {
+      "key": "fog",
+      "label": "Fog of war",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "numbers",
+      "label": "Combat numbers (off when an addon draws its own)",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "minimap",
+      "label": "Minimap",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Standard (default)",
+      "params": {}
+    },
+    {
+      "name": "Labyrinth: many rooms, many loops",
+      "params": {
+        "rooms": 16,
+        "loops": 0.8,
+        "width": 60,
+        "height": 44
+      }
+    },
+    {
+      "name": "Pure tree, no doors",
+      "params": {
+        "loops": 0,
+        "doors": 0
+      }
+    },
+    {
+      "name": "Crowded",
+      "params": {
+        "density": 2,
+        "chests": 1.6
+      }
+    },
+    {
+      "name": "Short dive",
+      "params": {
+        "floors": 3,
+        "rooms": 7
+      }
+    },
+    {
+      "name": "Dim lantern",
+      "params": {
+        "light": 4
+      }
+    }
+  ],
+  "assets": "module/dungeon-floors.js (global GameDNA_DungeonFloors, no dependencies; API in module/README.md). Everything is drawn in code at 16 px tiles: flagstone, tile, brick, moss and throne floors, brick wall faces and caps with autotiled rims and corners, doors, arches, stairs, torches, a fountain, 11 decor kinds, chests, 5 item looks, the hooded hero (4 facings, 4-frame walk), six monster looks (slime, ember slime with a flame crown, bat, sporeling, wisp, the Hollow Crown), a throne, effects, the light grid, HUD, minimap and the 8 px pixel font. No external files.",
+  "status": "v1-module",
+  "module": {
+    "file": "module/dungeon-floors.js",
+    "global": "GameDNA_DungeonFloors",
+    "version": "1.1.3"
+  },
+  "starter": "starter/index.html"
+}

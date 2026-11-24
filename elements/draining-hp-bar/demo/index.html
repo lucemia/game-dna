@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Draining HP Bar</title>
+<style>
+:root {
+  --bg: #0b0912; --panel: #15121f; --line: #2a2540; --text: #ece8f6; --dim: #9a93b4; --accent: #ff6a5a; --loss: #ffd98a; --gain: #9dffc6; --fill: #4cc25c;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1100px 560px at 25% -10%, #3a1a2a 0%, var(--bg) 62%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 16px 20px 10px; max-width: 1280px; margin: 0 auto; }
+.code { white-space: nowrap; font: 800 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #1a0606; background: linear-gradient(#ffb0a0, var(--accent)); padding: 6px 8px; border-radius: 5px; box-shadow: 0 2px 10px #ff6a5a40; }
+h1 { font-size: 19px; margin: 0; letter-spacing: .01em; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; max-width: 880px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; padding: 0 20px 24px; max-width: 1280px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.frame { padding: 6px; background: linear-gradient(#2a2340, #14101e); border-radius: 12px; box-shadow: 0 0 0 1px #3a3352, 0 24px 60px #000a; }
+#game { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; background: #000; }
+.caption { display: flex; justify-content: space-between; gap: 12px; color: var(--dim); font-size: 12px; padding: 0 4px; }
+.caption b { color: var(--text); font-weight: 600; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--dim); }
+.legend span::before { content: ""; display: inline-block; width: 18px; height: 8px; border-radius: 4px; background: var(--c); margin-right: 6px; vertical-align: 0; box-shadow: 0 0 8px var(--c); }
+.cmp { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px 14px; }
+.cmp h2 { margin: 0 0 2px; }
+.cmp p { margin: 0 0 10px; color: var(--dim); font-size: 12.5px; }
+.pxwrap { display: flex; justify-content: center; background: #07050c; border-radius: 6px; box-shadow: 0 0 0 1px #3a3352; padding: 8px 0; }
+#px { display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
+aside { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+h2 { margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.triggers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.triggers button { --c: #dfe5f3; appearance: none; border: 1px solid #00000060; border-radius: 7px; padding: 8px 2px 7px; cursor: pointer; color: var(--text); font: 600 11.5px/1.1 inherit;
+  background: linear-gradient(#2a2440, #1d192c); box-shadow: inset 0 1px 0 #ffffff14, inset 0 -2px 0 var(--c); transition: transform .06s, background .15s; }
+.triggers button:hover { background: linear-gradient(#352d50, #241f36); }
+.triggers button:active { transform: translateY(1px) scale(.98); }
+.triggers button i { display: block; font-style: normal; font: 900 13px/1 inherit; color: var(--c); margin-bottom: 4px; text-shadow: 0 0 10px var(--c), 0 1px 0 #000; }
+.row { margin-bottom: 10px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 5px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--loss); }
+input[type=range] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--fill), #2e2842 var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #ffe8d8; border: 2px solid #1a0606; box-shadow: 0 1px 6px #000a; cursor: pointer; }
+input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: #ffe8d8; border: 2px solid #1a0606; }
+.seg { display: flex; flex-wrap: wrap; background: #0f0d17; border: 1px solid var(--line); border-radius: 7px; padding: 2px; gap: 2px; }
+.seg button { flex: 1 1 22%; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 4px; border-radius: 5px; cursor: pointer; }
+.seg button[aria-checked=true] { background: #2e2746; color: var(--text); box-shadow: inset 0 0 0 1px #4a4068, inset 0 -2px 0 var(--accent); }
+.seg button:hover { color: var(--text); }
+.tog { display: flex; gap: 6px; }
+.tog button { flex: 1; appearance: none; background: #0f0d17; border: 1px solid var(--line); color: var(--text); border-radius: 7px; padding: 7px 8px; font: 600 12px inherit; cursor: pointer; }
+.tog button[aria-pressed=true] { box-shadow: inset 0 -2px 0 var(--fill); }
+.foot { color: var(--dim); font-size: 11.5px; border-top: 1px solid var(--line); padding-top: 10px; }
+.foot code { color: var(--text); }
+@media (max-width: 1000px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 680px; width: 100%; margin: 0 auto; } }
+#hud { display: block; width: 100%; border-radius: 0 0 8px 8px; background: #0e0a14; margin-top: 3px; }
+@media (max-width: 520px) { header { flex-direction: column; align-items: flex-start; gap: 8px; } }
+@media (max-width: 560px) { header { padding: 12px 16px 8px; } main { padding: 0 16px 16px; gap: 12px; } .frame { padding: 3px; } .caption { flex-direction: column; gap: 2px; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">C-08</span>
+  <div><h1>Draining HP bar</h1><p>Damage drops the fill at once while a pale loss segment holds where the health was, then drains down; quick hits extend the hold and merge into one segment. A heal shows a gain segment first, then the fill rises to meet it. Low health pulses. One module draws the boss bar, the party HUD bars and the small bars over units, smooth on HD and crisp on pixel canvases.</p></div>
+</header>
+<main>
+  <section id="stage">
+    <div class="frame"><canvas id="game" width="640" height="360" aria-label="A night battle in old ruins: three heroes against a stone colossus and two small foes, with draining health bars"></canvas><canvas id="hud" hidden aria-label="Boss and party health bars (phone layout)"></canvas></div>
+    <div class="caption"><span><b>Watch:</b> the sword combo stacks three hits into one loss segment on the boss bar before it drains; the mage's heal shows a mint gain segment before the fill rises; at a quarter health the bars pulse.</span><span>Keys 1-6 trigger events</span></div>
+    <div class="legend"><span style="--c:var(--fill)">fill (current HP)</span><span style="--c:var(--loss)">loss segment (holds, then drains)</span><span style="--c:var(--gain)">gain segment (heal preview)</span><span style="--c:#ff3a3a">low-HP pulse</span></div>
+    <div class="cmp">
+      <h2>On a native pixel canvas</h2>
+      <p>The same events on a 256 x 144 canvas shown at a whole-number scale. The module switches to its crisp mode by itself there: whole pixels, flat colour steps, a stepped flash and pulse, and built-in 3 x 5 digits.</p>
+      <div class="pxwrap"><canvas id="px" width="256" height="144" aria-label="Pixel version: a knight against a brute and a bandit"></canvas></div>
+    </div>
+  </section>
+  <aside>
+    <div>
+      <h2>Trigger</h2>
+      <div class="triggers">
+        <button type="button" data-fire="hit" style="--c:#ffd98a"><i>-</i>Hit boss</button>
+        <button type="button" data-fire="combo" style="--c:#ffd98a"><i>x3</i>Combo</button>
+        <button type="button" data-fire="big" style="--c:#ff7a5a"><i>!!</i>Big hit</button>
+        <button type="button" data-fire="hurt" style="--c:#ff5a4e"><i>-</i>Hit hero</button>
+        <button type="button" data-fire="heal" style="--c:#9dffc6"><i>+</i>Heal hero</button>
+        <button type="button" data-fire="reset" style="--c:#a9b7d6"><i>R</i>Reset HP</button>
+      </div>
+    </div>
+    <div class="tog"><button type="button" id="auto" aria-pressed="true">Script: on</button><button type="button" id="slow" aria-pressed="false">Speed: 1x</button><button type="button" id="defaults">Defaults</button></div>
+    <div><h2>Parameters</h2><div id="params"></div></div>
+    <div class="foot">Deterministic: <code>?t=1400&amp;freeze=1</code> shows the same frame every time. Any parameter can be set in the URL, e.g. <code>?hold=900&amp;ease=linear&amp;theme=amber</code>.</div>
+  </aside>
+</main>
+<script src="../../../demo-kit/kit-art.js"></script>
+<script src="../../cutout-characters/module/cutout-characters.js"></script>
+<script src="../../cutout-characters/assets/pack.js"></script>
+<script src="../../../demo-kit/kit.js"></script>
+<script src="../../../pixel-kit/pixel-scene.js"></script>
+<script src="../module/draining-hp-bar.js"></script>
+<script>/* ===== C-08 demo: drives module/draining-hp-bar.js (an HD instance and a crisp 256x144 instance) ===== */
+'use strict';
+const VW = 640, VH = 360, STEP = 1000 / 60, LOOP = 12600;
+const qs = new URLSearchParams(location.search);
+const PARAMS = [
+  { key: 'hold', label: 'Hold before drain', type: 'range', min: 0, max: 1500, step: 25, default: 450, unit: 'ms' },
+  { key: 'holdCap', label: 'Hold cap (merged hits)', type: 'range', min: 0, max: 4000, step: 100, default: 1600, unit: 'ms' },
+  { key: 'drain', label: 'Drain speed', type: 'range', min: 0.1, max: 3, step: 0.05, default: 0.7, unit: 'bar/s' },
+  { key: 'ease', label: 'Drain easing', type: 'select', options: ['smooth', 'out', 'linear'], default: 'smooth' },
+  { key: 'gainHold', label: 'Gain preview hold', type: 'range', min: 0, max: 1000, step: 20, default: 240, unit: 'ms' },
+  { key: 'fill', label: 'Fill speed (heal)', type: 'range', min: 0.1, max: 3, step: 0.05, default: 0.9, unit: 'bar/s' },
+  { key: 'low', label: 'Low-HP threshold', type: 'range', min: 0, max: 0.5, step: 0.05, default: 0.25, unit: '' },
+  { key: 'pulse', label: 'Low-HP pulse', type: 'select', options: ['on', 'off'], default: 'on' },
+  { key: 'flash', label: 'Hit flash', type: 'select', options: ['on', 'off'], default: 'on' },
+  { key: 'shake', label: 'Shake', type: 'range', min: 0, max: 4, step: 0.5, default: 2, unit: 'px' },
+  { key: 'theme', label: 'Theme', type: 'select', options: ['auto', 'crimson', 'verdant', 'azure', 'amber'], default: 'auto' },
+  { key: 'ticks', label: 'Ticks (0 = auto)', type: 'range', min: 0, max: 10, step: 1, default: 0, unit: '' },
+  { key: 'render', label: 'Render', type: 'select', options: ['auto', 'smooth', 'crisp'], default: 'auto' }
+];
+const P = {};
+PARAMS.forEach(p => { P[p.key] = p.default; if (qs.has(p.key)) { const v = qs.get(p.key); P[p.key] = p.type === 'range' ? clamp(+v, p.min, p.max) : p.options.includes(v) ? v : p.default; } });
+const FREEZE = qs.has('t') && qs.get('freeze') === '1', T0 = qs.has('t') ? Math.max(0, +qs.get('t') || 0) : 0;
+let AUTO = qs.get('auto') !== '0', SLOW = qs.get('slow') === '1';
+function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+const lerp = (a, b, u) => a + (b - a) * u, easeOut = u => 1 - (1 - clamp(u, 0, 1)) ** 3, easeInOut = u => (u = clamp(u, 0, 1), u < 0.5 ? 2 * u * u : 1 - (-2 * u + 2) ** 2 / 2);
+function hash(a, b) { let h = Math.imul((a | 0) * 374761393 + (b | 0) * 668265263, 3266489917); h ^= h >>> 13; h = Math.imul(h, 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; }
+const UIFONT = 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+
+/* ---------- cast (640x360 stage px; x = feet centre, y = feet) ---------- */
+const KIT = GameDNA_DemoKit, HUD_Y = 290;
+const CAST = [
+  { id: 'rowan', name: 'Rowan', side: 'a', kit: 'sword', h: 92, hx: 214, hy: 270, hp: 420 },
+  { id: 'kael', name: 'Kael', side: 'a', kit: 'spear', h: 90, hx: 142, hy: 250, hp: 360 },
+  { id: 'mira', name: 'Mira', side: 'a', kit: 'mage', h: 88, hx: 78, hy: 276, hp: 300 },
+  { id: 'colossus', name: 'Ruin Colossus', side: 'b', kit: 'golem', h: 150, hx: 484, hy: 268, hp: 2400, boss: true },
+  { id: 'imp', name: 'Imp', side: 'b', kit: 'imp', h: 54, hx: 316, hy: 238, hp: 180 },
+  { id: 'slime', name: 'Slime', side: 'b', kit: 'slime', h: 42, hx: 590, hy: 282, hp: 90 }
+];
+CAST.forEach(c => { c.act = KIT.actor(c.kit, { h: c.h }); c.maxHp = c.hp; c.x = c.hx; c.y = c.hy; c.dead = false; c.target = c.side === 'a' ? 'colossus' : c.id === 'imp' ? 'mira' : 'rowan'; c.face = c.side === 'a' ? 1 : -1; c.lift = 0; });
+const C = id => CAST.find(c => c.id === id);
+
+/* ---------- the script: who acts on whom, and the HP each hit takes or gives ---------- */
+// [start ms, actor, target, move, [[ms after start, amount (negative = damage)], ...]]
+const SCRIPT = [
+  [500, 'rowan', 'colossus', 'combo', [[420, -220], [580, -180], [740, -260]]],
+  [2150, 'colossus', 'rowan', 'slam', [[560, -224]]],
+  [2950, 'imp', 'mira', 'bolt', [[520, -72]]],
+  [3500, 'mira', 'rowan', 'heal', [[420, 170]]],
+  [4600, 'kael', 'imp', 'thrust', [[420, -120], [640, -60]]],
+  [6000, 'mira', 'colossus', 'fire', [[600, -1200]], [['slime', -34]]],
+  [7700, 'colossus', 'kael', 'slam', [[560, -290]]],
+  [8900, 'mira', 'kael', 'heal', [[420, 150]]],
+  [10100, 'rowan', 'colossus', 'combo', [[420, -90], [580, -110], [740, -140]]]
+];
+const DUR = { combo: 1400, thrust: 1150, slam: 1000, bolt: 900, heal: 900, fire: 1050 };
+const S = { wt: 0, lt: 0, si: 0, acts: [], fx: [], cam: 0, log: [], waiting: [] };
+
+/* ---------- module instances ---------- */
+const BARS = GameDNA_DrainingHpBar.create({ params: P, debug: qs.get('debug') === '1' ? e => (window.__barLog = window.__barLog || []).push(Object.assign({ wt: Math.round(S.wt) }, e)) : null });
+const PXB = GameDNA_DrainingHpBar.create({ params: Object.assign({}, P, { render: 'crisp' }) });
+const PXMAP = { colossus: 'brute', imp: 'bandit', rowan: 'hero' };
+function setHp(c, hp) {
+  c.hp = clamp(Math.round(hp), 0, c.maxHp);
+  BARS.set(c.id, c.hp, c.maxHp);
+  if (PXMAP[c.id]) PXB.set(PXMAP[c.id], c.hp, c.maxHp);
+}
+function resetAll() {
+  CAST.forEach(c => { c.hp = c.maxHp; c.dead = false; c.deadAt = 0; c.act.reset(); c.x = c.hx; c.lift = 0; BARS.reset(c.id, c.hp, c.maxHp); if (PXMAP[c.id]) PXB.reset(PXMAP[c.id], c.hp, c.maxHp); });
+  S.acts = []; S.fx = []; S.waiting = [];
+}
+resetAll();
+
+/* ---------- actions ---------- */
+function start(who, target, move, hits, extra, queued) {
+  const a = C(who), t = C(target); if (!a || !t || a.dead) return;
+  if (queued && S.acts.some(q => q.a === a || (queued === 'keys' && q.t === a))) { S.waiting.push([who, target, move, hits, extra, queued]); return; }   // a button press waits until its attacker is free, so every hit has a visible source
+  const act = { a, t, move, hits: hits.map(h => ({ at: h[0], amt: h[1], done: false })), extra: extra || [], l: 0, end: DUR[move] || 1000 };
+  a.target = target;
+  if (move === 'combo' || move === 'thrust') a.act.walk(260);
+  if (move === 'slam' || move === 'bolt') a.act.play('attack', { dur: 620 });
+  if (move === 'heal' || move === 'fire') a.act.play('cast', { dur: 720 });
+  S.acts.push(act);
+}
+function deathFade(c) { return clamp(1 - (S.wt - c.deadAt - 250) / 650, 0, 1); }
+function frontOf(a, t) { return t.hx - (t.boss ? 96 : 52); }   // the boss strike spot stays clear of the imp standing behind it
+function stepActs() {
+  if (S.waiting.length) { const w = S.waiting[0], a = C(w[0]); if (!S.acts.some(q => q.a === a || (w[5] === 'keys' && q.t === a))) { S.waiting.shift(); start(w[0], w[1], w[2], w[3], w[4]); } }
+  for (const q of S.acts) {
+    q.l += STEP;
+    const a = q.a, melee = q.move === 'combo' || q.move === 'thrust';
+    if (melee) {   // dash in (walk cycle), strike, hop back facing the foe
+      const fx = frontOf(a, q.t), back = q.end - 330;
+      if (q.l < 300) a.x = lerp(a.hx, fx, easeInOut(q.l / 300));
+      else if (q.l < back) { a.x = fx; if (!q.s1) { q.s1 = 1; a.act.walk(0); a.act.play('attack', { dur: q.move === 'combo' ? 560 : 600 }); } if (q.move === 'combo' && !q.s2 && q.l >= 640) { q.s2 = 1; a.act.play('attack', { dur: 420 }); } }
+      else { const k = (q.l - back) / 330; a.x = lerp(fx, a.hx, easeInOut(k)); a.lift = Math.sin(clamp(k, 0, 1) * Math.PI) * 14; }
+    }
+    if (q.move === 'slam') {   // wind-up: the colossus leans back, then lunges a step at its target and slams the ground
+      const hitAt = q.hits[0].at, dir = q.t.x > a.hx ? 1 : -1, back = q.l < 160 ? -easeOut(q.l / 160) * 10 : q.l < 260 ? -10 + easeInOut((q.l - 160) / 100) * 46 : q.l < hitAt + 120 ? 36 : 36 * (1 - easeInOut((q.l - hitAt - 120) / (q.end - hitAt - 120)));
+      a.x = a.hx + dir * back;
+      if (Math.abs(q.l - 250) < STEP / 2) S.fx.push({ k: 'quake', id: a.id, t0: S.wt, x: a.x + dir * 40 + dir * 26, y: a.y });
+    }
+    for (const h of q.hits) if (!h.done && q.l >= h.at) {
+      h.done = true;
+      const t = q.t; if (t.dead && h.amt < 0) continue;
+      setHp(t, t.hp + h.amt);
+      if (h.amt < 0) { t.act.play('hurt'); S.fx.push({ k: 'hit', id: t.id, t0: S.wt, big: h.amt <= -400, col: q.move === 'fire' ? '255,150,60' : q.move === 'bolt' ? '200,120,255' : '255,240,210' }); }
+      else S.fx.push({ k: 'heal', id: t.id, t0: S.wt });
+      for (const [eid, amt] of q.extra) { const e = C(eid); if (e && !e.dead) { setHp(e, e.hp + amt); e.act.play('hurt'); S.fx.push({ k: 'hit', id: e.id, t0: S.wt, col: '255,150,60' }); } }
+      if (t.hp <= 0 && !t.dead) { t.dead = true; t.deadAt = S.wt; t.act.play('down'); }
+    }
+    if (q.l >= q.end) { a.x = a.hx; a.lift = 0; if (a.side === 'a') a.target = 'colossus'; else a.target = a.id === 'imp' ? 'mira' : 'rowan'; }
+  }
+  S.acts = S.acts.filter(q => q.l < q.end);
+  S.fx = S.fx.filter(f => S.wt - f.t0 < 900);   // hits, heals and quakes all end well within 900 ms
+}
+function stepWorld() {
+  S.wt += STEP;
+  if (AUTO) {
+    S.lt += STEP;
+    if (S.lt >= LOOP) { S.lt -= LOOP; S.si = 0; resetAll(); }
+    while (S.si < SCRIPT.length && S.lt >= SCRIPT[S.si][0]) { const s = SCRIPT[S.si++]; start(s[1], s[2], s[3], s[4], s[5], true); }   // same queue as the keys: never two actions on one attacker
+  }
+  stepActs();
+  S.cam = Math.sin(S.wt / 2600) * 10;   // a slow camera drift: the over-head bars are drawn in world space and follow it
+  for (const c of CAST) {
+    c.face = faceOf(c);
+    c.act.update(STEP, { facing: c.face });
+  }
+  BARS.update(STEP); PXB.update(STEP);
+}
+function faceOf(c) { const t = C(c.target); return t ? (t.x > c.x ? 1 : -1) : c.face; }
+
+/* ---------- drawing the HD scene ---------- */
+const cv = document.getElementById('game'), g = cv.getContext('2d');
+let NARROW = false;   // phone: the 640x360 stage shrinks below ~520 css px, so boss and party bars move to a full-size HUD canvas under it
+function glowAt(gg, x, y, r, col, a) { const gr = gg.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, `rgba(${col},${a})`); gr.addColorStop(1, `rgba(${col},0)`); gg.fillStyle = gr; gg.fillRect(x - r, y - r, r * 2, r * 2); }
+function rr(gg, x, y, w, h, r) { gg.beginPath(); gg.roundRect(x, y, w, h, r); }
+function overheadY(c) { const b = c.act.box(c.x, c.y, { h: c.h }); return b.y - 12; }
+function drawFx() {
+  for (const q of S.acts) {
+    const a = q.a, t = q.t, k = q.l;
+    if (q.move === 'bolt' || q.move === 'fire') {   // projectile from the caster's hand to the target
+      const hitAt = q.hits[0].at, t0 = hitAt - 300; if (k < t0 || k > hitAt) continue;
+      const u = (k - t0) / 300, p0 = a.act.point('hand', a.x, a.y, { h: a.h, facing: a.face }), p1 = { x: t.x, y: t.y - t.h * 0.5 };
+      const x = lerp(p0.x, p1.x, u), y = lerp(p0.y, p1.y, u) - Math.sin(u * Math.PI) * 30, col = q.move === 'fire' ? '255,160,60' : '190,110,255';
+      g.save(); g.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < 6; i++) { const v = clamp(u - i * 0.035, 0, 1), tx = lerp(p0.x, p1.x, v), ty = lerp(p0.y, p1.y, v) - Math.sin(v * Math.PI) * 30; glowAt(g, tx, ty, (q.move === 'fire' ? 16 : 10) * (1 - i * 0.13), col, 0.5 - i * 0.07); }
+      glowAt(g, x, y, q.move === 'fire' ? 26 : 16, '255,255,230', 0.6); g.restore();
+    }
+    if (q.move === 'slam') {   // ground shockwave from the colossus to the target
+      const hitAt = q.hits[0].at, t0 = hitAt - 320; if (k < t0 || k > hitAt + 60) continue;
+      const u = clamp((k - t0) / 320, 0, 1), x = lerp(a.x - 50, t.x + 10, u), y = t.y + 2;
+      g.save(); g.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < 5; i++) { const v = clamp(u - i * 0.06, 0, 1), tx = lerp(a.x - 50, t.x + 10, v); g.save(); g.translate(tx, y); g.scale(1, 0.32); glowAt(g, 0, 0, 30 - i * 3, '255,200,140', 0.45 - i * 0.07); g.restore(); }
+      g.restore();
+      for (let i = 0; i < 9; i++) {   // dust kicked up behind the wave front
+        const v = clamp(u - i * 0.07, 0, 1), dx2 = lerp(a.x - 50, t.x + 10, v) + (hash(i, 9) - 0.5) * 10, age = clamp(u - v + 0.15, 0, 1), r = 5 + age * 14 + hash(i, 4) * 4, dy2 = y - 3 - age * 12;
+        const dg = g.createRadialGradient(dx2 - r * 0.3, dy2 - r * 0.4, 0, dx2, dy2, r); dg.addColorStop(0, `rgba(226,206,180,${(0.55 * (1 - age)).toFixed(3)})`); dg.addColorStop(1, 'rgba(150,126,110,0)');
+        g.fillStyle = dg; g.beginPath(); g.arc(dx2, dy2, r, 0, Math.PI * 2); g.fill();
+      }
+    }
+    if (q.move === 'heal' && k > 200 && k < 900) {
+      const u = (k - 200) / 700;
+      g.save(); g.globalCompositeOperation = 'lighter';
+      glowAt(g, t.x, t.y - t.h * 0.45, 60, '150,255,200', 0.35 * Math.sin(u * Math.PI));
+      for (let i = 0; i < 12; i++) { const ph = (u * 1.4 + hash(i, 3)) % 1, x = t.x + (hash(i, 5) - 0.5) * 60, y = t.y - ph * t.h * 1.1; glowAt(g, x, y, 5, '200,255,220', 0.8 * (1 - ph) * Math.sin(u * Math.PI)); }
+      g.restore();
+    }
+  }
+  for (const f of S.fx) if (f.k === 'quake') {   // the fist meets the floor: flash, ring, chips
+    const u = (S.wt - f.t0) / 420; if (u > 1) continue;
+    g.save(); g.globalCompositeOperation = 'lighter'; g.translate(f.x, f.y); g.save(); g.scale(1, 0.3); glowAt(g, 0, 0, 30 + 50 * u, '255,210,150', 0.7 * (1 - u)); g.restore();
+    g.strokeStyle = `rgba(255,220,170,${(0.45 * (1 - u)).toFixed(3)})`; g.lineWidth = 2 * (1 - u) + 0.5; g.beginPath(); g.ellipse(0, 0, 14 + 60 * u, (14 + 60 * u) * 0.28, 0, 0, Math.PI * 2); g.stroke(); g.restore();
+    for (let i = 0; i < 7; i++) { const an = Math.PI * (1.05 + i * 0.13), v = 70 + hash(i, 7) * 60, x = f.x + Math.cos(an) * v * u * 0.6, y = f.y - 4 + Math.sin(an) * v * u * 0.6 + 120 * u * u; g.fillStyle = i % 2 ? '#9a8a74' : '#c8b498'; g.beginPath(); g.moveTo(x - 3, y); g.lineTo(x, y - 3); g.lineTo(x + 3, y + 1); g.lineTo(x - 1, y + 3); g.closePath(); g.fill(); }
+  }
+  for (const f of S.fx) if (f.k === 'hit') {
+    const c = C(f.id), u = (S.wt - f.t0) / 260; if (u > 1) continue;
+    const x = c.x - c.face * c.h * 0.05, y = c.y - c.h * 0.55;
+    g.save(); g.globalCompositeOperation = 'lighter'; glowAt(g, x, y, (f.big ? 70 : 40) * (0.6 + u), f.col, 0.7 * (1 - u));
+    const fl = (1 - u) * (f.big ? 1.5 : 1), diamond = (len, wid, rot) => { g.save(); g.translate(x, y); g.rotate(rot); g.beginPath(); g.moveTo(-len, 0); g.lineTo(0, -wid); g.lineTo(len, 0); g.lineTo(0, wid); g.closePath(); g.fill(); g.restore(); };
+    g.fillStyle = `rgba(255,255,255,${(0.9 * (1 - u)).toFixed(3)})`; diamond(34 * fl, 2.6 * fl, 0.12); diamond(20 * fl, 2.2 * fl, 0.12 + Math.PI / 2);
+    for (let i = 0; i < 7; i++) {   // tapered shards flying out
+      const an = i * 0.9 + hash(f.t0 | 0, i) * 0.6, r0 = 10 + u * 26, r1 = r0 + (f.big ? 20 : 13) * (1 - u), w2 = 2.4 * (1 - u);
+      g.fillStyle = `rgba(${f.col},${(0.95 * (1 - u)).toFixed(3)})`; g.beginPath();
+      g.moveTo(x + Math.cos(an) * r1, y + Math.sin(an) * r1); g.lineTo(x + Math.cos(an + 0.5 * Math.PI) * w2 + Math.cos(an) * r0, y + Math.sin(an + 0.5 * Math.PI) * w2 + Math.sin(an) * r0);
+      g.lineTo(x - Math.cos(an + 0.5 * Math.PI) * w2 + Math.cos(an) * r0, y - Math.sin(an + 0.5 * Math.PI) * w2 + Math.sin(an) * r0); g.closePath(); g.fill();
+    }
+    g.restore();
+  }
+}
+function drawScene() {
+  const t = S.wt;
+  g.save(); g.translate(-S.cam, 0);
+  KIT.backdrop(g, 'ruins-night', { x: -30, y: 0, w: VW + 60, h: NARROW ? VH : HUD_Y + 8, groundY: 262 });
+  // braziers frame the arena
+  for (const [x, y, h] of [[28, 236, 64], [622, 236, 64]]) { KIT.sprite(g, 'brazier', x, y, { h }); KIT.flame(g, x, y - h * 0.82, 30, t + x * 7); }
+  const order = CAST.slice().sort((p, q) => p.y - q.y);
+  for (const c of order) {
+    const alpha = c.dead ? deathFade(c) : 1;
+    if (alpha <= 0) continue;
+    if (c.dead && !c.act.rigged) {   // a fallen foe slumps onto its foot line (sink + squash, never rotated), its own ground shadow and its over-head bar fade with it
+      const k = clamp((S.wt - c.deadAt) / 600, 0, 1), e = easeOut(k), fade = deathFade(c);
+      if (fade <= 0) continue;
+      KIT.shadow(g, c.x, c.y + 1, c.h * 0.42 * (1 + 0.25 * e), Math.max(1.5, c.h * 0.06), 0.4 * fade);
+      KIT.sprite(g, c.kit, c.x, c.y, { h: c.h, facing: c.face > 0 ? 'right' : 'left', squash: -0.42 * e, alpha: fade, flash: k < 0.2 ? 0.75 * (1 - k / 0.2) : 0, shadow: false });
+      continue;
+    }
+    c.act.draw(g, c.x, c.y - c.lift, { h: c.h, facing: c.face, flash: 'auto', alpha });
+  }
+  drawFx();
+  // over-head bars (world space, inside the camera): small foes only; the boss has the big bar
+  for (const c of CAST) if (c.side === 'b' && !c.boss) { const w = Math.round(c.h * (NARROW ? 1.25 : 0.9)), bh = NARROW ? 8 : 5; const fall = c.dead ? easeOut(clamp((S.wt - c.deadAt) / 600, 0, 1)) * c.h * 0.42 : 0; if (!c.dead || deathFade(c) > 0) BARS.draw(g, c.id, c.x - w / 2, overheadY(c) - (bh - 5) + fall, w, bh, { style: 'unit', team: 'foe', alpha: c.dead ? deathFade(c) : 1 }); }   // the bar follows a falling foe down
+  g.restore();
+  const vg = g.createRadialGradient(VW / 2, VH * 0.45, VH * 0.3, VW / 2, VH * 0.45, VW * 0.62); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(6,2,12,0.55)'); g.fillStyle = vg; g.fillRect(0, 0, VW, VH);
+}
+function drawHUD() {
+  if (NARROW) return;   // the phone HUD canvas draws these bars at readable size
+  const tg = g.createLinearGradient(0, 0, 0, 78); tg.addColorStop(0, 'rgba(8,4,14,0.62)'); tg.addColorStop(1, 'rgba(8,4,14,0)'); g.fillStyle = tg; g.fillRect(0, 0, VW, 78);   // shade the sky behind the boss plate
+  // boss bar: top centre
+  BARS.draw(g, 'colossus', 170, 34, 300, 12, { style: 'boss', label: 'Ruin Colossus' });
+  // party panel along the bottom
+  const pg = g.createLinearGradient(0, HUD_Y, 0, VH); pg.addColorStop(0, 'rgba(22,16,30,0.94)'); pg.addColorStop(1, 'rgba(10,7,14,0.97)');
+  g.fillStyle = pg; g.fillRect(0, HUD_Y, VW, VH - HUD_Y);
+  g.fillStyle = 'rgba(232,196,124,0.55)'; g.fillRect(0, HUD_Y, VW, 1); g.fillStyle = 'rgba(0,0,0,0.6)'; g.fillRect(0, HUD_Y + 1, VW, 1);
+  const cut = KIT.cutout();
+  ['rowan', 'kael', 'mira'].forEach((id, i) => {
+    const c = C(id), x = 14 + i * 208, y = HUD_Y + 10, acting = S.acts.some(q => q.a === c);
+    rr(g, x, y, 196, 50, 9); g.fillStyle = acting ? 'rgba(255,220,160,0.08)' : 'rgba(255,255,255,0.035)'; g.fill(); g.strokeStyle = acting ? 'rgba(255,214,140,0.45)' : 'rgba(255,255,255,0.08)'; g.lineWidth = 1; g.stroke();
+    const px = x + 25, py = y + 25, st = BARS.state(id);
+    const ring = g.createLinearGradient(0, py - 20, 0, py + 20); ring.addColorStop(0, '#e8c47c'); ring.addColorStop(1, '#6a4a22');
+    g.fillStyle = ring; g.beginPath(); g.arc(px, py, 19, 0, Math.PI * 2); g.fill();
+    const bgc = g.createLinearGradient(0, py - 17, 0, py + 17); bgc.addColorStop(0, st && st.low ? '#7a2a30' : '#3a5a7a'); bgc.addColorStop(1, '#151a2a');
+    g.fillStyle = bgc; g.beginPath(); g.arc(px, py, 17, 0, Math.PI * 2); g.fill();
+    g.save(); g.beginPath(); g.arc(px, py, 17, 0, Math.PI * 2); g.clip();
+    if (!(cut && cut.drawHead(g, c.kit, px, py + 3, 12))) { g.fillStyle = '#f0d0b0'; g.beginPath(); g.arc(px, py, 8, 0, Math.PI * 2); g.fill(); }
+    g.restore();
+    BARS.draw(g, id, x + 52, y + 30, 132, 8, { style: 'party', label: c.name, text: 'hp/max' });
+  });
+}
+
+/* ---------- phone HUD (css px coordinates; boss row + three party rows) ---------- */
+const cvH = document.getElementById('hud'), gH = cvH.getContext('2d');
+function drawPhoneHUD() {
+  const W = cvH.clientWidth, dpr = Math.max(2, window.devicePixelRatio || 1), H = 158;   // backing >= 2x: the module draws smooth bars here
+  if (cvH.width !== Math.round(W * dpr)) { cvH.width = Math.round(W * dpr); cvH.height = Math.round(H * dpr); cvH.style.height = H + 'px'; }
+  gH.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const bg = gH.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#1a1222'); bg.addColorStop(1, '#0c0812'); gH.fillStyle = bg; gH.fillRect(0, 0, W, H);
+  gH.fillStyle = 'rgba(232,196,124,0.45)'; gH.fillRect(0, 0, W, 1);
+  BARS.draw(gH, 'colossus', 22, 24, W - 44, 12, { style: 'boss', label: 'Ruin Colossus' });
+  const cut = KIT.cutout();
+  ['rowan', 'kael', 'mira'].forEach((id, i) => {
+    const c = C(id), y = 50 + i * 35, st = BARS.state(id), px = 26, py = y + 16, acting = S.acts.some(q => q.a === c);
+    if (acting) { gH.fillStyle = 'rgba(255,220,160,0.07)'; rr(gH, 6, y, W - 12, 32, 7); gH.fill(); }
+    const ring = gH.createLinearGradient(0, py - 14, 0, py + 14); ring.addColorStop(0, '#e8c47c'); ring.addColorStop(1, '#6a4a22');
+    gH.fillStyle = ring; gH.beginPath(); gH.arc(px, py, 14, 0, Math.PI * 2); gH.fill();
+    gH.fillStyle = st && st.low ? '#6a2430' : '#2a4060'; gH.beginPath(); gH.arc(px, py, 12.5, 0, Math.PI * 2); gH.fill();
+    gH.save(); gH.beginPath(); gH.arc(px, py, 12.5, 0, Math.PI * 2); gH.clip();
+    if (!(cut && cut.drawHead(gH, c.kit, px, py + 2, 9))) { gH.fillStyle = '#f0d0b0'; gH.beginPath(); gH.arc(px, py, 6, 0, Math.PI * 2); gH.fill(); }
+    gH.restore();
+    BARS.draw(gH, id, 50, y + 19, W - 66, 9, { style: 'party', label: c.name, text: 'hp/max' });
+  });
+}
+
+/* ---------- the pixel strip (256x144, 1 art px = 1 canvas px) ---------- */
+const cvP = document.getElementById('px'), gP = cvP.getContext('2d'); gP.imageSmoothingEnabled = false;
+const PX = { hero: null, brute: null, bandit: null, bg: null };
+function buildPixel() {
+  if (!window.PXS) return;
+  PX.hero = PXS.fighter({ head: 'hair', gear: 'sword', shield: ['#c8ccd8', '#ffffff', '#8a90a4', '#2e5cc0'], pal: { h: '#8a5428', H: '#c08a4a', x: '#5a3418', b: '#2e5cc0', B: '#6a94ea', d: '#1c3a80', g: '#e8c060', p: '#7a8498', P: '#565e72' } });
+  PX.brute = PXS.fighter({ head: 'helm', gear: 'club', beard: true, pal: { h: '#6a6a7a', H: '#a8a8b8', x: '#3a3a48', r: '#c04040', b: '#8a3a2a', B: '#c0603a', d: '#5a2018', g: '#c8a050', p: '#4a3a2e', P: '#33281f' } });
+  PX.bandit = PXS.fighter({ head: 'hood', gear: 'axe', pal: { h: '#3a5a3a', H: '#5a8a5a', x: '#1c3a1c', b: '#5a4a3a', B: '#8a7a5a', d: '#3a2a1a', g: '#a08050' } });
+  const c = document.createElement('canvas'); c.width = 256; c.height = 144; const b = c.getContext('2d');
+  const sky = ['#140c2a', '#1c1238', '#261a48', '#33225a', '#45306a', '#5a3e74'];
+  for (let y = 0; y < 112; y++) { const k = y / 112 * (sky.length - 1), i = Math.floor(k), f = k - i; b.fillStyle = (hash(y * 7, 3) < f && (y % 2 === 0)) ? sky[Math.min(i + 1, sky.length - 1)] : sky[i]; b.fillRect(0, y, 256, 1); }
+  for (let i = 0; i < 40; i++) { const x = Math.floor(hash(i, 1) * 256), y = Math.floor(hash(i, 2) * 60); b.fillStyle = hash(i, 3) > 0.7 ? '#ffffff' : '#a8a0d0'; b.fillRect(x, y, 1, 1); }
+  b.fillStyle = '#f0e8c8'; b.fillRect(232, 32, 6, 6); b.fillRect(231, 33, 8, 4); b.fillRect(233, 31, 4, 8); b.fillStyle = '#c8bfa0'; b.fillRect(234, 33, 2, 2);
+  const ridge = (base, amp, col, s) => { b.fillStyle = col; for (let x = 0; x < 256; x++) { const hgt = Math.round(base - amp * (0.5 + 0.5 * Math.sin(x / 23 + s) * Math.cos(x / 41 + s * 2)) - hash(x >> 2, s) * 3); b.fillRect(x, hgt, 1, 112 - hgt); } };
+  ridge(84, 26, '#2a1e48', 1); ridge(96, 16, '#1e1636', 4);
+  // ruined columns
+  for (const [x, hgt] of [[30, 34], [222, 28]]) { b.fillStyle = '#4a4258'; b.fillRect(x, 112 - hgt, 9, hgt); b.fillStyle = '#6a6278'; b.fillRect(x, 112 - hgt, 2, hgt); b.fillStyle = '#2e2838'; b.fillRect(x + 7, 112 - hgt, 2, hgt); b.fillStyle = '#5a5268'; b.fillRect(x - 1, 112 - hgt, 11, 2); }
+  PXS.sideGround(b, 0, 110, 256, 34, { seed: 7 });
+  PX.bg = c;
+}
+function drawPixel() {
+  if (!PX.bg) return;
+  const t = S.wt, gg = gP;
+  gg.setTransform(1, 0, 0, 1, 0, 0); gg.imageSmoothingEnabled = false; gg.drawImage(PX.bg, 0, 0);
+  const R = C('rowan'), Co = C('colossus'), Im = C('imp');
+  const heroX = 72 + Math.round((R.x - R.hx) * 0.32), shake = (id, f) => S.fx.some(x => x.id === id && S.wt - x.t0 < 200) ? ((Math.floor((S.wt) / 50) % 2) ? f : -f) : 0;
+  const mode = id => S.fx.some(x => x.id === id && x.k === 'hit' && S.wt - x.t0 < 160 && Math.floor((S.wt - x.t0) / 40) % 2 === 0) ? 'white' : 'normal';
+  const fig = (f, x, footY, want, id, dead) => { gg.fillStyle = 'rgba(10,6,20,0.45)'; gg.fillRect(x - 7, footY, 14, 1); gg.fillRect(x - 5, footY + 1, 10, 1); PXS.drawFighter(gg, f, x + shake(id, 1), footY, want, dead ? 'grey' : mode(id)); };
+  fig(PX.hero, heroX, 116, 'right', 'rowan', R.dead);
+  if (!Im.dead || Im.act.busy()) fig(PX.bandit, 150, 120, 'left', 'imp', Im.dead);
+  fig(PX.brute, 200, 114, 'left', 'colossus', Co.dead);
+  // unit bar over the bandit (world space, 1 px outline), the brute's boss bar on top, the hero's bar in the HUD box
+  PXB.draw(gg, 'bandit', 140, 84, 20, 2, { style: 'unit', team: 'foe' });
+  PXB.draw(gg, 'brute', 54, 16, 148, 5, { style: 'boss', label: 'Brute' });
+  gg.fillStyle = '#0a0612'; gg.fillRect(4, 124, 108, 17); gg.fillStyle = '#5a4a3a'; gg.fillRect(5, 125, 106, 15); gg.fillStyle = '#1c1428'; gg.fillRect(6, 126, 104, 13);
+  PXB.draw(gg, 'hero', 10, 134, 96, 3, { style: 'party', label: 'Rowan', text: 'hp/max' });
+}
+
+/* ---------- render ---------- */
+function fit() { const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1, w = Math.max(VW, Math.round(r.width * dpr)); if (cv.width !== w) { cv.width = w; cv.height = Math.round(w * VH / VW); } }
+function fitPixel() {   // whole-number device-pixel scale for the pixel canvas
+  const dpr = window.devicePixelRatio || 1, avail = Math.max(256, (cvP.parentElement.clientWidth - 16) * dpr), k = Math.max(1, Math.floor(avail / 256));
+  const css = 256 * k / dpr + 'px'; if (cvP.style.width !== css) { cvP.style.width = css; cvP.style.height = 144 * k / dpr + 'px'; }
+}
+function render() {
+  NARROW = cv.clientWidth > 0 && cv.clientWidth < 520; cvH.hidden = !NARROW;
+  fit(); fitPixel();
+  const k = cv.width / VW;
+  g.setTransform(k, 0, 0, k, 0, 0);
+  drawScene(); drawHUD();
+  if (NARROW) drawPhoneHUD();
+  drawPixel();
+  document.documentElement.dataset.t = Math.round(S.wt);
+}
+
+/* ---------- controls ---------- */
+function buildParams() {
+  const box = document.getElementById('params'); box.innerHTML = '';
+  for (const p of PARAMS) {
+    const row = document.createElement('div'); row.className = 'row';
+    if (p.type === 'range') {
+      row.innerHTML = `<label for="p-${p.key}">${p.label}<output id="o-${p.key}"></output></label><input type="range" id="p-${p.key}" min="${p.min}" max="${p.max}" step="${p.step}" value="${P[p.key]}">`;
+      const inp = row.querySelector('input'), out = row.querySelector('output');
+      const show = () => { out.textContent = p.key === 'ticks' && +inp.value === 0 ? 'auto' : inp.value + (p.unit ? ' ' + p.unit : ''); inp.style.setProperty('--fill', ((inp.value - p.min) / (p.max - p.min) * 100) + '%'); };
+      inp.addEventListener('input', () => { P[p.key] = +inp.value; apply(); show(); }); show();
+    } else {
+      row.innerHTML = `<label>${p.label}</label><div class="seg" role="radiogroup">${p.options.map(o => `<button type="button" role="radio" data-v="${o}" aria-checked="${o === P[p.key]}">${o}</button>`).join('')}</div>`;
+      row.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { P[p.key] = b.dataset.v; row.querySelectorAll('button').forEach(x => x.setAttribute('aria-checked', x === b)); apply(); }));
+    }
+    box.appendChild(row);
+  }
+}
+const MANUAL = {
+  hit: () => start('rowan', 'colossus', 'thrust', [[420, -150]], null, 'keys'),
+  combo: () => start('rowan', 'colossus', 'combo', [[420, -140], [580, -120], [740, -170]], null, 'keys'),
+  big: () => start('mira', 'colossus', 'fire', [[600, -700]], null, 'keys'),
+  hurt: () => start('colossus', 'rowan', 'slam', [[560, -120]], null, 'keys'),
+  heal: () => start('mira', 'rowan', 'heal', [[420, 160]], null, 'keys'),
+  reset: () => resetAll()
+};
+function buildControls() {
+  buildParams();
+  document.querySelectorAll('[data-fire]').forEach(b => b.addEventListener('click', () => MANUAL[b.dataset.fire]()));
+  const tog = (id, get, set, on, off) => { const b = document.getElementById(id); const sync = () => { b.setAttribute('aria-pressed', get()); b.textContent = get() ? on : off; }; b.addEventListener('click', () => { set(!get()); sync(); }); sync(); };
+  tog('auto', () => AUTO, v => AUTO = v, 'Script: on', 'Script: off');
+  tog('slow', () => SLOW, v => SLOW = v, 'Speed: 1/4', 'Speed: 1x');
+  document.getElementById('defaults').addEventListener('click', () => { PARAMS.forEach(p => P[p.key] = p.default); buildParams(); apply(); });
+}
+function apply() { BARS.setParams(P); PXB.setParams(Object.assign({}, P, { render: 'crisp' })); }
+
+/* ---------- loop ---------- */
+buildControls();
+KIT.ready(() => {   // the cast is drawn from decoded art: fast-forward and first paint wait for it
+  buildPixel();
+  for (let n = Math.floor(T0 / STEP); n > 0; n--) stepWorld();
+  if (FREEZE) { render(); document.documentElement.dataset.frozen = '1'; window.__frozen = true; }
+  else {
+    let last = performance.now(), acc = 0;
+    const loop = now => { acc += Math.min(250, now - last) * (SLOW ? 0.25 : 1); last = now; while (acc >= STEP) { stepWorld(); acc -= STEP; } render(); requestAnimationFrame(loop); };
+    requestAnimationFrame(loop);
+    addEventListener('keydown', e => { const k = { '1': 'hit', '2': 'combo', '3': 'big', '4': 'hurt', '5': 'heal', '6': 'reset' }[e.key]; if (k) MANUAL[k](); });
+  }
+});
+window.__hpbar = { S, BARS, PXB, P, CAST };
+/* text state for critics and tools/sprites/statecheck.py (640x360 stage px, feet): heroes face the foe they attack (the colossus
+   by default), foes face the hero they attack; a melee hero dashes to the colossus and hops back still facing it. bars = the
+   module's state for every bar (hp, main fill, gain top, loss top, phase). */
+window.__state = () => ({ t: Math.round(S.wt), actors: CAST.map(c => {
+  const q = S.acts.find(x => x.a === c), vx = q && (q.move === 'combo' || q.move === 'thrust') && q.l < 300 ? 1 : 0;
+  return { id: c.id, x: Math.round(c.x), y: c.y, facing: c.face > 0 ? 'right' : 'left', target: c.target, vx: vx ? (C(c.target).x > c.x ? 200 : -200) : 0, asset: c.kit,
+    noFace: c.dead ? (S.wt - c.deadAt > 1300 ? 'gone (faded out)' : 'down') : undefined };
+}), bars: BARS.state() });
+</script>
+</body>
+</html>

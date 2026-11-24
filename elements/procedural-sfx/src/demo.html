@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Procedural Sound Effects</title>
+<style>
+:root {
+  --bg: #0c0b14; --panel: #161423; --panel2: #1c1930; --line: #2c2844; --text: #eeeaf8; --dim: #9c95b8; --accent: #7ee0c3; --accent2: #ffc65c;
+  --combat: #ff7a5c; --pickup: #ffd166; --move: #7cc4ff; --ui: #c79bff; --ok: #5be3a0; --warn: #ffb547; --bad: #ff6b7a;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1000px 520px at 20% -12%, #1f2a44 0%, var(--bg) 60%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 16px 20px 8px; max-width: 1280px; margin: 0 auto; flex-wrap: wrap; }
+.code { white-space: nowrap; font: 800 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #06221a; background: linear-gradient(#b4f5e2, var(--accent)); padding: 6px 8px; border-radius: 5px; box-shadow: 0 2px 12px #7ee0c340; }
+h1 { font-size: 19px; margin: 0; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; max-width: 860px; }
+.hgrow { flex: 1 1 320px; min-width: 0; }
+#soundState { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 999px; background: #2a1a24; border: 1px solid #5a2c3c; color: #ffd0d8; font-size: 13px; cursor: pointer; user-select: none; }
+#soundState .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--bad); box-shadow: 0 0 10px var(--bad); }
+#soundState.on { background: #13281f; border-color: #2c5a44; color: #c8f5e0; }
+#soundState.on .dot { background: var(--ok); box-shadow: 0 0 10px var(--ok); }
+#soundState.muted { background: #2a2614; border-color: #5a4c24; color: #ffe8b0; }
+#soundState.muted .dot { background: var(--warn); box-shadow: 0 0 10px var(--warn); }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 18px; padding: 8px 20px 28px; max-width: 1280px; margin: 0 auto; align-items: start; }
+.col { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.card { background: linear-gradient(180deg, var(--panel2), var(--panel)); border: 1px solid var(--line); border-radius: 14px; padding: 14px; box-shadow: 0 18px 50px #0007; }
+.card h2 { font-size: 13px; margin: 0 0 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.card h2 .sp { flex: 1; }
+.groups { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.group h3 { margin: 0 0 6px; font-size: 12px; color: var(--gc); letter-spacing: .05em; display: flex; align-items: center; gap: 6px; }
+.group h3::before { content: ""; width: 8px; height: 8px; border-radius: 2px; background: var(--gc); box-shadow: 0 0 8px var(--gc); }
+.pads { display: flex; flex-direction: column; gap: 7px; }
+.groups { grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)); }
+.g-combat .pads { display: grid; grid-template-columns: 1fr 1fr; }
+.pad .db { white-space: nowrap; }
+.pad { position: relative; display: grid; grid-template-columns: 1fr; gap: 4px; text-align: left; padding: 8px 9px 7px; border-radius: 10px; border: 1px solid #ffffff14; background: linear-gradient(180deg, #ffffff0d, #ffffff05); color: var(--text); font: 600 13px/1.2 inherit; cursor: pointer; transition: transform .08s, border-color .15s, background .15s; overflow: hidden; }
+.pad:hover { border-color: color-mix(in srgb, var(--gc) 60%, transparent); background: linear-gradient(180deg, color-mix(in srgb, var(--gc) 16%, transparent), #ffffff05); }
+.pad:active, .pad.hit { transform: scale(.97); }
+.pad.sel { border-color: var(--gc); box-shadow: 0 0 0 1px var(--gc) inset, 0 0 18px color-mix(in srgb, var(--gc) 30%, transparent); }
+.pad .nm { display: flex; justify-content: space-between; gap: 6px; }
+.pad .nm small { color: var(--dim); font-weight: 500; font-size: 11px; font-family: ui-monospace, Menlo, monospace; }
+.pad canvas { width: 100%; height: 26px; display: block; }
+.pad .flash { position: absolute; inset: 0; background: radial-gradient(circle at 30% 50%, color-mix(in srgb, var(--gc) 45%, transparent), transparent 70%); opacity: 0; pointer-events: none; }
+.pad.hit .flash { animation: flash .45s ease-out; }
+@keyframes flash { from { opacity: 1; } to { opacity: 0; } }
+#lastWrap { position: relative; }
+#wave { width: 100%; height: 150px; display: block; border-radius: 10px; background: #0a0912; box-shadow: 0 0 0 1px var(--line) inset; }
+.info { display: flex; flex-wrap: wrap; gap: 6px 14px; color: var(--dim); font-size: 12.5px; margin-top: 8px; }
+.info b { color: var(--text); font-weight: 600; }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; }
+button.b { font: 600 13px/1 inherit; color: var(--text); background: #2a2642; border: 1px solid #3c3660; padding: 8px 12px; border-radius: 9px; cursor: pointer; }
+button.b:hover { background: #342f52; }
+button.b.pri { background: linear-gradient(180deg, #8af0d2, #4fc6a4); color: #062018; border-color: #8af0d2; }
+button.b.on { background: #3a3360; border-color: var(--accent); }
+.frame { padding: 6px; background: linear-gradient(#25304a, #121624); border-radius: 12px; box-shadow: 0 0 0 1px #34405e; position: relative; }
+#game { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: 7px; background: #000; image-rendering: pixelated; image-rendering: crisp-edges; outline: none; }
+#gameOver { position: absolute; inset: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; background: #08081280; border-radius: 7px; backdrop-filter: blur(1.5px); }
+#gameOver.hide { display: none; }
+#gameOver .k { color: #dfe6ff; font-size: 13px; text-align: center; padding: 0 12px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+.seg button { font: 600 12px/1 inherit; color: var(--dim); background: transparent; border: 0; padding: 7px 10px; cursor: pointer; }
+.seg button.on { background: #2f2a4c; color: var(--text); }
+.help { color: var(--dim); font-size: 12px; margin-top: 8px; }
+.help kbd { font: 600 11px/1 ui-monospace, Menlo, monospace; background: #24203a; border: 1px solid #3a3456; border-bottom-width: 2px; padding: 2px 5px; border-radius: 4px; color: var(--text); }
+.ctl { display: grid; grid-template-columns: 96px 1fr 44px; align-items: center; gap: 8px; margin: 7px 0; font-size: 12.5px; }
+.ctl label { color: var(--dim); }
+.ctl output { text-align: right; font: 600 12px ui-monospace, Menlo, monospace; color: var(--text); }
+.ctl input[type=range] { width: 100%; accent-color: var(--accent); }
+.ctl select { width: 100%; background: #221e36; color: var(--text); border: 1px solid #3a3456; border-radius: 7px; padding: 4px 6px; font: inherit; }
+.ctl .ck { display: flex; gap: 8px; align-items: center; }
+#log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 12px; min-height: 120px; }
+#log li { display: grid; grid-template-columns: 52px 1fr auto; gap: 8px; align-items: center; padding: 4px 8px; border-radius: 7px; background: #ffffff07; }
+#log li .t { color: var(--dim); font-family: ui-monospace, Menlo, monospace; font-size: 11px; }
+#log li .p { font-weight: 600; display: flex; align-items: center; gap: 6px; min-width: 0; }
+#log li .p::before { content: ""; width: 7px; height: 7px; border-radius: 2px; background: var(--gc); flex: none; }
+.pill { font: 700 10px/1 ui-monospace, Menlo, monospace; padding: 3px 6px; border-radius: 999px; letter-spacing: .03em; text-transform: uppercase; }
+.pill.played { background: #1d4634; color: #9ff0c8; } .pill.merged { background: #3a3414; color: #ffe08a; } .pill.dropped { background: #4a1d26; color: #ffb0bc; }
+.pill.locked { background: #2c2a40; color: #b8b2d8; } .pill.muted { background: #3a3414; color: #ffe08a; } .pill.noaudio, .pill.unknown, .pill.error { background: #4a1d26; color: #ffb0bc; }
+.meter { display: flex; gap: 3px; margin-top: 6px; }
+.meter i { flex: 1; height: 8px; border-radius: 2px; background: #2a2640; }
+.meter i.on { background: linear-gradient(90deg, var(--accent), #b4f5e2); box-shadow: 0 0 6px #7ee0c380; }
+.note { color: var(--dim); font-size: 12px; margin: 6px 0 0; }
+@media (max-width: 980px) { main { grid-template-columns: minmax(0, 1fr); } .groups { grid-template-columns: repeat(2, minmax(0, 1fr)); } .g-combat { grid-column: span 2; } }
+@media (max-width: 520px) { header, main { padding-left: 12px; padding-right: 12px; } .groups { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; } .ctl { grid-template-columns: 84px 1fr 40px; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">F-02</span>
+  <div class="hgrow">
+    <h1>Procedural Sound Effects</h1>
+    <p>Fourteen game sounds synthesized live in the browser: oscillators, noise, envelopes, pitch slides, filters and a little FM. No audio files. Each play is a seeded variation, so repeats never sound copy-pasted. Click a pad, or play the little scene below.</p>
+  </div>
+  <div id="soundState" title="Browsers keep audio off until you click"><span class="dot"></span><span id="soundText">Sound off: click anywhere to turn it on</span></div>
+</header>
+<main>
+  <div class="col">
+    <section class="card">
+      <h2>Sound board<span class="sp"></span><span style="text-transform:none;letter-spacing:0;font-weight:500">pick a pad, then try the sliders</span></h2>
+      <div class="groups" id="groups"></div>
+    </section>
+    <section class="card">
+      <h2>Last sound<span class="sp"></span><span class="btns"><button class="b" id="again">Play again</button><button class="b pri" id="five">Play 5 variations</button></span></h2>
+      <div id="lastWrap"><canvas id="wave" width="900" height="150"></canvas></div>
+      <div class="info" id="info"></div>
+    </section>
+    <section class="card">
+      <h2>Little scene<span class="sp"></span><span class="seg" id="mode"><button data-m="paused">Paused</button><button data-m="auto">Watch</button><button data-m="you">Play</button></span></h2>
+      <div class="frame"><canvas id="game" width="224" height="126" tabindex="0"></canvas>
+        <div id="gameOver"><button class="b pri" id="playScene">Play the scene</button><div class="k">or <a href="#" id="watchScene" style="color:#9fe9d4">watch it play itself</a>: every sound here is triggered by a game event</div></div>
+      </div>
+      <div class="help"><kbd>&larr;</kbd> <kbd>&rarr;</kbd> walk (footsteps) &middot; <kbd>Z</kbd> jump / land &middot; <kbd>X</kbd> sword (hit, every 3rd in a row crits) &middot; <kbd>C</kbd> bolt (laser; the barrel explodes) &middot; coins, star gem (power-up), shrine (heal), slimes (hurt) &middot; <kbd>Esc</kbd> menu (move / confirm / cancel)</div>
+    </section>
+  </div>
+  <aside class="col">
+    <section class="card">
+      <h2>Mixer &amp; voice</h2>
+      <div id="ctls"></div>
+      <div class="note">Every slider changes the synthesis itself; the pad waveforms redraw to match.</div>
+    </section>
+    <section class="card">
+      <h2>Events<span class="sp"></span><span id="voices" style="text-transform:none;letter-spacing:0;font-weight:500">0 / 12 voices</span></h2>
+      <div class="meter" id="meter"></div>
+      <ul id="log" style="margin-top:10px"></ul>
+    </section>
+  </aside>
+</main>
+<script>/*PIXELSCENE*/</script>
+<script>/*MODULE*/</script>
+<script>/*MAIN*/</script>
+</body>
+</html>

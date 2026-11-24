@@ -1,0 +1,875 @@
+{
+ "format": "gamedna-assets/1",
+ "pack": "art-direction-lock demo-only comparison images (not part of the asset pack; the pack is assets.json)",
+ "generated": {
+  "tool": "codex image_gen.imagegen (built-in)",
+  "runner": "tools/assets/gen.sh",
+  "model": "image generator",
+  "effort": "high",
+  "date": "2026-11-16"
+ },
+ "budgetBytes": 330000,
+ "assets": [
+  {
+   "key": "w-keeper",
+   "role": "sprite",
+   "file": "compare/w-keeper.webp",
+   "source": {
+    "run": "compare/gen/words-a",
+    "file": "keeper.png",
+    "sha256": "b0e467fdd115cb0d1f4dc721c95cff5b110461c165d33d5ee78a98d5be52f211"
+   },
+   "prompt": [
+    "compare/gen/words-a/PROMPT.md",
+    "compare/gen/words-a/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 240
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "set": "words",
+   "w": 112,
+   "h": 240,
+   "bytes": 8184,
+   "sha256": "c71ebbaa382da11b1daad3360621cd33957c4db612642c90f78cbc8e270e3a6f",
+   "baseline": 240
+  },
+  {
+   "key": "w-lamppost",
+   "role": "prop",
+   "file": "compare/w-lamppost.webp",
+   "source": {
+    "run": "compare/gen/words-a",
+    "file": "lamppost.png",
+    "sha256": "ca644e99620b409daad4780bc5084c0d49251a993b75ccdfa8582494bda8bf09"
+   },
+   "prompt": [
+    "compare/gen/words-a/PROMPT.md",
+    "compare/gen/words-a/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 300
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "set": "words",
+   "w": 199,
+   "h": 300,
+   "bytes": 12798,
+   "sha256": "52e35b755211b5005e9729ead495a1abcef92930610bb7d34cbde643d10aa3a1",
+   "baseline": 300
+  },
+  {
+   "key": "w-oak",
+   "role": "prop",
+   "file": "compare/w-oak.webp",
+   "source": {
+    "run": "compare/gen/words-a",
+    "file": "oak.png",
+    "sha256": "0043ce672bb2540a72a04674336cdfc7a76efc04d65d8b8440fb1d4aaf17f50c"
+   },
+   "prompt": [
+    "compare/gen/words-a/PROMPT.md",
+    "compare/gen/words-a/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 360
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "set": "words",
+   "w": 394,
+   "h": 360,
+   "bytes": 35522,
+   "sha256": "af23c53fa15966da899a64545a6b4d3848227795fbfab183a7c6db78e9fc7599",
+   "baseline": 360
+  },
+  {
+   "key": "w-herbalist",
+   "role": "sprite",
+   "file": "compare/w-herbalist.webp",
+   "source": {
+    "run": "compare/gen/words-b",
+    "file": "herbalist.png",
+    "sha256": "0ccc00f0a23510d443e590b3ba41f662af778237ea561adaa40962f750bd233f"
+   },
+   "prompt": [
+    "compare/gen/words-b/PROMPT.md",
+    "compare/gen/words-b/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 240
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "set": "words",
+   "w": 179,
+   "h": 240,
+   "bytes": 14984,
+   "sha256": "4284774ee164ed356b71d67a04e48ed93c36746adaa532c18bf07eb13dd824a5",
+   "baseline": 240
+  },
+  {
+   "key": "w-well",
+   "role": "prop",
+   "file": "compare/w-well.webp",
+   "source": {
+    "run": "compare/gen/words-b",
+    "file": "well.png",
+    "sha256": "8034da47056aba06b9fbdd3c5f65850f1ba7dc531cb1e7d6d79d7b803e4dee62"
+   },
+   "prompt": [
+    "compare/gen/words-b/PROMPT.md",
+    "compare/gen/words-b/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 260
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "set": "words",
+   "w": 226,
+   "h": 260,
+   "bytes": 19564,
+   "sha256": "7930700d5a5802634f4790ac700abc46324533897f2712150378f691e972e776",
+   "baseline": 260
+  },
+  {
+   "key": "w-ground",
+   "role": "tile",
+   "file": "compare/w-ground.webp",
+   "source": {
+    "run": "compare/gen/words-b",
+    "file": "ground.png",
+    "sha256": "8bef9f105dbfd2e3640a99ddd5d292ab9d99557adc91181393a192b824fa5277"
+   },
+   "prompt": [
+    "compare/gen/words-b/PROMPT.md",
+    "compare/gen/words-b/GEN.md"
+   ],
+   "post": [
+    {
+     "seam": {
+      "mode": "tile"
+     }
+    },
+    {
+     "resize": {
+      "size": "256x256",
+      "wrap": "xy"
+     }
+    },
+    {
+     "export": {
+      "quality": 95
+     }
+    }
+   ],
+   "alpha": false,
+   "seam": "tile",
+   "tileW": 128,
+   "tileH": 128,
+   "set": "words",
+   "w": 256,
+   "h": 256,
+   "bytes": 34460,
+   "sha256": "00f6cea819af8e7732764c55c83f72e4b15419530aa8f216f3e92eb09bc33df7"
+  },
+  {
+   "key": "w-key",
+   "role": "icon",
+   "file": "compare/w-key.webp",
+   "source": {
+    "run": "compare/gen/words-c",
+    "file": "key.png",
+    "sha256": "b0df15795950fe22a0db6316f1afb0e2aa8cead5e97012b616a1c52ad7640421"
+   },
+   "prompt": [
+    "compare/gen/words-c/PROMPT.md",
+    "compare/gen/words-c/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "fit": "128x128"
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "alpha": true,
+   "set": "words",
+   "w": 128,
+   "h": 113,
+   "bytes": 4474,
+   "sha256": "31f14305a08cd0ccab7b34f9edd24fb6f936798d941fdbcbe45b5dddaf8879e4"
+  },
+  {
+   "key": "w-vial",
+   "role": "icon",
+   "file": "compare/w-vial.webp",
+   "source": {
+    "run": "compare/gen/words-c",
+    "file": "vial.png",
+    "sha256": "00af5e824c43cbe707047b9215587ac9502a1755dd3dd60d8ce17bd7aec304b3"
+   },
+   "prompt": [
+    "compare/gen/words-c/PROMPT.md",
+    "compare/gen/words-c/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "fit": "128x128"
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "alpha": true,
+   "set": "words",
+   "w": 86,
+   "h": 128,
+   "bytes": 4814,
+   "sha256": "1f5591f48c66489e998b54a831ee77e41436adbfb8f7ab03f09713252df9b0ef"
+  },
+  {
+   "key": "guard-w1",
+   "role": "sprite",
+   "file": "compare/guard-w1.webp",
+   "source": {
+    "run": "compare/gen/guard-with",
+    "file": "guard-1.png",
+    "sha256": "d4958b60c0aad565136518ab05fa80c9bbad0e08b5c65d5de1895291089bfc84"
+   },
+   "prompt": [
+    "compare/gen/guard-with/PROMPT.md",
+    "compare/gen/guard-with/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 200
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 80
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "set": "with",
+   "repeat": true,
+   "w": 118,
+   "h": 200,
+   "bytes": 7516,
+   "sha256": "813575e509166bf6da47ef45a57c275fe0124b980ea877caab94ea700869867e",
+   "baseline": 200
+  },
+  {
+   "key": "guard-w2",
+   "role": "sprite",
+   "file": "compare/guard-w2.webp",
+   "source": {
+    "run": "compare/gen/guard-with",
+    "file": "guard-2.png",
+    "sha256": "9c87fce18fb103da56e179c494e091a2416d2b345abc39f841dbeb3634c4656e"
+   },
+   "prompt": [
+    "compare/gen/guard-with/PROMPT.md",
+    "compare/gen/guard-with/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 200
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 80
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "set": "with",
+   "repeat": true,
+   "w": 102,
+   "h": 200,
+   "bytes": 7014,
+   "sha256": "7e12e36ed288d9308590640f8af1174555815127d432ba6d76a5ba315dd6f0e9",
+   "baseline": 200
+  },
+  {
+   "key": "guard-w3",
+   "role": "sprite",
+   "file": "compare/guard-w3.webp",
+   "source": {
+    "run": "compare/gen/guard-with",
+    "file": "guard-3.png",
+    "sha256": "38f0901b0a8a532d758d1a04cf71a81191c89f82bb7f1c80405c273bbb3659c7"
+   },
+   "prompt": [
+    "compare/gen/guard-with/PROMPT.md",
+    "compare/gen/guard-with/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 200
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 80
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "set": "with",
+   "repeat": true,
+   "w": 114,
+   "h": 200,
+   "bytes": 7008,
+   "sha256": "f5a0236152f16ea20c4ca424c1dd0696d013c76578331a48799a65e820d69f93",
+   "baseline": 200
+  },
+  {
+   "key": "guard-n1",
+   "role": "sprite",
+   "file": "compare/guard-n1.webp",
+   "source": {
+    "run": "compare/gen/guard-without",
+    "file": "guard-1.png",
+    "sha256": "268c4edb25aea8be67fb20f710bfff2a51903e9d4e27c439c30ec0cc105e3d48"
+   },
+   "prompt": [
+    "compare/gen/guard-without/PROMPT.md",
+    "compare/gen/guard-without/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 200
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 80
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "set": "without",
+   "repeat": true,
+   "w": 113,
+   "h": 200,
+   "bytes": 6492,
+   "sha256": "92ecff4014c7dea26b2c71dfaf47c1e5a26ee8bad03675fb37770e4b4684c0fc",
+   "baseline": 199
+  },
+  {
+   "key": "guard-n2",
+   "role": "sprite",
+   "file": "compare/guard-n2.webp",
+   "source": {
+    "run": "compare/gen/guard-without",
+    "file": "guard-2.png",
+    "sha256": "95d5314c28ab50a779f0e2d5467eda61766a20f6ad46c3bde6fd662f55aeba98"
+   },
+   "prompt": [
+    "compare/gen/guard-without/PROMPT.md",
+    "compare/gen/guard-without/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 200
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 80
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "set": "without",
+   "repeat": true,
+   "w": 105,
+   "h": 200,
+   "bytes": 6310,
+   "sha256": "ba4ed3d2b2114afb9e50d8479ad3553efd41313c6ff4795ee70ac4839f8234ac",
+   "baseline": 200
+  },
+  {
+   "key": "guard-n3",
+   "role": "sprite",
+   "file": "compare/guard-n3.webp",
+   "source": {
+    "run": "compare/gen/guard-without",
+    "file": "guard-3.png",
+    "sha256": "56f1639533015a11c7af751cccdb0ad58b5d2dc82eab91c38d96cf6f37f116b5"
+   },
+   "prompt": [
+    "compare/gen/guard-without/PROMPT.md",
+    "compare/gen/guard-without/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 200
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 80
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "set": "without",
+   "repeat": true,
+   "w": 111,
+   "h": 200,
+   "bytes": 6610,
+   "sha256": "5f7816f690ab52e26b5f023f514a1d4e9bdadffde1d7328da44b314c85b5d164",
+   "baseline": 199
+  },
+  {
+   "key": "herbalist-wd",
+   "role": "sprite",
+   "file": "compare/herbalist-wd.webp",
+   "source": {
+    "run": "compare/gen/herb-with",
+    "file": "herbalist-d.png",
+    "sha256": "f873669c1106ce409c3c9f44861b9f43772b92aab2f3e44ea7d39f028f93d4a3"
+   },
+   "prompt": [
+    "compare/gen/herb-with/PROMPT.md",
+    "compare/gen/herb-with/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 200
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 80
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "set": "with",
+   "repeat": true,
+   "w": 120,
+   "h": 200,
+   "bytes": 8324,
+   "sha256": "db48ad35d3892ebcbdfbbeded5181db7685fd06b7255e89caaa522d7175f3e4d",
+   "baseline": 200
+  },
+  {
+   "key": "herbalist-we",
+   "role": "sprite",
+   "file": "compare/herbalist-we.webp",
+   "source": {
+    "run": "compare/gen/herb-with",
+    "file": "herbalist-e.png",
+    "sha256": "7a48451fd2cb6189925b5f0b01f5b37dd9ffdcb48f69cc9ab901802a0c54e48e"
+   },
+   "prompt": [
+    "compare/gen/herb-with/PROMPT.md",
+    "compare/gen/herb-with/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 200
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 80
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "set": "with",
+   "repeat": true,
+   "w": 120,
+   "h": 200,
+   "bytes": 8592,
+   "sha256": "e4b4da4e83af7b2da6de91444e5a6a9233788c9481ade5925354683f9469b6c2",
+   "baseline": 200
+  },
+  {
+   "key": "herbalist-wf",
+   "role": "sprite",
+   "file": "compare/herbalist-wf.webp",
+   "source": {
+    "run": "compare/gen/herb-with",
+    "file": "herbalist-f.png",
+    "sha256": "3908454d16bb43aefedb8c37c9d5b0b91c483c1bdab4020cbbf954c7d19cdf29"
+   },
+   "prompt": [
+    "compare/gen/herb-with/PROMPT.md",
+    "compare/gen/herb-with/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 200
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 80
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "set": "with",
+   "repeat": true,
+   "w": 118,
+   "h": 200,
+   "bytes": 8676,
+   "sha256": "0a86e8a6f6bcb7a1aef352341ba2327d509e8484ee794cf46280b44162d38aa9",
+   "baseline": 200
+  },
+  {
+   "key": "herbalist-nd",
+   "role": "sprite",
+   "file": "compare/herbalist-nd.webp",
+   "source": {
+    "run": "compare/gen/herb-without",
+    "file": "herbalist-d.png",
+    "sha256": "44ffdb16adb28d20534456aa24d76fc64cd9cc7d4a2e3c33a55c9404be62672a"
+   },
+   "prompt": [
+    "compare/gen/herb-without/PROMPT.md",
+    "compare/gen/herb-without/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 200
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 80
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "set": "without",
+   "repeat": true,
+   "w": 127,
+   "h": 200,
+   "bytes": 8472,
+   "sha256": "7c5862121a113f3545d4a704d8af466d4fa870ccd9ab8e1c8a313c1db4a71e01",
+   "baseline": 200
+  },
+  {
+   "key": "herbalist-ne",
+   "role": "sprite",
+   "file": "compare/herbalist-ne.webp",
+   "source": {
+    "run": "compare/gen/herb-without",
+    "file": "herbalist-e.png",
+    "sha256": "78036f85221678eed3879515bab64b666dcf087978cdb5066aeb84ddb8c2d1f7"
+   },
+   "prompt": [
+    "compare/gen/herb-without/PROMPT.md",
+    "compare/gen/herb-without/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 200
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 80
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "set": "without",
+   "repeat": true,
+   "w": 135,
+   "h": 200,
+   "bytes": 8942,
+   "sha256": "838b918ac0cc67dd4ca07beb0ff359c9c2c551012d3e0b14a42047b35024dc0a",
+   "baseline": 200
+  },
+  {
+   "key": "herbalist-nf",
+   "role": "sprite",
+   "file": "compare/herbalist-nf.webp",
+   "source": {
+    "run": "compare/gen/herb-without",
+    "file": "herbalist-f.png",
+    "sha256": "cf06316d2ea68c0f3c757b5d19f68aa2f45584632ad6e46e37cfa306043b5107"
+   },
+   "prompt": [
+    "compare/gen/herb-without/PROMPT.md",
+    "compare/gen/herb-without/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 200
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 80
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "set": "without",
+   "repeat": true,
+   "w": 111,
+   "h": 200,
+   "bytes": 7804,
+   "sha256": "e174c4a9ab5c0e629ca09075cb415cc2aebb740efc1ae208b22d66ee434cbb71",
+   "baseline": 200
+  }
+ ],
+ "totalBytes": 226560
+}

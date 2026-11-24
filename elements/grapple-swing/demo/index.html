@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Grappling Hook &amp; Swing</title>
+<style>
+  :root { --bg: #0f0d17; --panel: #191526; --line: #342c48; --ink: #eee8f6; --dim: #a39cb8; --acc: #ffd86a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; overflow-x: hidden; }
+  main { max-width: 1000px; margin: 0 auto; padding: 14px 16px 28px; }
+  h1 { font-size: 19px; margin: 0 0 2px; letter-spacing: 0.2px; }
+  h1 span { color: var(--dim); font-weight: 400; }
+  .sub { color: var(--dim); margin: 0 0 12px; max-width: 860px; }
+  #stage { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px var(--line), 0 10px 40px rgba(0,0,0,0.5); }
+  #game { display: block; width: 100%; height: 100%; image-rendering: pixelated; cursor: crosshair; touch-action: none; }
+  #hud { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; margin: 10px 0 4px; font-size: 13px; }
+  .chip { background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; color: var(--dim); white-space: nowrap; }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip.hot { border-color: var(--acc); }
+  .chip.hot b { color: var(--acc); }
+  #log { color: var(--dim); font-size: 12.5px; min-height: 18px; overflow-wrap: anywhere; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0 8px; }
+  button { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px; font: inherit; cursor: pointer; min-height: 36px; }
+  button.on { background: var(--acc); color: #26170a; border-color: var(--acc); font-weight: 600; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  label { display: flex; flex-direction: column; font-size: 12.5px; color: var(--dim); }
+  label b { color: var(--ink); font-weight: 600; }
+  input[type=range] { width: 100%; accent-color: var(--acc); }
+  select { background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 4px; font: inherit; }
+  .keys { color: var(--dim); font-size: 12.5px; margin: 10px 0 0; }
+  kbd { background: #0c0a14; border: 1px solid var(--line); border-radius: 3px; padding: 0 4px; font: 11.5px ui-monospace, monospace; color: var(--ink); }
+  #pad { display: none; gap: 8px; margin: 10px 0 0; justify-content: center; flex-wrap: wrap; user-select: none; -webkit-user-select: none; }
+  #pad button { min-width: 54px; height: 46px; touch-action: none; }
+  @media (pointer: coarse) { #pad { display: flex; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Grappling hook &amp; swing <span>(B-16)</span></h1>
+  <p class="sub">Fire a hook at iron rings or any rock face, hang on a real rope, swing like a pendulum, pump with left and right, reel in and out, and let go with the swing's momentum. The rope bends around corners and unbends on the way back. The game keeps its own collision: the module only proposes the swing's velocity.</p>
+  <div id="stage"><canvas id="game" width="320" height="180"></canvas></div>
+  <div id="pad"><button data-k="left">&#9664;</button><button data-k="right">&#9654;</button><button data-k="up">Reel &#9650;</button><button data-k="down">Reel &#9660;</button><button data-k="jump">Jump</button><button data-k="hook">Hook</button></div>
+  <div id="hud"></div>
+  <div id="log"></div>
+  <div class="bar" id="presets"></div>
+  <div class="bar"><button id="bBot" class="on">Bot tour</button><button id="bReset">Restart</button></div>
+  <div class="grid" id="ctl"></div>
+  <p class="keys"><kbd>&larr;</kbd><kbd>&rarr;</kbd> run, pump the swing &middot; <kbd>Z</kbd>/<kbd>Space</kbd> jump (on the rope: jump off) &middot; <kbd>X</kbd>/<kbd>C</kbd> fire the hook, hold to hang on, release to let go &middot; <kbd>&uarr;</kbd><kbd>&darr;</kbd> aim steeper / flatter, on the rope reel in / out &middot; click or tap the scene to fire at that spot &middot; <kbd>B</kbd> bot tour</p>
+</main>
+<script src="../../parallax-layers/module/parallax-layers.js"></script>
+<script src="../module/grapple-swing.js"></script>
+<script src="world.js"></script>
+<script>
+'use strict';
+(function () {
+  var Q = new URLSearchParams(location.search);
+  var NW = 320, NH = 180, STEP = 1000 / 60;
+  var T_AT = Q.has('t') ? Math.max(0, +Q.get('t') || 0) : null, FREEZE = Q.get('freeze') === '1';
+  var SLIDERS = [
+    ['range', 'Hook range (px)', 60, 200, 5], ['hookSpeed', 'Hook speed (px/s)', 300, 1600, 20], ['reelSpeed', 'Reel speed (px/s)', 20, 200, 5],
+    ['swingForce', 'Pump force (px/s²)', 0, 600, 10], ['tighten', 'Yank on attach', 0.6, 1, 0.02], ['jumpBoost', 'Jump-off boost (px/s)', 0, 300, 10],
+    ['releaseBoost', 'Release momentum x', 0.8, 1.5, 0.05], ['carryMs', 'Momentum carry (ms)', 0, 2000, 50], ['aimAssist', 'Ring aim assist (deg)', 0, 60, 2]
+  ];
+  var SELECTS = [['mode', 'Button', ['hold', 'toggle']], ['wrap', 'Rope wraps corners', ['1', '0']], ['surfaces', 'Hook bites rock', ['1', '0']], ['showAim', 'Aim reticle', ['1', '0']]];
+  var PRESETS = {
+    'Default': {},
+    'Snappy': { hookSpeed: 1300, tighten: 0.8, swingForce: 360, releaseBoost: 1.25, jumpBoost: 210 },
+    'Heavy rope': { hookSpeed: 520, reelSpeed: 45, swingForce: 160, releaseBoost: 1.0, tighten: 0.96, carryMs: 700 },
+    'Rings only': { surfaces: 0, aimAssist: 44 }
+  };
+  var params = {};
+  SLIDERS.forEach(function (s) { if (Q.has(s[0])) params[s[0]] = +Q.get(s[0]); });
+  SELECTS.forEach(function (s) { if (Q.has(s[0])) params[s[0]] = Q.get(s[0]); });
+  var botOn = Q.get('bot') !== '0';
+
+  var cv = document.getElementById('game'), ctx = cv.getContext('2d');
+  var NAT = document.createElement('canvas'); NAT.width = NW; NAT.height = NH; var g = NAT.getContext('2d');
+  var BG = GameDNA_Parallax.create({ view: { x: 0, y: 0, w: NW, h: NH }, seed: 7, theme: 'cliffs', time: 'dusk', params: { layers: 6, ground: 0.86, horizon: 0.52, vertical: 0 } });
+  BG.prebuild();
+  var W = null;
+  function newWorld() { W = GrappleDemoWorld.makeWorld(GameDNA_Grapple, { params: params, seed: 3, bot: botOn }); }
+  newWorld();
+
+  /* ---------------- level art: one layer painted per pixel (rock strata, moss caps, dark undersides, roots) ---------------- */
+  function sm(t) { return t * t * (3 - 2 * t); }
+  function vn(x, y, sc, sd) { var u = x / sc, v = y / sc, i = Math.floor(u), j = Math.floor(v), fx = sm(u - i), fy = sm(v - j), a = h2(i + sd * 131, j), b = h2(i + 1 + sd * 131, j), c = h2(i + sd * 131, j + 1), d = h2(i + 1 + sd * 131, j + 1); return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy; }
+  function h2(a, b) { var n = Math.imul(a | 0, 73856093) ^ Math.imul(b | 0, 19349663) ^ 0x9e3779b9; n = Math.imul(n ^ (n >>> 13), 0x5bd1e995); n ^= n >>> 15; n = Math.imul(n, 0x2c1b3c6d); n ^= n >>> 12; return (n >>> 0) / 4294967296; }
+  var LAYER = (function () {
+    var TS = W.TS, LW = W.WORLD_W, LH = W.WORLD_H, c = document.createElement('canvas'); c.width = LW; c.height = LH;
+    var q = c.getContext('2d'), img = q.createImageData(LW, LH), d = img.data;
+    var sol = function (x, y) { return x >= 0 && x < LW && W.solidAt(x, y); };
+    var hex = function (s) { var n = parseInt(s.slice(1), 16); return [n >> 16, n >> 8 & 255, n & 255]; };
+    var ROCK = [['#8a6a5a', '#735648', '#5c4438'], ['#6e5248', '#5a4238', '#46342c'], ['#4e3a34', '#40302a', '#32261f']].map(function (r) { return r.map(hex); });
+    var MOSS = ['#c8e070', '#8cc04a', '#5e9a3a', '#3c6e2e', '#24462a'].map(hex), INK = hex('#1a1220'), RIM = hex('#a88a70'), UNDER = hex('#2a1e1c');
+    function put(x, y, col, a) { if (x < 0 || y < 0 || x >= LW || y >= LH) return; var k = (y * LW + x) * 4; d[k] = col[0]; d[k + 1] = col[1]; d[k + 2] = col[2]; d[k + 3] = a == null ? 255 : a; }
+    var x, y;
+    for (y = 0; y < LH; y++) for (x = 0; x < LW; x++) {
+      if (!sol(x, y)) continue;
+      var up = 0; while (up < 14 && sol(x, y - up - 1) && y - up - 1 >= 0) up++;
+      var dn = 0; while (dn < 10 && sol(x, y + dn + 1) && y + dn + 1 < LH) dn++;
+      var lf = 0; while (lf < 10 && sol(x - lf - 1, y)) lf++;
+      var rt = 0; while (rt < 10 && sol(x + rt + 1, y)) rt++;
+      var edge = Math.min(up, dn, lf, rt), topOpen = y - up - 1 >= 0 && up < 14, band = edge > 8 ? 2 : edge > 3 ? 1 : 0;
+      // natural rock: rounded lumps from value noise, lit from above (a lump's upper rim light, lower rim dark), thin cracks
+      var n = vn(x, y * 1.35, 9, 3) * 0.7 + vn(x, y, 4, 9) * 0.3, nu = vn(x, (y - 1.5) * 1.35, 9, 3) * 0.7 + vn(x, y - 1.5, 4, 9) * 0.3;
+      var tone = n > 0.62 ? 0 : n > 0.4 ? 1 : 2, col = ROCK[band][tone];
+      if (n - nu > 0.035 && band < 2) col = ROCK[Math.max(0, band - 1)][Math.max(0, tone - 1)];
+      else if (nu - n > 0.045) col = ROCK[Math.min(2, band + 1)][2];
+      var cr = (n * 5) % 1; if (cr < 0.04 && vn(x, y, 3, 21) > 0.55) col = band === 2 ? INK : ROCK[2][2];
+      if (h2(x, y) < 0.012) col = ROCK[band][Math.min(2, tone + 1)];
+      // moss cap on open tops
+      if (topOpen && up < 5) { var cap = 2 + Math.floor(h2(x >> 1, 77) * 3); if (up < cap) col = up === 0 ? MOSS[0] : up === 1 ? MOSS[1] : MOSS[2]; else if (up === cap) col = MOSS[4]; }
+      // dark undersides (ceilings): a shadow band
+      if (dn < 3 && y + dn + 1 < LH) col = dn === 0 ? INK : UNDER;
+      if ((lf === 0 || rt === 0) && !(topOpen && up < 3)) col = INK;
+      else if (lf === 1 && !(topOpen && up < 3)) col = RIM;                      // rim light on faces open to the left
+      else if (rt === 1 && dn > 2) col = ROCK[2][1];                             // shade on faces open to the right
+      if ((lf === 0 || rt === 0) && (dn === 0 || (topOpen && up === 0))) { put(x, y, [0, 0, 0], 0); continue; }   // rounded outer corners
+      put(x, y, col);
+    }
+    // outline above open tops, grass blades and flowers, hanging moss and roots under ceilings
+    for (x = 0; x < LW; x++) for (y = 1; y < LH; y++) {
+      if (sol(x, y) && !sol(x, y - 1)) {
+        put(x, y - 1, INK);
+        var hv = h2(x, y + 90);
+        if (hv < 0.28) { put(x, y - 1, MOSS[1]); put(x, y - 2, INK); if (hv < 0.12) { put(x, y - 2, MOSS[2]); put(x, y - 3, INK); } }
+        if (hv > 0.985) { put(x, y - 2, hex('#f4e6a0')); put(x, y - 3, hex('#ffd06a')); put(x + 1, y - 3, INK); put(x - 1, y - 3, INK); put(x, y - 4, INK); }
+      }
+      if (sol(x, y - 1) && !sol(x, y) && y - 1 > 0) {
+        var hv2 = h2(x * 7, y + 40);
+        if (hv2 < 0.16) { var n = 2 + Math.floor(hv2 * 60) % 7; for (var k = 0; k < n; k++) put(x, y + k, k === n - 1 ? MOSS[1] : k & 1 ? MOSS[3] : MOSS[2]); put(x + 1, y + n - 1, INK); }
+        else if (hv2 > 0.93) { var n2 = 1 + Math.floor((hv2 - 0.93) * 60); for (var k2 = 0; k2 < n2; k2++) put(x, y + k2, ROCK[1][1]); put(x, y + n2, INK); }
+      }
+    }
+    q.putImageData(img, 0, 0);
+    return c;
+  })();
+
+  /* ---------------- water (animated, drawn each frame) ---------------- */
+  function drawWater(camX, camY, tMs) {
+    var top = 10 * W.TS - camY;
+    for (var x = 0; x < NW; x++) {
+      var wx = x + camX, c = Math.floor(wx / W.TS); if (W.tileAt(c, 10) !== '~') continue;
+      var wave = Math.round(Math.sin(wx * 0.09 + tMs / 420) * 1.2 + Math.sin(wx * 0.23 - tMs / 300) * 0.6);
+      var y0 = top + 2 + wave;
+      g.fillStyle = '#e8f4ff'; g.fillRect(x, y0, 1, 1);
+      g.fillStyle = '#5aa8d0'; g.fillRect(x, y0 + 1, 1, 2);
+      g.fillStyle = '#2e6c9a'; g.fillRect(x, y0 + 3, 1, 5);
+      g.fillStyle = '#1c4470'; g.fillRect(x, y0 + 8, 1, NH - y0 - 8);
+      if (h2(Math.floor(wx / 3), Math.floor(tMs / 260)) > 0.94) { g.fillStyle = '#bfe4ff'; g.fillRect(x, y0 + 5, 2, 1); }
+    }
+  }
+
+  /* ---------------- the hero: a hooded climber drawn in code per pixel, posed every frame ----------------
+     Head and torso are small hand-made pixel sprites; arms and legs are 2 px limbs between joints (simple two-bone IK), so the
+     arms really reach for the rope. Everything is composited on a 32x32 layer and outlined as ONE shape. Native art looks right;
+     the mirror is computed in one place (flipX = want !== 'right'); light comes from straight above, so a mirror is honest. */
+  var HC = { o: '#1a1024', h: '#2f8a8a', H: '#5ec4b0', d: '#1d5560', s: '#f2c08f', S: '#c98d5d', e: '#1a1024', r: '#d8443a', R: '#9a2a2a', t: '#3a5a8a', T: '#5a82b8', n: '#26385a', b: '#6a4422', B: '#a0703a', p: '#3a3550', P: '#26223a', k: '#6a4426', K: '#3e2616', g: '#e0a848', G: '#9a6a28' };
+  var HEAD = ['..hhh..', '.hHhhh.', 'hHhhhhd', 'hhhsssd', 'hhssess', 'dhsssSs', '.dhSSs.'];
+  var TORSO = ['.rrrr.', 'rRrrrr', 'tTTttn', 'tTttnn', 'tTttnn', 'bBbbbb', 'pppppP'];
+  function hex(s) { return s; }
+  var HL = document.createElement('canvas'); HL.width = 32; HL.height = 32; var hg = HL.getContext('2d', { willReadFrequently: true });
+  function sprite(rows, ox, oy) { for (var y = 0; y < rows.length; y++) for (var x = 0; x < rows[y].length; x++) { var ch = rows[y].charAt(x); if (ch === '.') continue; hg.fillStyle = HC[ch]; hg.fillRect(ox + x, oy + y, 1, 1); } }
+  function limb(ax, ay, bx, by, c1, w) { var dx = bx - ax, dy = by - ay, l = Math.sqrt(dx * dx + dy * dy), n = Math.max(1, Math.ceil(l * 2)); hg.fillStyle = c1; for (var i = 0; i <= n; i++) { var x = ax + dx * i / n, y = ay + dy * i / n; hg.fillRect(Math.round(x - w / 2), Math.round(y - w / 2), w, w); } }
+  function ik(ax, ay, bx, by, l1, l2, bend) {   // knee / elbow between a and b; bend +1 = to the front (x+), -1 = back
+    var dx = bx - ax, dy = by - ay, d = Math.sqrt(dx * dx + dy * dy), maxd = l1 + l2 - 0.01;
+    if (d > maxd) { bx = ax + dx / d * maxd; by = ay + dy / d * maxd; dx = bx - ax; dy = by - ay; d = maxd; }
+    var a = (l1 * l1 - l2 * l2 + d * d) / (2 * d), hh = Math.sqrt(Math.max(0, l1 * l1 - a * a)), mx = ax + dx * a / d, my = ay + dy * a / d;
+    var px = -dy / d, py = dx / d; if (px * bend < 0) { px = -px; py = -py; }
+    return { x: mx + px * hh, y: my + py * hh, ex: bx, ey: by };
+  }
+  // pose: joints in facing space (x = forward), hip at (16, 19) of the layer
+  function heroPose(h, tMs) {
+    var r = h.lastR || {}, att = r.state === 'attached' && r.active !== false && !h.onGround, air = !h.onGround;
+    var P = { lean: 0, bob: 0, legs: null, arms: null, scarf: 0 };
+    var f = h.facing > 0 ? 1 : -1, vx = h.vx * f;
+    if (att || (r.state === 'attached' && !h.onGround)) {
+      var grip = { x: 0, y: -16.5 };   // the rope grip (the module's hand point) relative to the hip: just above the hood
+      P.lean = Math.max(-1, Math.min(1, Math.round(-vx * 0.4)));
+      P.arms = { behind: true, reach: [0, 1] };
+      if (W.input && W.input.reel) { var ph = Math.floor(tMs / 110) & 1; P.arms = { behind: true, reach: ph ? [0, 2] : [1, 0] }; }   // hand over hand
+      var trail = Math.max(-3, Math.min(3, -vx * 1.3)), drop = Math.max(-2, Math.min(2, h.vy * 0.6));
+      P.legs = { n: { x: trail + 1, y: 7 - Math.abs(trail) * 0.2 }, f: { x: trail - 1.5, y: 6.5 }, bend: 1 };
+      P.scarf = -vx;
+      return P;
+    }
+    if (air) {
+      if (h.vy < -0.5) P.legs = { n: { x: 2.5, y: 5 }, f: { x: -1.5, y: 6 }, bend: 1 };
+      else P.legs = { n: { x: 1.5, y: 7 }, f: { x: -2, y: 6.5 }, bend: 1 };
+      P.arms = h.vy < -0.5 ? { n: { x: 3.5, y: -3.5 }, f: { x: -3, y: -4.5 } } : { n: { x: 4, y: -4.5 }, f: { x: -3.5, y: -4 } };   // arms out, clear of the face
+      P.scarf = -vx - 1;
+    } else if (Math.abs(h.vx) > 0.2) {
+      var fr = Math.floor(h.run / 4.5) % 6;
+      var FEET = [[3.5, 7], [1.5, 7.2], [-1, 7.2], [-3.5, 6], [-1.5, 4.6], [2, 5]];
+      var nF = FEET[fr], fF = FEET[(fr + 3) % 6];
+      P.legs = { n: { x: nF[0], y: nF[1] }, f: { x: fF[0], y: fF[1] }, bend: 1 };
+      var HANDS = [[-3, -2], [-1.5, -1], [1.5, -1.5], [3, -3], [1.5, -2.5], [-1.5, -2]];
+      var nH = HANDS[(fr + 3) % 6], fH = HANDS[fr];
+      P.arms = { n: { x: nH[0], y: nH[1] }, f: { x: fH[0], y: fH[1] } };
+      P.lean = 1; P.bob = fr === 1 || fr === 4 ? 1 : 0; P.scarf = -2;
+    } else {
+      var br = Math.floor(tMs / 600) & 1;
+      P.legs = { n: { x: 1.5, y: 7 }, f: { x: -1.5, y: 7 }, bend: 1 };
+      P.arms = { n: { x: 2, y: 0.5 }, f: { x: -2, y: 0 } };
+      P.bob = br; P.scarf = -0.5;
+      if (h.landT > 0) { P.bob = 1; P.legs = { n: { x: 2, y: 6 }, f: { x: -2, y: 6 }, bend: 1 }; }
+    }
+    // throwing: the near arm held straight out toward the flying hook (the rope leaves from that hand)
+    var hk = h.hookAt;
+    // the arm starts at the FRONT shoulder (3 px ahead of the body axis, below the chin) and reaches 8 px toward the hook in a
+    // straight line: upper arm sleeve, gauntleted forearm, hand at the end, all clear of the face (drawn over the head)
+    if (hk && r.state !== 'attached') { var sxw = h.x + h.w / 2 + f * 3, syw = h.y + 8, dx = hk.x - sxw, dy = hk.y - syw, l = Math.sqrt(dx * dx + dy * dy) || 1, ax = dx / l * f, ay = dy / l;
+      if (ax < 0.25) { ax = 0.25; ay = -Math.sqrt(1 - ax * ax) * (ay < 0 ? 1 : -1); }
+      P.throwArm = { x: ax, y: ay }; P.arms.f = { x: -2.5, y: -3.5 }; }
+    else if (h.fireT > 0 && r.state !== 'attached') { P.throwArm = { x: 0.6, y: -0.8 }; P.arms.f = { x: -2.5, y: -3.5 }; }
+    return P;
+  }
+  function renderHero(h, tMs) {
+    var P = heroPose(h, tMs), HX = 16, HY = 19 + P.bob;
+    hg.clearRect(0, 0, 32, 32);
+    var sx = HX + P.lean, sy = HY - 7;   // shoulder
+    // far arm and far leg (darker), then torso and head, then near leg and near arm
+    var L1 = 3.7, L2 = 3.7, A1 = 3.4, A2 = 3.4;
+    var kf = ik(HX - 0.5, HY, HX + P.legs.f.x, HY + P.legs.f.y, L1, L2, P.legs.bend);
+    if (!P.arms.behind) { var ef = ik(sx - 1, sy, HX + P.arms.f.x, HY + P.arms.f.y, A1, A2, -1);
+      limb(sx - 1, sy, ef.x, ef.y, HC.n, 2); limb(ef.x, ef.y, ef.ex, ef.ey, HC.G, 2); hg.fillStyle = HC.S; hg.fillRect(Math.round(ef.ex - 1), Math.round(ef.ey - 1), 2, 2); }
+    limb(HX - 0.5, HY, kf.x, kf.y, HC.P, 2); limb(kf.x, kf.y, kf.ex, kf.ey, HC.P, 2);
+    hg.fillStyle = HC.K; hg.fillRect(Math.round(kf.ex - 1), Math.round(kf.ey - 1), 3, 2);
+    // scarf tail: a short knot of cloth at the back of the neck that flutters (1-2 px), never a long streamer
+    var st = P.scarf < -1.2 ? 1 : 0, wav = Math.sin(tMs / 120) > 0 ? 1 : 0, tx0 = Math.round(sx - 3);
+    hg.fillStyle = HC.r; hg.fillRect(tx0 - 1 - st, sy + wav, 2, 1); hg.fillStyle = HC.R; hg.fillRect(tx0 - 1 - st, sy + 1 + wav, 1, 1);
+    var reach = P.arms.behind ? (P.arms.reach || [0, 0]) : null;
+    if (reach) {   // hanging: arms up along both sides of the hood, hands meeting on the rope just above it
+      var gy = sy - 9.5;
+      limb(sx - 2.5, sy, sx - 3.5, sy - 5, HC.n, 2); limb(sx - 3.5, sy - 5, sx - 0.5, gy + 1 + reach[1], HC.n, 2); hg.fillStyle = HC.G; hg.fillRect(Math.round(sx - 2.5), Math.round(gy + 2 + reach[1]), 1, 1);
+      hg.fillStyle = HC.S; hg.fillRect(Math.round(sx - 1.5), Math.round(gy + 0.5 + reach[1]), 2, 2);
+    }
+    sprite(TORSO, Math.round(sx - 3), sy - 1);
+    sprite(HEAD, Math.round(sx - 3 + 0.5), sy - 8);
+    if (reach) {
+      limb(sx + 2.5, sy, sx + 3.5, sy - 5, HC.t, 2); limb(sx + 3.5, sy - 5, sx + 0.5, gy + reach[0], HC.T, 2); hg.fillStyle = HC.g; hg.fillRect(Math.round(sx + 1.5), Math.round(gy + 1 + reach[0]), 2, 1);
+      hg.fillStyle = HC.s; hg.fillRect(Math.round(sx - 0.5), Math.round(gy - 0.5 + reach[0]), 2, 2);
+    }
+    var kn = ik(HX + 0.5, HY, HX + P.legs.n.x, HY + P.legs.n.y, L1, L2, P.legs.bend);
+    limb(HX + 0.5, HY, kn.x, kn.y, HC.p, 2); limb(kn.x, kn.y, kn.ex, kn.ey, HC.p, 2);
+    hg.fillStyle = HC.k; hg.fillRect(Math.round(kn.ex - 1), Math.round(kn.ey - 1), 3, 2); hg.fillStyle = HC.B; hg.fillRect(Math.round(kn.ex), Math.round(kn.ey - 1), 1, 1);
+    if (P.throwArm) {
+      var t0x = sx + 3, t0y = sy + 1, ta = P.throwArm, ex = t0x + ta.x * 4, ey = t0y + ta.y * 4, hx2 = t0x + ta.x * 8, hy2 = t0y + ta.y * 8;
+      limb(t0x, t0y, ex, ey, HC.T, 2); limb(ex, ey, hx2 - ta.x * 1.5, hy2 - ta.y * 1.5, HC.g, 2);
+      hg.fillStyle = HC.G; hg.fillRect(Math.round(ex + ta.x * 2), Math.round(ey + ta.y * 2), 1, 1);
+      hg.fillStyle = HC.s; hg.fillRect(Math.round(hx2 - 1), Math.round(hy2 - 1), 2, 2);
+    } else if (!P.arms.behind) {
+      var en = ik(sx + 1, sy, HX + P.arms.n.x, HY + P.arms.n.y, A1, A2, -1);
+      limb(sx + 1, sy, en.x, en.y, HC.T, 2); limb(en.x, en.y, en.ex, en.ey, HC.g, 2);
+      hg.fillStyle = HC.s; hg.fillRect(Math.round(en.ex - 1), Math.round(en.ey - 1), 2, 2);
+    }
+    // one outline around the whole figure
+    var im = hg.getImageData(0, 0, 32, 32), a = im.data, add = [];
+    for (var y = 0; y < 32; y++) for (var x = 0; x < 32; x++) { var k = (y * 32 + x) * 4; if (a[k + 3]) continue; if ((x > 0 && a[k - 1]) || (x < 31 && a[k + 7]) || (y > 0 && a[k - 125]) || (y < 31 && a[k + 131])) add.push(k); }
+    for (var i = 0; i < add.length; i++) { a[add[i]] = 26; a[add[i] + 1] = 16; a[add[i] + 2] = 36; a[add[i] + 3] = 255; }
+    hg.putImageData(im, 0, 0);
+    return HL;
+  }
+  /* hanging: the whole climber is laid out along the rope (hands at the rope end, the body below them on the rope line), drawn
+     from pixel primitives in world orientation (no bitmap is rotated; light still comes from straight above). Legs trail the
+     motion; pushing with the swing at the bottom of the arc kicks them forward (pump); reeling goes hand over hand. */
+  var HG = document.createElement('canvas'); HG.width = 56; HG.height = 56; var gg2 = HG.getContext('2d', { willReadFrequently: true });
+  function renderHang(h, tMs, ux, uy, opt) {
+    opt = opt || {};
+    var q = hg; hg = gg2; hg.clearRect(0, 0, 56, 56);
+    var G0 = { x: 28, y: 28 }, dx = -ux, dy = -uy;                       // d: down the body, along the rope
+    var f = h.vx > 0.15 ? 1 : h.vx < -0.15 ? -1 : (h.facing > 0 ? 1 : -1);
+    var fx = -dy, fy = dx; if (fx * f < 0 || (Math.abs(fx) < 1e-3 && f < 0)) { fx = -fx; fy = -fy; }   // forward, across the body
+    var P = function (a, b) { return { x: G0.x + dx * a + fx * b, y: G0.y + dy * a + fy * b }; };
+    var speed = h.vx * fx + h.vy * fy;                                   // swing speed across the rope (forward +)
+    var reel = opt.reel || 0, ph = Math.floor(tMs / 110) & 1;
+    var hn = P(reel && ph ? 1.5 : 0, 0.6), hf = P(reel && !ph ? 0.2 : 1.8, -0.6);
+    var nk = P(8.2, 0), sn = P(8, 2.4), sf = P(8.3, -2.4), hd = P(5.4, 0.6);
+    var lean = Math.max(-1.2, Math.min(1.2, -speed * 0.35)), hip = P(13.6, lean);
+    var pump = opt.push && opt.push * f > 0 && Math.abs(speed) > 0.8 && Math.abs(fy) < 0.5;
+    var trail = pump ? 0.75 : Math.max(-0.8, Math.min(0.8, -speed * 0.28));   // radians, + = legs forward
+    var cs = Math.cos(trail), sn2 = Math.sin(trail), lx = dx * cs + fx * sn2, ly = dy * cs + fy * sn2;   // leg direction
+    var bx = fx * cs - dx * sn2, by = fy * cs - dy * sn2;                // knee bend direction (forward of the legs)
+    function leg(off, near) {
+      var o = { x: hip.x + fx * off, y: hip.y + fy * off }, bend = pump ? 1.8 : 0.9;
+      var k = { x: o.x + lx * 3.6 + bx * bend, y: o.y + ly * 3.6 + by * bend }, e = { x: k.x + lx * 3.6 - bx * (pump ? 0.6 : 0.2), y: k.y + ly * 3.6 - by * (pump ? 0.6 : 0.2) };
+      limb(o.x, o.y, k.x, k.y, near ? HC.p : HC.P, 2); limb(k.x, k.y, e.x, e.y, near ? HC.p : HC.P, 2);
+      hg.fillStyle = near ? HC.k : HC.K; hg.fillRect(Math.round(e.x - 1 + bx), Math.round(e.y - 1 + by), 2, 2); hg.fillRect(Math.round(e.x - 1), Math.round(e.y - 1), 2, 2);
+    }
+    function arm(sh, hand, near) {   // elbow bulges outward, beside the head
+      var out = near ? 1 : -1, m = { x: (sh.x + hand.x) / 2 + fx * out * 1.6, y: (sh.y + hand.y) / 2 + fy * out * 1.6 };
+      limb(sh.x, sh.y, m.x, m.y, near ? HC.t : HC.n, 2); limb(m.x, m.y, hand.x, hand.y, near ? HC.T : HC.n, 2);
+      hg.fillStyle = near ? HC.g : HC.G; hg.fillRect(Math.round((m.x + hand.x * 2) / 3 - 0.5), Math.round((m.y + hand.y * 2) / 3 - 0.5), 1, 1);
+      hg.fillStyle = near ? HC.s : HC.S; hg.fillRect(Math.round(hand.x - 1), Math.round(hand.y - 1), 2, 2);
+    }
+    arm(sf, hf, false); leg(-1, false);
+    // torso: tunic along the rope line, belt near the hip, scarf at the neck
+    limb(nk.x, nk.y, hip.x, hip.y, HC.t, 4);
+    var mid = { x: nk.x * 0.45 + hip.x * 0.55, y: nk.y * 0.45 + hip.y * 0.55 }; limb(mid.x + fx, mid.y + fy, nk.x + fx, nk.y + fy, HC.T, 2);
+    var belt = { x: nk.x * 0.2 + hip.x * 0.8, y: nk.y * 0.2 + hip.y * 0.8 }; hg.fillStyle = HC.b; hg.fillRect(Math.round(belt.x - 2), Math.round(belt.y), 4, 1);
+    hg.fillStyle = HC.r; hg.fillRect(Math.round(nk.x - 2), Math.round(nk.y - 1), 4, 2); hg.fillStyle = HC.R; hg.fillRect(Math.round(nk.x - 2 - fx * 2), Math.round(nk.y + 1 + (Math.sin(tMs / 120) > 0 ? 1 : 0)), 1, 2);
+    leg(1, true); arm(sn, hn, true);
+    // head: a hood lit from above, face on the forward side, one eye
+    var r0 = 3.6;
+    for (var yy = -4; yy <= 4; yy++) for (var xx = -4; xx <= 4; xx++) {
+      var d2 = xx * xx + yy * yy; if (d2 > r0 * r0 + 0.5) continue;
+      var face = (xx * fx + yy * fy) > -0.4 && (xx * dx + yy * dy) > -1.2, col = face ? ((xx * dx + yy * dy) > 1.6 ? HC.S : HC.s) : (yy < -1.5 ? HC.H : yy > 1.5 ? HC.d : HC.h);
+      hg.fillStyle = col; hg.fillRect(Math.round(hd.x + xx), Math.round(hd.y + yy), 1, 1);
+    }
+    hg.fillStyle = HC.e; hg.fillRect(Math.round(hd.x + fx * 1.8 + dx * 0.2), Math.round(hd.y + fy * 1.8 + dy * 0.2), 1, 1);
+
+    var im = hg.getImageData(0, 0, 56, 56), a = im.data, add = [];
+    for (var y = 0; y < 56; y++) for (var x = 0; x < 56; x++) { var k = (y * 56 + x) * 4; if (a[k + 3]) continue; if ((x > 0 && a[k - 1]) || (x < 55 && a[k + 7]) || (y > 0 && a[k - 221]) || (y < 55 && a[k + 227])) add.push(k); }
+    for (var i = 0; i < add.length; i++) { a[add[i]] = 26; a[add[i] + 1] = 16; a[add[i] + 2] = 36; a[add[i] + 3] = 255; }
+    hg.putImageData(im, 0, 0);
+    hg = q;
+    return HG;
+  }
+  var HERO_ASSET = { id: 'climber', facing: 'right' };
+  function flipX(asset, want) { return (want === 'left' || want < 0 ? 'left' : 'right') !== asset.facing; }
+  function drawHero(h, camX, camY, tMs) {
+    var want = h.facing > 0 ? 'right' : 'left', r = h.lastR || {};
+    if (r.state === 'attached' && !h.onGround) {   // on the rope: laid out along the rope from the hands
+      var rp = W.g.ropePath(h), ux = 0, uy = -1;
+      if (rp.length > 1) { var ddx = rp[1].x - rp[0].x, ddy = rp[1].y - rp[0].y, dl = Math.sqrt(ddx * ddx + ddy * ddy); if (dl > 2) { ux = ddx / dl; uy = ddy / dl; } }
+      var I = W.input || {}, img2 = renderHang(h, tMs, ux, uy, { reel: I.reel, push: (I.right ? 1 : 0) - (I.left ? 1 : 0) });
+      var gx = Math.round(h.x + h.w / 2 - camX), gy = Math.round(h.y - 2 - camY);
+      g.drawImage(img2, gx - 28, gy - 28);
+      return { x: gx, y: gy, facing: h.vx > 0.15 ? 'right' : h.vx < -0.15 ? 'left' : want };
+    }
+    var st0 = W.g.state(); h.hookAt = st0.hook && st0.state !== 'attached' ? st0.hook : null;
+    var img = renderHero(h, tMs);
+    var X = Math.round(h.x + h.w / 2 - camX), Y = Math.round(h.y + h.h - camY);   // feet centre
+    // soft contact shadow on the ground under the hero
+    if (h.onGround) { g.fillStyle = 'rgba(16,8,24,0.35)'; g.fillRect(X - 4, Y, 9, 1); }
+    if (flipX(HERO_ASSET, want)) { g.save(); g.translate(X + 16, Y - 27); g.scale(-1, 1); g.drawImage(img, 0, 0); g.restore(); }
+    else g.drawImage(img, X - 16, Y - 27);
+    return { x: X, y: Y, facing: want };
+  }
+  window.__grappleCast = { climber: function (gg, x, footY, want, pose) {
+    var h = { x: 0, y: 0, w: 8, h: 22, vx: pose && pose.vx || 0, vy: pose && pose.vy || 0, facing: want === 'left' ? -1 : 1, onGround: !(pose && pose.air), run: pose && pose.run || 0, landT: 0, fireT: pose && pose.fire ? 5 : 0, lastR: pose && pose.hang ? { state: 'attached', active: true } : null };
+    if (pose && pose.hang) { var im2 = renderHang(h, 0, (pose.ux || 0), (pose.uy == null ? -1 : pose.uy), { push: pose.push || 0 }); gg.drawImage(im2, Math.round(x) - 28, Math.round(footY) - 24 - 28); return true; }
+    var img = renderHero(h, 0), X = Math.round(x), Y = Math.round(footY);
+    if (flipX(HERO_ASSET, want)) { gg.save(); gg.translate(X + 16, Y - 27); gg.scale(-1, 1); gg.drawImage(img, 0, 0); gg.restore(); } else gg.drawImage(img, X - 16, Y - 27);
+    return true; } };
+
+  /* ---------------- loop: one clock; ?t= replays the same fixed steps ---------------- */
+  var human = { left: false, right: false, up: false, down: false, jump: false, jumpPressed: false, fire: false, hold: false, reel: 0 };
+  var pressed = { jump: false, fire: false };
+  var aimClick = null, tMs = 0, lastHeroDraw = null;
+  function step() {
+    var I = null;
+    if (!W.botOn) {
+      I = { left: human.left, right: human.right, up: human.up, down: human.down, jump: human.jump, jumpPressed: pressed.jump, fire: pressed.fire, hold: human.hold, reel: W.g.attached() ? (human.up ? -1 : human.down ? 1 : 0) : 0 };
+      if (aimClick && pressed.fire) { var h = W.hero; I.aimX = aimClick.x - (h.x + h.w / 2); I.aimY = aimClick.y - (h.y + 2); }
+      if (W.g.attached()) { I.up = false; I.down = false; }
+      pressed.jump = false; pressed.fire = false; if (I.fire) aimClick = null;
+    }
+    W.step(I);
+    BG.update(STEP);
+    tMs += STEP;
+  }
+  function draw() {
+    var camX = Math.round(W.cam.x), camY = Math.round(W.cam.y);
+    g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = false;
+    BG.draw(g, camX * 0.5, 0);
+    g.drawImage(LAYER, camX, camY, NW, NH, 0, 0, NW, NH);
+    W.g.drawRings(g, camX, camY);
+    var h = W.hero;
+    W.g.draw(g, camX, camY, h);
+    lastHeroDraw = drawHero(h, camX, camY, tMs);
+    drawWater(camX, camY, tMs);
+    // present: integer scale onto the display canvas
+    var r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1, k = Math.max(1, Math.round(r.width * dpr / NW));
+    if (cv.width !== NW * k) { cv.width = NW * k; cv.height = NH * k; }
+    ctx.imageSmoothingEnabled = false; ctx.drawImage(NAT, 0, 0, NW * k, NH * k);
+    hud();
+  }
+  var HUD = document.getElementById('hud'), LOG = document.getElementById('log'), lastHud = '';
+  function hud() {
+    var s = W.g.state(), chips = [['State', s.state, s.state === 'attached'], ['Rope', s.state === 'attached' ? Math.round(s.length) + ' px' : '-', false],
+      ['Bends', String(Math.max(0, s.pivots.length - 1)), s.pivots.length > 1], ['Momentum', s.carry ? 'carried' : '-', !!s.carry], ['Tour', W.botOn ? W.phaseName() : 'off', false]];
+    var html = chips.map(function (c) { return '<span class="chip' + (c[2] ? ' hot' : '') + '">' + c[0] + ' <b>' + c[1] + '</b></span>'; }).join('');
+    var ev = W.events.slice(-4).map(function (e) { return e.type + (e.kind ? ' (' + e.kind + ')' : ''); }).join(' · ');
+    if (html + ev !== lastHud) { HUD.innerHTML = html; LOG.textContent = ev ? 'Events: ' + ev : ''; lastHud = html + ev; }
+  }
+
+  /* ---------------- text state for critics and tools/sprites/statecheck.py ---------------- */
+  window.__state = function () {
+    var h = W.hero, s = W.g.state(), camX = Math.round(W.cam.x), camY = Math.round(W.cam.y);
+    return { t: Math.round(tMs), frame: W.frame, phase: W.phaseName(),
+      actors: [{ id: 'hero', x: Math.round(h.x + h.w / 2 - camX), y: Math.round(h.y + h.h - camY), facing: (h.lastR && h.lastR.state === 'attached' && !h.onGround && Math.abs(h.vx) > 0.15) ? (h.vx > 0 ? 'right' : 'left') : (h.facing > 0 ? 'right' : 'left'), target: null, vx: Math.round(h.vx * 60), asset: 'climber',
+        note: s.state === 'attached' ? 'on the rope: faces its swing direction' : s.state === 'shot' ? 'firing: faces the shot' : '' }],
+      grapple: { state: s.state, length: s.length, free: s.free, anchor: s.anchor, pivots: s.pivots, hook: s.hook, carry: s.carry, aim: s.aim },
+      events: W.events.map(function (e) { return { t: Math.round(e.frame * STEP), type: e.type, kind: e.kind || null, ring: e.ring || null }; }),
+      cam: { x: camX, y: camY } };
+  };
+
+  /* ---------------- input ---------------- */
+  var KEYS = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', KeyZ: 'jump', Space: 'jump', KeyX: 'hook', KeyC: 'hook' };
+  function press(k, down) {
+    if (k === 'left' || k === 'right' || k === 'up' || k === 'down') human[k] = down;
+    else if (k === 'jump') { if (down && !human.jump) pressed.jump = true; human.jump = down; }
+    else if (k === 'hook') { if (down && !human.hold) pressed.fire = true; human.hold = down; }
+    if (down && W.botOn) setBot(false);
+  }
+  addEventListener('keydown', function (e) { if (e.code === 'KeyB') { setBot(!W.botOn); return; } var k = KEYS[e.code]; if (!k) return; e.preventDefault(); if (!e.repeat) press(k, true); });
+  addEventListener('keyup', function (e) { var k = KEYS[e.code]; if (k) press(k, false); });
+  cv.addEventListener('pointerdown', function (e) {
+    var r = cv.getBoundingClientRect(); aimClick = { x: (e.clientX - r.left) / r.width * NW + W.cam.x, y: (e.clientY - r.top) / r.height * NH + W.cam.y };
+    press('hook', true);
+  });
+  addEventListener('pointerup', function () { if (human.hold) press('hook', false); });
+  document.querySelectorAll('#pad button').forEach(function (b) {
+    b.addEventListener('pointerdown', function (e) { e.preventDefault(); press(b.dataset.k, true); });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) { b.addEventListener(ev, function () { press(b.dataset.k, false); }); });
+  });
+
+  /* ---------------- controls ---------------- */
+  function setBot(on) { botOn = on; W.botOn = on; if (on) W.reset(); document.getElementById('bBot').classList.toggle('on', on); }
+  document.getElementById('bBot').onclick = function () { setBot(!W.botOn); };
+  document.getElementById('bReset').onclick = function () { W.reset(); };
+  var CTL = document.getElementById('ctl'), inputs = {};
+  var defaults = GameDNA_Grapple.defaults;
+  SLIDERS.forEach(function (s) {
+    var v = params[s[0]] != null ? params[s[0]] : defaults[s[0]], l = document.createElement('label');
+    l.innerHTML = s[1] + ' <b>' + v + '</b><input type="range" min="' + s[2] + '" max="' + s[3] + '" step="' + s[4] + '" value="' + v + '">';
+    var inp = l.querySelector('input'), out = l.querySelector('b'); inputs[s[0]] = inp;
+    inp.oninput = function () { out.textContent = inp.value; params[s[0]] = +inp.value; W.g.setParams(params); };
+    CTL.appendChild(l);
+  });
+  SELECTS.forEach(function (s) {
+    var v = String(params[s[0]] != null ? params[s[0]] : defaults[s[0]]), l = document.createElement('label');
+    l.innerHTML = s[1] + '<select>' + s[2].map(function (o) { return '<option' + (o === v ? ' selected' : '') + '>' + o + '</option>'; }).join('') + '</select>';
+    var sel = l.querySelector('select'); inputs[s[0]] = sel;
+    sel.onchange = function () { params[s[0]] = sel.value; W.g.setParams(params); };
+    CTL.appendChild(l);
+  });
+  var PB = document.getElementById('presets');
+  Object.keys(PRESETS).forEach(function (name) {
+    var b = document.createElement('button'); b.textContent = name;
+    b.onclick = function () {
+      params = Object.assign({}, PRESETS[name]);
+      var full = Object.assign({}, defaults, params); W.g.setParams(full);
+      for (var k in inputs) { inputs[k].value = String(full[k]); var lb = inputs[k].parentNode.querySelector('b'); if (lb) lb.textContent = full[k]; }
+      PB.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+    };
+    PB.appendChild(b);
+  });
+  PB.firstChild.classList.add('on');
+
+  /* ---------------- boot ---------------- */
+  if (T_AT != null) {
+    var n = Math.floor(T_AT / STEP);
+    for (var i = 0; i < n; i++) step();
+    draw();
+    if (FREEZE) { window.__frozen = true; return; }
+  }
+  var acc = 0, last = null;
+  function frame(ts) {
+    if (last === null) last = ts;
+    acc += Math.min(250, ts - last); last = ts;
+    while (acc >= STEP) { step(); acc -= STEP; }
+    draw();
+    requestAnimationFrame(frame);
+  }
+  draw();
+  requestAnimationFrame(frame);
+  addEventListener('resize', draw);
+})();
+</script>
+</body>
+</html>

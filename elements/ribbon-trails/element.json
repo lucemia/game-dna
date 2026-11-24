@@ -1,0 +1,238 @@
+{
+  "id": "ribbon-trails",
+  "code": "E-15",
+  "kind": "addon",
+  "name": "Ribbon trails",
+  "family": "motion-trails",
+  "oneLiner": "Smooth tapered ribbons behind anything fast: a sword swing leaves a swept crescent from hilt to tip, a dash or lunge a soft body-wide ribbon, a projectile a thin curved trail with a bright additive core, a drifting wisp a faint wake. Each update samples the source once; a centripetal Catmull-Rom curve runs through the recent points and thins and fades with age. Teleports, scene switches, long gaps and a source going quiet start a new strip, and update(0) holds every ribbon still, so nothing is ever drawn across the screen. Seamless translucent bodies on HD canvases, whole pixels with three hard alpha steps on native pixel canvases. Drawing only: positions, hit boxes and rules never change.",
+  "fits": [
+    "top-down action RPG (sword swings, dashes, magic bolts)",
+    "side-scrolling action / platformer (slashes, air dashes, projectiles)",
+    "beat-'em-up and character action",
+    "twin-stick and bullet-hell shooters (projectile trails)",
+    "turn-based battles with attack animations (a lunge or swing on the attack frame)",
+    "any 2D game drawn on a canvas, pixel or HD"
+  ],
+  "notFor": [
+    "deliberately retro looks where sprite-copy afterimages are the point (this replaces them with a modern ribbon)",
+    "thousands of simultaneous projectiles (each ribbon is a few dozen quads; fine up to ~100 ribbons)",
+    "3D or WebGL-rendered scenes (2D canvas drawing)",
+    "gameplay trails that hurt or block (light-cycle walls): the ribbon never affects rules"
+  ],
+  "interfaces": {
+    "time": "realtime",
+    "coords": "side",
+    "layer": "fx",
+    "needs": [
+      "a fixed update step that calls update(dt) once per step after movement (also run by ?t= fast-forward and ?auto=1), update(0) while frozen or paused",
+      "per ribbon a source: world position of the weapon tip (and hilt), body centre or projectile each step, or null while there is nothing to trail",
+      "the draw pass: one call before the sprites ('under') and one after them ('over'), with the camera offset",
+      "a clear() call on restart, level start and every scene switch"
+    ],
+    "provides": [
+      "swept sword crescents, dash ribbons, projectile trails and wakes drawn under or over the sprites",
+      "automatic teleport, gap and scene breaks (no streaks), pause hold with update(0)",
+      "stats(), list(), points() and lastDrawn(): strips, points, breaks, largest drawn step, boxes (for tests)"
+    ]
+  },
+  "params": [
+    {
+      "key": "life",
+      "label": "Life (ms)",
+      "type": "range",
+      "min": 60,
+      "max": 800,
+      "step": 10,
+      "default": 220
+    },
+    {
+      "key": "width",
+      "label": "Width (multiplier)",
+      "type": "range",
+      "min": 0.25,
+      "max": 3,
+      "step": 0.05,
+      "default": 1
+    },
+    {
+      "key": "taper",
+      "label": "Taper",
+      "type": "range",
+      "min": 0,
+      "max": 3,
+      "step": 0.05,
+      "default": 1.3
+    },
+    {
+      "key": "fade",
+      "label": "Fade",
+      "type": "range",
+      "min": 0,
+      "max": 3,
+      "step": 0.05,
+      "default": 1.2
+    },
+    {
+      "key": "glow",
+      "label": "Glow",
+      "type": "range",
+      "min": 0,
+      "max": 1.5,
+      "step": 0.05,
+      "default": 0.5
+    },
+    {
+      "key": "smooth",
+      "label": "Smoothing (subdivisions)",
+      "type": "range",
+      "min": 1,
+      "max": 10,
+      "step": 1,
+      "default": 4
+    },
+    {
+      "key": "core",
+      "label": "Additive core",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "palette",
+      "label": "Palette",
+      "type": "select",
+      "options": [
+        "steel",
+        "ember",
+        "arcane",
+        "frost",
+        "venom",
+        "gold",
+        "shadow",
+        "skin"
+      ],
+      "default": "steel"
+    },
+    {
+      "key": "render",
+      "label": "Render",
+      "type": "select",
+      "options": [
+        "auto",
+        "smooth",
+        "pixel"
+      ],
+      "default": "auto"
+    },
+    {
+      "key": "contrast",
+      "label": "Contrast on bright backdrops",
+      "type": "select",
+      "options": [
+        "auto",
+        "on",
+        "off"
+      ],
+      "default": "auto"
+    },
+    {
+      "key": "reduced",
+      "label": "Reduced motion",
+      "type": "select",
+      "options": [
+        "system",
+        "on",
+        "off"
+      ],
+      "default": "system"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Clean steel (default)",
+      "params": {
+        "life": 220,
+        "width": 1,
+        "taper": 1.3,
+        "fade": 1.2,
+        "glow": 0.5,
+        "smooth": 4,
+        "core": "on",
+        "palette": "steel"
+      }
+    },
+    {
+      "name": "Ember blade",
+      "params": {
+        "palette": "ember",
+        "glow": 0.9,
+        "life": 260
+      }
+    },
+    {
+      "name": "Arcane caster",
+      "params": {
+        "palette": "arcane",
+        "life": 320,
+        "glow": 1.1,
+        "width": 1.2
+      }
+    },
+    {
+      "name": "Snappy action",
+      "params": {
+        "life": 140,
+        "taper": 2,
+        "width": 0.8,
+        "glow": 0.3
+      }
+    },
+    {
+      "name": "Long silk",
+      "params": {
+        "life": 520,
+        "taper": 0.8,
+        "fade": 1.6,
+        "smooth": 6,
+        "palette": "frost"
+      }
+    },
+    {
+      "name": "Shadow",
+      "params": {
+        "palette": "shadow",
+        "glow": 0,
+        "core": "off",
+        "fade": 0.9
+      }
+    },
+    {
+      "name": "Calm (reduced)",
+      "params": {
+        "reduced": "on",
+        "glow": 0
+      }
+    },
+    {
+      "name": "Pixel host",
+      "params": {
+        "render": "pixel",
+        "glow": 0
+      }
+    }
+  ],
+  "assets": [
+    "module/ribbon-trails.js: the element as one dependency-free script (global GameDNA_Ribbons): sampling, teleport / gap / scene breaks, centripetal Catmull-Rom ribbons, taper and fade, seamless body compositing, additive core and glow, arc samples for fast swings, under-shadow on bright backdrops, pixel raster",
+    "no image, font or audio files"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/ribbon-trails.js",
+    "global": "GameDNA_Ribbons",
+    "version": "1.1.0",
+    "docs": "module/README.md"
+  }
+}

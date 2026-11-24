@@ -1,0 +1,76 @@
+{
+  "id": "run-map",
+  "code": "G-08",
+  "kind": "addon",
+  "name": "Branching run map",
+  "family": "run-map",
+  "oneLiner": "The roguelite route between fights: a seeded map of floors whose battle, elite, event, shop and rest nodes are joined by paths that never cross, rising to a boss. The player picks one of the nodes connected to where they stand (arrows, mouse or touch), a token travels there and the game plays that node: fight nodes start the game's own fight or room and come back through finish(), rest, shop and event nodes are small panels whose choices are the game's own callbacks. The visited route is drawn in gold, the current node carries the token, unreachable branches fade. Framed HD map sheet or crisp pixel map (readable at 256x224); autoplay picks routes by itself so ?auto=1 still ends.",
+  "fits": [
+    "roguelites and deck-builders (a route between fights)",
+    "top-down action and adventure games (rooms or arenas as nodes)",
+    "turn-based RPGs (one battle per node, rest and shop stops)",
+    "survivor-likes and arena games (each node is a wave or stage)",
+    "any game with repeatable fights that can be chained into a run"
+  ],
+  "notFor": [
+    "a fixed world map of hand-placed levels you walk between (B-05 level-select-map)",
+    "open worlds where the player walks to places freely",
+    "linear stage lists with no choice",
+    "competitive multiplayer where the map must come from a server"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "the place where a fight (or room, wave) starts, called from onEnter for battle / elite / boss nodes, scaled by node.tier and node type",
+      "every place where that fight is decided (won, lost, fled): run.finish({won})",
+      "the place where a new game starts: run.start()",
+      "the stats rest / shop / event choices change (HP, max HP, attack, coins), written by the designer's apply functions",
+      "a fixed update step (the map's only clock), also while the world is paused for it; key-down events or polled edges; pointer in native px",
+      "the play field size in native px and HUD rects to keep clear; the autoplay flag"
+    ],
+    "provides": [
+      "a seeded map with no crossing paths and no dead ends (GameDNA_RunMap.generate, audit)",
+      "node entry through onEnter(node) with type, floor, tier and a per-node seed, synchronously inside update()",
+      "rest / shop / event panels whose choices run the game's own apply(), with coin costs",
+      "busy flag: pause the world and route input here while the map or a panel is open",
+      "a floor badge while a fight node is away; route, current node and serialize() / restore() for saves",
+      "the map sheet rectangle on screen, for other overlays to avoid"
+    ]
+  },
+  "params": [
+    { "key": "wrap", "label": "What fight nodes play in the game (required; the designer's words)", "type": "text", "default": "battle = one of my normal fights, elite = a tougher fight, boss = my final fight" },
+    { "key": "seed", "label": "Map seed", "type": "range", "min": 1, "max": 999, "step": 1, "default": 1 },
+    { "key": "floors", "label": "Floors below the boss", "type": "range", "min": 3, "max": 14, "step": 1, "default": 6 },
+    { "key": "width", "label": "Columns", "type": "range", "min": 3, "max": 7, "step": 1, "default": 5 },
+    { "key": "paths", "label": "Paths walked up the map", "type": "range", "min": 2, "max": 6, "step": 1, "default": 4 },
+    { "key": "wElite", "label": "Elite weight (battle 46)", "type": "range", "min": 0, "max": 100, "step": 1, "default": 14 },
+    { "key": "wEvent", "label": "Event weight", "type": "range", "min": 0, "max": 100, "step": 1, "default": 22 },
+    { "key": "wShop", "label": "Shop weight", "type": "range", "min": 0, "max": 100, "step": 1, "default": 8 },
+    { "key": "wRest", "label": "Rest weight", "type": "range", "min": 0, "max": 100, "step": 1, "default": 10 },
+    { "key": "eliteFrom", "label": "First floor with elites", "type": "range", "min": 1, "max": 8, "step": 1, "default": 3 },
+    { "key": "look", "label": "Look (auto = pixel below 300 px tall)", "type": "select", "options": ["auto", "hd", "pixel"], "default": "auto" },
+    { "key": "autoRoute", "label": "Autoplay route", "type": "select", "options": ["balanced", "safe", "bold", "first"], "default": "balanced" }
+  ],
+  "variants": [
+    { "name": "Classic run", "params": { "floors": 6, "width": 5, "paths": 4 } },
+    { "name": "Long climb", "params": { "floors": 12, "width": 7, "paths": 6 } },
+    { "name": "Short skirmish", "params": { "floors": 3, "width": 3, "paths": 2 } },
+    { "name": "Elite gauntlet", "params": { "wElite": 40, "eliteFrom": 2, "wRest": 16 } },
+    { "name": "Mystery road", "params": { "wEvent": 45, "wShop": 12 } },
+    { "name": "Pixel console", "params": { "look": "pixel" } }
+  ],
+  "assets": [
+    "module/run-map.js: the element as one dependency-free script (global GameDNA_RunMap): pure seeded generation with no crossing paths and an audit, node types with placement rules, route choice by keys / mouse / touch, token travel, rest / shop / event panels with costs, floor badge, autoplay routing, HD vector map and crisp pixel map (bitmap font, 1-bit icons), 6 node icons drawn in code, serialize / restore",
+    "no image or audio files (sound cues are a callback; node content is plain data in the game)"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/run-map.js",
+    "global": "GameDNA_RunMap",
+    "version": "1.1.0",
+    "docs": "module/README.md",
+    "skin": "optional: skins/skin-api.js + a skin before it (dim colour from ink; a smooth skin's UI font family in HD)"
+  }
+}

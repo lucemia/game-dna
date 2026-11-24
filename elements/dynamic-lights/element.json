@@ -1,0 +1,71 @@
+{
+  "id": "dynamic-lights",
+  "code": "J-01",
+  "name": "Dynamic 2D lights & soft shadows",
+  "kind": "addon",
+  "family": "light-post",
+  "requires": ["webgl-post"],
+  "oneLiner": "Point lights and spotlights with soft falloff, colour and deterministic flicker; lights that ride on actors (a torch on the hero, glowing projectiles) and short flashes on impacts; walls and obstacles the game supplies (a solid-tile callback or rects) cast soft real-time shadows with a penumbra. A light map is built every frame and composited in an I-08 WebGL pass, so the HUD stays unlit. Without WebGL, or with ?webgl=0 / ?lights=0, the game looks exactly as before.",
+  "fits": [
+    "top-down adventure, action RPG and dungeon crawlers (torches, braziers, dark rooms)",
+    "side-scrolling platformer / action (caves, night levels, glowing projectiles)",
+    "tactics or turn-based maps at night (lit units, lamp posts)",
+    "shmups and twin-stick games (bullets that light the arena)",
+    "any 2D canvas game, pixel or HD, with the I-08 post pipeline"
+  ],
+  "notFor": [
+    "games already drawn with WebGL or a 3D engine (use their own lighting)",
+    "games without WebGL on their target devices (no fallback lighting by design: the plain game shows)",
+    "per-pixel normal-mapped lighting (that is J-02)",
+    "hundreds of shadow-casting lights at once (the light map is built on the CPU; maxLights caps it)"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "post",
+    "needs": [
+      "render() once per drawn frame on every draw path (or the game's own post.render())",
+      "a world clock in ms (flicker, flashes, fade)",
+      "a camera offset: the world point drawn at canvas (0, 0)",
+      "optional: occluders from the tile map (solidAt(tx, ty) + tile size) and / or rects",
+      "optional: ui rects to keep clear (HUD, text boxes, menus stay unlit)",
+      "optional: actors to follow (hero, projectiles) and events with a point (impacts, spells) for flashes"
+    ],
+    "provides": [
+      "lights.add / set / remove / flash / clear: point lights, cones, follow lights, fading flashes",
+      "a light-map pass at order 200 on the I-08 instance (lights-blur-h, lights-blur-v, lights)",
+      "the shared uiMask input rasterised from ui rects (other J passes leave those pixels alone too)",
+      "stats() and list(): light count, lights drawn, shadow edges, light-map cost, mean light, canvas positions"
+    ]
+  },
+  "params": [
+    { "key": "ambient", "label": "Ambient (darkness where no light reaches)", "type": "range", "min": 0, "max": 1, "step": 0.01, "default": 0.55 },
+    { "key": "tint", "label": "Ambient tint", "type": "select", "options": ["dusk", "night", "cave", "warm", "neutral"], "default": "dusk" },
+    { "key": "shadows", "label": "Soft shadows", "type": "select", "options": ["on", "off"], "default": "on" },
+    { "key": "softness", "label": "Shadow softness (px)", "type": "range", "min": 0, "max": 16, "step": 0.5, "default": 5 },
+    { "key": "glow", "label": "Glow haze", "type": "range", "min": 0, "max": 1.2, "step": 0.05, "default": 0.35 },
+    { "key": "flicker", "label": "Torch flicker", "type": "range", "min": 0, "max": 1, "step": 0.05, "default": 0.25 },
+    { "key": "bands", "label": "Light style (0 smooth, 3-8 banded)", "type": "range", "min": 0, "max": 8, "step": 1, "default": 0 }
+  ],
+  "variants": [
+    { "name": "Dusk (default)", "params": { "ambient": 0.55, "tint": "dusk", "shadows": "on", "softness": 5, "glow": 0.35 } },
+    { "name": "Torch-lit dungeon", "params": { "ambient": 0.15, "tint": "night", "softness": 6, "glow": 0.45, "flicker": 0.3 } },
+    { "name": "Moonlit night", "params": { "ambient": 0.3, "tint": "night", "glow": 0.3 } },
+    { "name": "Day accents", "params": { "ambient": 0.9, "tint": "warm", "glow": 0.15, "flicker": 0.15 } },
+    { "name": "Retro banded light", "params": { "ambient": 0.2, "tint": "cave", "bands": 4, "softness": 3 } }
+  ],
+  "assets": [
+    "module/dynamic-lights.js: the element as one dependency-free script (global GameDNA_Lights): light list, follow / flash / cone lights, occluder edges from a tile callback or rects, soft shadow polygons, CPU light map, uiMask, I-08 passes",
+    "requires elements/webgl-post/module/webgl-post.js (I-08, global GameDNA_Post), shipped alongside in every combo",
+    "no image or audio files"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/dynamic-lights.js",
+    "global": "GameDNA_Lights",
+    "version": "1.1.0",
+    "docs": "module/README.md",
+    "requires": "webgl-post (GameDNA_Post) loaded first",
+    "skin": "none: the module draws no 2D UI; HUD pixels pass through unchanged"
+  }
+}

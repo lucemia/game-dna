@@ -1,0 +1,75 @@
+{
+  "id": "threat-range",
+  "code": "B-02",
+  "name": "Enemy threat range",
+  "kind": "addon",
+  "family": "map-info-overlay",
+  "oneLiner": "One key or button paints every tile any enemy could move to or strike this turn as a red tinted zone with a crisp marching outline; pointing at one enemy shows just its reach, enemies can be pinned one by one, the zone follows units as they move, and it never covers the player's own blue range.",
+  "fits": [
+    "grid tactics",
+    "tactical RPG",
+    "turn-based wargame",
+    "roguelike tactics",
+    "board-game adaptations"
+  ],
+  "notFor": [
+    "real-time action (reach changes every frame)",
+    "free (non-grid) movement",
+    "hex grids (needs a neighbour rewrite)",
+    "games that hide enemy stats on purpose (fog of war, stealth)"
+  ],
+  "interfaces": {
+    "time": "turn",
+    "coords": "grid",
+    "layer": "scene",
+    "needs": [
+      "tile grid size and tile size in px",
+      "terrain move cost per tile and unit (99 or Infinity = impassable)",
+      "unit on a tile (occupant), each unit's tile, move points and weapon range",
+      "the list of enemy units",
+      "camera offset and the map viewport inside the canvas",
+      "a draw pass after the ground and the player's range overlay, before units",
+      "optional: the player's currently shown range tiles, sprite and HUD rects to keep clear, a key handler and pointer clicks"
+    ],
+    "provides": [
+      "data threatened tiles (union) and which enemies threaten a tile",
+      "data one unit's move and threat sets (non-interactive)",
+      "the toggle key and on-screen button state",
+      "button rect (for other overlays to avoid)"
+    ]
+  },
+  "params": [
+    { "key": "tint", "label": "Zone colour", "type": "select", "options": ["red", "threat"], "default": "red" },
+    { "key": "fill", "label": "Fill strength", "type": "range", "min": 0, "max": 1, "step": 0.05, "default": 0.8 },
+    { "key": "pattern", "label": "Fill pattern", "type": "select", "options": ["solid", "pulsing", "checker"], "default": "solid" },
+    { "key": "outline", "label": "Outline", "type": "select", "options": ["march", "solid", "off"], "default": "march" },
+    { "key": "march", "label": "March speed (px/s)", "type": "range", "min": 0, "max": 24, "step": 1, "default": 8 },
+    { "key": "dash", "label": "Dash length (px)", "type": "range", "min": 2, "max": 8, "step": 1, "default": 4 },
+    { "key": "fade", "label": "Fade (ms)", "type": "range", "min": 0, "max": 400, "step": 20, "default": 120 },
+    { "key": "both", "label": "With player range", "type": "select", "options": ["outline", "dim"], "default": "outline" },
+    { "key": "walls", "label": "Strike over walls", "type": "select", "options": ["hide", "show"], "default": "hide" },
+    { "key": "costs", "label": "Terrain costs", "type": "select", "options": ["on", "off"], "default": "on" },
+    { "key": "start", "label": "Start shown", "type": "select", "options": ["off", "on"], "default": "off" },
+    { "key": "key", "label": "Toggle key", "type": "select", "options": ["KeyT", "KeyQ", "KeyV", "KeyC"], "default": "KeyT" },
+    { "key": "label", "label": "Button label", "type": "select", "options": ["THREAT", "DANGER", "RANGE"], "default": "THREAT" },
+    { "key": "layer", "label": "Drawn", "type": "select", "options": ["under", "over"], "default": "under" },
+    { "key": "button", "label": "On-screen button", "type": "select", "options": ["auto", "off"], "default": "auto" }
+  ],
+  "variants": [
+    { "name": "Classic danger zone", "params": { "tint": "red", "fill": 0.8, "pattern": "solid", "outline": "march", "march": 8, "dash": 4 } },
+    { "name": "Calm board", "params": { "fill": 0.5, "outline": "solid", "fade": 240, "both": "dim" } },
+    { "name": "Arcane violet", "params": { "tint": "threat", "pattern": "pulsing", "march": 12 } },
+    { "name": "Outline only", "params": { "fill": 0, "outline": "march", "march": 6, "dash": 3 } }
+  ],
+  "assets": [
+    "module/threat-range.js: the element as one dependency-free script (global GameDNA_ThreatRange): reach, zone union, single and pinned views, recompute on movement, overlay, marching outline, toggle key and button",
+    "no image or audio files"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/threat-range.js",
+    "global": "GameDNA_ThreatRange",
+    "version": "1.0.0",
+    "docs": "module/README.md"
+  }
+}

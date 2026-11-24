@@ -1,0 +1,68 @@
+{
+  "id": "squad-clash",
+  "code": "A-14",
+  "kind": "system",
+  "name": "Auto-resolved squad clash with forecast",
+  "family": "Battle flow",
+  "oneLiner": "Two squads on 2x3 grids (front row takes melee, back row is shielded from it while the front stands) meet; before committing, a forecast shows each unit's HP after, who falls and win / lose / draw, from the same seeded simulation the clash will run; on commit it plays out by itself in a staged side view with a readable turn order, units acting by their own condition -> action tactic rules, guards stepping in for weak allies, follow-up attacks, hit numbers and a result banner, and ends exactly as forecast.",
+  "fits": [
+    "squad-based strategy RPGs where units fight as small groups",
+    "auto-battlers with a preparation phase",
+    "tactics games that resolve an engagement between two squads",
+    "management or campaign games where the player sets formations and orders, not each attack",
+    "turn-based party battles that want a 'what will happen' preview"
+  ],
+  "notFor": [
+    "fights where the player picks every action (use A-01 or A-02)",
+    "real-time action combat (use A-05)",
+    "grid movement tactics with one unit per tile (use B-01; this resolves the clash once two squads meet)",
+    "games that need hidden information or surprise in the fight itself (the forecast shows everything)"
+  ],
+  "interfaces": {
+    "time": "turn",
+    "coords": "side",
+    "layer": "ui",
+    "needs": [
+      "two squads of up to six units: id, name, row and column (or slot 0-5, or an A-12 squad), hp, maxHp, atk, def, mag, res, spd, skills",
+      "per-unit ordered tactic rules (condition -> skill), or a class preset (A-13 rule sets accepted)",
+      "a seed per encounter and a fixed 60 Hz update step",
+      "a moment before the fight to show the forecast and a confirm to commit",
+      "optional: skill table, guard / follow-up traits, tags (flying, armored), backdrop, own sprites, A-12 row rules and A-13 evaluator through adapters"
+    ],
+    "provides": [
+      "a pure seeded simulation (simulate) and its forecast: result, round it ends, every unit's HP after, falls, guards, follow-ups, crits",
+      "the staged playback of that log: dash, swing, arrows, spells, guard step-in, follow-up, hit flash, falls, cheering",
+      "hit site onHit per HP change on its impact frame (read-only amounts), events round / fall / end, onEnd(result, outcome) with outcome.match",
+      "turn-order strip, why readout (rule that fired and its reason), result banner, forecast panel, striped forecast HP bars",
+      "unit anchors, unit rects (sprite + HP bar with id) and UI rects in logical pixels",
+      "built-in procedural HD unit painter for 14 looks (the fallback); drawUnit / drawHead / looks / layout options for painted art (the starter ships an original painted pack: 13 classes with 2-3 poses, 4 backdrops); built-in hit numbers that an addon can turn off"
+    ]
+  },
+  "params": [
+    { "key": "rounds", "label": "Rounds per clash", "type": "range", "min": 1, "max": 6, "step": 1, "default": 3 },
+    { "key": "speed", "label": "Playback speed", "type": "range", "min": 0.5, "max": 3, "step": 0.25, "default": 1 },
+    { "key": "crit", "label": "Crit chance", "type": "range", "min": 0, "max": 0.3, "step": 0.01, "default": 0.08 },
+    { "key": "guard", "label": "Guards step in", "type": "select", "options": ["on", "off"], "default": "on" },
+    { "key": "followUps", "label": "Follow-up attacks", "type": "select", "options": ["on", "off"], "default": "on" },
+    { "key": "margin", "label": "Rout margin (HP kept)", "type": "range", "min": 0, "max": 0.4, "step": 0.05, "default": 0.1 },
+    { "key": "forecast", "label": "Forecast on HP bars", "type": "select", "options": ["bars", "off"], "default": "bars" },
+    { "key": "numbers", "label": "Built-in hit numbers", "type": "select", "options": ["on", "off"], "default": "on" }
+  ],
+  "variants": [
+    { "name": "Standard clash (default)", "params": {} },
+    { "name": "Short skirmish", "params": { "rounds": 2, "speed": 1.5 } },
+    { "name": "War of attrition", "params": { "rounds": 5, "margin": 0.2 } },
+    { "name": "No guards, no follow-ups", "params": { "guard": "off", "followUps": "off" } },
+    { "name": "Swingy (high crits)", "params": { "crit": 0.25 } },
+    { "name": "Forecast panel only", "params": { "forecast": "off" } }
+  ],
+  "assets": "module/squad-clash.js (global GameDNA_SquadClash, no dependencies; API in module/README.md). Built-in procedural HD units (knight, lancer, archer, mage, cleric, rogue, brigand, slinger, ironclad, hexer, mender, warlord, hound, raptor) with poses, effects (swing arc, arrow, rune circle, burst, heal, guard shield), UI panels. The starter adds a procedural vale backdrop (src/art.js). No external files.",
+  "status": "v1-module",
+  "module": {
+    "file": "module/squad-clash.js",
+    "global": "GameDNA_SquadClash",
+    "version": "1.2.2"
+  },
+  "starter": "starter/index.html",
+  "starterFiles": ["art"]
+}

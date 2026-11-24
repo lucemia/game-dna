@@ -1,0 +1,149 @@
+{
+  "id": "dialogue-choices",
+  "code": "H-02",
+  "kind": "addon",
+  "name": "Branching choices with flags",
+  "family": "dialogue-choices",
+  "oneLiner": "After a line of dialogue, a small window of 2 to 4 options opens beside the text box: arrows move a hand cursor, Z / tap picks, an option the player cannot take yet is grey and says why (\"Need 10 gold\"), and an optional countdown picks a default. Picks set flags (gold, metElder, plan) that later lines check with conditions like gold>=10 && !metElder, jump to labels and rejoin; once-only lines and options are remembered. The script is plain data the designer edits, a validator reports unreachable labels and unknown flags, and flags save as plain JSON. Drives the H-01 dialogue box, or the game's own text box through a three-function adapter.",
+  "fits": [
+    "top-down adventure and RPG (villagers, quests, shops that remember)",
+    "turn-based RPG battle (a pre-battle plan, a boss bargain)",
+    "tactics RPG (briefings and recruit talks)",
+    "visual-novel style scenes inside a game",
+    "any game that already has a text box and wants choices on top of it"
+  ],
+  "notFor": [
+    "full dialogue trees edited in a node editor or loaded from external tools (the script is a plain JS object)",
+    "free text input or parser-style conversations",
+    "real-time dialogue wheels that keep the world running",
+    "voiced dialogue timed to audio",
+    "portraits and expressions (family D)"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "a text box: a GameDNA_DialogueBox (H-01) instance passed as box, or the game's own text box behind a three-function adapter (show one line, call done when the player advances, give its rect)",
+      "the game's existing talk function, in update logic: start(name, {onEnd}) there; what ran after the old talk moves into onEnd",
+      "input (directions, confirm, cancel, pointer) routed to the module while busy (box mode) or while choosing (adapter mode), on key-down edges",
+      "a fixed 60 Hz update step (the module's only clock), also while the world is paused for the talk",
+      "the play field size in native px and ui rects to keep clear (HUD, menus)",
+      "optional: the game's autoplay flag, its save / load (getFlags / setFlags), game effects for flags (onFlag)"
+    ],
+    "provides": [
+      "busy / choosing flags: pause the world and route input while a talk or its menu is open",
+      "a flag store (get, set, inc, check(condition), onFlag) the game reads and writes; getFlags / setFlags as plain JSON for save systems",
+      "talk end via onEnd({conv, lines, choices, path, skipped, auto, flags}) and each pick via onChoice, synchronous inside update()",
+      "validate(script): unreachable labels, goto targets without a label, flags read but never set, bad conditions",
+      "the menu rectangle on screen (menuRect), for other overlays to avoid"
+    ]
+  },
+  "params": [
+    {
+      "key": "scope",
+      "label": "Which talks branch and what the choices change (required; the designer's words)",
+      "type": "text",
+      "default": "the main quest giver: accept the quest, ask about the reward, or ask for advice (once each); the advice gives a small bonus, and the reward question changes what they say when you return"
+    },
+    {
+      "key": "menuPlace",
+      "label": "Menu side (auto = right of the text box, away from the speaker)",
+      "type": "select",
+      "options": [
+        "auto",
+        "right",
+        "left"
+      ],
+      "default": "auto"
+    },
+    {
+      "key": "timeout",
+      "label": "Default countdown in ms (0 = wait for the player; a line's own timeout wins)",
+      "type": "range",
+      "min": 0,
+      "max": 15000,
+      "step": 500,
+      "default": 0
+    },
+    {
+      "key": "wrap",
+      "label": "Cursor wraps around",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "disabled",
+      "label": "Options whose condition is false",
+      "type": "select",
+      "options": [
+        "show",
+        "hide"
+      ],
+      "default": "show"
+    },
+    {
+      "key": "tint",
+      "label": "Menu window colour (a blue, n slate, b red)",
+      "type": "select",
+      "options": [
+        "a",
+        "n",
+        "b"
+      ],
+      "default": "a"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Classic RPG menu",
+      "params": {
+        "menuPlace": "auto",
+        "timeout": 0,
+        "wrap": "on",
+        "disabled": "show",
+        "tint": "a"
+      }
+    },
+    {
+      "name": "Timed decision",
+      "params": {
+        "timeout": 5000,
+        "tint": "b"
+      }
+    },
+    {
+      "name": "Clean menu (hide locked options)",
+      "params": {
+        "disabled": "hide"
+      }
+    },
+    {
+      "name": "War council (slate, left)",
+      "params": {
+        "menuPlace": "left",
+        "tint": "n",
+        "wrap": "off"
+      }
+    }
+  ],
+  "assets": [
+    "module/dialogue-choices.js: the element as one dependency-free script (global GameDNA_DialogueChoices): script walker (if, once, set, inc, goto, end, {$flag}), condition parser (no eval), flag store, choice menu with cursor, disabled reasons, countdown, autoplay, placement, validator, drawing with the C-03 6x8 font built in",
+    "uses module/dialogue-box.js of H-01 in box mode (not bundled; the game's own text box works through the adapter)",
+    "no image or audio files (sound cue names come back through onSfx)"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/dialogue-choices.js",
+    "global": "GameDNA_DialogueChoices",
+    "version": "1.0.0",
+    "docs": "module/README.md",
+    "uses": [
+      "dialogue-box (optional, box mode)"
+    ]
+  }
+}

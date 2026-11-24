@@ -1,0 +1,114 @@
+{
+  "id": "hit-stop-shake",
+  "code": "E-05",
+  "name": "Hit-stop, shake & flash",
+  "kind": "addon",
+  "family": "screen-feel",
+  "oneLiner": "On a hit the world freezes for a few frames (hit-stop), the play field shakes by whole pixels and decays, and the struck sprite turns white for a frame or two; a finisher freezes longer, shakes harder and flashes the field. Three strengths (light, heavy, finisher), a reduced-motion mode, and a step gate so autoplay and frozen screenshots stay deterministic.",
+  "fits": [
+    "side-scrolling platformer / action",
+    "beat-'em-up",
+    "action RPG",
+    "turn-based RPG battle",
+    "tactics / strategy RPG (attack animations)",
+    "fighting game",
+    "shmup (boss hits, player death)",
+    "roguelike"
+  ],
+  "notFor": [
+    "games whose step is not a fixed update (the gate needs a step to skip)",
+    "rhythm or timing games where freezing the world shifts the beat",
+    "networked games that must stay in lockstep (freeze every peer or none)",
+    "hundreds of hits per second (one freeze counter: rapid hits never stack, but the world keeps stuttering)"
+  ],
+  "interfaces": {
+    "time": "realtime",
+    "coords": "side",
+    "layer": "post",
+    "needs": [
+      "a fixed 60 Hz update step the module can gate (its first line), also used by ?t= fast-forward and ?auto=1",
+      "hit event on the impact frame: strength (light / heavy / finisher), contact point, target id, blow direction",
+      "the play field draw wrapped by begin/end (or the shake offset applied by the game); HUD drawn after",
+      "optional: each unit's sprite draw wrapped by sprite(id, rect, fn), or an existing white sprite picked with flashing(id)",
+      "optional: UI rects (HUD, banners) the screen flash never covers",
+      "optional: hit-stop request (ms) from other effects, routed to freeze(ms) so one counter gates the world"
+    ],
+    "provides": [
+      "hit-stop: step(dt) returns false while frozen (one freeze counter for every element: freeze(ms))",
+      "screen shake: integer offset {x, y} (shake(px, ms) for other elements)",
+      "white sprite flash and finisher screen flash",
+      "stats(): hits by strength, frozen steps, max offset, flash frames (for tests)"
+    ]
+  },
+  "params": [
+    {
+      "key": "strength",
+      "label": "Default strength",
+      "type": "select",
+      "options": ["light", "heavy", "finisher"],
+      "default": "heavy"
+    },
+    {
+      "key": "stop",
+      "label": "Hit-stop, heavy hit (frames)",
+      "type": "range",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "default": 6
+    },
+    {
+      "key": "shake",
+      "label": "Max shake (px)",
+      "type": "range",
+      "min": 0,
+      "max": 8,
+      "step": 1,
+      "default": 4
+    },
+    {
+      "key": "flash",
+      "label": "Flash",
+      "type": "select",
+      "options": ["on", "sprite", "screen", "off"],
+      "default": "on"
+    },
+    {
+      "key": "reduced",
+      "label": "Reduced motion",
+      "type": "select",
+      "options": ["system", "on", "off"],
+      "default": "system"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Classic 16-bit",
+      "params": { "strength": "heavy", "stop": 6, "shake": 4, "flash": "on", "reduced": "system" }
+    },
+    {
+      "name": "Arcade heavy",
+      "params": { "stop": 9, "shake": 6, "flash": "on" }
+    },
+    {
+      "name": "Subtle",
+      "params": { "stop": 3, "shake": 2, "flash": "sprite" }
+    },
+    {
+      "name": "Reduced motion",
+      "params": { "reduced": "on" }
+    }
+  ],
+  "assets": [
+    "module/hit-stop-shake.js: the element as one dependency-free script (global GameDNA_HitStop): step gate, freeze counter with a chain cap, seeded decaying integer shake, pixel-diff sprite flash, finisher screen flash, contact-flash fallback; colours through GameDNA_Skin (built-in pixel16 fallback)",
+    "no image or audio files"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/hit-stop-shake.js",
+    "global": "GameDNA_HitStop",
+    "version": "1.0.0",
+    "docs": "module/README.md",
+    "skin": "optional: skins/skin-api.js + skins/pixel16.js before it"
+  }
+}

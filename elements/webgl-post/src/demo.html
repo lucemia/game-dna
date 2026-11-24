@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WebGL Post Pipeline</title>
+<style>
+:root {
+  --bg: #0b0a12; --panel: #14121d; --panel2: #1b1827; --line: #2a2640; --text: #ece8f6; --dim: #958fb0; --accent: #ffb86b; --accent2: #7fd4ff; --ok: #6ee7a8; --off: #ff7a8a;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1100px 560px at 28% -12%, #2a1f45 0%, var(--bg) 62%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 16px 20px 10px; max-width: 1320px; margin: 0 auto; }
+.code { white-space: nowrap; font: 700 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #1d1206; background: linear-gradient(#ffd29a, var(--accent)); padding: 6px 8px; border-radius: 6px; box-shadow: 0 0 0 1px #00000040, 0 4px 14px #ffb86b40; }
+h1 { font-size: 18px; margin: 0; letter-spacing: .01em; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; max-width: 900px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; padding: 0 20px 20px; max-width: 1320px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; }
+.frame { position: relative; padding: 0; border-radius: 14px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px #3a3352, 0 24px 60px #00000090; }
+#game { display: block; width: 100%; height: auto; }
+#game.px { image-rendering: pixelated; }
+.split { position: absolute; top: 0; bottom: 0; width: 2px; background: #ffffffd0; box-shadow: 0 0 12px #fff8; pointer-events: none; display: none; z-index: 5; }
+.split span { position: absolute; top: 10px; font: 700 10px/1 ui-monospace, Menlo, monospace; letter-spacing: .1em; background: #000a; padding: 4px 6px; border-radius: 4px; white-space: nowrap; }
+.split .l { right: 8px; } .split .r { left: 8px; }
+.caption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; margin-top: 10px; color: var(--dim); font-size: 12px; }
+.caption b { color: var(--text); font-weight: 600; }
+#mode::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--ok); margin-right: 6px; box-shadow: 0 0 8px var(--ok); vertical-align: 1px; }
+#mode.off::before { background: var(--off); box-shadow: 0 0 8px var(--off); }
+aside { background: linear-gradient(var(--panel2), var(--panel)); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+section { border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+section:last-of-type { border-bottom: 0; padding-bottom: 0; }
+h2 { display: flex; align-items: center; justify-content: space-between; margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.row { margin-bottom: 8px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 3px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 5px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--fill), #2c2742 var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 15px; height: 15px; border-radius: 50%; background: #fff4e2; border: 0; box-shadow: 0 0 0 3px #ffb86b55, 0 2px 6px #000a; cursor: pointer; }
+.sw { position: relative; width: 34px; height: 19px; flex: none; }
+.sw input { opacity: 0; width: 0; height: 0; position: absolute; }
+.sw i { position: absolute; inset: 0; border-radius: 10px; background: #2c2742; transition: background .2s; cursor: pointer; }
+.sw i::after { content: ""; position: absolute; left: 3px; top: 3px; width: 13px; height: 13px; border-radius: 50%; background: #cfc8e6; transition: transform .22s cubic-bezier(.3, 1.6, .5, 1); }
+.sw input:checked + i { background: linear-gradient(90deg, #ff9b52, var(--accent)); }
+.sw input:checked + i::after { transform: translateX(15px); background: #fff; }
+.seg { display: flex; background: #0e0c16; border: 1px solid var(--line); border-radius: 8px; padding: 2px; gap: 2px; }
+.seg button { flex: 1; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 4px; border-radius: 6px; cursor: pointer; text-transform: capitalize; }
+.seg button[aria-checked=true] { background: #2c2546; color: var(--text); box-shadow: inset 0 0 0 1px #4a4068; }
+.big { width: 100%; appearance: none; border: 0; border-radius: 10px; padding: 10px; font: 700 13px/1 inherit; color: #1d1206; cursor: pointer; background: linear-gradient(#ffd29a, var(--accent)); box-shadow: 0 6px 18px #ffb86b40; transition: transform .08s; }
+.big:active { transform: scale(.98); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.note { color: var(--dim); font-size: 11.5px; margin: 4px 0 0; }
+.stat { font: 11.5px/1.5 ui-monospace, Menlo, monospace; color: var(--dim); }
+.stat b { color: var(--text); font-weight: 600; }
+.dim { opacity: .45; pointer-events: none; }
+#offnote { display: none; color: var(--off); }
+.ghost { width: 100%; appearance: none; border: 1px solid var(--line); border-radius: 10px; padding: 9px; font: 700 12.5px/1 inherit; color: var(--text); background: #0e0c16; cursor: pointer; margin-bottom: 8px; touch-action: none; user-select: none; -webkit-user-select: none; }
+.ghost:active, .ghost.on { background: #2c2546; box-shadow: inset 0 0 0 1px #4a4068; }
+@media (max-width: 1020px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 680px; width: 100%; margin: 0 auto; } }
+@media (max-width: 560px) { header { padding: 12px 16px 8px; } main { padding: 0 16px 16px; gap: 12px; } .frame { border-radius: 10px; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">I-08</span>
+  <div><h1>WebGL post-process pipeline</h1><p>The game keeps drawing on its own 2D canvas. Each frame that canvas becomes a texture on a WebGL layer laid exactly over it, and a chain of shader passes runs at device resolution: a filmic grade with vignette, and a chromatic hit-pulse. Without WebGL the 2D canvas shows exactly as before.</p></div>
+</header>
+<main>
+  <div id="stage">
+    <div class="frame" id="frame">
+      <canvas id="game" width="640" height="360"></canvas>
+      <div class="split" id="split"><span class="l">2D ONLY</span><span class="r">POST</span></div>
+    </div>
+    <div class="caption">
+      <span id="mode">WebGL2 &middot; 3 passes</span>
+      <span id="cost">frame <b>-</b></span>
+      <span id="size">-</span>
+    </div>
+  </div>
+  <aside>
+    <section>
+      <h2>Pipeline <label class="sw"><input type="checkbox" id="webgl" checked><i></i></label></h2>
+      <p class="note" id="offnote">WebGL off: the game shows unchanged, so the controls below do nothing.</p>
+      <div id="cmp">
+      <button class="ghost" id="hold" title="Hold (or hold the C key) to see the plain 2D canvas">Hold to see 2D only (C)</button>
+      <div class="row"><label>Compare (2D left, post right) <output id="o-split">off</output></label><input type="range" id="splitR" min="0" max="1" step="0.01" value="0"></div>
+      <div class="row"><label>Leave the HUD untouched (uiRects &rarr; uiMask) <span class="sw"><input type="checkbox" id="p-ui" checked><i></i></span></label></div>
+      </div>
+      <div class="two" id="canvasrow">
+        <div class="row"><label>Game canvas</label><div class="seg" id="res"><button data-v="hd" aria-checked="true">640&times;360</button><button data-v="px" aria-checked="false">320&times;180</button></div></div>
+        <div class="row"><label>Magnify</label><div class="seg" id="sample"><button data-v="auto" aria-checked="true">auto</button><button data-v="sharp" aria-checked="false">sharp</button><button data-v="nearest" aria-checked="false">near</button><button data-v="linear" aria-checked="false">linear</button></div></div>
+      </div>
+    </section>
+    <section id="sec-grade">
+      <h2>Grade &amp; vignette <label class="sw"><input type="checkbox" id="p-grade" checked><i></i></label></h2>
+      <div class="row"><label>Look</label><div class="seg" id="look"><button data-v="filmic">filmic</button><button data-v="warm">warm</button><button data-v="cold">cold</button><button data-v="punchy">punchy</button><button data-v="neutral">none</button></div></div>
+      <div class="two">
+        <div class="row"><label>Exposure <output></output></label><input type="range" data-k="exposure" min="0.6" max="1.6" step="0.01"></div>
+        <div class="row"><label>Contrast <output></output></label><input type="range" data-k="contrast" min="0" max="1" step="0.01"></div>
+        <div class="row"><label>Saturation <output></output></label><input type="range" data-k="saturation" min="0" max="1.8" step="0.01"></div>
+        <div class="row"><label>Warmth <output></output></label><input type="range" data-k="warmth" min="-1" max="1" step="0.01"></div>
+        <div class="row"><label>Filmic curve <output></output></label><input type="range" data-k="filmic" min="0" max="1" step="0.01"></div>
+        <div class="row"><label>Vignette <output></output></label><input type="range" data-k="vignette" min="0" max="1" step="0.01"></div>
+      </div>
+    </section>
+    <section id="sec-pulse">
+      <h2>Hit pulse <label class="sw"><input type="checkbox" id="p-pulse" checked><i></i></label></h2>
+      <div class="two">
+        <div class="row"><label>Colour split px <output></output></label><input type="range" data-k="chroma" min="0" max="16" step="0.5"></div>
+        <div class="row"><label>Fade ms <output></output></label><input type="range" data-k="decay" min="80" max="900" step="10"></div>
+      </div>
+      <div class="row"><label>Punch zoom <output></output></label><input type="range" data-k="punch" min="0" max="0.05" step="0.001"></div>
+      <button class="big" id="hit">Strike now</button>
+    </section>
+    <section id="sec-haze">
+      <h2>Example pass: depth haze <label class="sw"><input type="checkbox" id="p-haze"><i></i></label></h2>
+      <div class="row"><label>Haze <output></output></label><input type="range" id="haze" min="0" max="1" step="0.01" value="0.55"></div>
+      <p class="note">A 20-line pass added with <code>addPass</code>, reading a depth canvas the scene provides through <code>setInput('depth', canvas)</code>: the slot later depth-of-field and light elements use. Like every pass in the family it also reads <code>uiMask</code>, so the HUD is never hazed.</p>
+    </section>
+    <section class="stat" id="stat">-</section>
+  </aside>
+</main>
+<script>
+/*MODULE*/
+</script>
+<script>
+/*MAIN*/
+</script>
+</body>
+</html>

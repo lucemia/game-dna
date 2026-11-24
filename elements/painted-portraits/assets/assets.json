@@ -1,0 +1,1655 @@
+{
+ "format": "gamedna-assets/1",
+ "pack": "painted-portraits",
+ "budgetBytes": 600000,
+ "generated": {
+  "tool": "codex image_gen.imagegen (built-in)",
+  "model": "image generator",
+  "effort": "high",
+  "date": "2026-11-16"
+ },
+ "styleLock": {
+  "text": "prompts/style-lock.txt",
+  "reference": "maren-neutral"
+ },
+ "portraitSet": {
+  "maxShift": 1,
+  "minIoU": 0.93,
+  "maxBodyDiff": 24
+ },
+ "drawn": {
+  "height": 168,
+  "note": "files are stored at about 1.7x the default drawn height (168 canvas px on a 640x360 canvas)"
+ },
+ "assets": [
+  {
+   "key": "maren-neutral",
+   "role": "portrait",
+   "set": "maren",
+   "expr": "neutral",
+   "file": "cast/maren-neutral.webp",
+   "source": {
+    "run": "gen/base-maren",
+    "file": "maren-neutral.png",
+    "sha256": "2f2db9dd3275bc000e4655943be8612893b9fd53ea179af2f829d7e0241dbb3b"
+   },
+   "prompt": [
+    "gen/base-maren/PROMPT.md",
+    "gen/base-maren/GEN.md",
+    "prompts/style-lock.txt"
+   ],
+   "post": [
+    {
+     "portraitset": {
+      "h": 336,
+      "margin": 0.03
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "side": "left",
+   "facing": "right",
+   "setBase": true,
+   "w": 366,
+   "h": 336,
+   "bytes": 16758,
+   "sha256": "750183300a05ca7a8077f29006fb2633b4f1812ecfd671aa0ec50310d47fedea",
+   "align": {
+    "scale": 1.0,
+    "dx": 0.0,
+    "dy": 0.0,
+    "iou": 1.0
+   },
+   "crop": [
+    -38,
+    34,
+    1292,
+    1254
+   ]
+  },
+  {
+   "key": "maren-happy",
+   "role": "portrait",
+   "set": "maren",
+   "expr": "happy",
+   "file": "cast/maren-happy.webp",
+   "source": {
+    "run": "gen/edits-maren",
+    "file": "maren-happy.png",
+    "sha256": "56a3837909cc15dbf26c8653aea01cc1fbb937cc8a323d6fac838dd583a78de3"
+   },
+   "prompt": [
+    "gen/edits-maren/PROMPT.md",
+    "gen/edits-maren/GEN.md",
+    "prompts/style-lock.txt"
+   ],
+   "post": [
+    {
+     "portraitset": {
+      "h": 336,
+      "margin": 0.03
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "side": "left",
+   "facing": "right",
+   "w": 366,
+   "h": 336,
+   "bytes": 16954,
+   "sha256": "867f715cbb2910021c30d2af662f9664fca66107b8e88b386edf8ec6ef7fdce6",
+   "align": {
+    "scale": 1.0,
+    "dx": 0.0,
+    "dy": 0.0,
+    "iou": 0.9961
+   },
+   "crop": [
+    -38,
+    34,
+    1292,
+    1254
+   ]
+  },
+  {
+   "key": "maren-angry",
+   "role": "portrait",
+   "set": "maren",
+   "expr": "angry",
+   "file": "cast/maren-angry.webp",
+   "source": {
+    "run": "gen/edits-maren",
+    "file": "maren-angry.png",
+    "sha256": "0857e631ab4248b7f971366631ffe86355f66362bb2171102055f74429addacc"
+   },
+   "prompt": [
+    "gen/edits-maren/PROMPT.md",
+    "gen/edits-maren/GEN.md",
+    "prompts/style-lock.txt"
+   ],
+   "post": [
+    {
+     "portraitset": {
+      "h": 336,
+      "margin": 0.03
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "side": "left",
+   "facing": "right",
+   "w": 366,
+   "h": 336,
+   "bytes": 16478,
+   "sha256": "f54143b64de168c97ec6bd930b319213af8c0abf2857a5e7fb30556c9b0ae3b3",
+   "align": {
+    "scale": 0.9975,
+    "dx": 0.0,
+    "dy": 2.0,
+    "iou": 0.994
+   },
+   "crop": [
+    -38,
+    34,
+    1292,
+    1254
+   ]
+  },
+  {
+   "key": "maren-sad",
+   "role": "portrait",
+   "set": "maren",
+   "expr": "sad",
+   "file": "cast/maren-sad.webp",
+   "source": {
+    "run": "gen/edits-maren",
+    "file": "maren-sad.png",
+    "sha256": "a9c3ff22c57d285bd140553c846ea5ac2eb75c28b83638cc5ce7b51706669f6f"
+   },
+   "prompt": [
+    "gen/edits-maren/PROMPT.md",
+    "gen/edits-maren/GEN.md",
+    "prompts/style-lock.txt"
+   ],
+   "post": [
+    {
+     "portraitset": {
+      "h": 336,
+      "margin": 0.03
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "side": "left",
+   "facing": "right",
+   "w": 366,
+   "h": 336,
+   "bytes": 16462,
+   "sha256": "64768ef0b9a538a792b3728cba64ff3848b043368c7bbf940c4b442294837324",
+   "align": {
+    "scale": 1.0,
+    "dx": 0.0,
+    "dy": 2.0,
+    "iou": 0.9952
+   },
+   "crop": [
+    -38,
+    34,
+    1292,
+    1254
+   ]
+  },
+  {
+   "key": "maren-surprised",
+   "role": "portrait",
+   "set": "maren",
+   "expr": "surprised",
+   "file": "cast/maren-surprised.webp",
+   "source": {
+    "run": "gen/edits-maren",
+    "file": "maren-surprised.png",
+    "sha256": "426e9b881da4ab3f1ac499266f9e68d941e282585dae306de6d0f329609714f5"
+   },
+   "prompt": [
+    "gen/edits-maren/PROMPT.md",
+    "gen/edits-maren/GEN.md",
+    "prompts/style-lock.txt"
+   ],
+   "post": [
+    {
+     "portraitset": {
+      "h": 336,
+      "margin": 0.03
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "side": "left",
+   "facing": "right",
+   "w": 366,
+   "h": 336,
+   "bytes": 17238,
+   "sha256": "654d81e7c1f736bb0b144125a9e8ec4a56d312e4e5985e791cb7732bea6ea9a5",
+   "align": {
+    "scale": 1.0,
+    "dx": 0.0,
+    "dy": 0.0,
+    "iou": 0.9965
+   },
+   "crop": [
+    -38,
+    34,
+    1292,
+    1254
+   ]
+  },
+  {
+   "key": "maren-determined",
+   "role": "portrait",
+   "set": "maren",
+   "expr": "determined",
+   "file": "cast/maren-determined.webp",
+   "source": {
+    "run": "gen/edits-maren",
+    "file": "maren-determined.png",
+    "sha256": "d5a7c1e889e8e0f23b2d3a2d8cf8ff253417cc0631c3d71a119816ef6b9fce50"
+   },
+   "prompt": [
+    "gen/edits-maren/PROMPT.md",
+    "gen/edits-maren/GEN.md",
+    "prompts/style-lock.txt"
+   ],
+   "post": [
+    {
+     "portraitset": {
+      "h": 336,
+      "margin": 0.03
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "side": "left",
+   "facing": "right",
+   "w": 366,
+   "h": 336,
+   "bytes": 16876,
+   "sha256": "4ecbff530559f5bd3df98c6f8fb99031a6ade53c3530452c36141c8695ae8066",
+   "align": {
+    "scale": 1.0,
+    "dx": 0.0,
+    "dy": 2.0,
+    "iou": 0.9945
+   },
+   "crop": [
+    -38,
+    34,
+    1292,
+    1254
+   ]
+  },
+  {
+   "key": "maren-blink",
+   "role": "portrait",
+   "set": "maren",
+   "expr": "blink",
+   "file": "cast/maren-blink.webp",
+   "source": {
+    "run": "gen/edits-maren",
+    "file": "maren-blink.png",
+    "sha256": "511aa5b9b82c4e87aa346802a35e5ca99ff2970a1058ab5efa84adb3ac3cb1e7"
+   },
+   "prompt": [
+    "gen/edits-maren/PROMPT.md",
+    "gen/edits-maren/GEN.md",
+    "prompts/style-lock.txt"
+   ],
+   "post": [
+    {
+     "portraitset": {
+      "h": 336,
+      "margin": 0.03
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "side": "left",
+   "facing": "right",
+   "w": 366,
+   "h": 336,
+   "bytes": 16300,
+   "sha256": "eb1d1897e94cd4933ca5cc09d6cd04f1d9d7b455477eb36fd40ab001c665e3cb",
+   "align": {
+    "scale": 1.0,
+    "dx": 0.0,
+    "dy": 0.0,
+    "iou": 0.9971
+   },
+   "crop": [
+    -38,
+    34,
+    1292,
+    1254
+   ]
+  },
+  {
+   "key": "tobin-neutral",
+   "role": "portrait",
+   "set": "tobin",
+   "expr": "neutral",
+   "file": "cast/tobin-neutral.webp",
+   "source": {
+    "run": "gen/bases-cast",
+    "file": "tobin-neutral.png",
+    "sha256": "3c6bbbb113fb2443de832ba3738ab43b1cef40ba071ae0e4ed035b50f89e5921"
+   },
+   "prompt": [
+    "gen/bases-cast/PROMPT.md",
+    "gen/bases-cast/GEN.md",
+    "prompts/style-lock.txt"
+   ],
+   "post": [
+    {
+     "portraitset": {
+      "h": 336,
+      "margin": 0.03
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "side": "right",
+   "facing": "right",
+   "setBase": true,
+   "w": 361,
+   "h": 336,
+   "bytes": 18492,
+   "sha256": "bacdf46e7ee4bf94b8c9ca0b9ce6e02ad1308f05eac343430fc9bfd4d00ded7b",
+   "align": {
+    "scale": 1.0,
+    "dx": 0.0,
+    "dy": 0.0,
+    "iou": 1.0
+   },
+   "crop": [
+    -29,
+    29,
+    1288,
+    1254
+   ]
+  },
+  {
+   "key": "tobin-happy",
+   "role": "portrait",
+   "set": "tobin",
+   "expr": "happy",
+   "file": "cast/tobin-happy.webp",
+   "source": {
+    "run": "gen/redo-tobin",
+    "file": "tobin-happy.png",
+    "sha256": "2b6d26313f4aaa684e7231bf16dcda188f84b5c2709d919485a527eb9f87d292"
+   },
+   "prompt": [
+    "gen/redo-tobin/PROMPT.md",
+    "gen/redo-tobin/GEN.md",
+    "prompts/style-lock.txt"
+   ],
+   "post": [
+    {
+     "portraitset": {
+      "h": 336,
+      "margin": 0.03
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "side": "right",
+   "facing": "right",
+   "w": 361,
+   "h": 336,
+   "bytes": 18718,
+   "sha256": "f74ee7c0b9d171ea9920261dafd36e39fe71be2eeaaeff97a856730dbd794752",
+   "align": {
+    "scale": 1.0,
+    "dx": 0.0,
+    "dy": 0.0,
+    "iou": 0.995
+   },
+   "crop": [
+    -29,
+    29,
+    1288,
+    1254
+   ]
+  },
+  {
+   "key": "tobin-angry",
+   "role": "portrait",
+   "set": "tobin",
+   "expr": "angry",
+   "file": "cast/tobin-angry.webp",
+   "source": {
+    "run": "gen/edits-tobin",
+    "file": "tobin-angry.png",
+    "sha256": "24ba87b4f2a85b1ed3399df26c01d26958029c981d9c0254ed9fbe2952907bd6"
+   },
+   "prompt": [
+    "gen/edits-tobin/PROMPT.md",
+    "gen/edits-tobin/GEN.md",
+    "prompts/style-lock.txt"
+   ],
+   "post": [
+    {
+     "portraitset": {
+      "h": 336,
+      "margin": 0.03
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "side": "right",
+   "facing": "right",
+   "w": 361,
+   "h": 336,
+   "bytes": 18368,
+   "sha256": "936316ad3a8f9e9eb32ea13198376ea74e2af8f45e6270be0d21164786217fa8",
+   "align": {
+    "scale": 1.0,
+    "dx": 0.0,
+    "dy": 0.0,
+    "iou": 0.9911
+   },
+   "crop": [
+    -29,
+    29,
+    1288,
+    1254
+   ]
+  },
+  {
+   "key": "tobin-sad",
+   "role": "portrait",
+   "set": "tobin",
+   "expr": "sad",
+   "file": "cast/tobin-sad.webp",
+   "source": {
+    "run": "gen/edits-tobin",
+    "file": "tobin-sad.png",
+    "sha256": "c915f72469558be72314d045b14ffe00937b305cb84fd11ffb11a391eb60c19e"
+   },
+   "prompt": [
+    "gen/edits-tobin/PROMPT.md",
+    "gen/edits-tobin/GEN.md",
+    "prompts/style-lock.txt"
+   ],
+   "post": [
+    {
+     "portraitset": {
+      "h": 336,
+      "margin": 0.03
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "side": "right",
+   "facing": "right",
+   "w": 361,
+   "h": 336,
+   "bytes": 18460,
+   "sha256": "19d457105e7b8eb7e392a1efe594997c79a70d7fc50270f902b616cfe5c2443d",
+   "align": {
+    "scale": 1.0,
+    "dx": 0.0,
+    "dy": 2.0,
+    "iou": 0.9908
+   },
+   "crop": [
+    -29,
+    29,
+    1288,
+    1254
+   ]
+  },
+  {
+   "key": "tobin-surprised",
+   "role": "portrait",
+   "set": "tobin",
+   "expr": "surprised",
+   "file": "cast/tobin-surprised.webp",
+   "source": {
+    "run": "gen/redo-tobin",
+    "file": "tobin-surprised.png",
+    "sha256": "d95051c72cb037b5b2339bb9f73cc2715d6f2e73f2deb6ddeff1d761950d43df"
+   },
+   "prompt": [
+    "gen/redo-tobin/PROMPT.md",
+    "gen/redo-tobin/GEN.md",
+    "prompts/style-lock.txt"
+   ],
+   "post": [
+    {
+     "portraitset": {
+      "h": 336,
+      "margin": 0.03
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "side": "right",
+   "facing": "right",
+   "w": 361,
+   "h": 336,
+   "bytes": 18318,
+   "sha256": "0f8bd589f665570143be4dda1bb04cc34d6956d6dbfedb047ca94e4cef00305d",
+   "align": {
+    "scale": 1.0,
+    "dx": 0.0,
+    "dy": 2.0,
+    "iou": 0.991
+   },
+   "crop": [
+    -29,
+    29,
+    1288,
+    1254
+   ]
+  },
+  {
+   "key": "tobin-determined",
+   "role": "portrait",
+   "set": "tobin",
+   "expr": "determined",
+   "file": "cast/tobin-determined.webp",
+   "source": {
+    "run": "gen/edits-tobin",
+    "file": "tobin-determined.png",
+    "sha256": "0151b75eac8d557dc28fad9a1f47e95af1c043122e2a40899463a0019181ae9f"
+   },
+   "prompt": [
+    "gen/edits-tobin/PROMPT.md",
+    "gen/edits-tobin/GEN.md",
+    "prompts/style-lock.txt"
+   ],
+   "post": [
+    {
+     "portraitset": {
+      "h": 336,
+      "margin": 0.03
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "side": "right",
+   "facing": "right",
+   "w": 361,
+   "h": 336,
+   "bytes": 19012,
+   "sha256": "646944f97fdbb06805550f260bc6efbca23e0dd7878f6f0062978b65170f9a56",
+   "align": {
+    "scale": 1.0025,
+    "dx": 0.0,
+    "dy": 0.0,
+    "iou": 0.9931
+   },
+   "crop": [
+    -29,
+    29,
+    1288,
+    1254
+   ]
+  },
+  {
+   "key": "tobin-blink",
+   "role": "portrait",
+   "set": "tobin",
+   "expr": "blink",
+   "file": "cast/tobin-blink.webp",
+   "source": {
+    "run": "gen/edits-tobin",
+    "file": "tobin-blink.png",
+    "sha256": "e225aea88b9324e3f7add13129809cf0e266d525855f3a2bcf9e62df7b2c7306"
+   },
+   "prompt": [
+    "gen/edits-tobin/PROMPT.md",
+    "gen/edits-tobin/GEN.md",
+    "prompts/style-lock.txt"
+   ],
+   "post": [
+    {
+     "portraitset": {
+      "h": 336,
+      "margin": 0.03
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "side": "right",
+   "facing": "right",
+   "w": 361,
+   "h": 336,
+   "bytes": 18184,
+   "sha256": "6c04cfe8e1608981360ef4ef907ffb965951516d98b0295a062cb70b8048dd40",
+   "align": {
+    "scale": 1.0,
+    "dx": 0.0,
+    "dy": 0.0,
+    "iou": 0.9921
+   },
+   "crop": [
+    -29,
+    29,
+    1288,
+    1254
+   ]
+  },
+  {
+   "key": "hesper-neutral",
+   "role": "portrait",
+   "set": "hesper",
+   "expr": "neutral",
+   "file": "cast/hesper-neutral.webp",
+   "source": {
+    "run": "gen/bases-cast",
+    "file": "hesper-neutral.png",
+    "sha256": "6c1afc464305ece185fea68c5806cc3d5d3f4fd622c245b113d2915fd905b888"
+   },
+   "prompt": [
+    "gen/bases-cast/PROMPT.md",
+    "gen/bases-cast/GEN.md",
+    "prompts/style-lock.txt"
+   ],
+   "post": [
+    {
+     "portraitset": {
+      "h": 336,
+      "margin": 0.03
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "side": "right",
+   "facing": "right",
+   "setBase": true,
+   "w": 369,
+   "h": 336,
+   "bytes": 21010,
+   "sha256": "ec84273679391093393004b977fc697550a2c2b8df082e377643270ab8cbefe6",
+   "align": {
+    "scale": 1.0,
+    "dx": 0.0,
+    "dy": 0.0,
+    "iou": 1.0
+   },
+   "crop": [
+    -38,
+    44,
+    1292,
+    1254
+   ]
+  },
+  {
+   "key": "hesper-happy",
+   "role": "portrait",
+   "set": "hesper",
+   "expr": "happy",
+   "file": "cast/hesper-happy.webp",
+   "source": {
+    "run": "gen/edits-hesper",
+    "file": "hesper-happy.png",
+    "sha256": "91918311ba9af4ebb526493569bb81c98e1d71fe427317ce6eadcccfb698339e"
+   },
+   "prompt": [
+    "gen/edits-hesper/PROMPT.md",
+    "gen/edits-hesper/GEN.md",
+    "prompts/style-lock.txt"
+   ],
+   "post": [
+    {
+     "portraitset": {
+      "h": 336,
+      "margin": 0.03
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "side": "right",
+   "facing": "right",
+   "w": 369,
+   "h": 336,
+   "bytes": 21816,
+   "sha256": "a94a5d0b8565f7c7a20fc3839140d921404978e0d886a66795889400fb60c6ed",
+   "align": {
+    "scale": 1.0025,
+    "dx": 0.0,
+    "dy": 0.0,
+    "iou": 0.9928
+   },
+   "crop": [
+    -38,
+    44,
+    1292,
+    1254
+   ]
+  },
+  {
+   "key": "hesper-angry",
+   "role": "portrait",
+   "set": "hesper",
+   "expr": "angry",
+   "file": "cast/hesper-angry.webp",
+   "source": {
+    "run": "gen/edits-hesper",
+    "file": "hesper-angry.png",
+    "sha256": "3fbe336b34ee08e28b063792412098b72c1a84ac0725cb3198cd3983ba8f8cbe"
+   },
+   "prompt": [
+    "gen/edits-hesper/PROMPT.md",
+    "gen/edits-hesper/GEN.md",
+    "prompts/style-lock.txt"
+   ],
+   "post": [
+    {
+     "portraitset": {
+      "h": 336,
+      "margin": 0.03
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "side": "right",
+   "facing": "right",
+   "w": 369,
+   "h": 336,
+   "bytes": 21648,
+   "sha256": "498e20e9dd4e808fa9a13bd3172be11616ac7e2d97a2f600b05a2c9f8f8a3e29",
+   "align": {
+    "scale": 1.005,
+    "dx": 0.0,
+    "dy": 0.0,
+    "iou": 0.9897
+   },
+   "crop": [
+    -38,
+    44,
+    1292,
+    1254
+   ]
+  },
+  {
+   "key": "hesper-sad",
+   "role": "portrait",
+   "set": "hesper",
+   "expr": "sad",
+   "file": "cast/hesper-sad.webp",
+   "source": {
+    "run": "gen/edits-hesper",
+    "file": "hesper-sad.png",
+    "sha256": "8e8f88def034814c1f2ef2696d5a246f2f05b6ab9b3b87968826bcde928499a0"
+   },
+   "prompt": [
+    "gen/edits-hesper/PROMPT.md",
+    "gen/edits-hesper/GEN.md",
+    "prompts/style-lock.txt"
+   ],
+   "post": [
+    {
+     "portraitset": {
+      "h": 336,
+      "margin": 0.03
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "side": "right",
+   "facing": "right",
+   "w": 369,
+   "h": 336,
+   "bytes": 20866,
+   "sha256": "69a66c471f1692df3430c1c8a44002a970b309d50f32b24f35634f3c4f23ac3e",
+   "align": {
+    "scale": 1.0,
+    "dx": 0.0,
+    "dy": 0.0,
+    "iou": 0.9924
+   },
+   "crop": [
+    -38,
+    44,
+    1292,
+    1254
+   ]
+  },
+  {
+   "key": "hesper-surprised",
+   "role": "portrait",
+   "set": "hesper",
+   "expr": "surprised",
+   "file": "cast/hesper-surprised.webp",
+   "source": {
+    "run": "gen/redo-hesper",
+    "file": "hesper-surprised.png",
+    "sha256": "e83e8689857bf12bb467b76e1e8301bcb916b09f97d3fe0a60288a133b3840df"
+   },
+   "prompt": [
+    "gen/redo-hesper/PROMPT.md",
+    "gen/redo-hesper/GEN.md",
+    "prompts/style-lock.txt"
+   ],
+   "post": [
+    {
+     "portraitset": {
+      "h": 336,
+      "margin": 0.03
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "side": "right",
+   "facing": "right",
+   "w": 369,
+   "h": 336,
+   "bytes": 21034,
+   "sha256": "14fc09b871e2687f3c97a1411d08315d08e51ff83b948785ffb922f4cb45c113",
+   "align": {
+    "scale": 1.0,
+    "dx": 0.0,
+    "dy": 0.0,
+    "iou": 0.9882
+   },
+   "crop": [
+    -38,
+    44,
+    1292,
+    1254
+   ]
+  },
+  {
+   "key": "hesper-determined",
+   "role": "portrait",
+   "set": "hesper",
+   "expr": "determined",
+   "file": "cast/hesper-determined.webp",
+   "source": {
+    "run": "gen/edits-hesper",
+    "file": "hesper-determined.png",
+    "sha256": "09315a471989df4e0e5b94b55e0c45937e49e9c4904575cbafcf48659bc979ed"
+   },
+   "prompt": [
+    "gen/edits-hesper/PROMPT.md",
+    "gen/edits-hesper/GEN.md",
+    "prompts/style-lock.txt"
+   ],
+   "post": [
+    {
+     "portraitset": {
+      "h": 336,
+      "margin": 0.03
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "side": "right",
+   "facing": "right",
+   "w": 369,
+   "h": 336,
+   "bytes": 21506,
+   "sha256": "ac472ebd7486d5eb6580f75f71a330ac0ba0b57f4853db67bcbccc6d712739c5",
+   "align": {
+    "scale": 1.005,
+    "dx": 0.0,
+    "dy": 0.0,
+    "iou": 0.9903
+   },
+   "crop": [
+    -38,
+    44,
+    1292,
+    1254
+   ]
+  },
+  {
+   "key": "hesper-blink",
+   "role": "portrait",
+   "set": "hesper",
+   "expr": "blink",
+   "file": "cast/hesper-blink.webp",
+   "source": {
+    "run": "gen/edits-hesper",
+    "file": "hesper-blink.png",
+    "sha256": "3c492a86b2129bbc4f31a39c038e985f4d2dec4aa55c7f69b55dc58ed8ea521b"
+   },
+   "prompt": [
+    "gen/edits-hesper/PROMPT.md",
+    "gen/edits-hesper/GEN.md",
+    "prompts/style-lock.txt"
+   ],
+   "post": [
+    {
+     "portraitset": {
+      "h": 336,
+      "margin": 0.03
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "side": "right",
+   "facing": "right",
+   "w": 369,
+   "h": 336,
+   "bytes": 21404,
+   "sha256": "157f10701109a0c1fd0d4e544e689cd33497d3ae4286cc63251b6e44609d2ca2",
+   "align": {
+    "scale": 1.0025,
+    "dx": 0.0,
+    "dy": -2.0,
+    "iou": 0.9903
+   },
+   "crop": [
+    -38,
+    44,
+    1292,
+    1254
+   ]
+  },
+  {
+   "key": "oswin-neutral",
+   "role": "portrait",
+   "set": "oswin",
+   "expr": "neutral",
+   "file": "cast/oswin-neutral.webp",
+   "source": {
+    "run": "gen/base-oswin",
+    "file": "oswin-neutral.png",
+    "sha256": "bf3d2220bdedb638d007fcba1cf29d95354dad0c4e0c0190e1e760e801d595be"
+   },
+   "prompt": [
+    "gen/base-oswin/PROMPT.md",
+    "gen/base-oswin/GEN.md",
+    "prompts/style-lock.txt"
+   ],
+   "post": [
+    {
+     "portraitset": {
+      "h": 336,
+      "margin": 0.03
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "side": "right",
+   "facing": "right",
+   "setBase": true,
+   "align": {
+    "scale": 1.0,
+    "dx": 0.0,
+    "dy": 0.0,
+    "iou": 1.0
+   },
+   "crop": [
+    -38,
+    37,
+    1292,
+    1254
+   ],
+   "w": 367,
+   "h": 336,
+   "bytes": 18212,
+   "sha256": "2bd40b32c5e3eb28f2255f06e99e0a526899064bae895746c4d626934b604927"
+  },
+  {
+   "key": "oswin-happy",
+   "role": "portrait",
+   "set": "oswin",
+   "expr": "happy",
+   "file": "cast/oswin-happy.webp",
+   "source": {
+    "run": "gen/edits-oswin",
+    "file": "oswin-happy.png",
+    "sha256": "281d4023bb54d142c4cfa1121446029adb48aa7e0c5b9646e19cb86aeb79dbb7"
+   },
+   "prompt": [
+    "gen/edits-oswin/PROMPT.md",
+    "gen/edits-oswin/GEN.md",
+    "prompts/style-lock.txt"
+   ],
+   "post": [
+    {
+     "portraitset": {
+      "h": 336,
+      "margin": 0.03
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "side": "right",
+   "facing": "right",
+   "align": {
+    "scale": 1.0,
+    "dx": 0.0,
+    "dy": 0.0,
+    "iou": 0.9955
+   },
+   "crop": [
+    -38,
+    37,
+    1292,
+    1254
+   ],
+   "w": 367,
+   "h": 336,
+   "bytes": 17804,
+   "sha256": "dea4a063e1a9e3d2a39e01d0d1423b1edf921fc232a59a67dee31b911957327c"
+  },
+  {
+   "key": "oswin-angry",
+   "role": "portrait",
+   "set": "oswin",
+   "expr": "angry",
+   "file": "cast/oswin-angry.webp",
+   "source": {
+    "run": "gen/edits-oswin",
+    "file": "oswin-angry.png",
+    "sha256": "0bdcb710a0d27789f3836c7affe13385562d25c799deabbb1ab40f722aa24d88"
+   },
+   "prompt": [
+    "gen/edits-oswin/PROMPT.md",
+    "gen/edits-oswin/GEN.md",
+    "prompts/style-lock.txt"
+   ],
+   "post": [
+    {
+     "portraitset": {
+      "h": 336,
+      "margin": 0.03
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "side": "right",
+   "facing": "right",
+   "align": {
+    "scale": 1.005,
+    "dx": 0.0,
+    "dy": 0.0,
+    "iou": 0.9957
+   },
+   "crop": [
+    -38,
+    37,
+    1292,
+    1254
+   ],
+   "w": 367,
+   "h": 336,
+   "bytes": 17954,
+   "sha256": "36199a48fee3d89bc66e48a98d169beee30c62cc8b203cad94e8c5b90cb59248"
+  },
+  {
+   "key": "oswin-sad",
+   "role": "portrait",
+   "set": "oswin",
+   "expr": "sad",
+   "file": "cast/oswin-sad.webp",
+   "source": {
+    "run": "gen/edits-oswin",
+    "file": "oswin-sad.png",
+    "sha256": "f3195cc2b543fffc85cf8755b2e59ceabf5ca144a3c16b3c6cc4cdc61e4f17c7"
+   },
+   "prompt": [
+    "gen/edits-oswin/PROMPT.md",
+    "gen/edits-oswin/GEN.md",
+    "prompts/style-lock.txt"
+   ],
+   "post": [
+    {
+     "portraitset": {
+      "h": 336,
+      "margin": 0.03
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "side": "right",
+   "facing": "right",
+   "align": {
+    "scale": 1.0,
+    "dx": 0.0,
+    "dy": 0.0,
+    "iou": 0.9968
+   },
+   "crop": [
+    -38,
+    37,
+    1292,
+    1254
+   ],
+   "w": 367,
+   "h": 336,
+   "bytes": 17716,
+   "sha256": "f184b451b476149496e24f3535b656f891f44fe4d5a539c08eebadfdbe0fe780"
+  },
+  {
+   "key": "oswin-surprised",
+   "role": "portrait",
+   "set": "oswin",
+   "expr": "surprised",
+   "file": "cast/oswin-surprised.webp",
+   "source": {
+    "run": "gen/edits-oswin",
+    "file": "oswin-surprised.png",
+    "sha256": "a639d756666fcdfc5ffd9bc90cfd6a12c88b6f7bd8b6d564b58c5daeb7bc876d"
+   },
+   "prompt": [
+    "gen/edits-oswin/PROMPT.md",
+    "gen/edits-oswin/GEN.md",
+    "prompts/style-lock.txt"
+   ],
+   "post": [
+    {
+     "portraitset": {
+      "h": 336,
+      "margin": 0.03
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "side": "right",
+   "facing": "right",
+   "align": {
+    "scale": 1.0,
+    "dx": 0.0,
+    "dy": 0.0,
+    "iou": 0.9967
+   },
+   "crop": [
+    -38,
+    37,
+    1292,
+    1254
+   ],
+   "w": 367,
+   "h": 336,
+   "bytes": 18200,
+   "sha256": "6a62d92c1d32381fe445b9ed207904e8812ab0eb8983ba68d5f5ccb0c3f114c4"
+  },
+  {
+   "key": "oswin-determined",
+   "role": "portrait",
+   "set": "oswin",
+   "expr": "determined",
+   "file": "cast/oswin-determined.webp",
+   "source": {
+    "run": "gen/edits-oswin",
+    "file": "oswin-determined.png",
+    "sha256": "eec388a1ab80c5353255922e40cdcb63c1a21718c1e13fd0459249ff398f073d"
+   },
+   "prompt": [
+    "gen/edits-oswin/PROMPT.md",
+    "gen/edits-oswin/GEN.md",
+    "prompts/style-lock.txt"
+   ],
+   "post": [
+    {
+     "portraitset": {
+      "h": 336,
+      "margin": 0.03
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "side": "right",
+   "facing": "right",
+   "align": {
+    "scale": 1.0,
+    "dx": 0.0,
+    "dy": 0.0,
+    "iou": 0.9943
+   },
+   "crop": [
+    -38,
+    37,
+    1292,
+    1254
+   ],
+   "w": 367,
+   "h": 336,
+   "bytes": 17666,
+   "sha256": "e9ebb511864d51b7e8ae1c8071b6b6f405182c522c3262553edf2cd6ce366f8f"
+  },
+  {
+   "key": "oswin-blink",
+   "role": "portrait",
+   "set": "oswin",
+   "expr": "blink",
+   "file": "cast/oswin-blink.webp",
+   "source": {
+    "run": "gen/edits-oswin",
+    "file": "oswin-blink.png",
+    "sha256": "f26745d4b274fa483bef669360722e0640ace9065f7868b7d3662b80e03ed115"
+   },
+   "prompt": [
+    "gen/edits-oswin/PROMPT.md",
+    "gen/edits-oswin/GEN.md",
+    "prompts/style-lock.txt"
+   ],
+   "post": [
+    {
+     "portraitset": {
+      "h": 336,
+      "margin": 0.03
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "side": "right",
+   "facing": "right",
+   "align": {
+    "scale": 1.0,
+    "dx": 0.0,
+    "dy": 0.0,
+    "iou": 0.9973
+   },
+   "crop": [
+    -38,
+    37,
+    1292,
+    1254
+   ],
+   "w": 367,
+   "h": 336,
+   "bytes": 17556,
+   "sha256": "ffaa49a70888b7728f3816f1c1f50812efd818b776a3389f146f06262dbfcbbb"
+  }
+ ],
+ "totalBytes": 521010
+}

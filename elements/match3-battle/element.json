@@ -1,0 +1,60 @@
+{
+  "id": "match3-battle",
+  "code": "A-17",
+  "kind": "system",
+  "name": "Match-3 battle board",
+  "family": "Battle flow",
+  "oneLiner": "A puzzle battle on an 8 x 8 gem board: swap two neighbours to line up 3 or more; matches clear, gems fall and cascades chain (each step worth more); 4 in a row leaves a Row or Column shard, an L or T a Blast gem, 5 in a row a Prism that clears a colour. Every gem colour powers the hero of that colour (attack and skill charge), hearts heal the party, foes count down and strike at 0. Faceted gems with one silhouette per colour (readable without colour), boards that never start with a match and always have a move (or reshuffle), seeded cascades, swaps and falls that always animate, a bot that plays through the player's own input path.",
+  "fits": [
+    "match-3 RPGs and puzzle battlers (heroes powered by gem colours)",
+    "a battle mode inside an adventure or map game (one encounter per node)",
+    "casual puzzle games that want foes, countdowns and skills on top of matching",
+    "mobile-first games (drag or tap to swap, a tall layout for phones)"
+  ],
+  "notFor": [
+    "real-time action combat (use A-05)",
+    "pure score-attack match-3 without foes (the module always runs a battle)",
+    "falling-block puzzles where the player drops pieces (different rules)",
+    "competitive versus play between two players on one board"
+  ],
+  "interfaces": {
+    "time": "turn",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "a party (hero ids), the foes of each wave (enemy ids) and a seed per battle",
+      "gem, hero, skill and enemy tables (built-ins ship; the game adds its own as plain data)",
+      "a fixed 60 Hz update step and key or pointer input routed to the battle while it runs",
+      "a way to draw characters and a backdrop (hooks; a code-drawn fallback ships)",
+      "a place to go when the battle ends (win / lose)"
+    ],
+    "provides": [
+      "the rules: 8 x 8 board, runs of 3+, groups, specials (Row / Column shard, Blast, Prism), firing, gravity and refills from a seeded generator, no-match fills, reshuffle when no move is left, combo weight per cascade, hero attacks by colour with weakness x1.5, hearts, skills with charge, foe countdowns and specials, ward",
+      "the screen: faceted gems with distinct silhouettes, specials, the board tray, cursor and selection, hint wobble, cascades and pops, beams and rings, orbs to the hero cards, hero cards with charge and READY, party bar, foe plates with countdown badges, target marker, banners, combo badge, built-in numbers; wide and tall layouts",
+      "onHit per HP change on its impact frame (read-only), events (swap, match, special, fire, clear, cascade, settle, heroAttack, skill, foeAttack, partyHit, heal, reshuffle, waveStart, waveClear, spawn, death, end ...), onEnd(result, info)",
+      "a bot that targets, casts ready skills and picks the best swap through key()",
+      "anchors (heroes, foes, 'party'), unit rects, UI rects, field (stage) rect, board rect, cell rects, the rules as GameDNA_Match3Battle.rules"
+    ]
+  },
+  "params": [
+    { "key": "specials", "label": "Special gems", "type": "select", "options": ["on", "off"], "default": "on" },
+    { "key": "combo", "label": "Cascade bonus per step", "type": "range", "min": 0, "max": 1, "step": 0.05, "default": 0.25 },
+    { "key": "weakMult", "label": "Weakness multiplier", "type": "range", "min": 1, "max": 3, "step": 0.1, "default": 1.5 },
+    { "key": "speed", "label": "Animation speed", "type": "range", "min": 0.5, "max": 2, "step": 0.25, "default": 1 },
+    { "key": "hints", "label": "Idle hint", "type": "select", "options": ["on", "off"], "default": "on" },
+    { "key": "numbers", "label": "Built-in numbers", "type": "select", "options": ["on", "off"], "default": "on" },
+    { "key": "layout", "label": "Layout", "type": "select", "options": ["auto", "wide", "tall"], "default": "auto" }
+  ],
+  "variants": [
+    { "name": "Standard (default)", "params": {} },
+    { "name": "Plain matching (no specials)", "params": { "specials": "off" } },
+    { "name": "Big cascades", "params": { "combo": 0.5 } },
+    { "name": "Quick playback", "params": { "speed": 2 } },
+    { "name": "Phone layout", "params": { "layout": "tall" } }
+  ],
+  "assets": "module/match3-battle.js (global GameDNA_Match3Battle, no dependencies; API in module/README.md): faceted gems, specials, board, effects and HUD drawn in code; a code-drawn fallback figure for characters. The starter and the demo draw the heroes (knight, archer, herbalist, keeper) and foes (slime, wolf, imp, wisp, harpy, skeleton, cultist, golem) with the demo-kit painted sprites (painted left variants, no mirroring), three demo-kit backdrops and the L-06 painted-ui icons: starter/art/cast-art.js (data URIs, made by src/make-art.py) and starter/art/kit.js (demo-kit runtime, unchanged). No new art was generated.",
+  "status": "v1-module",
+  "module": { "file": "module/match3-battle.js", "global": "GameDNA_Match3Battle", "version": "1.3.0" },
+  "starter": "starter/index.html",
+  "starterFiles": ["art"]
+}

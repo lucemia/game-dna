@@ -1,0 +1,74 @@
+{
+  "id": "kart-racer-3d",
+  "code": "N-05",
+  "kind": "system",
+  "name": "Arcade kart racer (3D)",
+  "family": "3D racing",
+  "oneLiner": "A low-poly 3D kart race: a track built from a closed spline (road, kerbs, barriers, ramps, boost pads, start gantry with countdown lamps), karts with drivers auto-scaled so the wheels sit on the ground, arcade physics with grip, a hop-drift that charges a three-level boost, jumps and boost pads, checkpoint gates that only count in order, AI racers on a racing line with rubber-banding, a 3-2-1-GO countdown, race clock, lap splits, places, minimap and a finish screen. Karts face their velocity (yaw = atan2(dir.x, dir.z) + facingOffset). Seeded and fixed-step, with an autoplay driver.",
+  "fits": [
+    "arcade kart and party racers",
+    "a racing mini-game inside a larger game (festival, hub world)",
+    "time trials and ghost-free lap challenges",
+    "a cup of short tracks with points",
+    "toy-car or creature racers that need drift-boost handling"
+  ],
+  "notFor": [
+    "simulation racing (no tyre model, no gears, no damage)",
+    "2D top-down racers (use a 2D element)",
+    "open-world driving without a lap track",
+    "combat items and weapons (not included; add them through the hooks)"
+  ],
+  "interfaces": {
+    "time": "realtime",
+    "coords": "3d",
+    "layer": "scene",
+    "needs": [
+      "three.js 0.149.0 classic build loaded as window.THREE before the module",
+      "a canvas for WebGL and (optional) a 2D canvas on top for the HUD and addons",
+      "a fixed 60 Hz step that passes the player's input {steer, throttle, brake, drift}",
+      "a track definition (closed list of points) and a list of racers"
+    ],
+    "provides": [
+      "events: countdown, go, checkpoint, lap, finish, raceEnd, allFinished, boost, driftStart, driftEnd, jump, land, bump, wall, wrongWay, respawn",
+      "karts() with x, y, z, heading, speed, lap, next gate, place, lap times, drift and boost state; results() with times and places",
+      "anchor(id) -> screen px of a kart (world -> screen); project(x, y, z)",
+      "drawHud(ctx, w, h, opts): place, lap, clock, splits, minimap, speed, drift meter, countdown and banners; hudRects()",
+      "state(): {t, phase, actors:[{id, x, z, yaw, moveDir, forward, facesMove, feetY, lap, next, place, ...}]} for checks",
+      "autoInput(id) / setAI(id, on): the AI driver for any kart (autoplay)",
+      "checkTrack(def): problems of a new track before it ships"
+    ]
+  },
+  "params": [
+    { "key": "track", "label": "Track", "type": "select", "options": ["meadow", "canyon"], "default": "meadow" },
+    { "key": "palette", "label": "Palette", "type": "select", "options": ["track", "meadow", "canyon", "twilight"], "default": "track" },
+    { "key": "laps", "label": "Laps", "type": "range", "min": 1, "max": 5, "step": 1, "default": 3 },
+    { "key": "maxSpeed", "label": "Top speed (m/s)", "type": "range", "min": 15, "max": 35, "step": 1, "default": 25 },
+    { "key": "grip", "label": "Grip (1/s)", "type": "range", "min": 6, "max": 24, "step": 1, "default": 14 },
+    { "key": "driftGrip", "label": "Drift grip (1/s)", "type": "range", "min": 2, "max": 8, "step": 0.2, "default": 5 },
+    { "key": "turnRate", "label": "Turn rate (rad/s)", "type": "range", "min": 1.2, "max": 3.5, "step": 0.05, "default": 2.25 },
+    { "key": "boostPower", "label": "Boost top-speed x", "type": "range", "min": 1.1, "max": 1.6, "step": 0.02, "default": 1.32 },
+    { "key": "rubberBand", "label": "Rubber band", "type": "range", "min": 0, "max": 0.3, "step": 0.01, "default": 0.1 },
+    { "key": "aiSkill", "label": "AI skill", "type": "range", "min": 0.8, "max": 1.05, "step": 0.01, "default": 0.95 },
+    { "key": "camDist", "label": "Camera distance (m)", "type": "range", "min": 4, "max": 10, "step": 0.2, "default": 6.4 },
+    { "key": "camHeight", "label": "Camera height (m)", "type": "range", "min": 1.4, "max": 5, "step": 0.1, "default": 2.5 },
+    { "key": "fov", "label": "Field of view (deg)", "type": "range", "min": 45, "max": 85, "step": 1, "default": 64 },
+    { "key": "shadows", "label": "Shadows", "type": "select", "options": ["soft", "hard", "off"], "default": "soft" },
+    { "key": "mode", "label": "Demo mode", "type": "select", "options": ["race", "play", "eight", "sheet"], "default": "race" }
+  ],
+  "variants": [
+    { "name": "Default", "params": {} },
+    { "name": "Canyon", "params": { "track": "canyon" } },
+    { "name": "Twilight meadow", "params": { "palette": "twilight" } },
+    { "name": "Slippery", "params": { "grip": 8, "driftGrip": 3, "turnRate": 2.6 } },
+    { "name": "Speed demons", "params": { "maxSpeed": 32, "boostPower": 1.45, "fov": 72, "camDist": 7.2 } },
+    { "name": "Low camera", "params": { "camDist": 4.6, "camHeight": 1.6, "fov": 70 } },
+    { "name": "Eight directions", "params": { "mode": "eight" } },
+    { "name": "Kart sheet", "params": { "mode": "sheet" } }
+  ],
+  "assets": "module/kart-racer-3d.js (global GameDNA_KartRacer3D; needs three.js 0.149.0 as window.THREE, copied as three.min.js next to the page). Karts, drivers, track, scenery and textures are procedural (primitives and code-drawn canvas textures). No external files besides three.min.js.",
+  "status": "v1-module",
+  "module": { "file": "module/kart-racer-3d.js", "global": "GameDNA_KartRacer3D", "version": "1.2.0" },
+  "starter": "starter/index.html",
+  "requires3d": { "three": "0.149.0", "file": "three.min.js" },
+  "basketFiles": [{"from": "vendor/three@0.149.0/three.min.js", "to": "three.min.js"}]
+}

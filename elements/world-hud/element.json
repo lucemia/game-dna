@@ -1,0 +1,229 @@
+{
+ "id": "world-hud",
+ "code": "C-12",
+ "kind": "addon",
+ "name": "World-space HUD",
+ "family": "world-hud",
+ "oneLiner": "HUD pieces that live in the world and follow the camera: a ring under every unit's feet with an HP arc whose pale loss segment drains after a hit, name plates with level and HP above heads that step up or sideways (with a leader line) so they never overlap each other, the game's HUD rects or the view edge, a marker with the distance in metres above the current goal, and arrows on the screen edge that point exactly at off-screen targets, sliding inward along the same bearing past HUD boxes. Crisp whole pixels with a built-in bitmap font on native pixel canvases, smooth vector drawing on HD canvases.",
+ "fits": [
+  "top-down action adventure and RPGs",
+  "tactics and real-time strategy maps (selection rings, unit plates)",
+  "twin-stick and arena games with tracked targets",
+  "open maps with quest objectives",
+  "party-based RPGs with followers"
+ ],
+ "notFor": [
+  "side-view platformers (rings and plates read best seen from above; plates alone can work)",
+  "single-screen menus and card games (nothing in a world)",
+  "first-person 3D (needs a projected toScreen; not covered by the checks)"
+ ],
+ "interfaces": {
+  "time": "any",
+  "coords": "screen",
+  "layer": "ui",
+  "needs": [
+   "units in world px with the feet point, footprint radius, sprite height, team, name, HP",
+   "the current goal (and any tracked target) in world px",
+   "the camera's world rect and the screen rect of the play view",
+   "the HUD rects to keep clear (bars, quest text, windows while open)",
+   "a fixed update step (also on the ?t= replay); a ground pass between floor and sprites"
+  ],
+  "provides": [
+   "drawn rings with HP arcs and loss drain, name plates, goal marker with distance, edge arrows with distance",
+   "rects() of every plate, arrow and marker (UI rects for other overlays)",
+   "lastDrawn(): where each ring, plate, arrow and marker is drawn, and what was hidden and why",
+   "setFocus(id): a highlighted target ring"
+  ]
+ },
+ "params": [
+  {
+   "key": "plates",
+   "label": "Name plates (auto = party, targets, just-hit enemies)",
+   "type": "select",
+   "options": [
+    "auto",
+    "all",
+    "enemies",
+    "damaged",
+    "named",
+    "off"
+   ],
+   "default": "auto"
+  },
+  {
+   "key": "arc",
+   "label": "HP arc on the ring",
+   "type": "select",
+   "options": [
+    "hp",
+    "off"
+   ],
+   "default": "hp"
+  },
+  {
+   "key": "squash",
+   "label": "Ring squash (height / width)",
+   "type": "range",
+   "min": 0.3,
+   "max": 1,
+   "step": 0.05,
+   "default": 0.5
+  },
+  {
+   "key": "ringSize",
+   "label": "Ring size",
+   "type": "range",
+   "min": 0.6,
+   "max": 1.8,
+   "step": 0.1,
+   "default": 1
+  },
+  {
+   "key": "arrows",
+   "label": "Edge arrows",
+   "type": "select",
+   "options": [
+    "on",
+    "off"
+   ],
+   "default": "on"
+  },
+  {
+   "key": "markers",
+   "label": "Goal marker",
+   "type": "select",
+   "options": [
+    "on",
+    "off"
+   ],
+   "default": "on"
+  },
+  {
+   "key": "distance",
+   "label": "Distance labels",
+   "type": "select",
+   "options": [
+    "on",
+    "off"
+   ],
+   "default": "on"
+  },
+  {
+   "key": "unit",
+   "label": "World px per metre",
+   "type": "range",
+   "min": 4,
+   "max": 64,
+   "step": 1,
+   "default": 16
+  },
+  {
+   "key": "plateHp",
+   "label": "HP bar on plates",
+   "type": "select",
+   "options": [
+    "on",
+    "off"
+   ],
+   "default": "on"
+  },
+  {
+   "key": "level",
+   "label": "Level badge",
+   "type": "select",
+   "options": [
+    "on",
+    "off"
+   ],
+   "default": "on"
+  },
+  {
+   "key": "lowHp",
+   "label": "Low-HP pulse below",
+   "type": "range",
+   "min": 0,
+   "max": 0.6,
+   "step": 0.05,
+   "default": 0.3
+  },
+  {
+   "key": "scale",
+   "label": "UI scale (0 = auto)",
+   "type": "range",
+   "min": 0,
+   "max": 4,
+   "step": 1,
+   "default": 0
+  },
+  {
+   "key": "render",
+   "label": "Render",
+   "type": "select",
+   "options": [
+    "auto",
+    "crisp",
+    "smooth"
+   ],
+   "default": "auto"
+  },
+  {
+   "key": "avoid",
+   "label": "Plates avoid sprites",
+   "type": "select",
+   "options": [
+    "auto",
+    "heroes",
+    "all",
+    "soft"
+   ],
+   "default": "auto"
+  }
+ ],
+ "variants": [
+  {
+   "name": "Action adventure",
+   "params": {
+    "plates": "auto",
+    "arc": "hp",
+    "arrows": "on",
+    "distance": "on"
+   }
+  },
+  {
+   "name": "Tactics selection",
+   "params": {
+    "plates": "all",
+    "squash": 0.55,
+    "ringSize": 1.2,
+    "arrows": "off"
+   }
+  },
+  {
+   "name": "Quest compass only",
+   "params": {
+    "plates": "off",
+    "arc": "off",
+    "arrows": "on",
+    "markers": "on"
+   }
+  },
+  {
+   "name": "Overhead (no perspective)",
+   "params": {
+    "squash": 1,
+    "ringSize": 0.9
+   }
+  }
+ ],
+ "assets": [
+  "module/world-hud.js: the element as one dependency-free script (global GameDNA_WorldHud): rings with HP arc and loss drain, plate layout solver, goal marker, edge arrows with the bearing recomputed after sliding, crisp and smooth drawing, a built-in 5-row bitmap font and 5x5 badge icons",
+  "no image, font or audio files"
+ ],
+ "status": "draft",
+ "module": {
+  "file": "module/world-hud.js",
+  "global": "GameDNA_WorldHud",
+  "version": "1.2.1",
+  "docs": "module/README.md"
+ }
+}

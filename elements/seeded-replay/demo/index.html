@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seeded Replay &amp; Ghost</title>
+<style>
+:root { --bg: #0a0d14; --panel: #121725; --panel2: #171d2e; --line: #262f48; --text: #edf1fa; --dim: #96a0bd; --accent: #7fe8ff; --gold: #ffd36a; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1100px 560px at 30% -12%, #1a2c44 0%, var(--bg) 62%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 16px 20px 10px; max-width: 1360px; margin: 0 auto; }
+.code { white-space: nowrap; font: 700 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #05293a; background: linear-gradient(#e6fbff, var(--accent)); padding: 6px 8px; border-radius: 6px; box-shadow: 0 0 0 1px #00000040, 0 4px 14px #7fe8ff40; }
+h1 { font-size: 18px; margin: 0; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; max-width: 960px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 18px; padding: 0 20px 20px; max-width: 1360px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; }
+.frame { position: relative; border-radius: 12px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px #2e3656, 0 24px 60px #00000090; display: flex; justify-content: center; touch-action: none; }
+#game { display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
+.caption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; margin-top: 10px; color: var(--dim); font-size: 12px; }
+.caption b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.keys { margin-top: 8px; color: var(--dim); font-size: 12px; }
+.keys kbd { font: 600 11px ui-monospace, Menlo, monospace; background: #1c2033; border: 1px solid #353d5c; border-bottom-width: 2px; border-radius: 4px; padding: 1px 5px; color: var(--text); }
+.transport { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; gap: 8px; align-items: center; margin-top: 10px; background: linear-gradient(var(--panel2), var(--panel)); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; }
+.transport output { font: 600 12px ui-monospace, Menlo, monospace; color: var(--dim); white-space: nowrap; }
+aside { background: linear-gradient(var(--panel2), var(--panel)); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+section { border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+section:last-of-type { border-bottom: 0; padding-bottom: 0; }
+h2 { margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.row { margin-bottom: 8px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 3px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { --fill: 0%; -webkit-appearance: none; appearance: none; width: 100%; height: 5px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--fill), #262c44 var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 15px; height: 15px; border-radius: 50%; background: #f2fbff; box-shadow: 0 0 0 3px #7fe8ff55, 0 2px 6px #000a; cursor: pointer; }
+.seg { display: flex; background: #0d0f1a; border: 1px solid var(--line); border-radius: 8px; padding: 2px; gap: 2px; flex-wrap: wrap; }
+.seg button { flex: 1; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 4px; border-radius: 6px; cursor: pointer; min-width: 0; }
+.seg button[aria-checked=true] { background: #262c44; color: var(--text); box-shadow: inset 0 0 0 1px #46507a; }
+.btn { appearance: none; border: 1px solid #353d5c; background: #1a1e30; color: var(--text); border-radius: 9px; padding: 9px 10px; font: 600 12.5px/1 inherit; cursor: pointer; user-select: none; -webkit-user-select: none; white-space: nowrap; }
+.btn:active, .btn.on { border-color: var(--accent); color: var(--accent); }
+.btn.big { background: linear-gradient(#20354f, #172338); border-color: #4a6aa0; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.note { color: var(--dim); font-size: 11.5px; margin: 4px 0 0; }
+.stat { font: 11.5px/1.6 ui-monospace, Menlo, monospace; color: var(--dim); overflow-wrap: anywhere; }
+.stat b { color: var(--text); font-weight: 600; }
+.ok { color: #7dff9a !important; } .bad { color: #ff7a7a !important; }
+textarea { width: 100%; min-height: 64px; resize: vertical; background: #0b0e18; color: #cfe9ff; border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; font: 11px/1.35 ui-monospace, Menlo, monospace; overflow-wrap: anywhere; }
+@media (max-width: 1040px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 680px; width: 100%; margin: 0 auto; } }
+@media (max-width: 560px) { header { padding: 12px 16px 8px; } main { padding: 0 16px 16px; gap: 12px; } .two { grid-template-columns: 1fr; } .transport { grid-template-columns: auto auto minmax(0, 1fr); } .transport output { grid-column: 1 / -1; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">I-07</span>
+  <div><h1>Seeded replay &amp; ghost</h1><p>Every fixed step the module stores the run's input next to its seed. Played back through the game's own step function, the run reaches the same end state, checked by hashing the state every second and at the finish. Your best run comes back as a translucent courier that races you with a live split. Replays save and load as one line of text.</p></div>
+</header>
+<main>
+  <div id="stage">
+    <div class="frame" id="frame"><canvas id="game" width="320" height="180"></canvas></div>
+    <div class="transport" id="transport">
+      <button class="btn" id="b-play" title="Pause (P)">&#10074;&#10074;</button>
+      <button class="btn" id="b-speed" title="Speed ([ and ])">x2</button>
+      <input type="range" id="scrub" min="0" max="100" value="0" aria-label="Replay position">
+      <output id="o-time">live</output>
+    </div>
+    <div class="caption">
+      <span id="cap-mode">mode <b>live</b></span>
+      <span id="cap-run">run <b>1</b></span>
+      <span id="cap-best">best <b>none</b></span>
+      <span id="cap-sync">replay check <b>-</b></span>
+    </div>
+    <p class="keys"><kbd>&larr;</kbd><kbd>&uarr;</kbd><kbd>&rarr;</kbd><kbd>&darr;</kbd> walk &middot; <kbd>X</kbd> hold to sprint &middot; <kbd>Z</kbd> start &middot; <kbd>V</kbd> watch the last replay (<kbd>Shift</kbd>+<kbd>V</kbd> the best) &middot; in a replay: <kbd>P</kbd> pause, <kbd>[</kbd> <kbd>]</kbd> speed, <kbd>&larr;</kbd> <kbd>&rarr;</kbd> scrub 2 s (one step while paused), <kbd>V</kbd> / <kbd>Esc</kbd> exit. A move key takes over from the script.</p>
+  </div>
+  <aside>
+    <section>
+      <h2>Drive</h2>
+      <div class="two">
+        <div class="row"><label>Who runs</label><div class="seg" id="drive"><button data-v="script" aria-checked="true">Script</button><button data-v="play" aria-checked="false">You</button></div></div>
+        <div class="row"><label>Seed <output id="o-seed">7</output></label><input type="range" id="seed" min="1" max="40" step="1" value="7"></div>
+      </div>
+      <div class="two">
+        <button class="btn big" id="b-new">New run</button>
+        <button class="btn" id="b-watch">Watch last (V)</button>
+      </div>
+    </section>
+    <section>
+      <h2>Ghost</h2>
+      <div class="row"><label>Races you</label><div class="seg" id="ghost"><button data-v="best">best</button><button data-v="last">last</button><button data-v="off">off</button></div></div>
+      <div class="row"><label>Tint</label><div class="seg" id="tint"><button data-v="cyan">cyan</button><button data-v="gold">gold</button><button data-v="violet">violet</button><button data-v="white">white</button></div></div>
+      <div class="row"><label>Opacity <output id="o-alpha">0.8</output></label><input type="range" id="alpha" min="0.2" max="1" step="0.05" value="0.8"></div>
+      <div class="two">
+        <div class="row"><label>Split</label><div class="seg" id="split"><button data-v="on">on</button><button data-v="off">off</button></div></div>
+        <div class="row"><label>Tag</label><div class="seg" id="tag"><button data-v="start">start</button><button data-v="on">on</button><button data-v="off">off</button></div></div>
+      </div>
+    </section>
+    <section>
+      <h2>Replay text</h2>
+      <div class="two"><button class="btn" id="b-save">Save best</button><button class="btn" id="b-load">Load as ghost</button></div>
+      <textarea id="txt" spellcheck="false" placeholder="Save puts the best run here as one line of text. Paste a run and press Load."></textarea>
+      <div class="two"><button class="btn" id="b-verify">Verify last run</button><span class="stat" id="verify-out"></span></div>
+      <p class="note">Verify replays the last run through the game's own step function at full speed, in place, and compares the end-state hash and every per-second checkpoint with the live run.</p>
+    </section>
+    <section>
+      <h2>Recorder</h2>
+      <div class="stat" id="stat"></div>
+    </section>
+  </aside>
+</main>
+<script src="../../../pixel-kit/pixel-scene.js"></script>
+<script src="../module/seeded-replay.js"></script>
+<script>
+"use strict";
+(() => {
+  const PXS = window.GameDNA_PixelScene, SR = window.GameDNA_SeededReplay;
+  const qs = new URLSearchParams(location.search);
+  const W = 320, H = 180, T = 16, STEP = 1000 / 60;
+  const FREEZE = qs.get('freeze') === '1', T0 = qs.has('t') ? Math.max(0, Number(qs.get('t')) || 0) : null;
+  const MUT = qs.get('mutant') || '';      // demo mutants for the checks: random (stray Math.random), seed (restart ignores the seed), ghost-face
+  let drive = qs.get('drive') === 'play' ? 'play' : 'script';
+  let seedSel = Math.max(1, Number(qs.get('seed')) || 7);
+
+  const cv = document.getElementById('game'), g = cv.getContext('2d');
+  g.imageSmoothingEnabled = false;
+
+  /* ---------------- course (pixel-kit terrain, original layout) ---------------- */
+  const MAP = (() => {
+    const C = 40, R = 14, m = [];
+    for (let r = 0; r < R; r++) { m.push([]); for (let c = 0; c < C; c++) { const n = PXS.noise(c * 16, r * 16, 60, 17); m[r].push(n > 0.63 ? ',' : n < 0.3 ? ':' : '.'); } }
+    const set = (c, r, ch) => { if (c >= 0 && r >= 0 && c < C && r < R) m[r][c] = ch; };
+    for (let r = 1; r < R - 1; r++) { set(15, r, 'w'); set(16, r, 'w'); }
+    set(14, 6, 'w'); set(17, 8, 'w'); set(14, 7, 'w');
+    for (let c = 2; c <= 37; c++) set(c, 3, 'p');
+    set(15, 3, 'b'); set(16, 3, 'b');
+    for (let r = 3; r <= 10; r++) set(37, r, 'p');
+    for (let c = 19; c <= 37; c++) set(c, 10, 'p');
+    for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
+      const edge = Math.min(r, c, R - 1 - r, C - 1 - c);
+      if (edge < 1 || (edge < 2 && PXS.hash(c, r, 5) < 0.55 && !(r === 3 || c === 37 || r === 10))) m[r][c] = PXS.hash(c, r, 9) < 0.25 ? 'P' : 'T';
+    }
+    const free = (c, r) => { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const q = (m[r + dy] || [])[c + dx]; if (q === 'p' || q === 'b' || q === 'w') return false; } return true; };
+    // south-west grove and the camp's garden
+    for (let r = 5; r < R - 1; r++) for (let c = 2; c < 14; c++) if (free(c, r)) { const n = PXS.noise(c * 16, r * 16, 30, 23); if (n > 0.64) m[r][c] = PXS.hash(c, r, 3) < 0.3 ? 't' : 'T'; else if (PXS.hash(c, r, 31) < 0.05) m[r][c] = 'u'; else if (PXS.hash(c, r, 37) < 0.05) m[r][c] = 'F'; }
+    // north strip
+    for (const [c, r, ch] of [[6, 1, 'u'], [10, 1, 'F'], [21, 1, 'r'], [26, 1, 'u'], [31, 2, 'F'], [34, 1, 't'], [19, 2, 'h'], [12, 2, 'F'], [24, 2, 'S']]) if (m[r][c] !== 'T' && m[r][c] !== 'P') set(c, r, ch);
+    // the meadow between the river and the east road: a few rocks and flowers the slimes bounce off
+    for (const [c, r, ch] of [[22, 6, 'r'], [30, 8, 'R'], [26, 5, 'F'], [33, 6, 'u'], [20, 8, 'F'], [27, 9, 'r']]) set(c, r, ch);
+    for (const [c, r, ch] of [[38, 6, 'u'], [38, 9, 'F'], [24, 11, 'F'], [31, 11, 'u'], [21, 12, 't'], [35, 12, 't']]) if (m[r][c] !== 'T' && m[r][c] !== 'P') set(c, r, ch);
+    return m.map(r => r.join(''));
+  })();
+  const COLS = MAP[0].length, ROWS = MAP.length, MW = COLS * T, MH = ROWS * T;
+  const SC = PXS.scene({ map: MAP, seed: 41 });
+  const blocked = (px, py) => { const c = Math.floor(px / T), r = Math.floor(py / T); return c < 0 || r < 0 || c >= COLS || r >= ROWS || SC.blocked(c, r); };
+  const START = { x: 2 * T + 8, y: 3 * T + 12 };
+  const GATES = [{ x: 9 * T + 8, y: 3 * T + 12 }, { x: 24 * T + 8, y: 3 * T + 12 }, { x: 37 * T + 8, y: 6 * T + 8 }, { x: 28 * T + 8, y: 10 * T + 12 }];
+  const FINISH = { x: 19 * T + 8, y: 10 * T + 12 };
+  const FIELD = { x0: 17 * T, y0: 4 * T + 6, x1: 36 * T, y1: 10 * T - 2 };
+  const ROUTE_LEN = (() => { let L = 0, p = START; for (const q of GATES.concat([FINISH])) { L += Math.abs(q.x - p.x) + Math.abs(q.y - p.y); p = q; } return L; })();
+
+  /* ---------------- art ---------------- */
+  const SLIME = [PXS.strArt(['....oooo....', '..oolllloo..', '.olllgggllo.', '.ollgggggGo.', 'olgwkggwkgGo', 'olgkkggkkgGo', 'oggggggggGGo', 'oGgggggggGGo', '.oGGGGGGGGo.', '..oooooooo..']),
+    PXS.strArt(['............', '....oooo....', '..oolllloo..', '.ollgggggGo.', 'olgwkggwkgGo', 'olgkkggkkgGo', 'oggggggggGGo', 'oGgggggggGGo', 'ooGGGGGGGGoo', '.oooooooooo.'])];
+
+  /* ---------------- game state (everything the step writes) ---------------- */
+  let S = null;
+  function rnd() {   // mulberry32 on S.rng
+    S.rng = (S.rng + 0x6d2b79f5) >>> 0; let t = S.rng;
+    t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  }
+  function newRun(seed, take) {
+    S = { scene: 'run', seed, take, rng: (seed * 2654435761) >>> 0, step: 0, gate: 0, result: null, doneT: 0, sparks: [],
+      hero: { x: START.x, y: START.y, dir: 'right', walk: 0, moving: false, mx: 0, stun: 0, kx: 0, ky: 0, sprint: false } };
+    S.slimes = [];
+    for (let i = 0; i < 7; i++) S.slimes.push({ id: 'slime-' + (i + 1), x: FIELD.x0 + 20 + rnd() * (FIELD.x1 - FIELD.x0 - 40), y: FIELD.y0 + 8 + rnd() * (FIELD.y1 - FIELD.y0 - 16), dx: 0, dy: 0, think: 10 + Math.floor(rnd() * 50), anim: Math.floor(rnd() * 30) });
+    rep.begin(seed);
+  }
+  function toTitle() { S = { scene: 'title', seed: seedSel, take: S ? S.take : 0, rng: 1, step: 0, gate: 0, result: null, doneT: 0, sparks: [], hero: { x: START.x, y: START.y, dir: 'right', walk: 0, moving: false, mx: 0, stun: 0, kx: 0, ky: 0, sprint: false }, slimes: [] }; }
+
+  /* ---------------- input: keyboard and the script's courier ---------------- */
+  const held = new Set(), taps = new Set();
+  const KEY = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', KeyX: 'run', ShiftLeft: 'run', KeyZ: 'ok', Space: 'ok', Enter: 'ok' };
+  addEventListener('keydown', e => { const k = KEY[e.code]; if (!k) return; e.preventDefault(); if (!held.has(k)) taps.add(k); held.add(k); if (drive === 'script' && k !== 'ok' && k !== 'run') setDrive('play'); });
+  addEventListener('keyup', e => { const k = KEY[e.code]; if (k) held.delete(k); });
+  function readDevice() { const i = { up: held.has('up'), down: held.has('down'), left: held.has('left'), right: held.has('right'), run: held.has('run'), ok: taps.has('ok') }; taps.clear(); return i; }
+  // the script's courier: walks the gates in order; take 1 jogs, take 2 jogs the first stretch, then sprints
+  function botInput() {
+    const i = { up: false, down: false, left: false, right: false, run: false, ok: false };
+    if (S.scene !== 'run') return i;
+    const h = S.hero, tgt = S.gate < GATES.length ? GATES[S.gate] : FINISH;
+    const dx = tgt.x - h.x, dy = tgt.y - h.y;
+    if (Math.abs(dx) > 1.5) i[dx > 0 ? 'right' : 'left'] = true; else if (Math.abs(dy) > 1.5) i[dy > 0 ? 'down' : 'up'] = true;
+    i.run = S.take % 2 === 1 ? S.gate === 0 : S.gate >= 1;   // take 1 sprints the first stretch only; take 2 the rest
+    return i;
+  }
+
+  /* ---------------- one fixed step ---------------- */
+  function step() {
+    const dev = readDevice();
+    const inp = rep.input(drive === 'script' ? botInput() : dev);
+    if (S.scene === 'title') { if (inp.ok) newRun(seedSel, S.take + 1); return; }
+    S.step++;
+    if (S.scene === 'done') { S.doneT++; if (inp.ok && S.doneT > 30) { toTitle(); } updateSlimes(); return; }
+    const h = S.hero;
+    let mx = (inp.right ? 1 : 0) - (inp.left ? 1 : 0), my = (inp.down ? 1 : 0) - (inp.up ? 1 : 0);
+    if (h.stun > 0) { h.stun--; mx = 0; my = 0; }
+    const sp = (inp.run ? 1.9 : 1.3) * (mx && my ? 0.7071 : 1);
+    h.sprint = !!inp.run && (mx !== 0 || my !== 0);
+    if (mx || my) h.dir = mx ? (mx > 0 ? 'right' : 'left') : (my > 0 ? 'down' : 'up');
+    h.mx = mx;
+    let moved = false;
+    const tryMove = (ddx, ddy) => { const nx = h.x + ddx, ny = h.y + ddy; if (!blocked(nx - 5, ny - 3) && !blocked(nx + 4, ny - 3) && !blocked(nx - 5, ny) && !blocked(nx + 4, ny)) { h.x = nx; h.y = ny; return true; } return false; };
+    if (mx) moved = tryMove(mx * sp, 0) || moved;
+    if (my) moved = tryMove(0, my * sp) || moved;
+    if (h.kx || h.ky) { tryMove(h.kx, 0); tryMove(0, h.ky); h.kx *= 0.8; h.ky *= 0.8; if (Math.abs(h.kx) + Math.abs(h.ky) < 0.05) { h.kx = 0; h.ky = 0; } }
+    h.moving = moved; if (moved) h.walk += sp;
+    updateSlimes();
+    for (const s of S.slimes) if (h.stun === 0 && Math.abs(s.x - h.x) < 10 && Math.abs(s.y - h.y) < 7) {
+      const d = Math.max(1, Math.hypot(h.x - s.x, h.y - s.y)); h.kx = (h.x - s.x) / d * 2.4; h.ky = (h.y - s.y) / d * 2.4; h.stun = 22;
+      S.sparks.push({ x: (h.x + s.x) / 2, y: h.y - 8, t: 0 });
+    }
+    S.sparks = S.sparks.filter(p => ++p.t < 24);
+    const tg = S.gate < GATES.length ? GATES[S.gate] : FINISH;
+    if (Math.abs(h.x - tg.x) < 9 && Math.abs(h.y - tg.y) < 9) {
+      if (S.gate < GATES.length) { S.gate++; S.sparks.push({ x: tg.x, y: tg.y - 22, t: 0, gate: 1 }); }
+      else { S.scene = 'done'; S.result = 'win'; S.doneT = 0; h.moving = false; h.sprint = false; rep.end({ won: true }); }
+    }
+  }
+  function updateSlimes() {
+    for (const s of S.slimes) {
+      s.anim++;
+      if (--s.think <= 0) {
+        const r = MUT === 'random' ? Math.random() : rnd();
+        s.think = 30 + Math.floor((MUT === 'random' ? Math.random() : rnd()) * 70);
+        const pick = Math.floor(r * 5); [s.dx, s.dy] = [[0, 0], [0.45, 0], [-0.45, 0], [0, 0.4], [0, -0.4]][pick];
+      }
+      const nx = s.x + s.dx, ny = s.y + s.dy;
+      if (nx < FIELD.x0 || nx > FIELD.x1 || blocked(nx, s.y)) s.dx = -s.dx; else s.x = nx;
+      if (ny < FIELD.y0 || ny > FIELD.y1 || blocked(s.x, ny)) s.dy = -s.dy; else s.y = ny;
+    }
+  }
+  function progress() { if (!S || S.scene === 'title') return 0; const h = S.hero; let base = 0, p = START; for (let i = 0; i < S.gate; i++) { const q = GATES[i]; base += Math.abs(q.x - p.x) + Math.abs(q.y - p.y); p = q; } const q = S.gate < GATES.length ? GATES[S.gate] : FINISH; const seg = Math.abs(q.x - p.x) + Math.abs(q.y - p.y); const left = Math.abs(q.x - h.x) + Math.abs(q.y - h.y); return S.scene === 'done' ? ROUTE_LEN : base + Math.max(0, seg - left); }
+
+  /* ---------------- the replay module ---------------- */
+  const P0 = { ghost: qs.get('ghost') || 'best', tint: qs.get('tint') || 'cyan', ghostAlpha: Number(qs.get('ghostAlpha')) || 0.8, split: qs.get('split') || 'on', tag: qs.get('tag') || 'start', speed: 2, render: 'pixel', autoExit: 3 };
+  const rep = SR.create({
+    restart: seed => { newRun(MUT === 'seed' ? seed + 1 : seed, S ? S.take : 1); },
+    step: () => step(),
+    state: () => ({ scene: S.scene, rng: S.rng, step: S.step, gate: S.gate, result: S.result, hero: S.hero, slimes: S.slimes }),
+    pose: () => S && S.scene === 'run' ? { x: S.hero.x, y: S.hero.y, dir: S.hero.dir, frame: S.hero.moving ? Math.floor(S.hero.walk / 7) % 2 : 0, mx: S.hero.moving ? S.hero.mx : 0 } : null,
+    progress: () => progress(),
+    drawGhost: (ctx, p) => { const c = cam(); const dir = MUT === 'ghost-face' ? 'right' : p.dir; PXS.actor(ctx, p.x - c.x, p.y - c.y, { pal: 'hero', dir, frame: p.frame, noShadow: true }); },
+    exit: () => { toTitle(); titleT = 0; },
+    view: { w: W, h: H }, canvas: cv, uiRects: () => uiRects(), keyboard: true,
+    params: P0
+  });
+  window.__rep = rep;
+
+  /* ---------------- camera, HUD and drawing ---------------- */
+  function cam() { const h = S.hero; return { x: Math.round(Math.max(0, Math.min(MW - W, h.x - W / 2))), y: Math.round(Math.max(0, Math.min(MH - H, h.y - H / 2 - 6))) }; }
+  // the demo's own HUD uses the same CSS-aware scale as the module (3x5 glyphs >= 10 CSS px on phones)
+  function uiK() { let css = 1; try { const bw = cv.getBoundingClientRect().width; if (bw > 0) css = bw / W; } catch (e) { css = 1; } return MUT === 'plate-1x' ? 1 : Math.max(1, Math.min(3, Math.ceil(2 / css - 1e-6))); }
+  let TEXTS = [];   // every text the demo drew this frame, in view px (checks/demo-check.py)
+  function uiRects() { const k = uiK(); return [{ x: 3 * k, y: 3 * k, w: 92 * k, h: 15 * k }].concat(S && S.scene === 'title' ? [{ x: 160 - 80 * k, y: 85 - 23 * k, w: 160 * k, h: 46 * k }] : []); }
+  function txt(s, x, y, col) { g.font = '8px monospace'; g.textBaseline = 'top'; g.fillStyle = '#05070d'; g.fillText(s, x + 1, y + 1); g.fillStyle = col; g.fillText(s, x, y); }
+  function pfont(s, x, y, col, k) { /* reuse the module's 3x5 glyphs through a tiny local copy for the plate */ const F = { C: '011100100100011', O: '010101101101010', U: '101101101101111', R: '110101110101101', I: '111010010010111', E: '111100110100111', G: '011100101101011', A: '010101111101101', T: '111010010010010', S: '011100010001110', D: '110101101101110', K: '101101110101101', ' ': '000000000000000', '/': '001001010100100', 0: '111101101101111', 1: '010110010010111', 2: '110001010100111', 3: '110001010001110', 4: '101101111001001', 5: '111100110001110', 6: '011100111101111', 7: '111001010010010', 8: '111101111101111', 9: '111101111001110', N: '110101101101101', L: '100100100100111', H: '101101111101101', P: '110101110100100', Y: '101101010010010', W: '101101111111101', M: '101111111101101', B: '110101110101110', V: '101101101101010', Z: '111001010100111', X: '101101010101101', ':': '000010000010000', '.': '000000000000010', '-': '000000111000000' }; k = k || 1; { const T = g.getTransform(); TEXTS.push({ s, x: x * T.a + T.e, y: y * T.d + T.f, w: (s.length * 4 - 1) * k * T.a, h: 5 * k * T.d, px: k * T.a }); } g.fillStyle = col; for (let i = 0; i < s.length; i++) { const gl = F[s[i]] || F[' ']; for (let b = 0; b < 15; b++) if (gl[b] === '1') g.fillRect(x + (i * 4 + b % 3) * k, y + Math.floor(b / 3) * k, k, k); } }
+  function drawPlate() {
+    const k = uiK(); g.save(); g.setTransform(k, 0, 0, k, 0, 0);
+    g.fillStyle = 'rgba(8,12,22,0.86)'; g.fillRect(3, 3, 92, 15); g.fillStyle = '#05070d'; g.fillRect(2, 3, 1, 15); g.fillRect(95, 3, 1, 15); g.fillRect(3, 2, 92, 1); g.fillRect(3, 18, 92, 1);
+    g.fillStyle = 'rgba(255,255,255,0.1)'; g.fillRect(3, 3, 92, 1);
+    pfont('COURIER TRIAL', 6, 5, '#ffe9a8');
+    pfont('SEED ' + (S.seed || seedSel), 6, 11, '#aab4cc');
+    // gate pips
+    for (let i = 0; i <= GATES.length; i++) { const lit = S.scene === 'run' || S.scene === 'done' ? i < S.gate || (i === GATES.length && S.scene === 'done') : false; g.fillStyle = '#05070d'; g.fillRect(58 + i * 7, 10, 6, 6); g.fillStyle = lit ? (i === GATES.length ? '#ffcf4a' : '#7fe8ff') : '#2a3348'; g.fillRect(59 + i * 7, 11, 4, 4); if (lit) { g.fillStyle = '#ffffff'; g.fillRect(59 + i * 7, 11, 1, 1); } }
+    g.restore();
+  }
+  function lanternPost(gg, x, y, lit, t) {
+    PXS.drawProp(gg, 'lantern', x - 8, y, { lit }, t);
+    PXS.drawProp(gg, 'lantern', x + 8, y, { lit }, t);
+  }
+  let clock = 0, titleT = 0;
+  function render() {
+    g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = false; g.globalAlpha = 1; TEXTS = [];
+    const c = cam(), ox = -c.x, oy = -c.y, t = clock, ex = [];
+    ex.push({ y: START.y - 14, draw: gg => { PXS.drawProp(gg, 'tent', START.x - 4 + ox, START.y - 14 + oy, {}, t); } });
+    ex.push({ y: START.y + 10, draw: gg => { PXS.drawProp(gg, 'campfire', START.x + 2 + ox, START.y + 22 + oy, {}, t); } });
+    GATES.forEach((q, i) => { const lit = S.scene !== 'title' && i < S.gate; ex.push({ y: q.y - 6, draw: gg => lanternPost(gg, q.x + ox, q.y - 6 + oy, lit, t) }); });
+    ex.push({ y: FINISH.y - 17, draw: gg => { PXS.drawProp(gg, 'statue', FINISH.x + ox, FINISH.y - 17 + oy, {}, t); PXS.drawProp(gg, 'lantern', FINISH.x - 15 + ox, FINISH.y - 15 + oy, { lit: true }, t); PXS.drawProp(gg, 'lantern', FINISH.x + 15 + ox, FINISH.y - 15 + oy, { lit: true }, t); } });
+    if (S.scene !== 'title') for (const s of S.slimes) ex.push({ y: s.y, draw: gg => { gg.fillStyle = 'rgba(16,10,30,0.35)'; gg.fillRect(Math.round(s.x + ox) - 5, Math.round(s.y + oy), 10, 1); gg.drawImage(SLIME[Math.floor(s.anim / 14) % 2], Math.round(s.x + ox - 6), Math.round(s.y + oy - 10)); } });
+    const gp = rep.ghost();
+    if (gp && S.scene !== 'title') ex.push({ y: gp.pose.y - 0.5, draw: gg => { rep.drawGhost(gg); } });
+    const h = S.hero;
+    if (S.scene !== 'title') ex.push({ y: h.y, draw: gg => {
+      if (h.stun > 0 && (h.stun >> 2) % 2) gg.globalAlpha = 0.55;
+      PXS.actor(gg, h.x + ox, h.y + oy, { pal: 'hero', dir: h.dir, frame: h.moving ? Math.floor(h.walk / 7) % 2 : 0 });
+      gg.globalAlpha = 1;
+      if (h.sprint && h.moving) { gg.fillStyle = 'rgba(240,230,200,0.55)'; const bx = Math.round(h.x + ox) - (h.dir === 'right' ? 9 : h.dir === 'left' ? -7 : 1), by = Math.round(h.y + oy) - 2; gg.fillRect(bx, by, 2, 1); gg.fillRect(bx + (h.dir === 'left' ? 2 : -2), by - 2, 1, 1); }
+    } });
+    SC.draw(g, t, ex, ox, oy);
+    for (const p of S.sparks) { const a = 1 - p.t / 24, r = 3 + p.t * 0.4; g.globalAlpha = a; g.fillStyle = p.gate ? '#ffe9a8' : '#ffffff'; for (let k = 0; k < 6; k++) { const an = k * Math.PI / 3 + p.t * 0.05; g.fillRect(Math.round(p.x + ox + Math.cos(an) * r), Math.round(p.y + oy + Math.sin(an) * r * 0.7), 1, 1); } g.globalAlpha = 1; }
+    drawPlate();
+    if (S.scene === 'title') {
+      g.fillStyle = 'rgba(6,10,18,0.55)'; g.fillRect(0, 0, W, H);
+      const tk = uiK(); g.save(); g.setTransform(tk, 0, 0, tk, 160 - 160 * tk, 85 - 85 * tk);
+      g.fillStyle = 'rgba(8,12,22,0.9)'; g.fillRect(80, 62, 160, 46); g.fillStyle = '#7fe8ff'; g.fillRect(80, 62, 160, 1); g.fillRect(80, 107, 160, 1);
+      pfont('COURIER TRIAL', 160 - 25 * 2 - 1, 70, '#ffe9a8', 2);
+      pfont('Z  RUN THE COURSE', 160 - 34, 86, '#e6ecfa');
+      pfont('BEAT THE GHOST', 160 - 28, 95, '#7fe8ff');
+      g.restore();
+    }
+    rep.draw(g);
+  }
+
+  /* ---------------- script director (one clock for play, ?t= and the stills) ---------------- */
+  let tick = 0, ev = { take1End: null, take2Start: null, take2End: null, watchAt: null };
+  function director() {
+    if (drive !== 'script') return;
+    if (S.scene === 'done' && !rep.playing() && S.doneT === 225) {   // after the 210-step FIRST TIME SET banner
+      if (S.take === 1) { newRun(seedSel, 2); ev.take2Start = tick; }
+    }
+    if (S.scene === 'done' && S.take === 2 && !rep.playing() && S.doneT === 160) { rep.setSpeed(2); rep.watch('best'); ev.watchAt = tick; }
+    if (rep.playing() && ev.watchAt != null) {
+      const k = tick - ev.watchAt;
+      if (k === 150) rep.pause(true);
+      if (k === 210) { rep.seek(rep.stats().play.cursor - 120); rep.setSpeed(1); rep.pause(false); }
+      if (k === 260) rep.setSpeed(2);
+    }
+    if (S.scene === 'title') { titleT++; if (titleT === 100) newRun(seedSel, S.take + 1); }
+  }
+  function fixedTick() {
+    director();
+    const n = rep.steps();
+    for (let i = 0; i < n; i++) step();
+    if (S.scene === 'done' && S.take === 1 && ev.take1End == null) ev.take1End = tick;
+    if (S.scene === 'done' && S.take === 2 && ev.take2End == null) ev.take2End = tick;
+    clock += STEP; tick++;
+  }
+
+  /* ---------------- text state for checks and critics ---------------- */
+  function eventNow() {
+    const st = rep.stats(), ld = rep.lastDrawn().map(d => d.kind);
+    if (rep.playing()) return st.play.match === true ? 'match' : st.play.paused ? 'paused' : 'replay x' + st.play.speed;
+    if (ld.includes('banner')) return 'newBest';
+    if (rep.recording()) return rep.ghost() ? 'ghost' : 'recording';
+    return S.scene;
+  }
+  window.__state = () => {
+    const c = cam(), ox = -c.x, oy = -c.y, actors = [], h = S.hero;
+    const side = d => d === 'left' || d === 'right';
+    if (S.scene !== 'title') {
+      actors.push(side(h.dir) ? { id: 'hero', x: Math.round(h.x + ox), y: Math.round(h.y + oy), facing: h.dir, vx: h.moving && h.stun === 0 ? h.mx : 0 } : { id: 'hero', x: Math.round(h.x + ox), y: Math.round(h.y + oy), noFace: 'top-down ' + h.dir + ' frame' });
+      const gp = rep.ghost();
+      if (gp) { const p = gp.pose, gd = MUT === 'ghost-face' ? 'right' : p.dir; actors.push(side(p.dir) ? { id: 'ghost', x: Math.round(p.x + ox), y: Math.round(p.y + oy), facing: gd, vx: p.mx || 0 } : { id: 'ghost', x: Math.round(p.x + ox), y: Math.round(p.y + oy), noFace: 'top-down ' + p.dir + ' frame' }); }
+      for (const s of S.slimes) actors.push({ id: s.id, x: Math.round(s.x + ox), y: Math.round(s.y + oy), noFace: 'frontal art' });
+    }
+    const st = rep.stats();
+    return { t: Math.round(clock), tick, event: eventNow(), scene: S.scene, take: S.take, seed: S.seed, gate: S.gate, camera: c, actors, ghost: st.ghost, rep: { mode: st.mode, recording: st.recording, steps: st.steps, best: st.best, last: st.last, play: st.play, randomCalls: st.randomCalls, drawn: rep.lastDrawn() }, events: ev };
+  };
+  // cast for tools/sprites/sheet.py: the slime, and the ghost as the module composites it (the hero's own frames, tinted)
+  window.__srCast = { slime: SLIME, ghost: (gg, x, footY, dir, frame) => { SR.composite(gg, lc => { PXS.actor(lc, x, footY, { pal: 'hero', dir, frame, noShadow: true }); }, { tint: 'cyan', alpha: 0.8 }); } };
+  // hooks for checks/demo-check.py (the same functions the loop uses)
+  window.__demo = { newRun: (seed, take) => newRun(seed, take), step: () => step(), scene: () => S.scene, tick: () => { fixedTick(); render(); }, render: () => render(), texts: () => TEXTS.slice(), uiRects: () => uiRects(), setDrive: v => setDrive(v) };
+
+  /* ---------------- page UI ---------------- */
+  const $ = id => document.getElementById(id);
+  function segs(id, cur, fn) { const el = $(id); el.querySelectorAll('button').forEach(b => { b.setAttribute('aria-checked', String(b.dataset.v === cur)); b.onclick = () => { el.querySelectorAll('button').forEach(x => x.setAttribute('aria-checked', String(x === b))); fn(b.dataset.v); }; }); }
+  function setDrive(v) { drive = v; $('drive').querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', String(b.dataset.v === v))); }
+  segs('drive', drive, v => setDrive(v));
+  segs('ghost', P0.ghost, v => rep.setParams({ ghost: v }));
+  segs('tint', P0.tint, v => rep.setParams({ tint: v }));
+  segs('split', P0.split, v => rep.setParams({ split: v }));
+  segs('tag', P0.tag, v => rep.setParams({ tag: v }));
+  const fill = el => el.style.setProperty('--fill', ((el.value - el.min) / (el.max - el.min) * 100) + '%');
+  $('seed').value = seedSel; $('o-seed').textContent = seedSel; fill($('seed'));
+  $('seed').oninput = e => { seedSel = +e.target.value; $('o-seed').textContent = seedSel; fill(e.target); };
+  $('alpha').oninput = e => { $('o-alpha').textContent = (+e.target.value).toFixed(2); rep.setParams({ ghostAlpha: +e.target.value }); fill(e.target); }; fill($('alpha'));
+  $('b-new').onclick = () => { if (rep.playing()) rep.stop(); setDrive('play'); newRun(seedSel, (S.take || 0) + 1); };
+  $('b-watch').onclick = () => { if (rep.playing()) rep.stop(); else rep.watch('last'); };
+  $('b-play').onclick = () => rep.pause();
+  $('b-speed').onclick = () => { const sp = [0.25, 0.5, 1, 2, 4], st = rep.stats(); const cur = st.play ? st.play.speed : 2; rep.setSpeed(sp[(sp.indexOf(cur) + 1) % sp.length]); };
+  $('scrub').oninput = e => { const st = rep.stats(); if (st.play) rep.seek(Math.round(+e.target.value / 1000 * st.play.length)); };
+  $('scrub').max = 1000;
+  $('b-save').onclick = () => { const t = rep.save('best'); $('txt').value = t || '(no finished run yet)'; };
+  $('b-load').onclick = () => { const r = rep.load($('txt').value, 'best'); $('verify-out').innerHTML = r ? '<b class="ok">loaded: ' + SR.fmtTime(r.endStep * STEP) + '</b>' : '<b class="bad">not a valid replay</b>'; };
+  $('b-verify').onclick = () => { if (rep.playing()) return; const r = rep.verify('last'); $('verify-out').innerHTML = !r ? 'no run yet' : '<b class="' + (r.ok ? 'ok' : 'bad') + '">' + (r.ok ? 'match' : 'desync at step ' + r.desyncAt) + '</b> ' + r.checked + ' checkpoints'; };
+  function syncUi() {
+    const st = rep.stats();
+    $('cap-mode').innerHTML = 'mode <b>' + (st.play ? 'replay' + (st.play.paused ? ' (paused)' : ' x' + st.play.speed) : st.recording ? 'recording' : S.scene) + '</b>';
+    $('cap-run').innerHTML = 'run <b>' + (S.take || 0) + '</b>';
+    $('cap-best').innerHTML = 'best <b>' + (st.best ? SR.fmtTime(st.best.ms) : 'none') + '</b>';
+    $('cap-sync').innerHTML = 'replay check <b class="' + (st.play && st.play.desyncAt != null ? 'bad' : st.play && st.play.match ? 'ok' : '') + '">' + (st.play ? (st.play.desyncAt != null ? 'desync @' + st.play.desyncAt : st.play.match ? 'end state match' : st.play.checked + ' ok') : st.lastVerify ? (st.lastVerify.ok ? 'last verify ok' : 'last verify failed') : '-') + '</b>';
+    $('b-play').innerHTML = st.play && !st.play.paused && !st.play.done ? '&#10074;&#10074;' : '&#9654;';
+    $('b-speed').textContent = 'x' + (st.play ? st.play.speed : 2);
+    $('transport').style.opacity = st.play ? 1 : 0.55;
+    if (st.play) { $('scrub').value = Math.round(st.play.cursor / Math.max(1, st.play.length) * 1000); const tot = st.play.endStep != null ? st.play.endStep : st.play.length; $('o-time').textContent = SR.fmtTime(Math.min(st.play.cursor, tot) * STEP) + ' / ' + SR.fmtTime(tot * STEP); }
+    else { $('scrub').value = 0; $('o-time').textContent = st.recording ? 'recording ' + SR.fmtTime(st.steps * STEP) : 'live'; }
+    fill($('scrub'));
+    $('stat').innerHTML = 'steps recorded <b>' + st.steps + '</b> &middot; distinct inputs <b>' + st.dict + '</b><br>seed <b>' + st.seed + '</b> &middot; Math.random in steps <b class="' + (st.randomCalls ? 'bad' : 'ok') + '">' + st.randomCalls + '</b><br>last end hash <b>' + (st.last ? st.last.hash : '-') + '</b><br>best <b>' + (st.best ? st.best.steps + ' steps' : '-') + '</b> &middot; saved text <b>' + (st.best ? rep.save('best').length + ' chars' : '-') + '</b>';
+  }
+
+  // integer scale of the 320x180 canvas into the frame (crisp pixels at any width)
+  function fit() { const fw = $('frame').clientWidth; const k = Math.max(1, Math.floor(fw / W)); cv.style.width = W * k + 'px'; cv.style.height = H * k + 'px'; if (fw < W) { cv.style.width = fw + 'px'; cv.style.height = Math.round(fw * H / W) + 'px'; } }
+  addEventListener('resize', fit); fit();
+
+  /* ---------------- boot ---------------- */
+  toTitle(); newRun(seedSel, 1);
+  let acc = 0, prev = null, halted = false, uiT = 0;
+  function frame(now) {
+    if (halted) return;
+    if (prev === null) prev = now;
+    acc += Math.min(250, now - prev); prev = now;
+    while (acc >= STEP) { fixedTick(); acc -= STEP; }
+    render();
+    syncUi();
+    requestAnimationFrame(frame);
+  }
+  if (T0 !== null) {
+    const n = Math.floor(T0 / STEP);
+    for (let i = 0; i < n; i++) fixedTick();
+    render(); syncUi();
+    if (qs.get('log') === '1') console.log('events', JSON.stringify(ev));
+    if (FREEZE) { halted = true; window.__frozen = true; } else requestAnimationFrame(frame);
+  } else { render(); requestAnimationFrame(frame); }
+})();
+</script>
+</body>
+</html>

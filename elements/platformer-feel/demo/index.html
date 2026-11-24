@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Platformer Movement Feel</title>
+<style>
+  :root { --bg: #0b0d1c; --panel: #151a33; --edge: #2c3462; --text: #d4d8ec; --dim: #8a90b0; --accent: #ffd86a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font: 13px/1.45 system-ui, -apple-system, sans-serif; overflow-x: hidden; }
+  header { padding: 14px 16px 6px; max-width: 1200px; margin: 0 auto; }
+  header h1 { margin: 0; font-size: 18px; letter-spacing: .02em; }
+  header p { margin: 4px 0 0; color: var(--dim); max-width: 860px; }
+  main { display: flex; gap: 16px; padding: 10px 16px 24px; max-width: 1200px; margin: 0 auto; flex-wrap: wrap; align-items: flex-start; }
+  #stage { flex: 0 0 auto; width: min(768px, 100%); }
+  #screen { display: block; width: 100%; image-rendering: pixelated; background: #000; border-radius: 4px; box-shadow: 0 0 0 1px var(--edge), 0 10px 40px #0008; touch-action: none; }
+  #status { margin-top: 8px; color: var(--dim); font: 12px ui-monospace, monospace; min-height: 18px; overflow-wrap: anywhere; }
+  #status b { color: var(--accent); font-weight: 600; }
+  aside { flex: 1 1 300px; min-width: 0; max-width: 420px; background: var(--panel); border: 1px solid var(--edge); border-radius: 8px; padding: 12px 14px; }
+  aside h2 { margin: 12px 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); }
+  aside h2:first-child { margin-top: 0; }
+  .row { display: grid; grid-template-columns: 118px 1fr 50px; align-items: center; gap: 8px; margin: 4px 0; }
+  .row output { text-align: right; color: var(--accent); font: 12px ui-monospace, monospace; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  select { width: 100%; background: #0e1228; color: var(--text); border: 1px solid var(--edge); border-radius: 4px; padding: 3px 4px; }
+  .seg { display: flex; flex-wrap: wrap; gap: 6px; }
+  button { font: 600 12px system-ui; padding: 7px 10px; min-height: 34px; border-radius: 6px; border: 1px solid var(--edge); background: #1e2448; color: var(--text); cursor: pointer; }
+  button[aria-pressed=true] { border-color: var(--accent); color: var(--accent); }
+  .keys { color: var(--dim); font-size: 12px; margin-top: 10px; }
+  kbd { background: #0e1228; border: 1px solid var(--edge); border-radius: 3px; padding: 0 4px; font: 11px ui-monospace, monospace; color: var(--text); }
+  #pad { display: none; gap: 8px; margin: 8px 0 0; justify-content: center; flex-wrap: wrap; user-select: none; -webkit-user-select: none; }
+  #pad button { width: 52px; height: 44px; font-size: 14px; touch-action: none; }
+  @media (pointer: coarse) { #pad { display: flex; } }
+  .legend { display: grid; grid-template-columns: 12px 1fr; gap: 3px 8px; font-size: 12px; color: var(--dim); margin-top: 8px; }
+  .legend i { width: 10px; height: 10px; display: inline-block; margin-top: 3px; border: 1px solid #000; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Platformer movement feel <span style="color:var(--dim);font-weight:400">(B-08)</span></h1>
+  <p>Side-view movement against a tile map: acceleration curves, variable jump height, coyote time, jump buffering, apex hang, terminal fall, an 8-way dash that refills on landing, wall slide and wall jump, one-way planks, corner correction and sub-pixel positions drawn on whole pixels. The HUD shows the coyote and buffer windows and calls out each assist; Markers (O) switches to the lab view of the whole room with the jump arc, event markers and a live velocity graph. A bot runs the test room until you press a key.</p>
+</header>
+<main>
+  <div id="stage">
+    <canvas id="screen" width="256" height="224"></canvas>
+    <div id="pad"><button data-k="left">&#9664;</button><button data-k="right">&#9654;</button><button data-k="up">&#9650;</button><button data-k="down">&#9660;</button><button data-k="jump">Z</button><button data-k="dash">X</button></div>
+    <div id="status"></div>
+  </div>
+  <aside>
+    <h2>Preset</h2>
+    <div class="seg" id="presets"></div>
+    <h2>Modes</h2>
+    <div id="modes"></div>
+    <h2>Tuning</h2>
+    <div id="ctl"></div>
+    <h2>Show</h2>
+    <div class="seg"><button id="bOverlay" aria-pressed="false">Markers</button><button id="bBot" aria-pressed="true">Bot</button><button id="bReset">Reset</button></div>
+    <div class="keys"><kbd>&larr;</kbd><kbd>&rarr;</kbd> run &middot; <kbd>Z</kbd> jump (hold = higher) &middot; <kbd>X</kbd> dash (+ arrows) &middot; <kbd>&darr;</kbd>+<kbd>Z</kbd> drop through a plank &middot; <kbd>B</kbd> bot &middot; <kbd>O</kbd> markers (lab view)</div>
+    <div class="legend">
+      <i style="background:#6ad8f0"></i><span>rising (trail) / vx (graph)</span>
+      <i style="background:#ff7a3a"></i><span>falling (trail) / vy (graph)</span>
+      <i style="background:#ffe070"></i><span>inside the coyote window; C = coyote jump</span>
+      <i style="background:#4ad870"></i><span>B = buffered jump; hitbox</span>
+      <i style="background:#b878f8"></i><span>D = dash; dashing trail</span>
+      <i style="background:#ffffff"></i><span>dots = predicted arc, full hold; gold = a tap</span>
+    </div>
+  </aside>
+</main>
+
+<script src="../../../skins/skin-api.js"></script>
+<script src="../../../skins/pixel16.js"></script>
+<script src="../../parallax-layers/module/parallax-layers.js"></script>
+<script src="../module/platformer-feel.js"></script>
+<script>
+'use strict';
+const W = 256, H = 224, TS = 16, COLS = 16, ROWS = 14, STEP_MS = 1000 / 60;
+const Q = new URLSearchParams(location.search);
+const T_AT = Q.has('t') ? Math.max(0, +Q.get('t') || 0) : null, FREEZE = Q.get('freeze') === '1';
+const cv = document.getElementById('screen'), g = cv.getContext('2d', { willReadFrequently: true });
+// the test room: '#' rock, '-' one-way plank. Left: a lane with a step and planks; middle: a ceiling corner and a ledge lip;
+// right: two walls for wall jumps.
+const MAP = [
+  '################',
+  '#..........#...#',
+  '#..........#...#',
+  '#..........#...#',
+  '#..........#...#',
+  '#..........#...#',
+  '#..........#...#',
+  '#......###.#...#',
+  '#..........#...#',
+  '#---.......#...#',
+  '#..............#',
+  '#....##........#',
+  '#....##........#',
+  '################'];
+const tileAt = (tx, ty) => { const r = MAP[ty]; if (!r) return null; const c = r[tx]; return c === '#' ? 'solid' : c === '-' ? 'oneway' : null; };
+const START = { x: 26, y: 13 * TS - 14 };
+
+/* parameters: element.json order */
+const SL = [
+  ['runSpeed', 'Run speed (px/s)', 20, 240, 2], ['groundAccel', 'Ground accel', 100, 4000, 50], ['groundDecel', 'Ground decel', 100, 4000, 50], ['turnAccel', 'Turn accel', 100, 6000, 50],
+  ['airAccel', 'Air accel', 0, 3000, 20], ['airDecel', 'Air decel', 0, 2000, 10], ['jumpHeight', 'Jump height (px)', 8, 96, 1], ['jumpApexMs', 'Time to apex (ms)', 150, 800, 10],
+  ['fallMult', 'Fall gravity x', 0.5, 3.5, 0.05], ['jumpCut', 'Release cut x', 0.1, 1, 0.05], ['minJumpMs', 'Min jump (ms)', 0, 200, 5], ['apexBand', 'Apex band (px/s)', 0, 150, 2], ['apexGravity', 'Apex gravity x', 0.1, 1, 0.05],
+  ['maxFall', 'Max fall (px/s)', 60, 800, 10], ['coyoteMs', 'Coyote (ms)', 0, 300, 5], ['bufferMs', 'Buffer (ms)', 0, 300, 5], ['dashSpeed', 'Dash speed', 80, 600, 10], ['dashMs', 'Dash time (ms)', 40, 400, 10],
+  ['dashCooldownMs', 'Dash cooldown (ms)', 0, 1000, 10], ['wallSlide', 'Wall slide (px/s)', 10, 200, 2], ['wallJumpX', 'Wall jump push', 20, 300, 5], ['wallJumpLockMs', 'Wall jump lock (ms)', 0, 400, 10], ['corner', 'Corner nudge (px)', 0, 8, 1], ['ledge', 'Ledge lip (px)', 0, 8, 1]
+];
+const MODES = [['dash', 'Dash', ['eight', 'four', 'off']], ['wall', 'Wall jump', ['on', 'off']], ['drop', 'Drop through', ['downjump', 'down']]];
+const init = { preset: GameDNA_Platformer.presets[Q.get('preset')] ? Q.get('preset') : 'tight' };
+const over = {}; for (const [k] of SL.concat(MODES)) if (Q.has(k)) over[k] = isNaN(+Q.get(k)) ? Q.get(k) : +Q.get(k);
+
+const pf = GameDNA_Platformer.create({ tile: TS, tileAt, cols: COLS, rows: ROWS, x: START.x, y: START.y, body: { w: 10, h: 14 }, preset: init.preset, params: over, skin: 'pixel16', seed: 5 });
+const BG = GameDNA_Parallax.create({ view: { x: 0, y: 0, w: W, h: H }, seed: 4, theme: 'cave', time: 'day', params: { layers: 5, ground: 0.9, horizon: 0.55 }, skin: 'pixel16' });
+// clean view by default (camera x2 on the hero, a small HUD); the lab overlay (arc, markers, trails, hitbox, graph) is a toggle: O, the Markers button, ?markers=1
+let overlayOn = Q.get('markers') === '1' || Q.get('overlay') === '1' || Q.get('debug') === '1', bot = Q.get('bot') !== '0', frame = 0, botF = 0;
+
+/* ---------------- tiles (pre-rendered) ---------------- */
+function hash(x, y) { let v = Math.imul(x * 374761393 + y * 668265263, 1274126177); return ((v ^ (v >>> 13)) >>> 0) / 4294967296; }
+const LAYER = (() => {
+  const c = document.createElement('canvas'); c.width = W; c.height = H; const q = c.getContext('2d');
+  const P = (x, y, w, h, col) => { q.fillStyle = col; q.fillRect(x, y, w, h); };
+  const solid = (tx, ty) => tx < 0 || ty < 0 || tx >= COLS || ty >= ROWS || MAP[ty][tx] === '#';
+  const h2 = (a, b) => { let n = Math.imul(a | 0, 73856093) ^ Math.imul(b | 0, 19349663) ^ 0x9e3779b9; n = Math.imul(n ^ (n >>> 13), 0x5bd1e995); n ^= n >>> 15; n = Math.imul(n, 0x2c1b3c6d); n ^= n >>> 12; return (n >>> 0) / 4294967296; };   // well-mixed hash for per-pixel detail
+  // rock, per pixel: mossy cap with an uneven depth, stone courses in three tones that darken away from the open air, dark joints
+  const airDist = (px, py) => { let best = 99; for (let d = 1; d <= 20 && best === 99; d++) { if (!solid(px >> 4, (py - d) >> 4) || !solid(px >> 4, (py + d) >> 4) || !solid((px - d) >> 4, py >> 4) || !solid((px + d) >> 4, py >> 4)) best = d; } return best; };
+  const STONE = [['#7c76a0', '#625c84', '#4c466a'], ['#6a6490', '#544e74', '#403a5c'], ['#544e74', '#443e60', '#34304c']];
+  for (let py = 0; py < H; py++) for (let px = 0; px < W; px++) {
+    if (!solid(px >> 4, py >> 4)) continue;
+    let top = py; while (top > 0 && top > py - 12 && solid(px >> 4, (top - 1) >> 4)) top--;
+    const d = py - top, open = d < 12 && top > 0, cap = 3 + Math.floor(h2(px >> 1, 77) * 3), ad = airDist(px, py);
+    let col;
+    if (open && d < cap) col = d === 0 ? '#a4f0c8' : d === 1 ? '#62c89a' : d < cap - 1 ? '#3fa07c' : '#2a7a60';
+    else if (open && d === cap) col = '#1c4c40';
+    else if (open && d < cap + 3 && h2(px, 31) < 0.3 && h2(px, 31) > d * 0.08) col = '#2a7a60';
+    else {
+      const row = Math.floor(py / 8), off = row & 1 ? 9 : 0, bw = 18, lx = (px + off) % bw, ly = py % 8, id = h2(Math.floor((px + off) / bw), row), band = ad > 18 ? 2 : ad > 7 ? 1 : 0, tn = id < 0.3 ? 2 : id < 0.72 ? 1 : 0;
+      col = ly === 7 || lx === 0 ? (band === 2 ? '#262238' : '#2e2a44') : ly === 0 || lx === 1 ? STONE[band][0] : STONE[band][Math.min(2, tn ? tn : 1)];
+      if (ly !== 7 && lx > 1 && tn === 0) col = STONE[band][1];
+      if (ly !== 7 && lx > 1 && ly > 0 && tn === 2) col = STONE[band][2];
+      if (id > 0.86 && lx > 4 && lx < 12 && (ly === 3 && lx < 9 || ly === 4 && lx > 7 && lx < 11 || ly === 5 && lx === 10)) col = '#2e2a44';   // a crack
+      if (h2(px, py) < 0.02 && ly > 1 && ly < 6 && lx > 2) col = STONE[band][0];
+    }
+    P(px, py, 1, 1, col);
+  }
+  for (let ty = 0; ty < ROWS; ty++) for (let tx = 0; tx < COLS; tx++) {
+    const ch = MAP[ty][tx], x = tx * TS, y = ty * TS;
+    if (ch === '#') {
+      if (!solid(tx - 1, ty)) P(x, y, 1, 16, '#14101e'); if (!solid(tx + 1, ty)) P(x + 15, y, 1, 16, '#14101e');
+      if (!solid(tx, ty + 1)) { P(x, y + 15, 16, 1, '#14101e'); P(x, y + 14, 16, 1, '#34304c');
+        for (let i = 1; i < 15; i += 1) { const hv = h2(tx * 16 + i, ty + 40); if (hv < 0.07) { const n = 2 + ((hv * 40) | 0) % 4; P(x + i, y + 16, 2, n, '#403a5c'); P(x + i, y + 16, 1, n - 1, '#544e74'); P(x + i - 1, y + 16, 1, 1, '#14101e'); P(x + i + 2, y + 16, 1, 1, '#14101e'); P(x + i, y + 16 + n, 2, 1, '#14101e'); i += 3; } } }
+      if (!solid(tx, ty - 1)) { P(x, y - 1, 16, 1, '#14101e');
+        for (let i = 0; i < 16; i++) { const hv = h2(tx * 16 + i, ty + 90); if (hv < 0.2) { P(x + i, y - 2, 1, 2, '#62c89a'); if (hv < 0.1) P(x + i, y - 3, 1, 1, hv < 0.05 ? '#a4f0c8' : '#3fa07c'); if (hv < 0.014) { P(x + i, y - 5, 1, 5, '#3fa07c'); P(x + i - 1, y - 6, 3, 2, hv < 0.007 ? '#f0e070' : '#f090b8'); P(x + i, y - 6, 1, 1, '#fff4c0'); } i++; } } }
+    } else if (ch === '-') {
+      const L = MAP[ty][tx - 1] !== '-', R = MAP[ty][tx + 1] !== '-';
+      P(x, y, 16, 5, '#2a1a10'); P(x, y + 1, 16, 3, '#b07a42'); P(x, y + 1, 16, 1, '#e0aa6a'); P(x + 7, y + 1, 1, 3, '#7a4e26');
+      if (L) { P(x + 2, y + 5, 2, 6, '#2a1a10'); P(x, y, 1, 5, '#2a1a10'); } if (R) { P(x + 12, y + 5, 2, 6, '#2a1a10'); P(x + 15, y, 1, 5, '#2a1a10'); }
+    }
+  }
+  // labels for the test stations
+  return c;
+})();
+
+/* ---------------- the bot: closed-loop stations, looped (deterministic, so ?t=&freeze=1 is exact) ---------------- */
+// [kind, x, opt]: go = run to x; jump = jump (held opt.hold ms, default all the way) steering to x, done on landing;
+// tap = a 0 ms jump tap; dash = dash in opt.dir; climb = wall-jump up the right-hand shaft to opt.top; drop = down + jump on a plank;
+// coyote = run right off the edge and press jump 4 steps (67 ms) AFTER leaving it (C; raw has no window: it falls);
+// buffer = a straight jump, then press again 5 steps (83 ms) BEFORE landing (B; raw: the early press is lost);
+// lip = a running jump at the step whose hold time is picked with pf.predict() so the feet clip the step's lip (L; raw: no lip, a full jump); wait = n frames.
+// The route is the same for every preset; only the measured hold of the lip jump adapts.
+const BOT = [['wait', 30], ['go', 60], ['jump', 92], ['jump', 36], ['wait', 20], ['drop'], ['go', 50], ['wait', 12], ['lip', 0], ['wait', 20], ['go', 109], ['wait', 14], ['jump', 109], ['wait', 10],
+  ['go', 100], ['coyote', 0], ['wait', 20], ['go', 150], ['buffer', 0], ['wait', 30], ['go', 120], ['dash', 0, { dir: 'r' }], ['go', 212], ['climb', 0, { top: 40 }],
+  ['dash', 0, { dir: 'dl' }], ['wait', 50], ['go', 140], ['tap', 0], ['wait', 40], ['dash', 0, { dir: 'ul' }], ['wait', 70]];
+const B = { i: 0, f: 0, m: {} };
+function botInput() {
+  const I = { left: false, right: false, up: false, down: false, jump: false, dash: false, jumpPressed: false, dashPressed: false };
+  if (B.i >= BOT.length) { B.i = 0; B.f = 0; B.m = {}; pf.reset(START.x, START.y, { facing: 1 }); }
+  const [kind, tx, opt = {}] = BOT[B.i], M = B.m, f = B.f++, cx = pf.x + pf.w / 2, feet = pf.y + pf.h;
+  const next = () => { B.i++; B.f = 0; B.m = {}; };
+  const steer = () => { if (cx < tx - 2) I.right = true; else if (cx > tx + 2) I.left = true; };
+  const d = s => { I.left = s.includes('l'); I.right = s.includes('r'); I.up = s.includes('u'); I.down = s.includes('d'); };
+  if (kind === 'wait') { if (f >= tx) next(); }
+  else if (kind === 'go') {
+    steer(); if (Math.abs(cx - tx) <= 3 && pf.onGround) next();
+    const sd = I.right ? 1 : I.left ? -1 : 0;   // blocked by a step (a missed jump under a heavy preset): hop up it
+    if (sd && pf.onGround && pf.collides(pf.x + sd, pf.y)) { M.stuck = (M.stuck || 0) + 1; if (M.stuck > 20) { I.jumpPressed = true; M.hold = 30; M.stuck = 0; } }
+    if (M.hold > 0) { I.jump = true; M.hold--; }
+  }
+  else if (kind === 'jump') { if (f === 0 && !pf.onGround) { B.f = 0; return I; } if (f === 0) I.jumpPressed = true; I.jump = f * STEP_MS < (opt.hold == null ? 1e9 : opt.hold) && f > 0 || (f === 0 && opt.hold !== 0); steer(); if (f > 3 && pf.onGround) next(); }
+  else if (kind === 'coyote') {
+    if (M.left == null) { I.right = true; if (!pf.onGround && f > 1) M.left = f; }
+    else { I.right = true; if (f - M.left === 3) { I.jumpPressed = true; M.pressed = 1; }   /* the body left the edge a step before it was seen: 4 steps = 67 ms late */ if (M.pressed) I.jump = true; if (pf.onGround) next(); }
+    if (f > 240) next();
+  }
+  else if (kind === 'buffer') {
+    if (!M.up) { if (pf.onGround) { I.jumpPressed = true; I.jump = true; M.up = 1; } }
+    else if (!M.pressed) { const land = pf.predict({ jump: false, dir: 0 }); if (f > 6 && land.length && land.length <= 5 && land[land.length - 1].ground) { I.jumpPressed = true; M.pressed = f; } }
+    if (M.pressed) { I.jump = f - M.pressed < 12; if (f - M.pressed > 6 && pf.onGround) next(); }
+    if (f > 300) next();
+  }
+  else if (kind === 'lip') {
+    if (f === 0) {   // pick the hold: shortest one whose arc peaks 1..ledge px under the step top and still ends on it
+      const top = 11 * TS; M.hold = null;
+      for (let h = 0; h <= 700 && M.hold == null; h += 5) { const pts = pf.predict({ dir: 1, hold: h, frames: 120 }), end = pts[pts.length - 1];
+        if (end && end.ground && end.y === top && pts.events.indexOf('ledge') >= 0) M.hold = h; }
+      if (M.hold == null) M.hold = 1e9; I.jumpPressed = true;
+    }
+    I.right = true; I.jump = f * STEP_MS < M.hold; if (f > 3 && pf.onGround) next(); if (f > 240) next();
+  }
+  else if (kind === 'tap') { if (f === 0) I.jumpPressed = true; if (f > 3 && pf.onGround) next(); }
+  else if (kind === 'dash') { if (f === 0) { I.dashPressed = true; d(opt.dir); } else if (!pf.dashing) next(); }
+  else if (kind === 'drop') { I.down = true; if (f === 0) I.jumpPressed = true; if (f > 4 && pf.onGround) next(); }
+  else if (kind === 'climb') {
+    if (feet > opt.top) {
+      const tR = pf.collides(pf.x + 2, pf.y), tL = pf.collides(pf.x - 2, pf.y); if (M.dir == null) M.dir = 1;
+      if (pf.onGround) { I.right = true; M.dir = 1; if (pf.collides(pf.x + 14, pf.y)) { I.jumpPressed = true; M.hold = 40; } }
+      else if ((tR && M.dir > 0) || (tL && M.dir < 0)) { I.jumpPressed = true; M.dir = -M.dir; M.hold = 40; }
+      if (!pf.onGround) { I.right = M.dir > 0; I.left = M.dir < 0; }
+      if (M.hold > 0) { I.jump = true; M.hold--; }
+    } else next();
+    if (f > 600) next();
+  }
+  return I;
+}
+
+/* ---------------- loop ---------------- */
+const SKN = GameDNA_Skin.resolve('pixel16');
+const WORLD = document.createElement('canvas'); WORLD.width = W; WORLD.height = H; const wg = WORLD.getContext('2d');
+const ZW = W / 2, ZH = H / 2, CAM = { x: 0, y: H - ZH, init: false };
+const NOTE = { text: '', f: 0, col: '#ffffff' }, LAST = {};
+const EVENTS = [['coyoteJumps', 'COYOTE JUMP', '#ffe070'], ['bufferedJumps', 'BUFFERED JUMP', '#7af0a0'], ['wallJumps', 'WALL JUMP', '#6ad8f0'], ['dashes', 'DASH', '#c898ff'], ['ledges', 'LEDGE LIP', '#ffffff'], ['corners', 'CORNER NUDGE', '#ffffff']];
+function step() {
+  frame++;
+  if (bot) {
+    pf.setInput(botInput()); botF++;
+  } else pf.setInput(null);
+  pf.update(); BG.update(STEP_MS);
+  // camera: eases to the hero, clamped to the room (in the step, so frozen frames are exact)
+  const tx = Math.max(0, Math.min(W - ZW, pf.x + pf.w / 2 - ZW / 2)), ty = Math.max(0, Math.min(H - ZH, pf.y + pf.h / 2 - ZH * 0.56));
+  if (!CAM.init) { CAM.x = tx; CAM.y = ty; CAM.init = true; } else { CAM.x += (tx - CAM.x) * 0.12; CAM.y += (ty - CAM.y) * 0.12; }
+  const st = pf.stats();
+  for (const [k, text, col] of EVENTS) { if (LAST[k] != null && st[k] > LAST[k]) { NOTE.text = text; NOTE.col = col; NOTE.f = 80; } LAST[k] = st[k]; }
+  if (NOTE.f > 0) NOTE.f--;
+}
+const HUD_PLATE = Q.get('hud') !== '0';   // ?hud=0: no tuning plate (site poster and card loop); the call-outs stay
+const BG_LIFT = 'rgb(30,24,50)';
+function hud() {
+  // one plate: preset, the coyote and buffer windows as meters, the dash charge; a call-out when an assist fires
+  const w = pf.windows();
+  if (HUD_PLATE) hudPlate(w);
+  hudNote();
+}
+function hudPlate(w) {
+  SKN.frame(g, { x: 3, y: 3, w: 250, h: 15 }, { role: 'plate' });
+  SKN.text(g, String(pf.params().preset).toUpperCase(), 9, 7, { font: 'ui', color: '#ffe070' });
+  const meter = (x, label, v, max, col) => {
+    SKN.text(g, label, x, 7, { font: 'ui', color: '#a8a0c8' });
+    const bx = x + 46, bw = 30; g.fillStyle = '#0c0a14'; g.fillRect(bx, 7, bw + 2, 7); g.fillStyle = '#2a2640'; g.fillRect(bx + 1, 8, bw, 5);
+    const n = max > 0 ? Math.round(bw * Math.max(0, Math.min(1, v / max))) : 0; if (n > 0) { g.fillStyle = col; g.fillRect(bx + 1, 8, n, 5); g.fillStyle = 'rgba(255,255,255,0.45)'; g.fillRect(bx + 1, 8, n, 1); }
+  };
+  meter(58, 'COYOTE', w.coyoteMs, w.coyoteMax, '#ffe070');
+  meter(142, 'BUFFER', w.bufferMs, w.bufferMax, '#7af0a0');
+  const dx = 234; g.fillStyle = '#0c0a14'; g.fillRect(dx + 2, 5, 5, 11); g.fillRect(dx, 8, 9, 5); g.fillRect(dx + 1, 6, 7, 9);
+  g.fillStyle = w.dashes > 0 ? '#c898ff' : '#3a3458'; g.fillRect(dx + 3, 6, 3, 9); g.fillRect(dx + 1, 9, 7, 3); g.fillRect(dx + 2, 7, 5, 7); if (w.dashes > 0) { g.fillStyle = '#f0e0ff'; g.fillRect(dx + 3, 8, 2, 2); }
+}
+function hudNote() {
+  if (NOTE.f > 0) {
+    const a = NOTE.f > 70 ? (80 - NOTE.f) / 10 : NOTE.f < 12 ? NOTE.f / 12 : 1, tw = NOTE.text.length * 6 + 16, x = Math.round(W / 2 - tw / 2), y = 24 - Math.round((1 - Math.min(1, (80 - NOTE.f) / 6)) * 4);
+    g.globalAlpha = a; SKN.frame(g, { x: x, y: y, w: tw, h: 15 }, { role: 'plate', alert: true });
+    g.fillStyle = NOTE.col; g.fillRect(x + 1, y + 13, tw - 2, 1);
+    SKN.text(g, NOTE.text, W / 2, y + 4, { font: 'ui', align: 'center', color: NOTE.col }); g.globalAlpha = 1;
+  }
+}
+function draw() {
+  g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = false;
+  if (overlayOn) {   // lab view: the whole room at x1 with the module's overlay
+    BG.draw(g, 0, 0);
+    g.drawImage(LAYER, 0, 0);
+    pf.drawFx(g, 0, 0);
+    pf.drawBody(g, 0, 0);
+    pf.drawOverlay(g, 0, 0, { view: { x: 16, y: 16, w: 224, h: 192 } });
+  } else {           // clean view: the same world at x2, camera on the hero
+    wg.imageSmoothingEnabled = false;
+    BG.draw(wg, 0, 0);
+    // lift the cave backdrop (demo only): it sat near black and read as empty at card size
+    wg.globalCompositeOperation = 'lighter'; wg.fillStyle = BG_LIFT; wg.fillRect(0, 0, W, H); wg.globalCompositeOperation = 'source-over';
+    wg.drawImage(LAYER, 0, 0);
+    pf.drawFx(wg, 0, 0);
+    pf.drawBody(wg, 0, 0);
+    g.drawImage(WORLD, Math.round(CAM.x), Math.round(CAM.y), ZW, ZH, 0, 0, W, H);
+    hud();
+  }
+  const s = pf.state(), w = pf.windows(), st = pf.stats();
+  document.getElementById('status').innerHTML = `<b>${s.pose}</b> x ${s.fx.toFixed(2)} (drawn ${s.x}) y ${s.fy.toFixed(2)} | vx ${s.vx} vy ${s.vy} | coyote ${Math.round(w.coyoteMs)} ms buffer ${Math.round(w.bufferMs)} ms | jumps ${st.jumps} (coyote ${st.coyoteJumps}, buffered ${st.bufferedJumps}) dashes ${st.dashes} wall ${st.wallJumps} corners ${st.corners + st.ledges}`;
+  document.documentElement.dataset.state = JSON.stringify({ frame, bot, state: s, stats: st, params: { preset: pf.params().preset } });
+}
+
+/* ---------------- controls ---------------- */
+function buildControls() {
+  const P = pf.params(), ctl = document.getElementById('ctl'), md = document.getElementById('modes'), pr = document.getElementById('presets');
+  ctl.innerHTML = ''; md.innerHTML = ''; pr.innerHTML = '';
+  for (const name of pf.presets()) { const b = document.createElement('button'); b.textContent = name; b.setAttribute('aria-pressed', P.preset === name); b.onclick = () => { pf.setParams({ preset: name }); buildControls(); if (bot) B.i = BOT.length; }; pr.appendChild(b); }
+  for (const [k, lab, opts] of MODES) {
+    const row = document.createElement('div'); row.className = 'row'; row.innerHTML = `<label>${lab}</label><select>${opts.map(o => `<option${o === P[k] ? ' selected' : ''}>${o}</option>`).join('')}</select><output></output>`;
+    row.querySelector('select').onchange = e => pf.setParams({ [k]: e.target.value }); md.appendChild(row);
+  }
+  for (const [k, lab, mn, mx, st] of SL) {
+    const row = document.createElement('div'); row.className = 'row';
+    row.innerHTML = `<label for="p-${k}">${lab}</label><input id="p-${k}" type="range" min="${mn}" max="${mx}" step="${st}" value="${P[k]}"><output>${P[k]}</output>`;
+    row.querySelector('input').oninput = e => { const v = +e.target.value; pf.setParams({ [k]: v }); row.querySelector('output').textContent = v; };
+    ctl.appendChild(row);
+  }
+}
+buildControls();
+const bOv = document.getElementById('bOverlay'), bBot = document.getElementById('bBot');
+function setBot(v) { bot = v; bBot.setAttribute('aria-pressed', v); if (v) { B.i = BOT.length; } else pf.setInput(null); }
+bOv.onclick = () => { overlayOn = !overlayOn; bOv.setAttribute('aria-pressed', overlayOn); };
+bBot.onclick = () => setBot(!bot);
+document.getElementById('bReset').onclick = () => { pf.reset(START.x, START.y, { facing: 1 }); B.i = 0; B.f = 0; B.m = {}; };
+bOv.setAttribute('aria-pressed', overlayOn); bBot.setAttribute('aria-pressed', bot);
+
+if (T_AT !== null) { for (let n = Math.round(T_AT * 60 / 1000); n > 0; n--) step(); }
+/* text state for critics and tools/sprites/statecheck.py: one character, drawn by the module's drawBody() from pf.facing (stand-in art looks right).
+   x / y = feet on the visible canvas: world px in the lab view, (world - camera) x zoom in the clean view. Sliding on a wall it looks at the wall. */
+window.__state = () => { const k = overlayOn ? 1 : W / ZW, cx = overlayOn ? 0 : Math.round(CAM.x), cy = overlayOn ? 0 : Math.round(CAM.y), s = pf.state();
+  return { t: Math.round(frame * STEP_MS), actors: [{ id: 'hero', x: Math.round((pf.x + pf.w / 2 - cx) * k), y: Math.round((pf.y + pf.h - cy) * k), facing: pf.facing > 0 ? 'right' : 'left',
+    target: null, vx: pf.sliding || Math.abs(pf.vx) < 10 ? 0 : Math.round(pf.vx), pose: s.pose, wx: pf.x, wy: pf.y }] }; };
+draw();
+if (!FREEZE) {
+  addEventListener('keydown', e => {
+    if (e.code === 'KeyB') { setBot(!bot); return; } if (e.code === 'KeyO') { bOv.click(); return; }
+    if (pf.key(e.code, true)) { e.preventDefault(); if (bot) setBot(false); }
+  });
+  addEventListener('keyup', e => pf.key(e.code, false));
+  document.querySelectorAll('#pad button').forEach(b => { const k = b.dataset.k;
+    b.addEventListener('pointerdown', e => { e.preventDefault(); if (bot) setBot(false); pf.press(k); });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => b.addEventListener(t, () => pf.release(k))); });
+  let acc = 0, prev = null;
+  const loop = now => { if (prev === null) prev = now; acc += Math.min(250, now - prev); prev = now; while (acc >= STEP_MS) { step(); acc -= STEP_MS; } draw(); requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+} else window.__frozen = true;
+</script>
+</body>
+</html>

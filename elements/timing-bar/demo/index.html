@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Timing Bar</title>
+<style>
+:root {
+  --bg: #0d0b14; --panel: #16131f; --line: #2c2740; --text: #ece8f6; --dim: #9a93b4; --accent: #f2c35a; --accent2: #8ae4ff;
+  --good: #4ad870; --great: #ffc030; --perfect: #8ae4ff; --miss: #a898c8;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1200px 600px at 30% -10%, #241c3a 0%, var(--bg) 60%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 14px 20px 10px; max-width: 1240px; margin: 0 auto; }
+.code { white-space: nowrap; font: 700 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #1a1206; background: var(--accent); padding: 6px 8px; border-radius: 4px; box-shadow: 0 0 0 1px #00000040, 0 2px 0 #8a6428; }
+h1 { font-size: 18px; margin: 0; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; padding: 0 20px 20px; max-width: 1240px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; display: flex; flex-direction: column; align-items: center; }
+.frame { padding: 6px; background: linear-gradient(#2a2340, #15111f); border-radius: 8px; box-shadow: 0 0 0 1px #3a3352, 0 18px 50px #00000080; }
+canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; border-radius: 3px; touch-action: manipulation; }
+.caption { display: flex; justify-content: space-between; gap: 12px; width: 100%; max-width: 780px; margin-top: 8px; color: var(--dim); font-size: 12px; }
+.caption b { color: var(--text); font-weight: 600; }
+.caption > span { white-space: nowrap; }
+#lamp { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: #5ad86a; box-shadow: 0 0 8px #5ad86a; }
+#lamp.on { background: #ffc030; box-shadow: 0 0 8px #ffc030; }
+aside { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+h2 { margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.triggers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.triggers button { --c: var(--good); appearance: none; border: 1px solid #00000060; border-radius: 6px; padding: 8px 4px 6px; cursor: pointer; color: var(--text); font: 600 11.5px/1.1 inherit;
+  background: linear-gradient(#2a2440, #1e1a2e); box-shadow: inset 0 1px 0 #ffffff14, inset 0 -2px 0 color-mix(in srgb, var(--c) 70%, black); }
+.triggers button:hover { background: linear-gradient(#352d50, #241f36); }
+.triggers button:active { transform: translateY(1px); }
+.triggers button i { display: block; font-style: normal; font: 800 12px/1 ui-monospace, Menlo, monospace; color: var(--c); margin-bottom: 4px; letter-spacing: .04em; text-shadow: 0 1px 0 #000, 1px 0 0 #000, -1px 0 0 #000, 0 -1px 0 #000; }
+.triggers kbd { display: block; font: 10px/1 ui-monospace, Menlo, monospace; color: var(--dim); margin-top: 4px; }
+.row { margin-bottom: 10px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 5px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--fill), #2e2842 var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 4px; background: #fff3d0; border: 2px solid #1a1206; box-shadow: 0 1px 4px #000a; cursor: pointer; }
+.seg { display: flex; background: #0f0d17; border: 1px solid var(--line); border-radius: 6px; padding: 2px; gap: 2px; }
+.seg button { flex: 1; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 3px; border-radius: 4px; cursor: pointer; text-transform: capitalize; }
+.seg button[aria-checked=true] { background: #2e2746; color: var(--text); box-shadow: inset 0 0 0 1px #4a4068, inset 0 -2px 0 var(--accent); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+select { width: 100%; appearance: none; background: #0f0d17; color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; font: 600 12px inherit; }
+.foot { display: flex; justify-content: space-between; align-items: center; color: var(--dim); font-size: 11.5px; border-top: 1px solid var(--line); padding-top: 10px; gap: 8px; }
+.foot button { appearance: none; background: none; border: 1px solid var(--line); color: var(--text); border-radius: 5px; padding: 5px 9px; font: 600 11.5px inherit; cursor: pointer; }
+.tally { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center; font: 700 12px ui-monospace, Menlo, monospace; }
+.tally div { background: #0f0d17; border: 1px solid var(--line); border-radius: 6px; padding: 6px 2px; }
+.tally span { display: block; font-size: 18px; }
+@media (max-width: 980px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 640px; width: 100%; margin: 0 auto; } }
+@media (max-width: 560px) { header { padding: 12px 16px 8px; } main { padding: 0 16px 16px; gap: 12px; } .frame { padding: 3px; } .caption { flex-direction: column; gap: 2px; } .triggers { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">F-01</span>
+  <div><h1>Timing-bar minigame</h1><p>A skill-check overlay for any moment: a marker sweeps a bar, the player stops it in the coloured zones. Lockpicks, timed strikes, forging, reeling in. Grade and offset come back to the game.</p></div>
+</header>
+<main>
+  <section id="stage">
+    <div class="frame"><canvas id="cv" width="256" height="224" aria-label="Workshop scene with a timing bar"></canvas></div>
+    <div class="caption"><span><span id="lamp"></span><b id="state">Idle</b> · <span id="now">no check</span></span><span style="white-space:nowrap"><span id="scaleinfo">256×224 native</span> · <b>Z</b>/<b>Space</b>/tap · keys <b>1–5</b></span></div>
+  </section>
+  <aside>
+    <div>
+      <h2>Start a check (then press Z / Space / tap)</h2>
+      <div class="triggers">
+        <button data-act="lock" style="--c:var(--great)"><i>LOCK</i>Lockpick<kbd>1</kbd></button>
+        <button data-act="strike" style="--c:#ff7a5a"><i>STRIKE</i>Timed attack<kbd>2</kbd></button>
+        <button data-act="forge" style="--c:#ffa040"><i>×3</i>Forge<kbd>3</kbd></button>
+        <button data-act="reel" style="--c:var(--perfect)"><i>REEL</i>Fishing<kbd>4</kbd></button>
+        <button data-act="auto" style="--c:var(--good)"><i>AUTO</i>Autoplay<kbd>5</kbd></button>
+        <button data-act="cancel" style="--c:var(--dim)"><i>X</i>Cancel<kbd>X</kbd></button>
+      </div>
+    </div>
+    <div class="tally" id="tally"><div style="color:var(--perfect)"><span id="n-perfect">0</span>perfect</div><div style="color:var(--great)"><span id="n-great">0</span>great</div><div style="color:var(--good)"><span id="n-good">0</span>good</div><div style="color:var(--miss)"><span id="n-miss">0</span>miss</div></div>
+    <div class="row"><h2>Difficulty</h2><div class="seg" data-key="difficulty"><button>easy</button><button>normal</button><button>hard</button><button>expert</button></div></div>
+    <div>
+      <div class="row"><label>Speed (bars / s) <output data-out="speed"></output></label><input type="range" data-key="speed" min="0.4" max="3" step="0.05"></div>
+      <div class="row"><label>Good zone <output data-out="good"></output></label><input type="range" data-key="good" min="0.1" max="0.6" step="0.01"></div>
+      <div class="row"><label>Great zone <output data-out="great"></output></label><input type="range" data-key="great" min="0.04" max="0.4" step="0.01"></div>
+      <div class="row"><label>Perfect zone <output data-out="perfect"></output></label><input type="range" data-key="perfect" min="0.02" max="0.2" step="0.005"></div>
+      <div class="row"><label>Bar width (px) <output data-out="width"></output></label><input type="range" data-key="width" min="96" max="224" step="8"></div>
+      <div class="row"><label>Dim behind <output data-out="dim"></output></label><input type="range" data-key="dim" min="0" max="0.6" step="0.05"></div>
+    </div>
+    <div class="two">
+      <div><h2>Motion</h2><div class="seg" data-key="motion"><button>pingpong</button><button>linear</button></div></div>
+      <div><h2>Ease</h2><div class="seg" data-key="ease"><button>none</button><button>sine</button><button>accel</button></div></div>
+      <div><h2>Presses</h2><div class="seg" data-key="hits"><button>1</button><button>2</button><button>3</button><button>5</button></div></div>
+      <div><h2>Zones</h2><div class="seg" data-key="zones"><button>random</button><button>fixed</button></div></div>
+      <div><h2>Assist</h2><div class="seg" data-key="assist"><button>off</button><button>on</button></div></div>
+      <div><h2>Position</h2><div class="seg" data-key="position"><button>upper</button><button>center</button><button>lower</button></div></div>
+      <div><h2>Skin</h2><select id="skin"><option value="pixel16">pixel16</option><option value="flat-demo">flat (non-pixel)</option></select></div>
+      <div><h2>Loop</h2><div class="seg" id="loop"><button data-v="1" aria-checked="true">auto</button><button data-v="0">manual</button></div></div>
+    </div>
+    <div class="foot"><span>Same module as <b>module/timing-bar.js</b> · URL: <code>?t=ms&amp;freeze=1</code>, <code>?difficulty=hard</code></span><button id="reset">Reset</button></div>
+  </aside>
+</main>
+<script src="../../../skins/skin-api.js"></script>
+<script src="../../../skins/pixel16.js"></script>
+<script src="../../../pixel-kit/pixel-scene.js"></script>
+<script src="../module/timing-bar.js"></script>
+<script>
+'use strict';
+(function () {
+  var W = 256, H = 224, HUD_Y = 184, STEP = 1000 / 60;
+  var Q = new URLSearchParams(location.search), num = function (k, d) { var v = Q.get(k); return v == null || v === '' || isNaN(+v) ? d : +v; };
+  var FREEZE = Q.get('freeze') === '1', T_AT = num('t', 0), LOOP = Q.get('loop') !== '0';
+  var cv = document.getElementById('cv'), SKAPI = window.GameDNA_Skin, TBM = window.GameDNA_TimingBar;
+
+  // a token-only, non-pixel skin to prove the bar draws through the skin (system fonts, smooth edges)
+  if (SKAPI) SKAPI.register({
+    id: 'flat-demo', name: 'Flat demo', pixel: false, native: { w: 256, h: 224, scale: 'fit', smoothing: true },
+    palette: { ink: '#29304d', paper: '#f4f6fb',
+      ui: { fill: '#ffffff', fillTo: '#eef1f8', edge: '#cdd2de', highlight: '#ffffff', shadow: 'rgba(40,46,90,0.25)' },
+      team: { a: '#5b6cff', b: '#ff6a5a', n: '#7b8199' },
+      overlay: { move: { fill: '#6f8cff', edge: '#4d68d6' }, attack: { fill: '#ff6f6f', edge: '#d9624f' }, threat: { fill: '#8f86ff', edge: '#5b4bff' }, heal: { fill: '#3fcf8e', edge: '#2f9e63' } },
+      fx: { hot: '#ff8a3c', cold: '#4aa8ff', heal: '#2f9e63', crit: '#f5b520', status: '#8f86ff' },
+      text: { main: '#29304d', main2: '#5a6280', shadow: 'rgba(0,0,0,0)', outline: '#29304d', dim: '#8a90a8' } },
+    fonts: { ui: { type: 'canvas', family: 'system-ui, -apple-system, sans-serif', size: 7, weight: 700 }, num: { type: 'canvas', family: 'system-ui, sans-serif', size: 11, weight: 800 },
+      display: { type: 'canvas', family: 'system-ui, -apple-system, "Segoe UI", sans-serif', size: 10, weight: 900, uppercase: true } },
+    shape: { radius: 4, padding: 4 }, shadow: { text: null, window: { blur: 4, dy: 1 } }, outline: { text: { width: 1 } }, motion: { snap: false }
+  });
+
+  /* ---------------- parameters (element.json defaults, URL overrides) ---------------- */
+  var params = {}; function resetParams() { params = {}; Object.keys(TBM.DEFAULTS).forEach(function (k) { params[k] = TBM.DEFAULTS[k]; }); }
+  resetParams(); params.dim = 0.4;
+  if (Q.has('difficulty') && TBM.PRESETS[Q.get('difficulty')]) { params.difficulty = Q.get('difficulty'); applyPreset(); }
+  Object.keys(params).forEach(function (k) { if (Q.has(k) && k !== 'difficulty') params[k] = typeof params[k] === 'number' ? num(k, params[k]) : Q.get(k); });
+  function applyPreset() { var p = TBM.PRESETS[params.difficulty]; if (p) Object.keys(p).forEach(function (k) { params[k] = p[k]; }); }
+  var skinId = Q.get('skin') || 'pixel16';
+
+  /* ---------------- scene art (original, drawn once) ---------------- */
+  function mk(w, h) { var c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+  function hashf(i) { var x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+  function sprite(rows, pal) { var c = mk(rows[0].length, rows.length), g = c.getContext('2d'); rows.forEach(function (r, y) { for (var x = 0; x < r.length; x++) if (pal[r[x]]) { g.fillStyle = pal[r[x]]; g.fillRect(x, y, 1, 1); } }); return c; }
+  var OUT = '#120a1e';
+  var BG = mk(W, HUD_Y), b = BG.getContext('2d');
+  (function () {
+    // stone wall: brick courses with mortar, darker towards the top
+    for (var y = 0; y < 112; y++) for (var x = 0; x < W; x++) {
+      var row = Math.floor(y / 8), off = row % 2 ? 8 : 0, bx = (x + off) % 16, by = y % 8, id = row * 40 + Math.floor((x + off) / 16);
+      var v = hashf(id), shade = y < 40 ? 0 : y < 80 ? 1 : 2;
+      var base = [['#1e1830', '#241c38', '#2a2240'], ['#2a2240', '#30284a', '#382e52'], ['#342a4a', '#3a3054', '#44385e']][shade][v < 0.33 ? 0 : v < 0.7 ? 1 : 2];
+      var c = by === 7 || bx === 15 ? '#120c1e' : by === 0 || bx === 0 ? (shade === 2 ? '#56487a' : '#4a3e6a') : base;
+      if (by === 6 && bx !== 15) c = '#1a1428';
+      b.fillStyle = c; b.fillRect(x, y, 1, 1);
+    }
+    // window with moonlight
+    var wx = 108, wy = 18;
+    b.fillStyle = '#0a0614'; b.fillRect(wx - 3, wy - 3, 46, 42);
+    b.fillStyle = '#5a4a3a'; b.fillRect(wx - 2, wy - 2, 44, 40);
+    for (y = 0; y < 36; y++) { var t = y / 36; b.fillStyle = t < 0.4 ? '#141a40' : t < 0.75 ? '#1c2458' : '#28306a'; b.fillRect(wx, wy + y, 40, 1); }
+    for (var s = 0; s < 14; s++) { b.fillStyle = s % 4 ? '#8a90c8' : '#ffffff'; b.fillRect(wx + Math.floor(hashf(s + 5) * 40), wy + Math.floor(hashf(s + 50) * 30), 1, 1); }
+    b.fillStyle = '#fff4d0'; for (var r = -5; r <= 5; r++) { var hw = Math.round(Math.sqrt(25 - r * r)); b.fillRect(wx + 28 - hw, wy + 10 + r, hw * 2, 1); }
+    b.fillStyle = '#28306a'; for (r = -5; r <= 5; r++) { hw = Math.round(Math.sqrt(25 - r * r)); b.fillRect(wx + 30 - hw, wy + 8 + r, hw, 1); }
+    b.fillStyle = '#5a4a3a'; b.fillRect(wx + 19, wy, 2, 36); b.fillRect(wx, wy + 17, 40, 2);
+    b.fillStyle = '#8a7050'; b.fillRect(wx - 2, wy + 37, 44, 2);
+    // shelves with jars on the left wall
+    b.fillStyle = '#4a321e'; b.fillRect(12, 46, 52, 3); b.fillStyle = '#6a4a2a'; b.fillRect(12, 46, 52, 1);
+    [['#5ad870', 16], ['#ffb43a', 26], ['#8a7cf0', 38], ['#ff7a5a', 50]].forEach(function (j) { b.fillStyle = OUT; b.fillRect(j[1] - 1, 36, 8, 10); b.fillStyle = j[0]; b.fillRect(j[1], 38, 6, 8); b.fillStyle = '#ffffff'; b.fillRect(j[1] + 1, 39, 1, 3); b.fillStyle = '#8a6a4a'; b.fillRect(j[1] + 1, 36, 4, 2); });
+    // banner on the right wall
+    b.fillStyle = OUT; b.fillRect(196, 14, 30, 50); b.fillStyle = '#7a1a2a'; b.fillRect(197, 15, 28, 46); b.fillStyle = '#a02a3a'; b.fillRect(197, 15, 28, 3);
+    // emblem: a shield with a chevron
+    for (y = 0; y < 22; y++) { var sw = y < 12 ? 9 : Math.max(1, Math.round(9 - (y - 11) * 0.85)); b.fillStyle = OUT; b.fillRect(211 - sw - 1, 25 + y, sw * 2 + 2, 1); b.fillStyle = y < 2 ? '#fff0a0' : '#e8b030'; b.fillRect(211 - sw, 25 + y, sw * 2, 1); }
+    b.fillStyle = OUT; b.fillRect(211, 25, 1, 22);
+    for (var k2 = 0; k2 < 7; k2++) { b.fillStyle = '#7a1a2a'; b.fillRect(204 + k2, 36 - k2, 2, 2); b.fillRect(216 - k2, 36 - k2, 2, 2); }
+    for (x = 0; x < 28; x += 4) { b.fillStyle = OUT; b.fillRect(197 + x, 61, 2, 3); b.fillStyle = '#7a1a2a'; b.fillRect(197 + x, 60, 2, 2); }
+    // floor planks
+    b.fillStyle = '#120c1e'; b.fillRect(0, 112, W, 2);
+    for (y = 114; y < HUD_Y; y++) for (x = 0; x < W; x++) {
+      var pl = Math.floor((y - 114) / 10), px = (x + pl * 23) % 48, d = (y - 114) / 70;
+      var cc = (y - 114) % 10 === 9 ? '#2a1a10' : px === 0 ? '#3a2616' : hashf(pl * 9 + Math.floor((x + pl * 23) / 48)) > 0.5 ? (d < 0.4 ? '#5a3a22' : '#6a4628') : (d < 0.4 ? '#523420' : '#624026');
+      if ((y - 114) % 10 === 0 && px !== 0) cc = d < 0.4 ? '#6e4a2c' : '#7a5432';
+      b.fillStyle = cc; b.fillRect(x, y, 1, 1);
+    }
+    // rug
+    b.fillStyle = OUT; b.fillRect(84, 150, 92, 28); b.fillStyle = '#3a2a6a'; b.fillRect(85, 151, 90, 26); b.fillStyle = '#5a4aa0'; b.fillRect(88, 154, 84, 20); b.fillStyle = '#3a2a6a'; b.fillRect(91, 157, 78, 14);
+    for (x = 94; x < 166; x += 8) { b.fillStyle = '#ffe070'; b.fillRect(x, 163, 3, 1); b.fillRect(x + 1, 162, 1, 3); }
+  })();
+
+  var CHEST = [sprite([
+    '..oooooooooooo..', '.obbbbbbbbbbbbo.', 'obbaaaaaaaaaabbo', 'obaaaaaaaaaaaabo', 'oyyyyyyyyyyyyyyo', 'obbbbbbyybbbbbbo', 'obaaaaayYaaaaabo',
+    'obaaaaayyaaaaabo', 'obaaaaaaaaaaaabo', 'oyyyyyyyyyyyyyyo', 'obaaaaaaaaaaaabo', 'obbbbbbbbbbbbbbo', 'oooooooooooooooo'],
+    { o: OUT, a: '#8a5a2a', b: '#5a3818', y: '#e8b030', Y: '#3a2008' }), sprite([
+    '..oooooooooooo..', '.obbbbbbbbbbbbo.', 'obaaaaaaaaaaaabo', 'oyyyyyyyyyyyyyyo', 'oggggggggggggggo', 'oGGgGGGgGGgGGGgo', 'obbbbbbyybbbbbbo',
+    'obaaaaayyaaaaabo', 'obaaaaaaaaaaaabo', 'oyyyyyyyyyyyyyyo', 'obaaaaaaaaaaaabo', 'obbbbbbbbbbbbbbo', 'oooooooooooooooo'],
+    { o: OUT, a: '#8a5a2a', b: '#5a3818', y: '#e8b030', g: '#fff4a0', G: '#ffd040' })];
+  var ANVIL = sprite([
+    '..ooooooooooooooo...', '.osssssssssssssssoo.', 'ossssssssssssssssssO', '.oddddddddddddddddo.', '...oooddddddddoo....', '.....odddddddo......', '....oddddddddd o....'.replace(' ', 'o'), '...oddddddddddddo...', '...ooooooooooooooo..'],
+    { o: OUT, s: '#b8c0d8', d: '#5a6078', O: OUT });
+  var DUMMY = sprite([
+    '....oooooo....', '...ossssss o...'.replace(' ', 's'), '...osxsxsso...', '...ossssss o...'.replace(' ', 's'), '....oooooo....', '.oooorrrrooooo.', 'ottttrrrrtttto.', 'ottttrrrrtttto.', '.ooooorrroooo..', '....orrrro.....',
+    '....orrrro.....', '....orrrro.....', '....orrrro.....', '.....owwo......', '.....owwo......', '.....owwo......', '.....owwo......', '...oowwwwoo....', '..owwwwwwwwo...', '..oooooooooo...'],
+    { o: OUT, s: '#e8d4a0', x: '#5a3a2a', r: '#c8a060', t: '#a07a40', w: '#6a4a2a' });
+  var HERO = [0, 1].map(function (f) {
+    return sprite([
+      '....oooo....', '...ohhhho...', '..ohhhhhho..', '..ohsssshho.', '..osesseso..', '..ossssssoo.', '...oooooo...', '..oaaaaaao..', '.oaayaayaao.', 'osaaaaaaaaso',
+      'osoaaaaaaoso', '.o.abbbba.o.', '...obooobo..', f ? '...obo.obo..' : '...obo..obo.', f ? '..oddo.oddo.' : '..oddo..oddo', '..ooo...ooo.'],
+      { o: OUT, h: '#c86a2a', s: '#f0c8a0', e: '#20102a', a: '#3a8a6a', y: '#ffe070', b: '#2a5a4a', d: '#4a3a2a' });
+  });
+  var PROPS = { chest: { x: 58, y: 146 }, anvil: { x: 118, y: 140 }, dummy: { x: 202, y: 150 } };
+  function propRect(id) {
+    if (id === 'chest') return { x: PROPS.chest.x, y: PROPS.chest.y - 13, w: 16, h: 13, id: 'chest' };
+    if (id === 'anvil') return { x: PROPS.anvil.x, y: PROPS.anvil.y - 9, w: 20, h: 9, id: 'anvil' };
+    if (id === 'dummy') return { x: PROPS.dummy.x, y: PROPS.dummy.y - 20, w: 14, h: 20, id: 'dummy' };
+    return { x: sim.hero.x, y: 160 - 16, w: 12, h: 16, id: 'hero' };
+  }
+
+  /* ---------------- simulation ---------------- */
+  var HUD = { x: 0, y: HUD_Y, w: W, h: H - HUD_Y };
+  var sim, tb, tally;
+  function newSim() { sim = { t: 0, loopAt: 0, chestOpen: false, msg: 'Pick a check', msgCol: '#c8d4f4', last: null, shake: 0, shakeAt: 0, dummyHit: 0, pops: [], sparks: [], hero: { x: 40, to: 40, at: 'chest' } }; tally = { perfect: 0, great: 0, good: 0, miss: 0 }; }
+  newSim();
+  function makeTB() {
+    tb = TBM.create({
+      bounds: { x: 0, y: 0, w: W, h: HUD_Y }, skin: skinId, seed: 7, params: params,
+      getObstacles: function () { return ['chest', 'anvil', 'dummy', 'hero'].map(propRect).concat([HUD]); },
+      onShake: function (px, ms) { sim.shake = px; sim.shakeAt = sim.t + ms; },
+      onSfx: function () { }
+    });
+  }
+  makeTB();
+
+  var JOBS = {
+    lock: { label: 'PICK THE LOCK', hint: 'Z', at: 'chest', opts: { width: 120 }, anchor: function () { return { x: PROPS.chest.x + 8, y: PROPS.chest.y - 16 }; },
+      done: function (r) { if (r.grade === 'miss') say('The pick slips. Try again.', '#c8c0e0'); else { sim.chestOpen = true; burstAt(PROPS.chest.x + 8, PROPS.chest.y - 12, r.grade); say(r.grade === 'perfect' ? 'Clean pick - found a gem.' : 'The lid creaks open.', '#ffe070'); } } },
+    strike: { label: 'STRIKE', hint: 'Z', at: 'dummy', opts: { difficulty: 'hard' }, anchor: function () { return { x: PROPS.dummy.x + 7, y: PROPS.dummy.y - 24 }; },
+      done: function (r) { var m = { perfect: 1.5, great: 1.25, good: 1, miss: 0.75 }[r.grade] || 1, dmg = Math.round(24 * m); sim.dummyHit = sim.t; pop(String(dmg), PROPS.dummy.x + 7, PROPS.dummy.y - 26, r.grade); say('Strike x' + m.toFixed(2) + ' - ' + dmg + ' damage', '#ffb0a0'); } },
+    forge: { label: 'FORGE', at: 'anvil', opts: { hits: 3 }, anchor: function () { return { x: PROPS.anvil.x + 10, y: PROPS.anvil.y - 14 }; },
+      onHit: function (h) { burstAt(PROPS.anvil.x + 10, PROPS.anvil.y - 10, h.grade); },
+      done: function (r) { say('Blade quality - ' + ({ perfect: 'masterwork', great: 'fine', good: 'plain', miss: 'brittle' }[r.grade] || '-'), '#ffc080'); } },
+    reel: { label: 'REEL IN', hint: 'Z', at: 'anvil', opts: { motion: 'linear', ease: 'sine', difficulty: 'easy' }, anchor: null,
+      done: function (r) { say(r.grade === 'miss' ? 'The fish got away.' : 'Caught a ' + ({ perfect: 'golden carp', great: 'silver trout', good: 'small perch' }[r.grade]) + '.', '#8ae4ff'); } }
+  };
+  var autoMode = false;
+  function run(name, auto) {
+    if (tb.busy()) return;
+    var J = JOBS[name], o = { label: J.label, hint: J.hint, cancel: true, onHit: J.onHit, auto: auto || (autoMode ? 'seeded' : null),
+      anchor: J.anchor ? J.anchor() : null, onDone: function (r) { sim.last = r; if (tally[r.grade] != null) tally[r.grade] += r.hits.length > 1 ? 0 : 1; if (r.hits.length > 1) r.hits.forEach(function (h) { tally[h.grade]++; }); if (r.grade === 'cancel') say('Cancelled.', '#9a93b4'); else J.done(r); } };
+    if (J.opts) Object.keys(J.opts).forEach(function (k) { o[k] = J.opts[k]; });
+    if (name === 'lock' && sim.chestOpen) { sim.chestOpen = false; }
+    sim.hero.to = { chest: 40, anvil: 98, dummy: 182 }[J.at];
+    tb.start(o);
+  }
+  function say(s, c) { sim.msg = s; sim.msgCol = c || '#c8d4ff'; }
+  function pop(text, x, y, g) { sim.pops.push({ text: text, x: x, y: y, t: sim.t, g: g }); }
+  function burstAt(x, y, g) { var n = g === 'perfect' ? 14 : g === 'great' ? 9 : g === 'good' ? 5 : 2; for (var i = 0; i < n; i++) { var a = hashf(sim.t + i * 7) * Math.PI * 2, s = 0.03 + hashf(i + sim.t) * 0.05; sim.sparks.push({ x: x, y: y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 0.05, t: sim.t, life: 400 + hashf(i * 3) * 300, c: g === 'perfect' ? '#e8fbff' : g === 'great' ? '#ffe070' : '#ffb060' }); } }
+
+  /* ---------------- scripted loop (deterministic: driven by sim time) ---------------- */
+  var LOOP_MS = 15000, SCRIPT = [
+    [300, function () { run('lock', 'perfect'); }],
+    [2700, function () { run('strike', 'great'); }],
+    [4900, function () { run('forge', 'seeded'); }],
+    [9300, function () { run('reel', 'good'); }],
+    [12100, function () { sim.chestOpen = false; run('lock', 'miss'); }]
+  ];
+  var sIdx = 0;
+  function stepSim() {
+    sim.t += STEP;
+    if (LOOP) {
+      var lt = sim.t - sim.loopAt;
+      while (sIdx < SCRIPT.length && lt >= SCRIPT[sIdx][0]) { SCRIPT[sIdx][1](); sIdx++; }
+      if (lt >= LOOP_MS) { sim.loopAt = sim.t; sIdx = 0; sim.chestOpen = false; tb.clear(); }
+    }
+    var h = sim.hero; if (h.x !== h.to) h.x += Math.sign(h.to - h.x) * Math.min(1.5, Math.abs(h.to - h.x));
+    sim.sparks = sim.sparks.filter(function (p) { var a = sim.t - p.t; p.x += p.vx * STEP; p.y += p.vy * STEP; p.vy += 0.0025; return a < p.life; });
+    sim.pops = sim.pops.filter(function (p) { return sim.t - p.t < 1100; });
+    tb.update(STEP);
+  }
+
+  /* ---------------- drawing ---------------- */
+  var SKN = function () { return SKAPI ? SKAPI.resolve(skinId) : null; };
+  var low = mk(W, H), lg = low.getContext('2d'); lg.imageSmoothingEnabled = false;
+  function drawWorld(g) {
+    var t = sim.t, sx = sim.t < sim.shakeAt ? (Math.floor(t / 33) % 2 ? sim.shake : -sim.shake) : 0;
+    g.save(); g.translate(sx, 0);
+    g.drawImage(BG, 0, 0);
+    // torches with flicker and a warm glow
+    [[84, 52], [168, 52]].forEach(function (p, i) {
+      var fl = Math.floor(t / 110 + i * 3) % 3;
+      g.fillStyle = '#ffb060'; for (var r = 24; r > 4; r -= 5) { g.globalAlpha = 0.07 + fl * 0.01; for (var yy = -r; yy <= r; yy++) { var hw = Math.round(Math.sqrt(r * r - yy * yy)); g.fillRect(p[0] - hw, p[1] + 2 + yy, hw * 2, 1); } } g.globalAlpha = 1;
+      g.fillStyle = OUT; g.fillRect(p[0] - 2, p[1], 5, 10); g.fillStyle = '#6a4a2a'; g.fillRect(p[0] - 1, p[1] + 1, 3, 9);
+      g.fillStyle = '#ff7a2a'; g.fillRect(p[0] - 2, p[1] - 5 + (fl === 1 ? 1 : 0), 5, 5); g.fillStyle = '#ffd060'; g.fillRect(p[0] - 1, p[1] - 6 + fl % 2, 3, 4); g.fillStyle = '#fff8d0'; g.fillRect(p[0], p[1] - 4, 1, 2);
+    });
+    // room dressing from the shared pixel scene kit (pixel skins): hearth behind the anvil, bookshelf, stores; other skins keep the plain forge glow
+    var PXS = window.GameDNA_PixelScene, SKk = SKN(), kit = PXS && (!SKk || SKk.pixel !== false);
+    if (kit) {
+      [['fireplace', 128, 119], ['bookshelf', 26, 122], ['barrel', 236, 124], ['barrel', 246, 128], ['crate', 224, 126], ['sack', 180, 122], ['pot', 70, 121], ['stool', 152, 124]].forEach(function (q) { PXS.drawProp(g, q[0], q[1], q[2], null, t); });
+    } else { var fg = Math.floor(t / 140) % 2; g.fillStyle = '#ff6a2a'; g.globalAlpha = 0.18 + fg * 0.05; g.fillRect(PROPS.anvil.x - 8, PROPS.anvil.y - 22, 36, 26); g.globalAlpha = 1; }
+    // shadows and props, back to front
+    [['chest', CHEST[sim.chestOpen ? 1 : 0]], ['anvil', ANVIL], ['dummy', DUMMY]].forEach(function (p) {
+      var P = PROPS[p[0]], img = p[1], wob = p[0] === 'dummy' && t - sim.dummyHit < 300 ? (Math.floor((t - sim.dummyHit) / 50) % 2 ? 2 : -2) : 0;
+      g.fillStyle = 'rgba(10,4,16,0.45)'; g.fillRect(P.x + 1, P.y - 1, img.width - 2, 3);
+      g.drawImage(img, P.x + wob, P.y - img.height);
+    });
+    if (true) { g.fillStyle = '#ff9a3a'; g.fillRect(PROPS.anvil.x + 6, PROPS.anvil.y - 10, 8, 1); g.fillStyle = '#ffe070'; g.fillRect(PROPS.anvil.x + 7, PROPS.anvil.y - 11, 6, 1); }
+    var hero = sim.hero, moving = hero.x !== hero.to, fr = moving ? Math.floor(t / 130) % 2 : 0;
+    if (kit && window.GameDNA_Skin) {   // a larger shaded hero (pixel16 unit sprite, 18x22), feet on the same floor line
+      window.GameDNA_Skin.resolve('pixel16').unitToken(g, { x: Math.round(hero.x) - 3, y: 160 - 22 - (moving && fr ? 1 : 0), w: 18, h: 22 }, { team: 'n', kind: 'lord', facing: hero.to < hero.x ? -1 : 1 }, moving ? t / 1000 * 3 : t / 1000);
+      [['table', 226, 174], ['stool', 204, 175], ['sack', 14, 173], ['pot', 26, 174], ['plant', 246, 150]].forEach(function (q) { PXS.drawProp(g, q[0], q[1], q[2], q[0] === 'table' ? { w: 32 } : null, t); });
+    } else {
+    g.fillStyle = 'rgba(10,4,16,0.45)'; g.fillRect(Math.round(hero.x) + 2, 159, 8, 2);
+    g.drawImage(HERO[fr], Math.round(hero.x), 160 - 16 - (moving && fr ? 1 : 0));
+    }
+    sim.sparks.forEach(function (p) { g.fillStyle = sim.t - p.t < 90 ? '#ffffff' : p.c; g.fillRect(Math.round(p.x), Math.round(p.y), 1, 1); });
+    sim.pops.forEach(function (p) {
+      var a = sim.t - p.t, dy = a < 60 ? -4 : a < 120 ? -1 : 0, S = SKN();
+      if (S && S.number) S.number(g, p.text, p.x, p.y + dy, { kind: p.g === 'perfect' ? 'crit' : 'damage', align: 'center', baseline: 'bottom', alpha: a > 800 ? 0.5 : 1 });
+    });
+    g.restore();
+  }
+  function drawHud(g) {
+    var S = SKN(); if (!S) return;
+    S.frame(g, HUD, { team: 'a' });
+    S.text(g, sim.msg, 10, HUD_Y + 9, { font: 'ui', color: sim.msgCol });
+    var r = sim.last, txt = r ? 'LAST ' + r.grade.toUpperCase() + (r.grade !== 'cancel' ? '  OFFSET ' + (r.offset >= 0 ? '+' : '') + r.offset.toFixed(2) : '') : 'LAST -';
+    S.text(g, txt, 10, HUD_Y + 23, { font: 'ui', color: '#b8d0ff' });
+    var bz = tb.busy();
+    S.text(g, bz ? 'KEYS TO BAR' : 'KEYS TO GAME', W - 10, HUD_Y + 23, { font: 'ui', align: 'right', color: bz ? '#ffe070' : '#b8ffc0' });
+  }
+
+  var ctx = cv.getContext('2d');
+  function render() {
+    var S = SKN(), pixel = !S || S.pixel !== false, k = pixel ? 1 : 3;
+    if (cv.width !== W * k) { cv.width = W * k; cv.height = H * k; fit(); }
+    if (pixel) {
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false;
+      drawWorld(ctx); drawHud(ctx); tb.draw(ctx);
+    } else {
+      drawWorld(lg);
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false; ctx.drawImage(low, 0, 0, W * k, H * k);
+      ctx.setTransform(k, 0, 0, k, 0, 0); ctx.imageSmoothingEnabled = true; drawHud(ctx); tb.draw(ctx);
+    }
+    var st = tb.state();
+    document.getElementById('lamp').className = tb.busy() ? 'on' : '';
+    document.getElementById('state').textContent = tb.busy() ? 'Bar has the key' : 'Idle';
+    document.getElementById('now').textContent = st ? st.label.toLowerCase() + ', ' + st.stage + (st.hits > 1 ? ' ' + Math.min(st.hit + 1, st.hits) + '/' + st.hits : '') + (st.auto ? ', auto' : '') : (sim.last ? 'last: ' + sim.last.grade : 'no check');
+    ['perfect', 'great', 'good', 'miss'].forEach(function (g) { document.getElementById('n-' + g).textContent = tally[g]; });
+    document.documentElement.dataset.state = JSON.stringify({ t: Math.round(sim.t), bar: st, busy: tb.busy(), rect: tb.rect(), last: sim.last });
+  }
+  function fit() {
+    var avail = Math.min(document.getElementById('stage').clientWidth - 12, 780), s = Math.max(1, Math.floor(avail / W));
+    cv.style.width = W * s + 'px'; cv.style.height = H * s + 'px';
+    document.getElementById('scaleinfo').textContent = '256×224 native · ' + s + '×';
+  }
+  addEventListener('resize', fit); fit();
+
+  /* ---------------- controls ---------------- */
+  function manual() { if (LOOP) setLoop(false); }
+  var ACT = { lock: function () { run('lock'); }, strike: function () { run('strike'); }, forge: function () { run('forge'); }, reel: function () { run('reel'); },
+    auto: function () { autoMode = !autoMode; document.querySelector('[data-act=auto] i').textContent = autoMode ? 'AUTO ON' : 'AUTO'; if (tb.busy() && autoMode) tb.auto('seeded'); }, cancel: function () { tb.cancel(); } };
+  document.querySelectorAll('.triggers button').forEach(function (btn) { btn.addEventListener('click', function () { manual(); ACT[btn.dataset.act](); }); });
+  addEventListener('keydown', function (e) {
+    if (tb.key(e.code, true)) { e.preventDefault(); return; }               // the bar takes only the keys it uses
+    var m = { Digit1: 'lock', Digit2: 'strike', Digit3: 'forge', Digit4: 'reel', Digit5: 'auto' }[e.code];
+    if (m) { manual(); ACT[m](); }
+  });
+  addEventListener('keyup', function (e) { tb.key(e.code, false); });
+  cv.addEventListener('pointerdown', function (e) { if (tb.busy()) { tb.tap(); e.preventDefault(); } });
+  function syncControls() {
+    document.querySelectorAll('input[type=range][data-key]').forEach(function (inp) {
+      var k = inp.dataset.key; inp.value = params[k];
+      inp.style.setProperty('--fill', (params[k] - inp.min) / (inp.max - inp.min) * 100 + '%');
+      document.querySelector('[data-out="' + k + '"]').textContent = params[k];
+    });
+    document.querySelectorAll('.seg[data-key]').forEach(function (seg) { seg.querySelectorAll('button').forEach(function (bt) { bt.setAttribute('aria-checked', String(bt.textContent === String(params[seg.dataset.key]))); }); });
+    document.getElementById('skin').value = skinId;
+  }
+  document.querySelectorAll('input[type=range][data-key]').forEach(function (inp) { inp.addEventListener('input', function () { params[inp.dataset.key] = +inp.value; tb.setParams(params); syncControls(); }); });
+  document.querySelectorAll('.seg[data-key]').forEach(function (seg) { seg.querySelectorAll('button').forEach(function (bt) { bt.addEventListener('click', function () {
+    var k = seg.dataset.key; params[k] = typeof TBM.DEFAULTS[k] === 'number' ? +bt.textContent : bt.textContent; if (k === 'difficulty') applyPreset(); tb.setParams(params); syncControls(); }); }); });
+  document.getElementById('skin').addEventListener('change', function (e) { skinId = e.target.value; makeTB(); });
+  function seg(id, fn) { var el = document.getElementById(id); el.querySelectorAll('button').forEach(function (bt) { bt.addEventListener('click', function () { fn(+bt.dataset.v); }); }); }
+  function setLoop(on) { LOOP = on; document.querySelectorAll('#loop button').forEach(function (x) { x.setAttribute('aria-checked', String(+x.dataset.v === (on ? 1 : 0))); }); if (on) { sim.loopAt = sim.t; sIdx = 0; tb.clear(); } }
+  seg('loop', function (v) { setLoop(!!v); });
+  if (!LOOP) setLoop(false);
+  document.getElementById('reset').addEventListener('click', function () { resetParams(); skinId = 'pixel16'; makeTB(); newSim(); sIdx = 0; syncControls(); setLoop(true); });
+  syncControls();
+
+  /* text state for critics and tools/sprites/statecheck.py. One character (the hero); chest, anvil and dummy are props.
+     Pixel skins draw the pixel16 'lord' unit token, whose art looks RIGHT and is mirrored when facing === -1; the same
+     expression is used here. Other skins blit HERO[] unmirrored (a symmetric front view: no side). While walking the hero has no
+     target (vx only); standing, it looks at the prop of its station. */
+  window.__state = function () {
+    var hero = sim.hero, moving = hero.x !== hero.to, PXS = window.GameDNA_PixelScene, SKk = SKN(), kit = PXS && (!SKk || SKk.pixel !== false) && window.GameDNA_Skin;
+    var face = kit ? (hero.to < hero.x ? -1 : 1) : 1, at = { 40: 'chest', 98: 'anvil', 182: 'dummy' }[hero.to], P = PROPS[at];
+    var o = { id: 'hero', x: Math.round(hero.x) + 6, y: 160, facing: face > 0 ? 'right' : 'left', target: moving || !P ? null : P.x + 8 };
+    if (moving) o.vx = Math.sign(hero.to - hero.x) * 1.5;
+    if (!kit) o.noFace = 'frontal art (non-pixel skin fallback sprite)';
+    return { t: Math.round(sim.t), actors: [o] };
+  };
+
+  /* ---------------- run ---------------- */
+  if (FREEZE) {
+    var n = Math.floor(T_AT / STEP); for (var i = 0; i < n; i++) stepSim(); render();
+  } else {
+    var last = performance.now(), acc = 0;
+    (function loop(now) { acc += Math.min(250, now - last); last = now; while (acc >= STEP) { stepSim(); acc -= STEP; } render(); requestAnimationFrame(loop); })(performance.now());
+  }
+})();
+</script>
+</body>
+</html>

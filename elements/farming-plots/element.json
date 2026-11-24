@@ -1,0 +1,63 @@
+{
+  "id": "farming-plots",
+  "code": "G-04",
+  "kind": "system",
+  "name": "Farming plots",
+  "family": "farming",
+  "oneLiner": "A farm loop on a tile grid: till, plant, water, crops grow one stage-step per watered night with every stage drawn, harvest once, ship produce in a bin that pays at night, buy the season's seeds at a stall; seasons repaint the farm and wither out-of-season crops, seeded rain waters everything, a 6:00-to-midnight clock with dusk, night and lamp light. The farmer walks tile by tile with a 4-frame walk and arm swing that follow the distance walked, turns before he steps, faces the tile he works and swings each tool (raise, strike). Crops and tools are plain data; a bot farms through the player's own key path.",
+  "fits": [
+    "farming and life sims (a field beside a house, a day clock, seasons)",
+    "a farm or garden corner inside an adventure or town game",
+    "cozy management games that want planting and harvest loops",
+    "top-down pixel games on a tile grid (keys, tap to walk, phones)"
+  ],
+  "notFor": [
+    "real-time combat (the farm owns its own day and input while it runs)",
+    "free-angle or physics movement (the farmer walks tile by tile)",
+    "large automation or factory games (no machines, belts or sprinklers on timers)",
+    "side-view platformers (the field is top-down)"
+  ],
+  "interfaces": {
+    "time": "realtime",
+    "coords": "grid",
+    "layer": "scene",
+    "needs": [
+      "a tile map: size, tile px, which tiles are walkable, which are field, the bin / stall / door tiles and the farmer's morning tile",
+      "a fixed 60 Hz update step, a camera (world px) and a seed",
+      "key input (directions with keydown / keyup, use, tool, seed) or taps on tiles",
+      "your scenery drawn under and around the farm (sprites are y-sorted with yours); optional lamp points",
+      "a place to go when the year ends (onEnd)"
+    ],
+    "provides": [
+      "the rules: tilling, planting (season-checked seeds), watering, growth +1 per watered in-season night, ripe only at growth >= days, regrowing crops, withering at a season change, rain, harvest once with yield, shipping paid at night, buying never below 0 gold, sleep / midnight / night summary / wake, end of the year",
+      "the farmer: tile walking with turn-before-step, held keys, a 4-frame walk with arm swing tied to distance, tool raise / strike poses, the harvest lifted overhead, a work cursor on the faced tile",
+      "the screen: tilled and wet soil (joined edges), every crop stage and a withered look, tools in hand, particles, dusk, night and lamp glow, rain, HUD (date, clock, day bar, gold, hotbar, prompt, seed stall window, season banner, night card)",
+      "events (till, plant, water, harvest, clear, use, ship, buy, sell, day, season, grow, ripe, wither, end ...), onEnd(result) once",
+      "a bot that harvests, ships, buys, tills, plants and waters through key()",
+      "uiRects(view) valid without drawing, actors() for __state(), state(), hash(), the pure rules as GameDNA_FarmingPlots.rules"
+    ]
+  },
+  "params": [
+    { "key": "dayMs", "label": "Day length (6:00 to midnight, ms)", "type": "range", "min": 6000, "max": 120000, "step": 1000, "default": 28000 },
+    { "key": "seasonDays", "label": "Days per season", "type": "range", "min": 2, "max": 28, "step": 1, "default": 4 },
+    { "key": "seasons", "label": "Seasons in the year", "type": "range", "min": 1, "max": 8, "step": 1, "default": 3 },
+    { "key": "rain", "label": "Rain chance per day", "type": "range", "min": 0, "max": 0.8, "step": 0.05, "default": 0.2 },
+    { "key": "startGold", "label": "Starting gold", "type": "range", "min": 0, "max": 2000, "step": 10, "default": 120 },
+    { "key": "walkMs", "label": "Walk ms per tile", "type": "range", "min": 120, "max": 320, "step": 10, "default": 180 },
+    { "key": "toolSpeed", "label": "Tool speed", "type": "range", "min": 0.5, "max": 2, "step": 0.25, "default": 1 },
+    { "key": "night", "label": "Dusk and night", "type": "select", "options": ["on", "off"], "default": "on" },
+    { "key": "cursor", "label": "Work cursor", "type": "select", "options": ["on", "off"], "default": "on" }
+  ],
+  "variants": [
+    { "name": "Short demo year (default)", "params": {} },
+    { "name": "Relaxed days", "params": { "dayMs": 60000, "seasonDays": 7 } },
+    { "name": "Dry climate", "params": { "rain": 0 } },
+    { "name": "Always daylight", "params": { "night": "off" } },
+    { "name": "Quick hands", "params": { "toolSpeed": 1.5, "walkMs": 150 } }
+  ],
+  "assets": "module/farming-plots.js (global GameDNA_FarmingPlots, no dependencies; API in module/README.md): the farmer (18 x 24, four facings, idle + 4 walk frames, tool poses), tools, five crops at every stage plus a withered look, tilled and wet soil, icons, particles, sky and HUD, all drawn in code. The starter and the demo draw the farm scenery (ground, trees, house, stall, lanterns, fences, props, the merchant) with the repo's pixel-kit (starter/art/pixel-scene.js, a copy of pixel-kit/pixel-scene.js, unchanged); the starter repaints it per season by an exact palette swap. No image was generated.",
+  "status": "v1-module",
+  "module": { "file": "module/farming-plots.js", "global": "GameDNA_FarmingPlots", "version": "1.2.0" },
+  "starter": "starter/index.html",
+  "starterFiles": ["art"]
+}

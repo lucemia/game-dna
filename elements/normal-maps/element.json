@@ -1,0 +1,222 @@
+{
+  "id": "normal-maps",
+  "code": "L-05",
+  "kind": "addon",
+  "name": "Material & normal maps",
+  "family": "generated-art",
+  "requires": [
+    "art-direction-lock"
+  ],
+  "oneLiner": "A script turns every generated bitmap with alpha into a height map (alpha distance field rounded into a dome, plus the painting's own local light and dark as relief), a normal map (Sobel), ambient occlusion and a gloss mask, packed into one lossless file next to the picture with sha256 and the derive settings in the manifest (re-derived and compared by assetcheck); a small module then lights the sprite on a plain 2D canvas from wherever the game's lights are (lantern on the hero, lamps, glowing pickups), sharp at any scale and capped so it never washes out, and J-02 lights the same maps in WebGL.",
+  "fits": [
+    "top-down action RPG and adventure with painted HD sprites",
+    "side-scrolling action / platformer with painted HD sprites",
+    "night, dusk, cave and dungeon scenes with lanterns, torches, spells",
+    "any HD game moving from code-drawn shapes to generated painted sprites (L-00) that should react to light",
+    "portraits and UI items that catch a highlight (busts, slots, potions, keys)"
+  ],
+  "notFor": [
+    "pixel-art styles (pixel8, pixel16, handheld4): a painted normal map on a 16 px sprite reads as noise",
+    "true 3D lighting with shadows cast by the sprites (the height is a 2.5D guess from a flat picture; use K-family 3D for that)",
+    "art whose light is baked in strongly (rim light, cast shadows painted in): it ends up lit twice; generate with even, neutral light",
+    "pages opened as file:// (pixels cannot be read: sprites draw unlit, nothing breaks)"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "actor",
+    "needs": [
+      "GameDNA_Assets (L-00 loader) loaded first; the game's boot moved into its onReady callback",
+      "the albedo picture and its <key>-nh map (nh2 layout) in the same manifest; tools/assets/normalmap.py to derive maps for new art",
+      "every draw site of the replaced characters / props: feet point, drawn height, facing",
+      "the game's light sources in the same coordinates as the draw calls (hero lantern, lamps, fires, glowing pickups, projectiles), from game state and the game clock"
+    ],
+    "provides": [
+      "nm.draw(ctx, key, x, y, {h, flip, alpha, lights, ambient}) -> bool: the sprite lit by up to 3 point lights + a key light, false only when the picture is missing",
+      "nm.maps(key) / nm.sample(key, x, y): decoded normal, height, occlusion, gloss (viewers, WebGL uploads for J-02)",
+      "tools/assets/normalmap.py derive / build / check / preview; assetcheck.py normalmap rule (re-derives and compares pixels)",
+      "assets.json: albedo (byte-identical to the L-00 / L-02 / L-06 packs) + one role normalmap entry per sprite with derivedFrom, params, albedoSha256 and sha256"
+    ]
+  },
+  "params": [
+    {
+      "key": "view",
+      "label": "View",
+      "type": "select",
+      "options": [
+        "lit",
+        "flat",
+        "split"
+      ],
+      "default": "lit"
+    },
+    {
+      "key": "light",
+      "label": "Lantern",
+      "type": "select",
+      "options": [
+        "walk",
+        "pointer"
+      ],
+      "default": "walk"
+    },
+    {
+      "key": "color",
+      "label": "Colour",
+      "type": "select",
+      "options": [
+        "warm",
+        "moon",
+        "spirit"
+      ],
+      "default": "warm"
+    },
+    {
+      "key": "ambient",
+      "label": "Night ambient",
+      "type": "range",
+      "min": 0.1,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.18
+    },
+    {
+      "key": "radius",
+      "label": "Light radius",
+      "type": "range",
+      "min": 80,
+      "max": 520,
+      "step": 10,
+      "default": 260
+    },
+    {
+      "key": "height",
+      "label": "Light height (px)",
+      "type": "range",
+      "min": 8,
+      "max": 160,
+      "step": 4,
+      "default": 34
+    },
+    {
+      "key": "strength",
+      "label": "Light strength",
+      "type": "range",
+      "min": 0.2,
+      "max": 2.5,
+      "step": 0.05,
+      "default": 1.8
+    },
+    {
+      "key": "key",
+      "label": "Moon key light",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "extra",
+      "label": "Lamp & wisp",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "asset",
+      "label": "Map viewer sprite",
+      "type": "select",
+      "options": [
+        "herbalist",
+        "keeper",
+        "lamppost",
+        "well",
+        "vial",
+        "key",
+        "maren",
+        "slot"
+      ],
+      "default": "keeper"
+    }
+  ],
+  "promptParams": [
+    {
+      "key": "subject",
+      "default": "the character or prop the game draws most often (the hero if it is drawn at least 40 px tall)"
+    },
+    {
+      "key": "ambient",
+      "default": "chosen from the scene's mood (day 0.85, dusk 0.6, night 0.4)"
+    },
+    {
+      "key": "lights",
+      "default": "a lantern on the hero plus every lamp, fire, glowing pickup or projectile the game draws"
+    },
+    {
+      "key": "targets",
+      "default": "every character or prop of the game that one of the pack's pictures fits (pack prompt)"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Night village, keeper carries the lantern",
+      "params": {
+        "view": "lit"
+      }
+    },
+    {
+      "name": "Split through every sprite (flat | lit)",
+      "params": {
+        "view": "split"
+      }
+    },
+    {
+      "name": "Low lantern, no moon",
+      "params": {
+        "key": "off",
+        "extra": "off",
+        "height": 20,
+        "ambient": 0.25
+      }
+    },
+    {
+      "name": "Spirit light",
+      "params": {
+        "color": "spirit"
+      }
+    }
+  ],
+  "assets": [
+    "module/normal-maps.js: GameDNA_NormalMaps (one global, no dependencies; reads images through GameDNA_Assets from L-00)",
+    "assets/assets.json: 9 albedo files (8 byte-identical copies of L-00 herbalist, keeper, lamppost, well, vial, key; L-02 maren; L-06 slot; plus lamppost-off, one Codex edit with the lantern out) + 9 derived nh2 maps, 488 KB; assets/README.md describes the layout",
+    "assets/prompts/templates.md: style lock (even, neutral light), subject briefs, post-process + derive commands, light settings",
+    "tools/assets/normalmap.py (shared): derive, build, check, preview; assetcheck.py normalmap rule"
+  ],
+  "assetPack": {
+    "manifest": "assets/assets.json",
+    "generated": true,
+    "tool": "codex image_gen.imagegen (built-in) for the albedo (L-00, L-02, L-06 runs, plus one edit run for lamppost-off); maps derived by tools/assets/normalmap.py",
+    "date": "2026-11-17",
+    "budgetBytes": 600000,
+    "styles": "hd (non-pixel skins)",
+    "check": "tools/assets/assetcheck.py assets/assets.json (re-derives every map); checks/litcheck.py <run> (lighting wired in a game)",
+    "regenerate": "prompt.md + assets/prompts/templates.md + tools/assets (normalmap.py, postproc.py, assetcheck.py, namecheck.py)"
+  },
+  "status": "draft",
+  "module": {
+    "file": "module/normal-maps.js",
+    "global": "GameDNA_NormalMaps",
+    "version": "1.2.0",
+    "docs": "module/README.md"
+  },
+  "related": [
+    "art-direction-lock (L-00): loader and style-lock method; the sprites come from its pack",
+    "normal-lighting (J-02): lights the same nh2 maps in WebGL through I-08",
+    "dynamic-lights (J-01): its light list can drive this module when drawn in the same coordinates"
+  ]
+}

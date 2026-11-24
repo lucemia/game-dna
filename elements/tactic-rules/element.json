@@ -1,0 +1,168 @@
+{
+  "id": "tactic-rules",
+  "code": "A-13",
+  "kind": "addon",
+  "name": "Conditional tactic rules",
+  "family": "tactics-ai",
+  "oneLiner": "Every unit decides with an ordered list of rules, \"condition → action (target)\": ally HP under a threshold, a flying or armoured foe, a back-row target, self HP or MP, foe count, first turn. The first rule that holds and whose action is usable with a valid target wins, else the unit's Otherwise action. The evaluator is pure, deterministic and explains itself (which rule fired, why, and why each rule above it did not); players edit the list in a compact modal editor with class presets and a live \"Now:\" line, and a plate beside the acting unit names the rule and the target. The game's own skills, costs, reach and damage stay the game's: it plugs them in through adapters.",
+  "fits": [
+    "turn-based RPG battle (enemy AI, party autoplay, auto-battle toggle)",
+    "tactics / strategy RPG (enemy phase, auto-move for player units)",
+    "squad auto-battlers and clash simulations (pure evaluate() for forecasts)",
+    "monster-taming and party RPGs with AI companions",
+    "real-time-with-pause party games (decide on each unit's action timer)"
+  ],
+  "notFor": [
+    "twitch action AI that reacts every frame (decide once per turn or action)",
+    "pathfinding or move planning (the game moves the unit; rules choose what to do and to whom)",
+    "dialogue or story branching (use H-02 dialogue choices)",
+    "learning or scoring AI that must search ahead (rules are a priority list, not a planner)"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "the places where a unit's action is chosen (enemy AI, autoplay, auto commands), called once per unit turn",
+      "the game's skills with an aim (enemy, ally, self, all foes, all allies, none) and a role, plus usability (costs, items, cooldowns) and reach",
+      "unit fields: name, HP, max HP, MP, tags (flying, armoured, back row ...), class",
+      "a fixed update step that keeps running while the editor is open, a key and pointer route into the editor, and the unit sprite boxes and HUD rects on screen"
+    ],
+    "provides": [
+      "GameDNA_TacticRules.evaluate(rules, snapshot): a pure, explainable decision (action, target ids, rule fired, reason, trace)",
+      "decide(unit): the decision against the live game, with the game's own unit objects as targets",
+      "a modal rule editor (busy() while open) and a why plate with target ticks; rects() for other overlays",
+      "the rule book as plain JSON (exportBook / importBook) and debug events (decide with its snapshot, open, close, change)"
+    ]
+  },
+  "params": [
+    {
+      "key": "why",
+      "label": "Why plate",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "whyMs",
+      "label": "Plate time (ms)",
+      "type": "range",
+      "min": 800,
+      "max": 4000,
+      "step": 100,
+      "default": 1800
+    },
+    {
+      "key": "theme",
+      "label": "Theme",
+      "type": "select",
+      "options": [
+        "dusk",
+        "slate",
+        "skin"
+      ],
+      "default": "dusk"
+    },
+    {
+      "key": "maxRules",
+      "label": "Max rules per unit",
+      "type": "range",
+      "min": 3,
+      "max": 8,
+      "step": 1,
+      "default": 8
+    },
+    {
+      "key": "editKey",
+      "label": "Editor key",
+      "type": "select",
+      "options": [
+        "T",
+        "Tab",
+        "R",
+        "Q"
+      ],
+      "default": "T"
+    },
+    {
+      "key": "size",
+      "label": "Text size (0 = auto)",
+      "type": "range",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "default": 0
+    },
+    {
+      "key": "render",
+      "label": "Render",
+      "type": "select",
+      "options": [
+        "auto",
+        "smooth",
+        "crisp"
+      ],
+      "default": "auto"
+    },
+    {
+      "key": "minCssPx",
+      "label": "Smallest text on screen (CSS px)",
+      "type": "range",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "default": 12
+    }
+  ],
+  "variants": [
+    {
+      "name": "Party tactics",
+      "params": {
+        "why": "on",
+        "whyMs": 1800,
+        "theme": "dusk",
+        "maxRules": 8
+      }
+    },
+    {
+      "name": "Quiet AI (no plates)",
+      "params": {
+        "why": "off",
+        "maxRules": 6
+      }
+    },
+    {
+      "name": "Short lists",
+      "params": {
+        "maxRules": 4,
+        "whyMs": 2400
+      }
+    },
+    {
+      "name": "Cool slate",
+      "params": {
+        "theme": "slate"
+      }
+    },
+    {
+      "name": "Pixel host",
+      "params": {
+        "render": "crisp"
+      }
+    }
+  ],
+  "assets": [
+    "module/tactic-rules.js: the element as one dependency-free script (global GameDNA_TacticRules): pure evaluator, 13 conditions, 6 target picks, 5 role-based class presets, rule book, why plate with docking and target ticks, modal editor (keys, pointer, drag to reorder), smooth HD and crisp pixel drawing with built-in 5x7 / 3x5 bitmap fonts",
+    "no image, font or audio files (system sans stack, never loaded from the network)"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/tactic-rules.js",
+    "global": "GameDNA_TacticRules",
+    "version": "1.1.0",
+    "docs": "module/README.md"
+  }
+}

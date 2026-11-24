@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dialogue Choices</title>
+<style>
+:root {
+  --bg: #0b0d16; --panel: #141826; --line: #283048; --text: #e9ecf8; --dim: #959cb8; --accent: #ffe070; --accent2: #7aa8ff;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1200px 600px at 30% -10%, #1c2444 0%, var(--bg) 60%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 14px 20px 10px; max-width: 1240px; margin: 0 auto; }
+.code { white-space: nowrap; font: 700 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #0e1428; background: var(--accent2); padding: 6px 8px; border-radius: 4px; box-shadow: 0 0 0 1px #00000040, 0 2px 0 #2c50b8; }
+h1 { font-size: 18px; margin: 0; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; padding: 0 20px 20px; max-width: 1240px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; display: flex; flex-direction: column; align-items: center; }
+.frame { padding: 6px; background: linear-gradient(#222a44, #121626); border-radius: 8px; box-shadow: 0 0 0 1px #343e60, 0 18px 50px #00000080; max-width: 100%; }
+canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; border-radius: 3px; touch-action: manipulation; max-width: 100%; }
+.caption { display: flex; justify-content: space-between; gap: 12px; width: 100%; max-width: 780px; margin-top: 8px; color: var(--dim); font-size: 12px; }
+.caption b { color: var(--text); font-weight: 600; }
+#lamp { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: #5ad86a; box-shadow: 0 0 8px #5ad86a; }
+#lamp.on { background: #7aa8ff; box-shadow: 0 0 8px #7aa8ff; }
+aside { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+h2 { margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.triggers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.triggers button { --c: var(--accent2); appearance: none; border: 1px solid #00000060; border-radius: 6px; padding: 8px 4px 6px; cursor: pointer; color: var(--text); font: 600 11.5px/1.1 inherit;
+  background: linear-gradient(#232a44, #1a2034); box-shadow: inset 0 1px 0 #ffffff14, inset 0 -2px 0 color-mix(in srgb, var(--c) 70%, black); }
+.triggers button:hover { background: linear-gradient(#2c3554, #20283e); }
+.triggers button i { display: block; font-style: normal; font: 800 12px/1 ui-monospace, Menlo, monospace; color: var(--c); margin-bottom: 4px; letter-spacing: .04em; }
+.triggers kbd { display: block; font: 10px/1 ui-monospace, Menlo, monospace; color: var(--dim); margin-top: 4px; }
+.row { margin-bottom: 10px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 5px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--accent2) var(--fill), #283048 var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 4px; background: #e8f0ff; border: 2px solid #0e1428; box-shadow: 0 1px 4px #000a; cursor: pointer; }
+.seg { display: flex; background: #0e1120; border: 1px solid var(--line); border-radius: 6px; padding: 2px; gap: 2px; }
+.seg button { flex: 1; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 3px; border-radius: 4px; cursor: pointer; text-transform: capitalize; }
+.seg button[aria-checked=true] { background: #273050; color: var(--text); box-shadow: inset 0 0 0 1px #3c4870, inset 0 -2px 0 var(--accent2); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+select { width: 100%; appearance: none; background: #0e1120; color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; font: 600 12px inherit; }
+.foot { display: flex; justify-content: space-between; align-items: center; color: var(--dim); font-size: 11.5px; border-top: 1px solid var(--line); padding-top: 10px; gap: 8px; }
+.foot button { appearance: none; background: none; border: 1px solid var(--line); color: var(--text); border-radius: 5px; padding: 5px 9px; font: 600 11.5px inherit; cursor: pointer; }
+.meter { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center; font: 700 11px ui-monospace, Menlo, monospace; color: var(--dim); }
+.meter div { background: #0e1120; border: 1px solid var(--line); border-radius: 6px; padding: 6px 2px; }
+.meter span { display: block; font-size: 16px; color: var(--text); }
+@media (max-width: 980px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 640px; width: 100%; margin: 0 auto; } }
+@media (max-width: 560px) { header { padding: 12px 16px 8px; } main { padding: 0 16px 16px; gap: 12px; } .frame { padding: 3px; } .caption { flex-direction: column; gap: 2px; } .triggers { grid-template-columns: repeat(2, 1fr); } .two { grid-template-columns: 1fr; } }
+.flags { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; font: 12px ui-monospace, Menlo, monospace; }
+.flags div { display: flex; justify-content: space-between; background: #0e1120; border: 1px solid var(--line); border-radius: 5px; padding: 4px 7px; transition: background .3s; }
+.flags div.hot { background: #3a3414; border-color: #8a7a2a; }
+.flags b { color: var(--accent); font-weight: 700; }
+.flags span { color: var(--dim); }
+.log { font: 11.5px/1.5 ui-monospace, Menlo, monospace; color: var(--dim); background: #0e1120; border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; max-height: 128px; overflow: auto; white-space: pre-wrap; }
+.log .ok { color: #8ad870; } .log .warn { color: #ffb070; } .log .err { color: #ff7a6a; }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">H-02</span>
+  <div><h1>Branching choices with flags</h1><p>A choice menu after a line: 2 to 4 options, a cursor, disabled options that say why, an optional countdown that picks a default. Picks set flags (gold, met, plan) that later lines check, jump to labels and rejoin; once-only lines and options are remembered for saves. Drives the H-01 dialogue box.</p></div>
+</header>
+<main>
+  <section id="stage">
+    <div class="frame"><canvas id="cv" width="256" height="224" aria-label="Village square with a dialogue box and a choice menu"></canvas></div>
+    <div class="caption"><span><span id="lamp"></span><b id="state">World running</b> · <span id="now">no talk</span></span><span style="white-space:nowrap"><span id="scaleinfo">256×224 native</span> · <b>↑↓</b> choose · <b>Z</b>/tap pick · <b>X</b> cancel</span></div>
+  </section>
+  <aside>
+    <div>
+      <h2>Talk</h2>
+      <div class="triggers">
+        <button data-act="mira" style="--c:#ffe070"><i>MIRA</i>3-way branch<kbd>1</kbd></button>
+        <button data-act="brann" style="--c:#ff8a6a"><i>BRANN</i>Timed choice<kbd>2</kbd></button>
+        <button data-act="coins" style="--c:#b8ffc0"><i>+5 GOLD</i>Find coins<kbd>3</kbd></button>
+        <button data-act="pass" style="--c:#8ae4ff"><i>PASS</i>Give lantern pass<kbd>4</kbd></button>
+        <button data-act="reset" style="--c:var(--dim)"><i>FLAGS</i>Reset (new game)<kbd>R</kbd></button>
+        <button data-act="end" style="--c:var(--dim)"><i>END</i>End talk<kbd>Esc</kbd></button>
+      </div>
+    </div>
+    <div><h2>Flags (getFlags)</h2><div class="flags" id="flags"></div></div>
+    <div>
+      <div class="row"><label>Default countdown (ms, 0 = none; Brann has his own 5000) <output data-out="timeout"></output></label><input type="range" data-key="timeout" min="0" max="10000" step="500"></div>
+      <div class="row"><label>Autoplay pick delay (ms) <output data-out="autoplayMs"></output></label><input type="range" data-key="autoplayMs" min="200" max="2000" step="100"></div>
+    </div>
+    <div class="two">
+      <div><h2>Menu side</h2><div class="seg" data-key="menuPlace"><button>auto</button><button>right</button><button>left</button></div></div>
+      <div><h2>Disabled</h2><div class="seg" data-key="disabled"><button>show</button><button>hide</button></div></div>
+      <div><h2>Cursor wrap</h2><div class="seg" data-key="wrap"><button>on</button><button>off</button></div></div>
+      <div><h2>Tint</h2><div class="seg" data-key="tint"><button>a</button><button>n</button><button>b</button></div></div>
+      <div><h2>Skin</h2><select id="skin"><option value="pixel16">pixel16</option><option value="flat-demo">flat (non-pixel)</option></select></div>
+      <div><h2>Loop</h2><div class="seg" id="loop"><button data-v="1" aria-checked="true">auto</button><button data-v="0">manual</button></div></div>
+    </div>
+    <div>
+      <h2>Validator</h2>
+      <div class="seg" id="vsel" style="margin-bottom:6px"><button data-v="village" aria-checked="true">village script</button><button data-v="draft">draft with mistakes</button></div>
+      <div class="log" id="vlog"></div>
+    </div>
+    <div class="foot"><span>Same module as <b>module/dialogue-choices.js</b> · URL: <code>?t=ms&amp;freeze=1</code>, <code>?auto=1</code></span><button id="resetp">Reset</button></div>
+  </aside>
+</main>
+<script src="../../../skins/skin-api.js"></script>
+<script src="../../../skins/pixel16.js"></script>
+<script src="../../dialogue-box/module/dialogue-box.js"></script>
+<script src="../../../pixel-kit/pixel-scene.js"></script>
+<script src="../module/dialogue-choices.js"></script>
+<script>
+'use strict';
+(function () {
+  var W = 256, H = 224, HUD_H = 14, STEP = 1000 / 60;
+  var Q = new URLSearchParams(location.search), num = function (k, d) { var v = Q.get(k); return v == null || v === '' || isNaN(+v) ? d : +v; };
+  var FREEZE = Q.get('freeze') === '1', T_AT = num('t', 0), LOOP = Q.get('loop') !== '0', AUTO = Q.get('auto') === '1';
+  var cv = document.getElementById('cv'), SKAPI = window.GameDNA_Skin, DB = window.GameDNA_DialogueBox, DC = window.GameDNA_DialogueChoices;
+
+  if (SKAPI) SKAPI.register({
+    id: 'flat-demo', name: 'Flat demo', pixel: false, native: { w: 256, h: 224, scale: 'fit', smoothing: true },
+    palette: { ink: '#29304d', paper: '#f4f6fb',
+      ui: { fill: '#ffffff', fillTo: '#eef1f8', edge: '#cdd2de', highlight: '#ffffff', shadow: 'rgba(40,46,90,0.25)', select: 'rgba(91,108,255,0.16)' },
+      team: { a: '#5b6cff', b: '#ff6a5a', n: '#7b8199' },
+      overlay: { move: { fill: '#6f8cff', edge: '#4d68d6' }, attack: { fill: '#ff6f6f', edge: '#d9624f' }, threat: { fill: '#8f86ff', edge: '#5b4bff' }, heal: { fill: '#3fcf8e', edge: '#2f9e63' } },
+      fx: { hot: '#ff8a3c', cold: '#4aa8ff', heal: '#2f9e63', crit: '#f5b520', status: '#8f86ff' },
+      text: { main: '#29304d', shadow: 'rgba(0,0,0,0)', outline: '#29304d', dim: '#a0a6bc', gold: '#b07a10', accent: '#5b6cff', select: '#2a3cd0', red: '#d0503c', label: '#5b6cff' } },
+    fonts: { ui: { type: 'canvas', family: 'system-ui, -apple-system, sans-serif', size: 7.5, weight: 600 }, num: { type: 'canvas', family: 'system-ui, sans-serif', size: 11, weight: 800 } },
+    shape: { radius: 4, padding: 4 }, shadow: { text: null, window: { blur: 4, dy: 1 } }, outline: { text: { width: 0 } }, motion: { snap: false }
+  });
+
+  /* ---------------- the script (data the designer edits) ---------------- */
+  var FLAGS = { gold: 8, metMira: false, plan: '', hasOil: false, hasPass: false, gateOpen: false, bribed: false };
+  var SCRIPT = {
+    mira: [
+      { speaker: 'Mira', id: 'greet', once: true, text: 'Evening, traveller! The square lanterns have all gone dark. The oil ran out.' },
+      { speaker: 'Mira', if: 'metMira && !hasOil', text: 'Back again? The lanterns are still dark.' },
+      { speaker: 'Mira', if: 'hasOil', text: 'The square is bright again, thanks to you. {p200}Safe roads!', end: true },
+      { set: { metMira: true } },
+      { label: 'ask', speaker: 'Mira', text: 'Will you help me light them?', default: 'mill', choices: [
+        { id: 'mill', text: 'Fetch oil from the mill', set: { plan: 'mill' }, goto: 'mill' },
+        { id: 'buy', text: 'Buy a flask (10 gold)', if: 'gold >= 10', reason: 'Need 10 gold', inc: { gold: -10 }, set: { plan: 'buy' }, goto: 'buy' },
+        { id: 'lore', text: 'Why forty lanterns?', once: true, goto: 'lore' }
+      ] },
+      { label: 'mill', speaker: 'Mira', text: 'The {gold}old mill{/} is two leagues down the west road. Mind the geese!', goto: 'rejoin' },
+      { label: 'buy', speaker: 'Mira', text: 'Ten gold, and the flask is yours. {p200}I keep a spare for emergencies.', set: { hasOil: true }, goto: 'rejoin' },
+      { label: 'lore', speaker: 'Mira', text: 'One for every family that founded Meadowhold. My grandmother lit them before me.', goto: 'ask' },
+      { label: 'rejoin', speaker: 'Mira', if: 'plan == "mill"', text: 'Come back before the moon is up. You carry {$gold} gold, plenty for the road.' },
+      { speaker: 'Mira', if: 'hasOil', text: 'There! One flask fills the whole square. Watch the lanterns!' }
+    ],
+    brann: [
+      { speaker: 'Brann', text: 'Halt. The south gate stays shut after dark.' },
+      { speaker: 'Brann', if: 'hasOil', text: 'You lit the square? Fine work. Rules are rules, though.' },
+      { label: 'gate', speaker: 'Brann', text: 'State your business, quickly.', timeout: 5000, default: 'leave', cancel: 'leave', choices: [
+        { id: 'pass', text: 'Show the lantern pass', if: 'hasPass', reason: 'You have no lantern pass', goto: 'open' },
+        { id: 'bribe', text: 'Offer 5 gold', if: 'gold >= 5 && !bribed', reason: 'Need 5 gold', inc: { gold: -5 }, set: { bribed: true }, goto: 'open' },
+        { id: 'leave', text: 'Turn back', hint: 'Picked when time runs out', goto: 'leave' }
+      ] },
+      { label: 'open', speaker: 'Brann', text: 'Through you go. {p200}I saw nothing.', set: { gateOpen: true }, end: true },
+      { label: 'leave', speaker: 'Brann', text: 'Wise. Come back by daylight.' }
+    ]
+  };
+  var DRAFT = { inn: [
+    { speaker: 'Ola', text: 'A room is 4 gold.', choices: [{ text: 'Take it', if: 'gold >= 4', inc: { gold: -4 }, goto: 'room' }, { text: 'Too dear', goto: 'haggle' }, { text: 'Ask for rumours', if: 'trustOla' }] },
+    { label: 'room', speaker: 'Ola', text: 'Sleep well.', end: true },
+    { label: 'cellar', speaker: 'Ola', text: 'The cellar? Nobody goes there.' },
+    { speaker: 'Ola', if: 'gold >= ', text: 'Broken condition.' }
+  ] };
+
+  /* ---------------- parameters ---------------- */
+  var params = {}; function resetParams() { params = {}; Object.keys(DC.DEFAULTS).forEach(function (k) { params[k] = DC.DEFAULTS[k]; }); }
+  resetParams();
+  Object.keys(params).forEach(function (k) { if (Q.has(k)) params[k] = typeof params[k] === 'number' ? num(k, params[k]) : Q.get(k); });
+  var skinId = Q.get('skin') || 'pixel16';
+
+  /* ---------------- scene art (original, drawn once) ---------------- */
+  function mk(w, h) { var c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+  function hashf(i) { var x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+  function sprite(rows, pal) { var c = mk(rows[0].length, rows.length), g = c.getContext('2d'); rows.forEach(function (r, y) { for (var x = 0; x < r.length; x++) if (pal[r[x]]) { g.fillStyle = pal[r[x]]; g.fillRect(x, y, 1, 1); } }); return c; }
+  var OUT = '#14101e';
+  // Meadowhold square, drawn by the shared pixel scene kit (pixel-kit/pixel-scene.js); the same spec is used by dialogue-box and dialogue-choices
+  var PXS = window.GameDNA_PixelScene;
+  var SCENE = PXS.scene({ seed: 44, map: [
+    'TTTTTTTTTTTTTTTT', 'TTTTTT,T.TT,TTTT', ',....,.....,T.,T', '...........,..T,', '................', '................', '....ccccccccc...',
+    '....cccccccccppp', '....cccccccccppp', '....ccccccccc...', '.......pp.......', '.FF....pp.....u.', 'FF.F...pp.......', '.......pp.......'],
+    props: [{ k: 'house', x: 40, y: 92, o: { w: 60, roofH: 24, wallH: 22, wall: 'stone', lit: true } }, { k: 'barrel', x: 88, y: 91 }, { k: 'crate', x: 100, y: 93 }, { k: 'well', x: 30, y: 136 },
+      { k: 'sign', x: 88, y: 130 }, { k: 'stall', x: 230, y: 108, o: { color: 'blue' } }, { k: 'bench', x: 166, y: 172 }, { k: 'hay', x: 20, y: 168 },
+      { k: 'fence', x: 2, y: 208, o: { len: 104 } }, { k: 'fence', x: 150, y: 208, o: { len: 106 } }] });
+  var LAMPS = [[72, 100], [196, 98], [60, 152], [196, 152]];
+  function drawLamp(g, x, y, a, t, i) {   // a = 0 dark .. 1 lit
+    var p = PXS.prop('lantern', { lit: a > 0.5 });
+    if (a > 0.02) PXS.glow(g, x, y - 13, 14, '#ffd070', a * (0.85 + 0.15 * Math.sin(t / 130 + i * 2)));
+    g.drawImage(p.frames[p.frames.length > 1 ? Math.floor(t / 140 + i) % p.frames.length : 0], x - p.ax, y - p.ay);
+  }
+
+  // the hero: three drawings (down = front, up = back, side = looking right), two walk frames each; 'left' is the side art mirrored
+  var HERO_PAL = { o: OUT, h: '#c86a2a', s: '#f0c8a0', e: '#20102a', a: '#3a7ad8', y: '#ffe070', b: '#2a4a8a', d: '#4a3a2a' };
+  var HERO = { asset: { facing: 'right' } };
+  HERO.down = [0, 1].map(function (f) {
+    return sprite([
+      '....oooo....', '...ohhhho...', '..ohhhhhho..', '..ohsssshho.', '..osesseso..', '..ossssssoo.', '...oooooo...', '..oaaaaaao..', '.oaayaayaao.', 'osaaaaaaaaso',
+      'osoaaaaaaoso', '.o.abbbba.o.', '...obooobo..', f ? '...obo.obo..' : '...obo..obo.', f ? '..oddo.oddo.' : '..oddo..oddo', '..ooo...ooo.'], HERO_PAL);
+  });
+  HERO.up = [0, 1].map(function (f) {
+    return sprite([
+      '....oooo....', '...ohhhho...', '..ohhhhhho..', '.ohhhhhhho..', '..ohhhhhho..', '.oohhhhhho..', '...oooooo...', '..oaaaaaao..', '.oaaaaaaaao.', 'osaaaaaaaaso',
+      'osoaaaaaaoso', '.o.abbbba.o.', '..obooobo...', f ? '..obo.obo...' : '.obo..obo...', f ? '.oddo.oddo..' : 'oddo..oddo..', '.ooo...ooo..'], HERO_PAL);
+  });
+  HERO.side = [0, 1].map(function (f) {
+    return sprite([
+      '....oooo....', '...ohhhho...', '..ohhhhhho..', '..ohhhhsso..', '..ohhhseso..', '..oohhssso..', '...oooooo...', '...oaaaao...', '...oaaayo...', '...oasaao...',
+      '...oasaao...', '...oabbbo...', f ? '...obbbbo...' : '....obbo....', f ? '...obo.obo..' : '....obbo....', f ? '..oddo.oddo.' : '....odddo...', f ? '..ooo..oooo.' : '....ooooo...'], HERO_PAL);
+  });
+  // flip computed in one place: want !== the side the art looks at (pixel-kit flipX); up / down frames are never mirrored
+  function drawHero(g, x, y, dir, fr) {
+    var side = dir === 'left' || dir === 'right', im = (side ? HERO.side : HERO[dir] || HERO.down)[fr];
+    if (side && PXS.flipX(HERO.asset, dir)) { g.save(); g.translate(x + 12, y); g.scale(-1, 1); g.drawImage(im, 0, 0); g.restore(); } else g.drawImage(im, x, y);
+  }
+  // standing in a conversation the hero turns to whoever (or whatever) he talks to: the longer axis picks the frame
+  function heroLook(name) {
+    var h = sim.hero, id = name === 'cutscene' ? 'mira' : name, n = NPC[id], sg = name === 'sign' && typeof SIGN !== 'undefined' ? SIGN : null;
+    var p = n ? [n.x + 7, n.y] : sg ? [sg.x + 7, sg.y + sg.h] : null; if (!p) return;
+    var dx = p[0] - (h.x + 6), dy = p[1] - h.y;
+    h.dir = Math.abs(dy) >= Math.abs(dx) ? (dy > 0 ? 'down' : 'up') : dx > 0 ? 'right' : 'left'; h.look = n ? id : p[0];
+  }
+  var MIRA = [0, 1].map(function (f) {   // the lamplighter: silver hair, violet robe, a lantern on a pole
+    return sprite([
+      '........ooo...', '.....oooo#o...', '....owwwwo#o..', '...owwwwwwo#..', '...owsssswo#o.', '...osesseso#y.', '...ossssssooyo', '....oooooo.oy.', '...oppppppo.#.', '..oppPpPppo.#.',
+      '..opppppppso#.', '..oppppppp.o#.', '..oppPPPppo.#.', '..opppppppo.#.', f ? '..opppppppo.#.' : '...oppppppo.#.', '..ooooooooo.o.'],
+      { o: OUT, w: '#e8e8f4', s: '#f0c8a0', e: '#20102a', p: '#7a4ab8', P: '#a878e8', '#': '#6a4224', y: f ? '#ffe070' : '#fff4b0' });
+  });
+  var BRANN = [0, 1].map(function (f) {   // the gate guard: steel helm with a red plume, tabard, spear
+    return sprite([
+      '...rrr.......o', '..orrro.....o#', '..ommmmo....o#', '.ommmmmmo...o#', '.omsssmmo...o#', '.osesesso..o#.', '.osssssso..o#.', '..oooooo...o#.', '.otttttto.oo#.', 'ommtyytmmoss#.',
+      'ommttttmmo.o#.', '.otttttto..o#.', '..oggggo...o#.', f ? '..ogo.go...o#.' : '..ogo.ogo..o#.', '..odo.odo..o#.', '..ooo.ooo...o.'],
+      { o: OUT, r: '#e84838', m: '#a8b0c8', s: '#e0b890', e: '#20102a', t: '#c83a3a', y: '#ffe070', g: '#4a4a5a', d: '#3a2a20', '#': '#8a5a30' });
+  });
+  var NPC = { mira: { x: 150, y: 70, img: MIRA }, brann: { x: 206, y: 186, img: BRANN } };
+  function spriteRect(id) {
+    if (id === 'hero') return { x: Math.round(sim.hero.x), y: Math.round(sim.hero.y) - 16, w: 12, h: 16, id: 'hero' };
+    var n = NPC[id]; return n ? { x: n.x, y: n.y - 16, w: 14, h: 16, id: id } : null;
+  }
+  var SIGN = { x: 81, y: 119, w: 14, h: 12, id: 'sign' };
+
+
+  /* ---------------- simulation (the "game") ---------------- */
+  var HUD = { x: 0, y: 0, w: W, h: HUD_H };
+  var COIN = { x: 70, y: 150 }, GATE = { x: 108, y: 196, w: 40, h: 12 };
+  var sim, dlg, talk, lastEnd = null, hot = {};
+  function newSim() { sim = { t: 0, hero: { x: 120, y: 140, tx: 120, ty: 140, dir: 'down', look: null }, birds: [{ x: 20, y: 60, v: 0.4 }, { x: 180, y: 120, v: 0.3 }], coinT: -1, gateT: 0, glow: 0 }; }
+  newSim();
+  function makeTalk(keepFlags) {
+    var saved = talk ? talk.getFlags() : null;
+    dlg = DB.create({ bounds: { x: 0, y: 0, w: W, h: H }, skin: skinId, params: { speed: 48 },
+      autoplay: function () { return AUTO; },
+      getAnchor: function (who) { return spriteRect(String(who).toLowerCase()); },
+      getObstacles: function () { return [HUD, spriteRect('hero'), spriteRect('mira'), spriteRect('brann')]; } });
+    talk = DC.create({ box: dlg, script: SCRIPT, flags: FLAGS, bounds: { x: 0, y: 0, w: W, h: H }, skin: skinId, params: params,
+      autoplay: function () { return AUTO; },
+      getObstacles: function () { return [HUD, spriteRect('hero'), spriteRect('mira'), spriteRect('brann')]; },
+      onFlag: function (n) { hot[n] = sim.t; if (n === 'gateOpen') sim.gateT = sim.t; },
+      onEnd: function (r) { lastEnd = r; } });
+    if (keepFlags && saved) talk.setFlags(saved);
+  }
+  makeTalk(false);
+
+  var SPOT = { mira: [150, 92], brann: [182, 194], coins: [COIN.x, COIN.y + 6] };
+  var queued = null;
+  function go(name) { if (talk.busy() || queued) return; var s = SPOT[name]; if (!s) return; sim.hero.tx = s[0]; sim.hero.ty = s[1]; queued = name; }
+  function arrive(name) {
+    if (name === 'coins') { talk.inc('gold', 5); sim.coinT = sim.t; return; }
+    talk.start(name);
+  }
+
+  /* ---------------- scripted loop: a player who reads, browses the menu and picks (deterministic, sim time) ---------------- */
+  // each talk: the menu actions in order ('d' cursor down, 'u' up, 'z' pick, 'w' wait for the countdown); 600 ms between actions
+  var SEQ = [['mira', 'dzdzz'], ['coins'], ['mira', 'dz'], ['brann', 'w'], ['mira', '']], sIdx = 0, idle = 0, plan = '', actT = 0, menuSeen = 0, waitT = 0;
+  function stepLoop() {
+    idle = talk.busy() || queued ? 0 : idle + STEP;
+    if (sIdx < SEQ.length && idle >= (sIdx ? 600 : 300)) { var s = SEQ[sIdx++]; plan = s[1] || ''; go(s[0]); idle = 0; }
+    if (sIdx >= SEQ.length && idle >= 1800) { sIdx = 0; idle = 0; talk.clear(); talk.resetFlags(); queued = null; newSim(); lastEnd = null; }
+    var st = talk.state(), bs = dlg.state();
+    if (st && st.menu && st.menu.open && !AUTO) {
+      actT += STEP;
+      if (plan.length && plan[0] !== 'w' && actT >= 650) {
+        var a = plan[0]; plan = plan.slice(1); actT = 0;
+        if (a === 'd') talk.move(1); else if (a === 'u') talk.move(-1); else if (a === 'z') talk.press();
+      }
+    } else actT = 0;
+    if (bs && !(st && st.menu) && !AUTO) { waitT = bs.stage === 'wait' ? waitT + STEP : 0; if (waitT >= 900) { talk.press(); waitT = 0; } }
+  }
+  function stepSim() {
+    sim.t += STEP;
+    if (LOOP || AUTO) stepLoop();
+    if (!talk.busy()) {
+      var h = sim.hero, dx = h.tx - h.x, dy = h.ty - h.y;
+      if (Math.abs(dx) > 0.5) { h.x += Math.sign(dx) * Math.min(1.2, Math.abs(dx)); h.dir = dx > 0 ? 'right' : 'left'; h.look = null; } else if (Math.abs(dy) > 0.5) { h.y += Math.sign(dy) * Math.min(1.2, Math.abs(dy)); h.dir = dy > 0 ? 'down' : 'up'; h.look = null; }
+      else if (queued) { var q = queued; queued = null; heroLook(q); arrive(q); }
+      sim.birds.forEach(function (bd, i) { bd.x += bd.v; if (bd.x > W + 10) bd.x = -10; bd.y += Math.sin(sim.t / 300 + i) * 0.2; });
+    }
+    var lit = talk.get('hasOil') ? 1 : 0; sim.glow += (lit - sim.glow) * 0.04;
+    talk.update(STEP);
+  }
+
+  /* text state for critics and tools/sprites/statecheck.py. The hero reports the frame drawHero() gets this frame (sim.hero.dir):
+     facing left / right for the side art, noFace 'up frame' / 'down frame' otherwise; target = who he talks to (an x for the sign).
+     Mira and Brann are single front-view drawings, never mirrored: noFace. x = feet centre (sprites are drawn from their left edge). */
+  window.__state = function () {
+    var h = sim.hero, mv = Math.abs(h.tx - h.x) > 0.5 ? Math.sign(h.tx - h.x) * 1.2 : 0, side = h.dir === 'left' || h.dir === 'right';
+    return { t: Math.round(sim.t), actors: [
+      { id: 'hero', x: Math.round(h.x) + 6, y: Math.round(h.y), dir: h.dir, facing: side ? h.dir : null, target: h.look, vx: mv, noFace: side ? undefined : h.dir + ' frame' },
+      { id: 'mira', x: NPC.mira.x + 7, y: NPC.mira.y, facing: null, target: 'hero', noFace: 'frontal art' },
+      { id: 'brann', x: NPC.brann.x + 7, y: NPC.brann.y, facing: null, target: 'hero', noFace: 'frontal art' }] };
+  };
+
+  /* ---------------- drawing ---------------- */
+  var SKN = function () { return SKAPI ? SKAPI.resolve(skinId) : null; };
+  var low = mk(W, H), lg = low.getContext('2d'); lg.imageSmoothingEnabled = false;
+  function drawWorld(g) {
+    var t = sim.t;
+    SCENE.drawGround(g, t);
+    // the south gate (opens when the flag gateOpen is set)
+    var open = talk.get('gateOpen') ? Math.min(1, (t - sim.gateT) / 600) : 0, gx = GATE.x, gy = GATE.y;
+    g.fillStyle = OUT; g.fillRect(gx - 3, gy - 12, 5, 26); g.fillRect(gx + GATE.w - 2, gy - 12, 5, 26);
+    g.fillStyle = '#8a8270'; g.fillRect(gx - 2, gy - 11, 3, 24); g.fillRect(gx + GATE.w - 1, gy - 11, 3, 24);
+    var leaf = Math.round((GATE.w / 2 - 2) * (1 - open * 0.8));
+    [[gx + 1, 1], [gx + GATE.w - 2, -1]].forEach(function (p) {
+      var x0 = p[1] > 0 ? p[0] : p[0] - leaf;
+      g.fillStyle = OUT; g.fillRect(x0 - 1, gy - 7, leaf + 2, 15);
+      for (var k = 0; k < leaf; k += 4) { g.fillStyle = '#8a5a30'; g.fillRect(x0 + k, gy - 6, 3, 13); g.fillStyle = '#b07a44'; g.fillRect(x0 + k, gy - 6, 1, 13); }
+      g.fillStyle = '#5a3a20'; g.fillRect(x0, gy - 3, leaf, 2); g.fillRect(x0, gy + 3, leaf, 2);
+    });
+    // coins on the grass until found; a sparkle when picked up
+    if (sim.coinT < 0) { var sp = Math.floor(t / 200) % 4; [[0, 0], [5, 2], [2, 4]].forEach(function (c, k) { g.fillStyle = OUT; g.fillRect(COIN.x + c[0] - 1, COIN.y + c[1] - 1, 5, 4); g.fillStyle = '#e8b030'; g.fillRect(COIN.x + c[0], COIN.y + c[1], 3, 2); g.fillStyle = sp === k ? '#ffffff' : '#fff0a0'; g.fillRect(COIN.x + c[0], COIN.y + c[1], 1, 1); }); }
+    else if (t - sim.coinT < 900) { var u = (t - sim.coinT) / 900, yy = COIN.y - 6 - u * 14; g.globalAlpha = 1 - u; g.fillStyle = OUT; g.fillRect(COIN.x - 6, yy - 1, 21, 9); g.fillStyle = '#ffe070'; g.fillRect(COIN.x - 5, yy, 19, 7); g.fillStyle = '#5a3a10'; g.fillRect(COIN.x - 3, yy + 3, 3, 1); g.fillRect(COIN.x - 2, yy + 2, 1, 3); g.fillRect(COIN.x + 2, yy + 1, 2, 5); g.fillRect(COIN.x + 6, yy + 1, 4, 1); g.fillRect(COIN.x + 6, yy + 1, 1, 3); g.fillRect(COIN.x + 6, yy + 3, 4, 1); g.fillRect(COIN.x + 9, yy + 3, 1, 3); g.fillRect(COIN.x + 6, yy + 5, 4, 1); g.globalAlpha = 1; }
+    sim.birds.forEach(function (bd) { var f = Math.floor(t / 160) % 2; g.fillStyle = OUT; g.fillRect(Math.round(bd.x) - 2, Math.round(bd.y) + (f ? 0 : -1), 2, 1); g.fillRect(Math.round(bd.x) + 1, Math.round(bd.y) + (f ? 0 : -1), 2, 1); g.fillRect(Math.round(bd.x), Math.round(bd.y), 1, 1); });
+    var list = [['mira', NPC.mira.x, NPC.mira.y, MIRA], ['brann', NPC.brann.x, NPC.brann.y, BRANN], ['hero', Math.round(sim.hero.x), Math.round(sim.hero.y), HERO]];
+    var objs = SCENE.sorted(t).map(function (o) { return [o, 0, o.y]; });
+    LAMPS.forEach(function (p, i) { objs.push([{ draw: function (gg) { drawLamp(gg, p[0], p[1], sim.glow, t, i); } }, 0, p[1]]); });   // dark until Mira has oil (the flag hasOil)
+    list.concat(objs).sort(function (a, c) { return a[2] - c[2]; }).forEach(function (c) {
+      if (c[0].draw) { c[0].draw(g); return; }
+      var moving = c[0] === 'hero' && (Math.abs(sim.hero.tx - sim.hero.x) > 0.5 || Math.abs(sim.hero.ty - sim.hero.y) > 0.5) && !talk.busy();
+      var fr = c[0] === 'hero' ? (moving ? Math.floor(t / 130) % 2 : 0) : Math.floor(t / 520) % 2;
+      g.fillStyle = 'rgba(20,16,30,0.4)'; g.fillRect(c[1] + 2, c[2] - 1, 9, 2);
+      if (c[0] === 'hero') drawHero(g, c[1], c[2] - 16 - (moving && fr ? 1 : 0), sim.hero.dir, fr); else g.drawImage(c[3][fr], c[1], c[2] - 16 - (moving && fr ? 1 : 0));
+    });
+    // night: darker while the lanterns are out
+    g.fillStyle = '#0a0c2a'; g.globalAlpha = 0.28 * (1 - sim.glow); g.fillRect(0, HUD_H, W, H - HUD_H); g.globalAlpha = 1;
+    var st = dlg.state();
+    if (st && st.anchor) { var a = st.anchor, bob = Math.floor(t / 250) % 2; g.fillStyle = OUT; g.fillRect(a.x + a.w / 2 - 3, a.y - 9 + bob, 7, 6); g.fillStyle = '#ffffff'; g.fillRect(a.x + a.w / 2 - 2, a.y - 8 + bob, 5, 4); g.fillStyle = OUT; g.fillRect(a.x + a.w / 2 - 1, a.y - 7 + bob, 1, 1); g.fillRect(a.x + a.w / 2 + 1, a.y - 7 + bob, 1, 1); }
+  }
+  function drawHud(g) {
+    var S = SKN();
+    if (S && S.frame && S.pixel !== false) S.frame(g, { x: 0, y: 0, w: W, h: HUD_H }, { role: 'window', team: 'n' }); else { g.fillStyle = '#0e1226'; g.fillRect(0, 0, W, HUD_H); g.fillStyle = '#2c3a6a'; g.fillRect(0, HUD_H - 1, W, 1); }
+    if (!S) return;
+    S.text(g, 'MEADOWHOLD', 6, 4, { font: 'ui', color: '#ffe890' });
+    var gold = talk.get('gold'), flash = hot.gold != null && sim.t - hot.gold < 700 && Math.floor((sim.t - hot.gold) / 120) % 2 === 0;
+    S.text(g, 'GOLD ' + gold, W - 6, 4, { font: 'ui', align: 'right', color: flash ? '#ffe070' : '#e8ecff' });
+    var tags = (talk.get('hasOil') ? 'OIL ' : '') + (talk.get('hasPass') ? 'PASS ' : '') + (talk.get('gateOpen') ? 'GATE OPEN' : '');
+    S.text(g, tags || (talk.busy() ? 'TALKING' : 'EXPLORE'), W / 2 + 8, 4, { font: 'ui', align: 'center', color: tags ? '#8ad870' : talk.busy() ? '#8ab4ff' : '#8a94b8' });
+  }
+
+  var ctx = cv.getContext('2d');
+  function render() {
+    var S = SKN(), pixel = !S || S.pixel !== false, k = pixel ? 1 : 3;
+    if (cv.width !== W * k) { cv.width = W * k; cv.height = H * k; fit(); }
+    if (pixel) {
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false;
+      drawWorld(ctx); drawHud(ctx); talk.draw(ctx);
+    } else {
+      drawWorld(lg); drawHud(lg);
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false; ctx.drawImage(low, 0, 0, W * k, H * k);
+      ctx.setTransform(k, 0, 0, k, 0, 0); ctx.imageSmoothingEnabled = true; talk.draw(ctx);
+    }
+    var st = talk.state(), m = st && st.menu;
+    document.getElementById('lamp').className = talk.busy() ? 'on' : '';
+    document.getElementById('state').textContent = talk.busy() ? 'World paused' : 'World running';
+    document.getElementById('now').textContent = m ? 'choosing: ' + (m.options[m.cursor] ? m.options[m.cursor].text : '') + (m.timeout ? ' (' + (m.left / 1000).toFixed(1) + ' s)' : '') :
+      st ? (st.conv + ', line ' + st.lines) : lastEnd ? 'last: ' + lastEnd.conv + ', ' + lastEnd.choices.map(function (c) { return c.text; }).join(', ') : 'no talk';
+    renderFlags();
+    document.documentElement.dataset.state = JSON.stringify({ t: Math.round(sim.t), talk: st, box: dlg.state() && { stage: dlg.state().stage, speaker: dlg.state().speaker }, flags: talk.getFlags(), last: lastEnd && { conv: lastEnd.conv, choices: lastEnd.choices.length } });
+  }
+  var flagsEl = document.getElementById('flags'), flagsKey = '';
+  function renderFlags() {
+    var f = talk.getFlags(), key = JSON.stringify(f) + Math.floor(sim.t / 300);
+    if (key === flagsKey) return; flagsKey = key;
+    flagsEl.innerHTML = Object.keys(f).map(function (k) {
+      var v = f[k], short = k.replace(/^seen:/, 'seen ');
+      return '<div class="' + (hot[k] != null && sim.t - hot[k] < 1500 ? 'hot' : '') + '"><span>' + short + '</span><b>' + (v === '' ? '""' : String(v)) + '</b></div>';
+    }).join('');
+  }
+  function fit() {
+    var avail = Math.min(document.getElementById('stage').clientWidth - 12, 780), s = Math.max(1, Math.floor(avail / W));
+    var cw = s >= 2 ? W * s : Math.max(Math.min(W, avail), Math.floor(avail));
+    cv.style.width = cw + 'px'; cv.style.height = Math.round(cw * H / W) + 'px';
+    document.getElementById('scaleinfo').textContent = '256×224 native · ' + (s >= 2 ? s + '×' : (cw / W).toFixed(2) + '×');
+  }
+  addEventListener('resize', fit); fit();
+
+  /* ---------------- validator panel ---------------- */
+  function showValidation(which) {
+    var r = which === 'draft' ? DC.validate(DRAFT, { flags: { gold: 0 } }) : talk.validate();
+    var esc = function (s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); };
+    var html = '<span class="' + (r.ok ? 'ok' : 'err') + '">' + (r.ok ? 'OK: every label reachable, every flag known' : 'Problems found') + '</span>\n';
+    r.errors.forEach(function (e) { html += '<span class="err">error  ' + esc(e) + '</span>\n'; });
+    r.warnings.forEach(function (e) { html += '<span class="warn">warn   ' + esc(e) + '</span>\n'; });
+    if (r.unusedFlags.length) html += 'unused flags: ' + esc(r.unusedFlags.join(', ')) + '\n';
+    var n = 0; for (var c in r.conversations) n += r.conversations[c].entries;
+    html += Object.keys(r.conversations).length + ' conversations, ' + n + ' entries';
+    document.getElementById('vlog').innerHTML = html;
+    document.querySelectorAll('#vsel button').forEach(function (b) { b.setAttribute('aria-checked', String(b.dataset.v === which)); });
+  }
+  document.querySelectorAll('#vsel button').forEach(function (b) { b.addEventListener('click', function () { showValidation(b.dataset.v); }); });
+  showValidation('village');
+
+  /* ---------------- controls ---------------- */
+  function manual() { if (LOOP) setLoop(false); }
+  var ACT = { mira: function () { go('mira'); }, brann: function () { go('brann'); }, coins: function () { if (!talk.busy()) { talk.inc('gold', 5); sim.coinT = sim.t; } },
+    pass: function () { talk.set('hasPass', true); }, reset: function () { talk.clear(); talk.resetFlags(); newSim(); queued = null; lastEnd = null; }, end: function () { talk.end(); } };
+  document.querySelectorAll('.triggers button').forEach(function (btn) { btn.addEventListener('click', function () { manual(); ACT[btn.dataset.act](); }); });
+  addEventListener('keydown', function (e) {
+    if (talk.key(e.code, true)) { manual(); e.preventDefault(); return; }       // menu: arrows, Z, X; box: Z / Space / Enter
+    var m = { Digit1: 'mira', Digit2: 'brann', Digit3: 'coins', Digit4: 'pass', KeyR: 'reset', Escape: 'end' }[e.code];
+    if (m) { manual(); ACT[m](); }
+  });
+  addEventListener('keyup', function (e) { talk.key(e.code, false); });
+  cv.addEventListener('pointerdown', function (e) {
+    if (!talk.busy()) return;
+    var r = cv.getBoundingClientRect(), x = (e.clientX - r.left) * W / r.width, y = (e.clientY - r.top) * H / r.height;
+    manual(); if (!talk.tapAt(x, y) && !talk.choosing()) { talk.tap(); talk.hold(true); } e.preventDefault();
+  });
+  addEventListener('pointerup', function () { talk.hold(false); });
+  function syncControls() {
+    document.querySelectorAll('input[type=range][data-key]').forEach(function (inp) {
+      var k = inp.dataset.key; inp.value = params[k];
+      inp.style.setProperty('--fill', (params[k] - inp.min) / (inp.max - inp.min) * 100 + '%');
+      document.querySelector('[data-out="' + k + '"]').textContent = params[k];
+    });
+    document.querySelectorAll('.seg[data-key]').forEach(function (seg) { seg.querySelectorAll('button').forEach(function (bt) { bt.setAttribute('aria-checked', String(bt.textContent === String(params[seg.dataset.key]))); }); });
+    document.getElementById('skin').value = skinId;
+  }
+  document.querySelectorAll('input[type=range][data-key]').forEach(function (inp) { inp.addEventListener('input', function () { params[inp.dataset.key] = +inp.value; talk.setParams(params); syncControls(); }); });
+  document.querySelectorAll('.seg[data-key]').forEach(function (seg) { seg.querySelectorAll('button').forEach(function (bt) { bt.addEventListener('click', function () {
+    var k = seg.dataset.key; params[k] = typeof DC.DEFAULTS[k] === 'number' ? +bt.textContent : bt.textContent; talk.setParams(params); syncControls(); }); }); });
+  document.getElementById('skin').addEventListener('change', function (e) { skinId = e.target.value; talk.clear(); makeTalk(true); });
+  function setLoop(on) { LOOP = on; document.querySelectorAll('#loop button').forEach(function (x) { x.setAttribute('aria-checked', String(+x.dataset.v === (on ? 1 : 0))); }); if (on) { sIdx = 0; idle = 0; talk.clear(); talk.resetFlags(); queued = null; newSim(); } }
+  document.querySelectorAll('#loop button').forEach(function (bt) { bt.addEventListener('click', function () { setLoop(!!+bt.dataset.v); }); });
+  if (!LOOP) setLoop(false);
+  document.getElementById('resetp').addEventListener('click', function () { resetParams(); skinId = 'pixel16'; talk.clear(); makeTalk(false); newSim(); queued = null; sIdx = 0; syncControls(); setLoop(true); });
+  syncControls();
+
+  /* ---------------- run ---------------- */
+  if (FREEZE) {
+    var n = Math.floor(T_AT / STEP); for (var i = 0; i < n; i++) stepSim(); render();
+  } else {
+    if (T_AT > 0) { var n2 = Math.floor(T_AT / STEP); for (var j = 0; j < n2; j++) stepSim(); }
+    var last = performance.now(), acc = 0;
+    (function loop(now) { acc += Math.min(250, now - last); last = now; while (acc >= STEP) { stepSim(); acc -= STEP; } render(); requestAnimationFrame(loop); })(performance.now());
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,106 @@
+{
+ "id": "paper-doll",
+ "code": "D-02",
+ "kind": "addon",
+ "name": "Paper doll",
+ "family": "paper-doll",
+ "oneLiner": "A layered pixel hero (body, hair, hat, top, legs, boots, weapon, shield) with swappable parts and palette tints, every part painted on one shared rig so any combination lines up in every frame of the 4-direction walk, the 3-frame attack and the jump; the weapon stays in the right hand when the hero turns (behind the body facing left); a small wardrobe window (keys, mouse, touch) shows a turning preview and the change on the walking hero.",
+ "fits": [
+  "top-down RPGs and adventures (equipment you can see)",
+  "side-view action and platformers with a small hero",
+  "dress-up, character creators and shops that preview gear",
+  "any pixel game whose hero should show what it wears"
+ ],
+ "notFor": [
+  "HD painted or 3D characters (this is 16-bit pixel art, about 22 px tall)",
+  "large bosses or monsters (humanoid rig only)",
+  "games that need a hand-drawn signature hero: the doll replaces the hero's sprite"
+ ],
+ "interfaces": {
+  "time": "any",
+  "coords": "screen",
+  "layer": "actor",
+  "needs": [
+   "the hero's feet (box centre and bottom, after the camera), facing, a walk counter that grows while it moves, the attack progress (0..1 or null) and airborne flag",
+   "a fixed update step (also the ?t= fast-forward) for update(dt)",
+   "a key / button to open the wardrobe and the game paused while it is open"
+  ],
+  "provides": [
+   "create({look}) -> doll: draw(ctx, feetX, feetY, {dir, moving, walk, attack, air, scale}), equip(slot, style, tint), look() / setLook() for saves, lastDrawn() hands for effects, check()",
+   "wardrobe({doll, view, owned}) -> open / close / isOpen / input / pointer / update / draw / rects",
+   "catalog (styles, tints), random(seed) outfits, verify(look), the anchor table rig(dir, pose, i)"
+  ]
+ },
+ "params": [
+  {
+   "key": "stride",
+   "label": "Px walked per walk frame",
+   "type": "range",
+   "min": 2,
+   "max": 12,
+   "step": 1,
+   "default": 5
+  },
+  {
+   "key": "sparkleMs",
+   "label": "Equip sparkle (ms, 0 = off)",
+   "type": "range",
+   "min": 0,
+   "max": 1000,
+   "step": 20,
+   "default": 520
+  },
+  {
+   "key": "shadow",
+   "label": "Ground shadow",
+   "type": "select",
+   "options": [
+    "on",
+    "off"
+   ],
+   "default": "on"
+  },
+  {
+   "key": "wardrobeKey",
+   "label": "Wardrobe key",
+   "type": "select",
+   "options": [
+    "C",
+    "I",
+    "Tab"
+   ],
+   "default": "C"
+  }
+ ],
+ "variants": [
+  {
+   "name": "Adventurer (default)",
+   "params": {
+    "stride": 5
+   }
+  },
+  {
+   "name": "Platformer hero (shorter steps)",
+   "params": {
+    "stride": 4
+   }
+  },
+  {
+   "name": "Calm dress-up (no sparkle)",
+   "params": {
+    "sparkleMs": 0
+   }
+  }
+ ],
+ "assets": [
+  "module/paper-doll.js: the element as one dependency-free script (global GameDNA_PaperDoll): 8 slots, 32 styles, 35 tints in 6 materials with derived 5-tone ramps, hand-pixelled in code on one rig (anchor table), 36 frames per outfit cached as canvases, the wardrobe window with a crisp bitmap font",
+  "demo only: pixel-kit market square scenery and a code-drawn straw dummy"
+ ],
+ "status": "draft",
+ "module": {
+  "file": "module/paper-doll.js",
+  "global": "GameDNA_PaperDoll",
+  "version": "1.1.0",
+  "docs": "module/README.md"
+ }
+}

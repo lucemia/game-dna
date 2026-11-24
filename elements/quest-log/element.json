@@ -1,0 +1,190 @@
+{
+  "id": "quest-log",
+  "code": "H-03",
+  "kind": "addon",
+  "name": "Quest log & objectives",
+  "family": "quest-log",
+  "oneLiner": "Quests as data with ordered steps and counters: the game only reports what happened (kill, collect, talk, reach) and the module advances the right step, clamps every counter to its target, ignores events for later steps and after completion, and shows it all: a tracker card per quest in a HUD corner (current objective, 2/3 counter that punches, a bar, a finished step that checks off, strikes through and collapses), NEW QUEST / QUEST COMPLETE banners (or C-14 toasts), a full log panel with active and done tabs, descriptions, steps and rewards, and optional world markers with edge arrows. Never covers the HUD rects the game names; text never overlaps. Glass cards on HD canvases, crisp pixel cards with bitmap fonts on native pixel canvases.",
+  "fits": [
+    "top-down action adventure and RPG",
+    "open-map and town games with errands",
+    "metroidvania and platformers with collectibles",
+    "survival and crafting games (gather N, build M)",
+    "tactics and battle campaigns with objectives"
+  ],
+  "notFor": [
+    "arcade games with a single score goal (nothing to track)",
+    "narrative games whose objectives must stay hidden",
+    "branching quest graphs with choices inside a quest (steps are linear; branch by starting a different quest)"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "quest data: id, title, giver, description, reward, ordered steps with 'type:target' and a count",
+      "events from the code that decides them: start(questId), event('kill' | 'collect' | 'talk' | 'reach' | any word, target, n)",
+      "the screen rect of the play view and the HUD rects to keep clear (dialogue boxes while open)",
+      "optional: quiet() = true while a dialogue or cut-scene runs (banners wait), obstacles() = screen rects of NPCs / speakers to keep visible",
+      "optional: camera world rect, target world positions and the player world position (markers, reach steps, banners off the player)",
+      "a fixed update step (also on the ?t= replay), a key for the log and arrow / confirm / cancel while it is open"
+    ],
+    "provides": [
+      "a drawn tracker, quest log, start / completion banners and world markers",
+      "quest state: status, current step, counts; callbacks onStart / onProgress / onStep / onComplete for rewards",
+      "rect() / rects() of what is on screen (UI rects for other overlays), busy() while the log is open",
+      "state(), lastDrawn() (cards, texts, banner, markers, log), stats() (applied and ignored events by reason)"
+    ]
+  },
+  "params": [
+    {
+      "key": "corner",
+      "label": "Tracker corner",
+      "type": "select",
+      "options": [
+        "tr",
+        "tl",
+        "br",
+        "bl"
+      ],
+      "default": "tr"
+    },
+    {
+      "key": "max",
+      "label": "Quests in the tracker",
+      "type": "range",
+      "min": 1,
+      "max": 4,
+      "step": 1,
+      "default": 2
+    },
+    {
+      "key": "theme",
+      "label": "Look",
+      "type": "select",
+      "options": [
+        "dusk",
+        "parchment",
+        "skin"
+      ],
+      "default": "dusk"
+    },
+    {
+      "key": "markers",
+      "label": "World markers",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "dodge",
+      "label": "Move away from the player and objectives",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "banner",
+      "label": "Start / complete banners",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "future",
+      "label": "Later steps in the log",
+      "type": "select",
+      "options": [
+        "hidden",
+        "shown"
+      ],
+      "default": "hidden"
+    },
+    {
+      "key": "logKey",
+      "label": "Log key (keycap on the tracker)",
+      "type": "select",
+      "options": [
+        "J",
+        "L",
+        "Q",
+        "Tab"
+      ],
+      "default": "J"
+    },
+    {
+      "key": "hold",
+      "label": "Finished step stays (ms)",
+      "type": "range",
+      "min": 400,
+      "max": 2500,
+      "step": 100,
+      "default": 1100
+    },
+    {
+      "key": "render",
+      "label": "Render",
+      "type": "select",
+      "options": [
+        "auto",
+        "crisp",
+        "smooth"
+      ],
+      "default": "auto"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Adventure tracker",
+      "params": {
+        "corner": "tr",
+        "max": 2,
+        "theme": "dusk",
+        "markers": "on"
+      }
+    },
+    {
+      "name": "Storybook",
+      "params": {
+        "theme": "parchment",
+        "corner": "tl",
+        "max": 1
+      }
+    },
+    {
+      "name": "Checklist only",
+      "params": {
+        "markers": "off",
+        "banner": "off",
+        "max": 3
+      }
+    },
+    {
+      "name": "Pixel host",
+      "params": {
+        "render": "crisp",
+        "max": 1
+      }
+    }
+  ],
+  "assets": [
+    "module/quest-log.js: the element as one dependency-free script (global GameDNA_QuestLog): quest rules, tracker, log panel, banners, markers, placement clear of HUD rects, smooth and crisp drawing with built-in 6x8 and 5x6 bitmap fonts",
+    "no image, font or audio files"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/quest-log.js",
+    "global": "GameDNA_QuestLog",
+    "version": "1.1.4",
+    "docs": "module/README.md"
+  }
+}

@@ -1,0 +1,256 @@
+{
+  "id": "timing-bar",
+  "code": "F-01",
+  "kind": "addon",
+  "name": "Timing-bar minigame",
+  "family": "skill-checks",
+  "oneLiner": "Any 'skill check' moment (picking a lock, a timed attack bonus, forging, reeling in a fish) opens a small window with a bar: a marker sweeps across bevelled miss / good / great / perfect zones and the player stops it with one press; a grade word pops, the window closes, and the game gets {grade, offset} back. Optional multi-press sequences, difficulty presets, an assist mode, and an autoplay hook that resolves at a fixed grade so ?auto=1 runs end the same.",
+  "fits": [
+    "top-down adventure (locks, traps, crafting)",
+    "turn-based RPG battle (timed attack or defence bonus)",
+    "action RPG",
+    "life sim / crafting (forging, cooking, fishing)",
+    "roguelike",
+    "minigame collections"
+  ],
+  "notFor": [
+    "rhythm games (a whole track of timed notes is a different element)",
+    "real-time action where pausing the world for a check would break the flow (use an in-world timing ring instead)",
+    "checks that must stay invisible (stealth rolls)"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "the moment that becomes a skill check (the `moment` parameter, named by the designer), in update logic (call start once; act on the result in onDone)",
+      "the confirm input routed to the bar while busy() (press(), tap() or key(code, down))",
+      "a fixed 60 Hz update step (the bar's only clock), also while the world is paused for the check",
+      "the play field size in native px, HUD excluded",
+      "optional: ui rects to keep clear (HUD, menus, dialog boxes) and the anchor of the object being worked on",
+      "optional: the game's autoplay flag"
+    ],
+    "provides": [
+      "busy flag: route the confirm input here and pause the world while a check runs",
+      "result {grade: miss|good|great|perfect|cancel, offset, hits, score, timeout, auto} via onDone (synchronous) and a Promise",
+      "shake request (perfect, miss) and sound cue names",
+      "window rectangle on screen, for other overlays to avoid"
+    ]
+  },
+  "params": [
+    {
+      "key": "moment",
+      "label": "Where the skill check goes (required; the designer's words)",
+      "type": "text",
+      "default": "opening a locked chest or door (a lockpick; on a miss it stays locked and can be retried)"
+    },
+    {
+      "key": "difficulty",
+      "label": "Difficulty",
+      "type": "select",
+      "options": [
+        "easy",
+        "normal",
+        "hard",
+        "expert"
+      ],
+      "default": "normal"
+    },
+    {
+      "key": "speed",
+      "label": "Speed (bar widths / s)",
+      "type": "range",
+      "min": 0.4,
+      "max": 3,
+      "step": 0.05,
+      "default": 1.1
+    },
+    {
+      "key": "good",
+      "label": "Good zone (fraction of bar)",
+      "type": "range",
+      "min": 0.1,
+      "max": 0.6,
+      "step": 0.01,
+      "default": 0.3
+    },
+    {
+      "key": "great",
+      "label": "Great zone",
+      "type": "range",
+      "min": 0.04,
+      "max": 0.4,
+      "step": 0.01,
+      "default": 0.14
+    },
+    {
+      "key": "perfect",
+      "label": "Perfect zone",
+      "type": "range",
+      "min": 0.02,
+      "max": 0.2,
+      "step": 0.005,
+      "default": 0.05
+    },
+    {
+      "key": "motion",
+      "label": "Motion",
+      "type": "select",
+      "options": [
+        "pingpong",
+        "linear"
+      ],
+      "default": "pingpong"
+    },
+    {
+      "key": "ease",
+      "label": "Ease",
+      "type": "select",
+      "options": [
+        "none",
+        "sine",
+        "accel"
+      ],
+      "default": "none"
+    },
+    {
+      "key": "hits",
+      "label": "Presses per check",
+      "type": "range",
+      "min": 1,
+      "max": 5,
+      "step": 1,
+      "default": 1
+    },
+    {
+      "key": "zones",
+      "label": "Zone position",
+      "type": "select",
+      "options": [
+        "random",
+        "fixed"
+      ],
+      "default": "random"
+    },
+    {
+      "key": "assist",
+      "label": "Assist (slower, bigger zones, no timeout)",
+      "type": "select",
+      "options": [
+        "off",
+        "on"
+      ],
+      "default": "off"
+    },
+    {
+      "key": "width",
+      "label": "Bar width (px)",
+      "type": "range",
+      "min": 96,
+      "max": 224,
+      "step": 8,
+      "default": 160
+    },
+    {
+      "key": "position",
+      "label": "Position (without an anchor)",
+      "type": "select",
+      "options": [
+        "upper",
+        "center",
+        "lower"
+      ],
+      "default": "center"
+    },
+    {
+      "key": "dim",
+      "label": "Dim behind",
+      "type": "range",
+      "min": 0,
+      "max": 0.6,
+      "step": 0.05,
+      "default": 0.3
+    },
+    {
+      "key": "shake",
+      "label": "Shake request",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "autoGrade",
+      "label": "Autoplay grade",
+      "type": "select",
+      "options": [
+        "good",
+        "great",
+        "perfect",
+        "miss",
+        "seeded"
+      ],
+      "default": "good"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Lockpick",
+      "params": {
+        "moment": "opening a locked chest or door (a lockpick; on a miss it stays locked and can be retried)",
+        "difficulty": "normal",
+        "hits": 1,
+        "motion": "pingpong",
+        "zones": "random"
+      }
+    },
+    {
+      "name": "Timed strike",
+      "params": {
+        "moment": "the hero's basic attack (a timed bonus: perfect x1.5, great x1.25, good x1.0, miss x0.75 damage)",
+        "difficulty": "hard",
+        "hits": 1,
+        "zones": "random",
+        "dim": 0.2
+      }
+    },
+    {
+      "name": "Forge (three hammer blows)",
+      "params": {
+        "moment": "forging at the anvil (three hammer blows; the result sets the item's quality)",
+        "difficulty": "normal",
+        "hits": 3,
+        "zones": "random"
+      }
+    },
+    {
+      "name": "Reel in (one pass, slow ends)",
+      "params": {
+        "moment": "reeling in a fish (one pass; a miss loses the fish)",
+        "difficulty": "easy",
+        "motion": "linear",
+        "ease": "sine"
+      }
+    },
+    {
+      "name": "Assist",
+      "params": {
+        "difficulty": "easy",
+        "assist": "on"
+      }
+    }
+  ],
+  "assets": [
+    "module/timing-bar.js: the element as one dependency-free script (global GameDNA_TimingBar): window, bar, zones, marker, judging, grade words (bold 5x7 font), sparks, placement, autoplay, drawing",
+    "no image or audio files (sound cues are names passed to onSfx)"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/timing-bar.js",
+    "global": "GameDNA_TimingBar",
+    "version": "1.0.0",
+    "docs": "module/README.md"
+  }
+}

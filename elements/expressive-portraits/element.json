@@ -1,0 +1,200 @@
+{
+  "id": "expressive-portraits",
+  "code": "D-04",
+  "kind": "addon",
+  "name": "Expressive portraits",
+  "family": "portraits",
+  "oneLiner": "Hand-made-looking 16-bit bust portraits built from a small seeded spec (head, skin, eyes, brows, mouth, hair style and colour, ears, hood / helmet / circlet, scar or freckles, collar) at native 48x48 or 64x64 with shaded ramps and an outline. Seven expressions (neutral, happy, angry, sad, surprised, determined, hurt) change only the brows, eyes and mouth; the face blinks and its mouth moves while the dialogue box types. Beside the H-01 dialogue box the speaker's portrait slides in, switches expression per line and dims while someone else talks; on its own it draws framed panels for character select and status screens.",
+  "fits": [
+    "turn-based and tactics RPG (conversations before and after battles, unit status)",
+    "top-down adventure (talking to villagers, quest givers)",
+    "visual-novel style scenes inside a game",
+    "character select, party, shop and status screens",
+    "any game that already uses the H-01 dialogue box"
+  ],
+  "notFor": [
+    "full-body sprites or animated characters (portraits are busts)",
+    "lip sync to voice audio (the mouth follows the typing, not phonemes)",
+    "photographic or painted portraits; art the designer drew by hand (draw that with drawImage, the presenter still works through getPortrait)",
+    "expressions that change in the middle of a line (one expression per line)",
+    "games without the H-01 dialogue box, for conversations (portraits then only work in menus and scripted scenes through show / hide)"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "for conversations: an H-01 dialogue box (GameDNA_DialogueBox) whose lines carry who and expr",
+      "a fixed 60 Hz update step, also while the dialogue box is busy",
+      "the play field size in native px (the same field the dialogue box uses)",
+      "a cast: one small spec per speaking character, keyed by the line's speaker / who",
+      "optional: rectangles of UI to keep clear (HUD, menus)"
+    ],
+    "provides": [
+      "the speaker's portrait beside the dialogue box, with the expression from each line's expr field, a talking mouth while letters type, blinking, and slide / fade enter and exit",
+      "a narrowed field for the dialogue box (reserve), so the box sits beside the portrait",
+      "framed portrait panels and bare portraits for character select, party and status screens (drawPanel / draw)",
+      "the portrait panel rects on screen, for other overlays to avoid"
+    ]
+  },
+  "params": [
+    {
+      "key": "size",
+      "label": "Portrait size (native px)",
+      "type": "select",
+      "options": [
+        48,
+        64
+      ],
+      "default": 48
+    },
+    {
+      "key": "layout",
+      "label": "Where portraits sit",
+      "type": "select",
+      "options": [
+        "left",
+        "right",
+        "two"
+      ],
+      "default": "left"
+    },
+    {
+      "key": "frame",
+      "label": "Panel frame",
+      "type": "select",
+      "options": [
+        "window",
+        "plate",
+        "none"
+      ],
+      "default": "window"
+    },
+    {
+      "key": "enter",
+      "label": "Enter / exit",
+      "type": "select",
+      "options": [
+        "slide",
+        "fade",
+        "none"
+      ],
+      "default": "slide"
+    },
+    {
+      "key": "enterMs",
+      "label": "Enter time (ms; exit is 3/4 of it)",
+      "type": "range",
+      "min": 0,
+      "max": 400,
+      "step": 20,
+      "default": 160
+    },
+    {
+      "key": "listener",
+      "label": "Other portrait while someone talks",
+      "type": "select",
+      "options": [
+        "dim",
+        "hide"
+      ],
+      "default": "dim"
+    },
+    {
+      "key": "blinkMs",
+      "label": "Blink about every (ms; 0 = off)",
+      "type": "range",
+      "min": 0,
+      "max": 8000,
+      "step": 200,
+      "default": 3600
+    },
+    {
+      "key": "mouthMs",
+      "label": "Mouth frame while talking (ms)",
+      "type": "range",
+      "min": 40,
+      "max": 200,
+      "step": 10,
+      "default": 90
+    },
+    {
+      "key": "outline",
+      "label": "Outline",
+      "type": "select",
+      "options": [
+        "ink",
+        "soft"
+      ],
+      "default": "ink"
+    },
+    {
+      "key": "backdrop",
+      "label": "Panel backdrop",
+      "type": "select",
+      "options": [
+        "tint",
+        "skin",
+        "none"
+      ],
+      "default": "tint"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Classic 16-bit RPG",
+      "params": {
+        "size": 48,
+        "layout": "left",
+        "frame": "window",
+        "enter": "slide",
+        "enterMs": 160,
+        "listener": "dim"
+      }
+    },
+    {
+      "name": "Two-sided conversation",
+      "params": {
+        "layout": "two",
+        "listener": "dim",
+        "enter": "slide"
+      }
+    },
+    {
+      "name": "Large faces",
+      "params": {
+        "size": 64,
+        "layout": "left",
+        "enterMs": 200
+      }
+    },
+    {
+      "name": "Quiet cutscene",
+      "params": {
+        "enter": "fade",
+        "enterMs": 300,
+        "listener": "hide",
+        "mouthMs": 120
+      }
+    },
+    {
+      "name": "Soft outline, no frame",
+      "params": {
+        "frame": "none",
+        "outline": "soft",
+        "backdrop": "none"
+      }
+    }
+  ],
+  "assets": [
+    "module/expressive-portraits.js: the element as one dependency-free script (global GameDNA_Portraits): seeded portrait specs, procedural pixel art at native size (5-step hue-shifted ramps, outline), 7 expressions, blink and talk frames, panels, enter/exit, and the presenter for the H-01 dialogue box",
+    "no image files: every portrait is generated from its spec and cached as small canvases"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/expressive-portraits.js",
+    "global": "GameDNA_Portraits",
+    "version": "1.0.0",
+    "docs": "module/README.md"
+  }
+}

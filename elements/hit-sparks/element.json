@@ -1,0 +1,200 @@
+{
+  "id": "hit-sparks",
+  "code": "E-02",
+  "name": "Hit sparks & spell bursts",
+  "kind": "addon",
+  "family": "impact-fx",
+  "oneLiner": "On the frame a blow lands, a few frames of impact at the contact point (slash streak, star burst, cross spark or ring shockwave) with pooled pixel sparks that fall under gravity; spells get palette-cycled fire, ice, thunder and heal bursts; criticals are bigger, flash white for 3 frames and ask for hit-stop and shake. Deterministic with a seed.",
+  "fits": [
+    "turn-based RPG battle",
+    "action RPG",
+    "side-scrolling platformer / action",
+    "beat-'em-up",
+    "tactics / strategy RPG",
+    "roguelike",
+    "monster battler",
+    "shmup (hits on enemies)"
+  ],
+  "notFor": [
+    "games whose art direction avoids impact flashes (calm puzzle, photosensitive-safe modes: set critFlash off)",
+    "hit feedback that must carry information (numbers, status): pair with damage numbers instead",
+    "hundreds of hits per second (the particle cap recycles sparks; aggregate first)"
+  ],
+  "interfaces": {
+    "time": "realtime",
+    "coords": "side",
+    "layer": "fx",
+    "needs": [
+      "hit event on the impact frame: contact point {x, y} on the target, attacker facing, crit flag, element",
+      "spell event: target body centre and element (fire, ice, thunder, heal)",
+      "frame clock in ms (world time that pauses during hit-stop)",
+      "optional: unit rects with ids (to stay off neighbours), UI rects (never drawn over), camera offset"
+    ],
+    "provides": [
+      "hit-stop request (ms) on every hit, doubled on criticals",
+      "screen shake request on criticals",
+      "optional screen flash request on criticals (critFlash 'host')",
+      "list of drawn effect rects (for tests and other overlays)"
+    ]
+  },
+  "params": [
+    {
+      "key": "size",
+      "label": "Effect size",
+      "type": "range",
+      "min": 0.5,
+      "max": 2,
+      "step": 0.25,
+      "default": 1
+    },
+    {
+      "key": "life",
+      "label": "Hit length (frames)",
+      "type": "range",
+      "min": 6,
+      "max": 30,
+      "step": 1,
+      "default": 14
+    },
+    {
+      "key": "sparks",
+      "label": "Sparks per hit",
+      "type": "range",
+      "min": 0,
+      "max": 24,
+      "step": 1,
+      "default": 8
+    },
+    {
+      "key": "gravity",
+      "label": "Spark gravity (px/frame²)",
+      "type": "range",
+      "min": 0,
+      "max": 0.4,
+      "step": 0.05,
+      "default": 0.15
+    },
+    {
+      "key": "hitstop",
+      "label": "Hit-stop (ms)",
+      "type": "range",
+      "min": 0,
+      "max": 120,
+      "step": 10,
+      "default": 50
+    },
+    {
+      "key": "shake",
+      "label": "Critical shake (px)",
+      "type": "range",
+      "min": 0,
+      "max": 4,
+      "step": 1,
+      "default": 2
+    },
+    {
+      "key": "critFlash",
+      "label": "Critical flash",
+      "type": "select",
+      "options": [
+        "screen",
+        "local",
+        "host",
+        "off"
+      ],
+      "default": "screen"
+    },
+    {
+      "key": "style",
+      "label": "Default hit shape",
+      "type": "select",
+      "options": [
+        "auto",
+        "slash",
+        "star",
+        "spark",
+        "ring"
+      ],
+      "default": "auto"
+    },
+    {
+      "key": "cycle",
+      "label": "Palette cycle (frames per step)",
+      "type": "range",
+      "min": 1,
+      "max": 6,
+      "step": 1,
+      "default": 2
+    },
+    {
+      "key": "cap",
+      "label": "Particle cap",
+      "type": "range",
+      "min": 32,
+      "max": 512,
+      "step": 32,
+      "default": 192
+    }
+  ],
+  "variants": [
+    {
+      "name": "Classic 16-bit",
+      "params": {
+        "size": 1,
+        "life": 14,
+        "sparks": 8,
+        "gravity": 0.15,
+        "hitstop": 50,
+        "shake": 2,
+        "critFlash": "screen",
+        "style": "auto",
+        "cycle": 2
+      }
+    },
+    {
+      "name": "Heavy impact",
+      "params": {
+        "size": 1.5,
+        "life": 18,
+        "sparks": 14,
+        "gravity": 0.2,
+        "hitstop": 80,
+        "shake": 3
+      }
+    },
+    {
+      "name": "Quick and light",
+      "params": {
+        "size": 0.75,
+        "life": 10,
+        "sparks": 4,
+        "gravity": 0.1,
+        "hitstop": 0,
+        "shake": 0,
+        "critFlash": "local"
+      }
+    },
+    {
+      "name": "Arcade sparkle",
+      "params": {
+        "sparks": 16,
+        "gravity": 0.3,
+        "cycle": 1,
+        "style": "spark",
+        "cap": 320
+      }
+    }
+  ],
+  "assets": [
+    "module/hit-sparks.js: the element as one dependency-free script (global GameDNA_HitSparks): hit shapes, pooled particles, procedurally generated burst sprite sequences with palette cycling, drawing through GameDNA_Skin (built-in pixel16 fallback)",
+    "no image or audio files"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/hit-sparks.js",
+    "global": "GameDNA_HitSparks",
+    "version": "1.0.0",
+    "docs": "module/README.md",
+    "skin": "optional: skins/skin-api.js + skins/pixel16.js before it"
+  }
+}

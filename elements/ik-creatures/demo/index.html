@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Procedural IK Creatures</title>
+<style>
+  :root { --bg: #10121c; --panel: #1c2130; --ink: #e8eef6; --dim: #9ea8bc; --acc: #f2b56a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; overflow-x: hidden; }
+  main { max-width: 1100px; margin: 0 auto; padding: 14px 16px 28px; }
+  h1 { font-size: 20px; margin: 0 0 2px; letter-spacing: 0.01em; }
+  .sub { color: var(--dim); margin: 0 0 12px; font-size: 14px; }
+  .stage { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 10px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.45); }
+  #game { display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+  #game.px { image-rendering: pixelated; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-top: 12px; }
+  .seg { display: inline-flex; background: var(--panel); border-radius: 8px; padding: 3px; }
+  .seg button { background: none; border: 0; color: var(--dim); font: inherit; font-size: 14px; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+  .seg button.on { background: #34405a; color: var(--ink); }
+  .btn { background: var(--acc); color: #2a1606; border: 0; font: inherit; font-weight: 650; font-size: 14px; padding: 8px 14px; border-radius: 8px; cursor: pointer; }
+  label.s { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--dim); min-width: 0; }
+  label.s input { width: 120px; }
+  label.s b { color: var(--ink); font-weight: 600; min-width: 34px; display: inline-block; }
+  select { background: var(--panel); color: var(--ink); border: 0; border-radius: 6px; font: inherit; font-size: 14px; padding: 5px 8px; }
+  .note { color: var(--dim); font-size: 13px; margin-top: 10px; }
+  @media (max-width: 520px) { label.s input { width: 96px; } .seg button { padding: 6px 9px; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Procedural IK creatures</h1>
+  <p class="sub">Every leg is a two-bone chain solved each step: feet plant on the ground and stay put, and a leg only lifts when it is stretched and its neighbours are down. The body rides on its feet, follows its path and turns its head to the firefly. Click or tap to move the firefly.</p>
+  <div class="stage"><canvas id="game"></canvas></div>
+  <div class="row">
+    <span class="seg" id="views"><button data-v="hd">HD 640x360</button><button data-v="pixel">Pixel 320x180</button></span>
+    <button class="btn" id="replay">Replay</button>
+  </div>
+  <div class="row">
+    <label class="s">Stride <input id="pStr" type="range" min="0.15" max="0.5" step="0.01"><b id="vStr"></b></label>
+    <label class="s">Lift <input id="pLif" type="range" min="0.05" max="0.35" step="0.01"><b id="vLif"></b></label>
+    <label class="s">Turn speed <input id="pTur" type="range" min="90" max="720" step="10"><b id="vTur"></b></label>
+    <label class="s">Rim light <input id="pRim" type="range" min="0" max="1.6" step="0.1"><b id="vRim"></b></label>
+    <label class="s">Colours <select id="pPal"><option>auto</option><option>forest</option><option>ember</option><option>cave</option><option>frost</option></select></label>
+  </div>
+  <p class="note">The scene replays from the same seed; <code>?t=&lt;ms&gt;&amp;freeze=1</code> shows one frame. The creatures are drawn in code per pixel (light, rim light, gloss, outline), at the screen's own resolution in HD and at 320x180 with a fixed colour ramp in the pixel view.</p>
+</main>
+<script src="../module/ik-creatures.js"></script>
+<script src="scene.js"></script>
+<script>
+"use strict";
+(function () {
+  var qs = new URLSearchParams(location.search);
+  var VIEW = qs.get('view') === 'pixel' ? 'pixel' : 'hd', PX = VIEW === 'pixel';
+  var HAS_T = qs.has('t'), START_T = HAS_T ? Math.max(0, +qs.get('t') || 0) : 0, FREEZE = qs.get('freeze') === '1';
+  // ?mut= known-bad demo behaviours for checks/timeline.py: noGround (the module is given no ground: feet hang), lift (the module's ground is 3 px above the drawn terrain: feet float)
+  var MUT = {}; (qs.get('mut') || '').split(',').forEach(function (k) { if (k) MUT[k] = true; });
+  var S = PX ? 0.5 : 1, NW = 640 * S, NH = 360 * S, STEP = 1000 / 60;
+  var IK = window.GameDNA_IKCreatures, SC = window.IKScene;
+  var cv = document.getElementById('game'), ctx = cv.getContext('2d');
+  cv.className = PX ? 'px' : '';
+  document.querySelectorAll('#views button').forEach(function (b) {
+    b.classList.toggle('on', b.dataset.v === VIEW);
+    b.onclick = function () { var q = new URLSearchParams(location.search); q.delete('t'); q.delete('freeze'); if (b.dataset.v === 'pixel') q.set('view', 'pixel'); else q.delete('view'); location.search = q.toString(); };
+  });
+
+  /* ------------------------------------------------------------ parameters */
+  var PAR = { stride: 0.30, lift: 0.16, turnRate: 300, rim: 1, palette: 'auto' };
+  function bindRange(id, vid, key, fmt) {
+    var el = document.getElementById(id), out = document.getElementById(vid);
+    el.value = PAR[key]; out.textContent = fmt(PAR[key]);
+    el.oninput = function () { PAR[key] = +el.value; out.textContent = fmt(PAR[key]); if (W) W.setParams(PAR); };
+  }
+  bindRange('pStr', 'vStr', 'stride', function (v) { return v.toFixed(2); });
+  bindRange('pLif', 'vLif', 'lift', function (v) { return v.toFixed(2); });
+  bindRange('pTur', 'vTur', 'turnRate', function (v) { return v + '°/s'; });
+  bindRange('pRim', 'vRim', 'rim', function (v) { return v.toFixed(1); });
+  var palSel = document.getElementById('pPal'); palSel.value = PAR.palette;
+  palSel.onchange = function () { PAR.palette = palSel.value; if (W) W.setParams(PAR); };
+
+  /* ------------------------------------------------------------ script (design units, one clock = step count) */
+  function ease(t) { return t * t * (3 - 2 * t); }
+  function seg(t, t0, t1, a, b) { return t <= t0 ? a : t >= t1 ? b : a + (b - a) * ease((t - t0) / (t1 - t0)); }
+  function lin(t, t0, t1, a, b) { return t <= t0 ? a : t >= t1 ? b : a + (b - a) * (t - t0) / (t1 - t0); }
+  function walkX(t, keys) { var x = keys[0][2]; for (var i = 0; i < keys.length; i++) { var k = keys[i]; if (t >= k[0]) x = seg(t, k[0], k[1], k[2], k[3]); } return x; }
+  // lanes: the weaver owns the boulder and the ledge, the hatchling the plateau until the weaver has gone back, the crab the sand
+  // until it leaves to the right, then the centipede comes in from the right and climbs the slope: creatures never overlap
+  // (checks/timeline.py). ?mut=crowd starts the hatchling under the weaver's legs, ?mut=edge ends the weaver half out of frame.
+  var WEAVER = [[0.5, 4.6, 95, 262], [7.0, 10.2, 262, MUT.edge ? 15 : 95]];
+  var CRAB = [[1.5, 2.5, 565, 520], [4.0, 6.8, 520, 900]];
+  var HATCH = { t0: 8.4, t1: 10.6, x0: MUT.crowd ? 300 : 385, x1: 262 };
+  var CENT = { t0: 6.7, t1: 10.7, x0: 690, x1: 395 };
+  var FLY = [[0, 430, 200], [3, 470, 185], [5.0, 380, 200], [6.0, 180, 195], [8, 110, 215], [10, 170, 195], [12, 160, 205], [14, 300, 215], [16, 360, 200], [18, 300, 195], [21, 430, 200]];
+  function flyAt(t) {
+    var T = 21, u = t % T, i = 0; while (i < FLY.length - 2 && FLY[i + 1][0] <= u) i++;
+    var a = FLY[Math.max(0, i - 1)], b = FLY[i], c = FLY[i + 1], d = FLY[Math.min(FLY.length - 1, i + 2)], f = (u - b[0]) / (c[0] - b[0]);
+    function cr(p0, p1, p2, p3) { return 0.5 * ((2 * p1) + (-p0 + p2) * f + (2 * p0 - 5 * p1 + 4 * p2 - p3) * f * f + (-p0 + 3 * p1 - 3 * p2 + p3) * f * f * f); }
+    return { x: cr(a[1], b[1], c[1], d[1]) + Math.sin(t * 3.1) * 6, y: cr(a[2], b[2], c[2], d[2]) + Math.sin(t * 4.3) * 5 };
+  }
+  // the hatchling hops off the ledge: a ballistic arc from the ledge top to the boulder's side
+  // the hatchling crouches (0.25 s), leaps in a clear parabola off the ledge (peak 30 above take-off) and lands by the boulder
+  var HOP = { t0: 10.85, t1: 11.5, x0: 262, x1: 216 };
+  function hatch(t) {
+    var crouch = t > HOP.t0 - 0.25 && t < HOP.t0 ? (t - (HOP.t0 - 0.25)) / 0.25 : 0;
+    if (t < HOP.t0) { var x = lin(t, HATCH.t0, HATCH.t1, HATCH.x0, HATCH.x1); return { x: x, y: SC.ground(x), air: false, crouch: crouch }; }
+    if (t < HOP.t1) { var f = (t - HOP.t0) / (HOP.t1 - HOP.t0), x2 = HOP.x0 + (HOP.x1 - HOP.x0) * f, y0 = SC.ground(HOP.x0), y1 = SC.ground(HOP.x1);
+      var y = y0 + (y1 - y0) * f * f - 30 * 4 * f * (1 - f) - (y1 - y0) * 0; return { x: x2, y: Math.min(y, SC.ground(x2)), air: true, crouch: 0 }; }
+    return { x: HOP.x1, y: SC.ground(HOP.x1), air: false, crouch: 0 };
+  }
+  // trapezoid speed (ramps of 20 % at both ends): no instant start or stop
+  function trap(u) { var a = 0.2, v = 1 / (1 - a); if (u <= 0) return 0; if (u >= 1) return 1; if (u < a) return v * u * u / (2 * a); if (u > 1 - a) return 1 - v * (1 - u) * (1 - u) / (2 * a); return v * (u - a / 2); }
+  function centX(t) { return CENT.x0 + (CENT.x1 - CENT.x0) * trap((t - CENT.t0) / (CENT.t1 - CENT.t0)); }
+
+  var clickFly = null, simT = 0, W = null, EVENTS = [], lastFly = null, MARKED = {}, TURNPREV = null;
+  function fly() { return clickFly || flyAt(simT / 1000); }
+  function actors() {
+    var t = simT / 1000, F = fly(), tg = { x: F.x * S, y: F.y * S };
+    var wx = walkX(t, WEAVER), cx = walkX(t, CRAB), h = hatch(t);
+    var cheadX = centX(t);
+    return [
+      { id: 'longback', kind: 'centipede', x: cheadX * S, y: SC.ground(cheadX) * S, size: 170 * S, depth: -26 * S, facing: -1, target: tg, palette: 'ember' },
+      { id: 'pincher', kind: 'crab', x: cx * S, y: SC.ground(cx) * S, size: 52 * S, depth: -10 * S, target: tg, palette: 'cave' },
+      { id: 'weaver', kind: 'spider', x: wx * S, y: SC.ground(wx) * S, size: 64 * S, depth: 0, target: tg, palette: 'forest', facing: 1 },
+      { id: 'hatchling', kind: 'spider', x: h.x * S, y: h.y * S, size: (PX ? 42 : 30) * S, depth: 20 * S, target: tg, palette: 'frost', facing: -1, crouch: h.crouch }
+    ];
+  }
+  var ACT = [];
+  function makeWorld() {
+    W = IK.create({ view: 'side', seed: 7, scale: S,
+      ground: function (x) { return MUT.noGround ? null : SC.ground(x / S) * S - (MUT.lift ? 3 : 0); },
+      actors: function () { return ACT; },
+      onEvent: function (e) { EVENTS.push({ ev: e.ev, id: e.id, t: Math.round(simT) }); if (EVENTS.length > 200) EVENTS.shift(); },
+      params: PAR });
+  }
+  function step() {
+    simT += STEP;
+    ACT = actors();
+    W.update(STEP);
+    var t = simT / 1000;
+    // script markers (the event each acceptance moment must show)
+    function mark(ev, id, at) { if (t >= at && t - STEP / 1000 < at) EVENTS.push({ ev: ev, id: id, t: Math.round(simT) }); }
+    function cross(ev, id, x0, x1) { if (!MARKED[ev] && x0 < x1) { MARKED[ev] = 1; EVENTS.push({ ev: ev, id: id, t: Math.round(simT) }); } }
+    var pw = walkX(t - STEP / 1000, WEAVER), nw = walkX(t, WEAVER);
+    if (pw < SC.BOULDER.c && nw >= SC.BOULDER.c) cross('boulder', 'weaver', 0, 1);
+    if (pw < SC.LEDGE && nw >= SC.LEDGE) cross('ledge', 'weaver', 0, 1);
+    var ph = centX(t - STEP / 1000), nh = centX(t);
+    if (ph > 432 && nh <= 432) cross('climb', 'longback', 0, 1);   // head on the slope's top, three segments on the slope
+    // the turn marker is the weaver's own heading passing side-on (its face to the camera), measured, not scheduled
+    var wc = W.creature('weaver'); if (wc && wc.heading > Math.PI / 2 && (TURNPREV === null || TURNPREV <= Math.PI / 2) && t > 4) cross('turn', 'weaver', 0, 1);
+    TURNPREV = wc ? wc.heading : null;
+    mark('claws', 'pincher', 3.2); mark('hop', 'hatchling', HOP.t0 + 0.2); mark('settled', 'weaver', 15.0);
+  }
+  function reset() { simT = 0; EVENTS = []; MARKED = {}; TURNPREV = null; clickFly = null; ACT = actors(); makeWorld(); }
+
+  /* ------------------------------------------------------------ drawing */
+  var BG = null, bgKey = '';
+  function fit() {
+    if (PX) { if (cv.width !== NW) { cv.width = NW; cv.height = NH; } return 1; }
+    var r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+    var w = Math.max(640, Math.round((r.width || 640) * dpr)), h = Math.round(w * 9 / 16);
+    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+    return w / 640;
+  }
+  function render() {
+    var k = fit(), key = cv.width + 'x' + cv.height;
+    if (key !== bgKey) { BG = SC.bake(cv.width, cv.height, PX ? 1 : k, S, PX); bgKey = key; }
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = !PX;
+    ctx.drawImage(BG, 0, 0);
+    ctx.setTransform(PX ? 1 : k, 0, 0, PX ? 1 : k, 0, 0); ctx.imageSmoothingEnabled = !PX;
+    W.draw(ctx, 0, 0);
+    SC.fx(ctx, simT, S, PX);
+    var F = fly(); SC.firefly(ctx, F.x * S, F.y * S, simT, S, PX);
+    SC.front(ctx, S, PX);
+  }
+
+  /* ------------------------------------------------------------ text state */
+  window.__ik = function () { return W; };
+  window.__ground = function (x) { return SC.ground(x / S) * S; };
+  window.__step = function (n) { for (var i = 0; i < (n || 1); i++) step(); return Math.round(simT); };
+  window.__state = function () {
+    var F = fly();
+    return { t: Math.round(simT), view: VIEW, fly: { x: F.x * S, y: F.y * S }, events: EVENTS.slice(),
+      actors: W.list().map(function (c) {
+        var moving = Math.abs(c.vel[0]) > c.L * 0.12;
+        var a = { id: c.id, kind: c.kind, x: Math.round(c.x * 10) / 10, y: Math.round(c.y * 10) / 10, facing: c.facing, vx: moving ? Math.round(c.vel[0]) : 0,
+          target: moving ? null : Math.round(F.x * S), mode: c.mode, head: { yaw: Math.round(c.headYaw * 57.3), pitch: Math.round(c.headPitch * 57.3) },
+          planted: c.legs.filter(function (l) { return l.planted; }).length, legs: c.legs.length };
+        if (c.facing === 'front') a.noFace = 'crab: walks sideways and faces the camera; eye stalks and claws turn to the firefly';
+        if (c.dying) a.noFace = 'gone';
+        return a;
+      }) };
+  };
+
+  /* ------------------------------------------------------------ one creature alone (tools/sprites/sheet.py, set ik-creatures-demo) */
+  var CAST = { weaver: { kind: 'spider', palette: 'forest', k: 1.25 }, hatchling: { kind: 'spider', palette: 'frost', k: 1.25 },
+    pincher: { kind: 'crab', palette: 'cave', k: 1.6 }, longback: { kind: 'centipede', palette: 'ember', k: 3.0 } };
+  window.__ikCast = function (g, id, x, footY, h, want, pose, extra) {
+    var spec = CAST[id]; if (!spec) return false;
+    var dir = want === 'left' ? -1 : 1, L = h * spec.k, step = pose && pose.name === 'step';
+    var mv = spec.kind === 'centipede' ? 0.15 : 0.9;   // a short walk at a natural pace (a centipede's legs are small)
+    var A = [{ id: 'c', kind: spec.kind, x: x - dir * L * (step ? mv : 0.01), y: footY, size: L, facing: dir, palette: spec.palette }];
+    var w = IK.create({ view: 'side', seed: 3, ground: function () { return footY; }, actors: function () { return A; }, params: { dust: 0, depth: 0 } });
+    var n = step ? 40 : 30;
+    for (var i = 0; i < n; i++) { if (step) A[0].x = x - dir * L * mv + dir * L * mv * (i + 1) / n; else A[0].x = x + dir * 0.02 * (i + 1); w.update(STEP); }
+    var ox = spec.kind === 'centipede' ? dir * L * 0.45 : 0;   // a centipede's head leads: centre its whole length in the cell
+    w.drawOne(g, 'c', A[0].x - x - ox, 0, { shadow: false, legs: !(extra && extra.legs === false) });
+    return true;
+  };
+
+  /* ------------------------------------------------------------ input, loop */
+  cv.addEventListener('pointerdown', function (e) {
+    var r = cv.getBoundingClientRect();
+    clickFly = { x: (e.clientX - r.left) / r.width * 640, y: Math.min(300, (e.clientY - r.top) / r.height * 360) };
+  });
+  document.getElementById('replay').onclick = function () { reset(); };
+  addEventListener('resize', function () { if (window.__frozen) render(); });
+  reset();
+  if (HAS_T) { var n = Math.round(START_T / STEP); for (var i = 0; i < n; i++) step(); }
+  var acc = 0, prev = null;
+  function frame(now) {
+    if (prev === null) prev = now;
+    acc += Math.min(200, now - prev); prev = now;
+    while (acc >= STEP) { step(); acc -= STEP; }
+    render(); requestAnimationFrame(frame);
+  }
+  if (FREEZE) { render(); window.__frozen = true; }
+  else { render(); requestAnimationFrame(frame); }
+})();
+</script>
+</body>
+</html>

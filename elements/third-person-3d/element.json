@@ -1,0 +1,70 @@
+{
+  "id": "third-person-3d",
+  "code": "N-01",
+  "kind": "system",
+  "name": "Third-person 3D character and camera",
+  "family": "3D character & camera",
+  "oneLiner": "A low-poly adventurer on a small 3D island seen from a smooth follow camera: camera-relative movement (keys or touch stick), idle / walk / run animated from the distance travelled so feet never slide, models auto-scaled by bounding box with feet on the ground in every pose, a facing rule (yaw = atan2(v.x, v.z) + facingOffset) checked against the model's real forward vector, a camera that pulls in when a prop blocks the view, pickups, NPCs that turn to face the hero, world-to-screen anchors and a 2D overlay layer for addons.",
+  "fits": [
+    "3D exploration and collect-a-thon adventures",
+    "cozy island or village quests",
+    "third-person action or RPG prototypes (before combat is added)",
+    "walking-sim and story games with NPCs to talk to",
+    "a 3D hub area inside a larger game"
+  ],
+  "notFor": [
+    "2D side or top-down games (use the 2D movement elements)",
+    "first-person games",
+    "grid tactics in 3D (use N-03)",
+    "physics platformers with jumps and ledges (no jumping or slopes in this element)"
+  ],
+  "interfaces": {
+    "time": "realtime",
+    "coords": "3d",
+    "layer": "scene",
+    "needs": [
+      "three.js 0.149.0 classic build loaded as window.THREE before the module",
+      "a canvas for WebGL and (optional) a 2D canvas on top for HUD and addons",
+      "a fixed 60 Hz step that passes camera-relative input {x, y, run}",
+      "the world content: prop list (kind, x, z, rot, scale), pickups, NPCs"
+    ],
+    "provides": [
+      "events: pickup {id, kind, value, x, z}; the starter adds onTalk, onPhase, onEnd, onStep",
+      "actors() with x, z, yaw, speed, target; anchor(id) -> screen px of head top, feet and centre (world -> screen)",
+      "project(x, y, z) -> screen px; the 2D overlay layers world | hud | overlay",
+      "state(): {t, actors:[{id, x, z, yaw, moveDir, forward, target, facesMove, facesTarget, feetY, pose}]} for checks",
+      "autopilot(goal) -> camera-relative input along an A* path around props",
+      "gestures on any adventurer: play('wave' | 'cheer' | 'bow')"
+    ]
+  },
+  "params": [
+    { "key": "walkSpeed", "label": "Walk speed (m/s)", "type": "range", "min": 1, "max": 3, "step": 0.1, "default": 1.8 },
+    { "key": "runSpeed", "label": "Run speed (m/s)", "type": "range", "min": 3, "max": 8, "step": 0.2, "default": 5.2 },
+    { "key": "turnRate", "label": "Turn rate (rad/s)", "type": "range", "min": 4, "max": 24, "step": 1, "default": 12 },
+    { "key": "heroHeight", "label": "Hero height (m)", "type": "range", "min": 1.2, "max": 2.2, "step": 0.05, "default": 1.7 },
+    { "key": "camDist", "label": "Camera distance (m)", "type": "range", "min": 3, "max": 11, "step": 0.5, "default": 6.5 },
+    { "key": "camPitch", "label": "Camera pitch (deg)", "type": "range", "min": 5, "max": 60, "step": 1, "default": 20 },
+    { "key": "camLag", "label": "Camera lag (s)", "type": "range", "min": 0.02, "max": 0.5, "step": 0.02, "default": 0.12 },
+    { "key": "autoAlign", "label": "Camera auto-align", "type": "range", "min": 0, "max": 4, "step": 0.1, "default": 1.2 },
+    { "key": "fov", "label": "Field of view (deg)", "type": "range", "min": 35, "max": 80, "step": 1, "default": 50 },
+    { "key": "gear", "label": "Back gear", "type": "select", "options": ["both", "cape", "satchel", "none"], "default": "both" },
+    { "key": "palette", "label": "Palette", "type": "select", "options": ["meadow", "dusk", "autumn"], "default": "meadow" },
+    { "key": "shadows", "label": "Shadows", "type": "select", "options": ["soft", "hard", "off"], "default": "soft" },
+    { "key": "mode", "label": "Demo mode", "type": "select", "options": ["tour", "play", "eight", "sheet"], "default": "tour" }
+  ],
+  "variants": [
+    { "name": "Default", "params": {} },
+    { "name": "Dusk stroll", "params": { "palette": "dusk", "walkSpeed": 1.4, "runSpeed": 4.2, "camLag": 0.2 } },
+    { "name": "Autumn, close camera", "params": { "palette": "autumn", "camDist": 4, "camPitch": 14, "fov": 58 } },
+    { "name": "High overview", "params": { "camDist": 10, "camPitch": 42, "fov": 42 } },
+    { "name": "Snappy action", "params": { "runSpeed": 7, "turnRate": 22, "camLag": 0.04, "autoAlign": 2.5 } },
+    { "name": "Eight directions", "params": { "mode": "eight" } },
+    { "name": "Character sheet", "params": { "mode": "sheet" } }
+  ],
+  "assets": "module/third-person-3d.js (global GameDNA_ThirdPerson3D; needs three.js 0.149.0 as window.THREE, copied as three.min.js next to the page). All models, props and textures are procedural (primitives, code-drawn canvas textures). No external files besides three.min.js.",
+  "status": "v1-module",
+  "module": { "file": "module/third-person-3d.js", "global": "GameDNA_ThirdPerson3D", "version": "1.0.0" },
+  "starter": "starter/index.html",
+  "requires3d": { "three": "0.149.0", "file": "three.min.js" },
+  "basketFiles": [{"from": "vendor/three@0.149.0/three.min.js", "to": "three.min.js"}]
+}

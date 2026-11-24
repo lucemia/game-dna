@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stamina &amp; Outpost Rest</title>
+<style>
+:root { --bg: #0d0b0a; --panel: #17130f; --line: #33291e; --text: #f1ead8; --dim: #a89c84; --accent: #ffc23a; --accent2: #ff8a3c; --blue: #5aa8ff; --red: #ff5a4a; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1100px 560px at 20% -10%, #3a2614 0%, var(--bg) 62%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 16px 20px 10px; max-width: 1280px; margin: 0 auto; }
+.code { white-space: nowrap; font: 800 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #1a1206; background: linear-gradient(#ffe08a, var(--accent)); padding: 6px 8px; border-radius: 5px; box-shadow: 0 2px 12px #ffc23a40; }
+h1 { font-size: 19px; margin: 0; letter-spacing: .01em; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; max-width: 900px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; padding: 0 20px 24px; max-width: 1280px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.frame { padding: 6px; background: linear-gradient(#3a2c1c, #18120c); border-radius: 12px; box-shadow: 0 0 0 1px #4a3a26, 0 24px 60px #000a; }
+#game { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; background: #000; cursor: pointer; touch-action: manipulation; }
+.caption { display: flex; justify-content: space-between; gap: 12px; color: var(--dim); font-size: 12px; padding: 0 4px; }
+.caption b { color: var(--text); font-weight: 600; }
+.status { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: flex; align-items: center; gap: 7px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px; font-size: 12px; color: var(--dim); }
+.chip b { color: var(--text); font-weight: 600; }
+.chip i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); box-shadow: 0 0 8px var(--c); }
+.pips { display: inline-flex; gap: 2px; }
+.pips s { width: 7px; height: 5px; border-radius: 2px; background: #3a3026; text-decoration: none; }
+.pips s.on { background: linear-gradient(#fff4b8, var(--accent) 50%, #e09a14); }
+.pips s.lo { background: linear-gradient(#ffd6a0, var(--accent2) 50%, #d0581c); }
+.pips.ex s { background: #4a1a14; box-shadow: inset 0 0 0 1px #ff4a3a; }
+.cmp { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px 14px; }
+.cmp p { margin: 0 0 10px; color: var(--dim); font-size: 12.5px; }
+.cmp canvas { display: block; width: 100%; max-width: 640px; aspect-ratio: 16 / 9; image-rendering: pixelated; image-rendering: crisp-edges; border-radius: 6px; box-shadow: 0 0 0 1px #4a3a26; background: #000; }
+aside { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+h2 { margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.row { margin-bottom: 10px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 5px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--fill), #3a3026 var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #fff3d0; border: 2px solid #1a1206; box-shadow: 0 1px 6px #000a; cursor: pointer; }
+input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: #fff3d0; border: 2px solid #1a1206; }
+.seg { display: flex; flex-wrap: wrap; background: #110d0a; border: 1px solid var(--line); border-radius: 7px; padding: 2px; gap: 2px; }
+.seg button { flex: 1 1 28%; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 4px; border-radius: 5px; cursor: pointer; }
+.seg button[aria-checked=true] { background: #352a1e; color: var(--text); box-shadow: inset 0 0 0 1px #5a4630, inset 0 -2px 0 var(--accent); }
+.seg button:hover { color: var(--text); }
+.tog { display: flex; gap: 6px; flex-wrap: wrap; }
+.tog button { flex: 1 1 28%; appearance: none; background: #110d0a; border: 1px solid var(--line); color: var(--text); border-radius: 7px; padding: 8px 8px; font: 600 12px inherit; cursor: pointer; }
+.tog button.hot { background: linear-gradient(#5a4220, #3a2a14); border-color: #8a6a30; }
+.tog button[aria-pressed=true] { box-shadow: inset 0 -2px 0 var(--accent); }
+.tog button:disabled { opacity: .45; cursor: default; }
+.note { margin: -2px 0 10px; color: var(--dim); font-size: 11.5px; }
+.foot { color: var(--dim); font-size: 11.5px; border-top: 1px solid var(--line); padding-top: 10px; }
+.foot code { color: var(--text); }
+@media (max-width: 1000px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 680px; width: 100%; margin: 0 auto; } }
+@media (max-width: 560px) { header { padding: 12px 16px 8px; } main { padding: 0 16px 16px; gap: 12px; } .frame { padding: 3px; } .caption { flex-direction: column; gap: 2px; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">G-10</span>
+  <div><h1>Stamina &amp; outpost rest</h1><p>Squads spend stamina on every march and every attack. At zero they are exhausted: they cannot attack (or move slower) until they recover. Resting inside a camp, outpost or shrine their side holds refills the pips; standing alone in an enemy or empty site claims it. Works on a turn clock (rest per phase) and on a real-time clock (rest per second).</p></div>
+</header>
+<main>
+  <section id="stage">
+    <div class="frame"><canvas id="game" width="640" height="360" aria-label="A frontier field at dusk with squads, a camp, a shrine and an outpost"></canvas></div>
+    <div class="caption"><span id="cap"><b>Watch:</b> pips drain on marches and attacks; a spent squad shows TIRED, its next attack is refused (TOO TIRED) and it falls back to camp, where REST +4 refills it with embers. The shrine and the raiders' outpost change hands when a squad holds them at the start of its phase.</span><span id="hint">Click a blue squad, then a tile; click a red squad next to it to attack</span></div>
+    <div class="status" id="status"></div>
+    <div class="cmp">
+      <h2>On a native pixel canvas</h2>
+      <p>The same module on a 256 × 144 canvas scaled with nearest-neighbour: crisp segment strips with a built-in 3 × 5 font, a pixel campfire and banner, a blinking strip and sweat drop when exhausted, white refill pops.</p>
+      <canvas id="px" width="256" height="144"></canvas>
+    </div>
+  </section>
+  <aside>
+    <div><h2>Clock</h2><div class="seg" id="clock"></div></div>
+    <div class="tog"><button type="button" id="auto" aria-pressed="true">Autoplay: on</button><button type="button" id="endturn">End turn</button><button type="button" id="restart">Restart</button><button type="button" id="speed" aria-pressed="false">Speed: 1×</button></div>
+    <div><h2>Parameters</h2><p class="note" id="pnote">Costs (attack, march, regen, rest) follow the pace for the current clock. Switching the clock keeps your other choices and resets only those costs.</p><div id="params"></div></div>
+    <div class="foot">Deterministic: <code>?t=14000&amp;freeze=1</code> shows the same frame every time. Parameters go in the URL, e.g. <code>?clock=realtime&amp;rule=noAttack</code>. Real-time: arrows / WASD move, Z swings (autoplay resumes after 4 s idle).</div>
+  </aside>
+</main>
+<script>/*MODULE*/</script>
+<script>/*PIXELSCENE*/</script>
+<script>/*MAIN*/</script>
+</body>
+</html>

@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shaped Inventory Packing</title>
+<style>
+:root { --bg: #0d0a09; --panel: #171210; --line: #33271f; --text: #efe6d6; --dim: #a8977e; --accent: #f1c96e; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1100px 560px at 30% -10%, #2c1f17 0%, var(--bg) 62%) fixed, var(--bg); min-height: 100vh; }
+header { display: flex; align-items: center; gap: 14px; padding: 14px 20px 10px; max-width: 1400px; margin: 0 auto; }
+.code { white-space: nowrap; font: 700 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #1d1404; background: var(--accent); padding: 6px 8px; border-radius: 4px; }
+h1 { font-size: 18px; margin: 0; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 18px; padding: 0 20px 20px; max-width: 1400px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; display: flex; flex-direction: column; align-items: center; }
+.frame { padding: 6px; background: linear-gradient(#33271f, #120d0b); border-radius: 8px; box-shadow: 0 0 0 1px #46362a, 0 18px 50px #00000080; max-width: 100%; }
+canvas { display: block; border-radius: 3px; touch-action: none; user-select: none; -webkit-user-select: none; }
+canvas.px { image-rendering: pixelated; }
+.caption { width: 100%; margin-top: 8px; color: var(--dim); font-size: 12px; text-align: center; }
+.caption b { color: var(--text); font-weight: 600; }
+aside { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+h2 { margin: 0 0 6px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+label.l { display: block; font-size: 12.5px; margin: 8px 0 4px; }
+select { width: 100%; background: #211915; color: var(--text); border: 1px solid var(--line); border-radius: 5px; padding: 5px 6px; font: inherit; font-size: 12.5px; }
+.btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.btns button { appearance: none; border: 1px solid #00000060; border-radius: 6px; padding: 7px 10px; cursor: pointer; color: var(--text); font: 600 12px/1.1 inherit;
+  background: linear-gradient(#3a2c22, #241b16); box-shadow: inset 0 1px 0 #ffffff14, inset 0 -2px 0 #5a4330; }
+.note { color: var(--dim); font-size: 12px; margin: 0; }
+#log { font: 11.5px/1.55 ui-monospace, Menlo, monospace; background: #120d0b; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; min-height: 120px; color: #d9cbb2; white-space: pre-wrap; }
+@media (max-width: 1000px) { main { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 520px) { header, main { padding-left: 16px; padding-right: 16px; } .caption .keys { display: none; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">G-11</span>
+  <div><h1>Shaped inventory packing</h1>
+  <p>Items take their real shape in a grid bag. Drag or use keys to move them, turn long items sideways, and see red, green, amber or blue for blocked, free, swap or stack. Sort, use or drop items, and take loot from the ground.</p></div>
+</header>
+<main>
+  <div id="stage">
+    <div class="frame"><canvas id="game"></canvas></div>
+    <div class="caption"><span class="keys"><b>Drag</b> or <b>Arrows + Z</b> to move &middot; <b>R</b> / right-click / second finger turns &middot; <b>T</b> sort &middot; <b>U</b> use &middot; <b>G</b> drop &middot; <b>F</b> take all &middot; <b>X</b> close / reopen with <b>I</b></span></div>
+  </div>
+  <aside>
+    <section><h2>Look and bag</h2>
+      <label class="l" for="theme">Look</label><select id="theme"><option value="hd">HD, painted icons</option><option value="code">HD, drawn in code</option><option value="pixel">16-bit pixel</option></select>
+      <label class="l" for="bag">Bag</label><select id="bag"><option value="10x6">10 x 6 backpack</option><option value="pack">Backpack with straps (locked corners)</option><option value="12x6">12 x 6 chest</option></select>
+      <label class="l" for="sortBy">Sort by</label><select id="sortBy"><option value="size">Size (largest first)</option><option value="type">Type, then size</option></select>
+      <label class="l" for="swap">Drop onto one item</label><select id="swap"><option value="on">Swap with it</option><option value="off">Refuse</option></select>
+      <label class="l" for="ground">Ground tray</label><select id="ground"><option value="on">On (loot and drops)</option><option value="off">Off</option></select>
+    </section>
+    <section><div class="btns"><button id="b-replay">Replay the tour</button><button id="b-play">Let me play</button><button id="b-loot">New loot</button></div>
+      <p class="note" style="margin-top:8px">The tour drives the same mouse and key input a player would use. Any key or click takes over.</p></section>
+    <section><h2>Events</h2><div id="log"></div></section>
+  </aside>
+</main>
+<script src="../../../pixel-kit/pixel-scene.js"></script>
+<script src="../module/shaped-inventory.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Q = new URLSearchParams(location.search);
+  var OPT = { t: Q.has('t') ? Math.max(0, +Q.get('t') || 0) : null, freeze: Q.get('freeze') === '1', theme: Q.get('theme') || 'hd', bag: Q.get('bag') || '10x6',
+    sortBy: Q.get('sortBy') || 'size', swap: Q.get('swap') || 'on', ground: Q.get('ground') || 'on', tour: Q.get('tour') !== '0' };
+  ['theme', 'bag', 'sortBy', 'swap', 'ground'].forEach(function (k) { var el = document.getElementById(k); el.value = OPT[k]; el.onchange = function () { Q.set(k, el.value); Q.delete('t'); Q.delete('freeze'); location.search = Q.toString(); }; });
+  var STEP = 1000 / 60, PIXEL = OPT.theme === 'pixel';
+  var cv = document.getElementById('game'), ctx = cv.getContext('2d');
+  if (PIXEL) cv.className = 'px';
+
+  /* ---------- art: painted icon atlas (painted-ui kit) and a backdrop (demo-kit scene) ---------- */
+  var ICON_CROP = { potion: [18, 10, 92, 108], 'mana-potion': [163, 10, 58, 108], antidote: [293, 10, 54, 108], bread: [394, 25, 108, 77], scroll: [522, 17, 108, 93],
+    gem: [654, 10, 100, 108], sword: [35, 138, 57, 108], axe: [156, 138, 72, 108], bow: [293, 138, 54, 108], staff: [427, 138, 42, 108], shield: [523, 138, 105, 108],
+    helmet: [657, 138, 94, 108], armor: [10, 268, 108, 103], boots: [140, 266, 104, 108], ring: [266, 276, 108, 87], amulet: [411, 266, 74, 108], coins: [522, 276, 108, 88], key: [671, 266, 66, 108] };
+  var IMG = {}, pending = 0;
+  function load(name, src) { if (PIXEL) return; pending++; var im = new Image(); im.onload = function () { IMG[name] = im; done(); }; im.onerror = function () { done(); }; im.src = src; }
+  function done() { if (--pending === 0) boot(); }
+
+  /* ---------- items: shapes are the point; stack sizes; what Use does ---------- */
+  var ITEMS = {
+    sword:   { name: 'Iron Sword', kind: 'weapon', shape: '1x2', art: 'sword', pixelArt: 'dagger', icon: 'sword', desc: 'A plain, honest blade. Attack +4.', rarity: 'common' },
+    staff:   { name: 'Oak Staff', kind: 'weapon', shape: '1x3', art: 'staff', icon: 'staff', desc: 'Hums faintly near old stones. Magic +3.', rarity: 'uncommon' },
+    axe:     { name: 'Woodcutter Axe', kind: 'weapon', shape: 'axe', art: 'axe', icon: 'axe', desc: 'Heavy head, long haft. Attack +7, Speed -1.', rarity: 'uncommon' },
+    bow:     { name: 'Ash Bow', kind: 'weapon', shape: '1x2', art: 'bow', pixelArt: 'shortbow', icon: 'bow', desc: 'Light and quick to draw. Range 6.', rarity: 'rare' },
+    shield:  { name: 'Round Shield', kind: 'shield', shape: '2x2', art: 'shield', icon: 'shield', desc: 'Oak boards under an iron rim. Defence +3.', rarity: 'common' },
+    armor:   { name: 'Leather Jerkin', kind: 'armor', shape: '2x2', art: 'armor', icon: 'armor', desc: 'Boiled leather over quilted wool. Defence +4.', rarity: 'common' },
+    helmet:  { name: 'Iron Helm', kind: 'head', shape: '2x2', art: 'helmet', icon: 'helmet', desc: 'Dented, but it held. Defence +2.', rarity: 'uncommon' },
+    boots:   { name: 'Fur Boots', kind: 'feet', shape: 'boot', art: 'boots', icon: 'boots', desc: 'Fur-lined. Walk speed +5%.', rarity: 'common' },
+    potion:  { name: 'Healing Draught', kind: 'consumable', shape: '1x1', art: 'potion', icon: 'potion', stack: 5, use: true, useText: 'Drank', desc: 'Restores 30 HP.', rarity: 'common' },
+    tonic:   { name: 'Blue Tonic', kind: 'consumable', shape: '1x1', art: 'potion', color: '#3f7ad8', icon: 'mana-potion', stack: 5, use: true, useText: 'Drank', desc: 'Restores 20 MP.', rarity: 'common' },
+    antidote:{ name: 'Antidote', kind: 'consumable', shape: '1x1', art: 'potion', color: '#4fae4c', icon: 'antidote', stack: 5, use: true, useText: 'Drank', desc: 'Cures poison.', rarity: 'common' },
+    bread:   { name: 'Trail Bread', kind: 'food', shape: '2x1', art: 'bread', icon: 'bread', stack: 3, use: true, useText: 'Ate', desc: 'Restores 12 HP over time.', rarity: 'common' },
+    scroll:  { name: 'Ember Scroll', kind: 'consumable', shape: '1x1', art: 'scroll', icon: 'scroll', stack: 3, use: true, useText: 'Read', desc: 'One use: a burst of flame.', rarity: 'uncommon' },
+    gem:     { name: 'Ruby', kind: 'material', shape: '1x1', art: 'gem', icon: 'gem', stack: 10, desc: 'Cut and bright. Jewellers pay well for these.', rarity: 'rare' },
+    coins:   { name: 'Silver', kind: 'treasure', shape: '1x1', art: 'coins', icon: 'coins', stack: 99, desc: 'Coins of the river towns.', rarity: 'common' },
+    ring:    { name: 'Jade Ring', kind: 'trinket', shape: '1x1', art: 'ring', icon: 'ring', desc: 'Luck +2.', rarity: 'rare' },
+    amulet:  { name: 'Star Amulet', kind: 'trinket', shape: 'plus', art: 'amulet', icon: 'amulet', desc: 'Resist frost +10%.', rarity: 'epic' },
+    rations: { name: 'Ration Pack', kind: 'food', shape: 'T', art: 'bread', icon: 'bread', stack: 1, use: true, useText: 'Ate', desc: 'Three days of bread, cheese and dried fruit, strapped in a T.', rarity: 'common' },
+    maps:    { name: 'Bundle of Maps', kind: 'misc', shape: 'S', art: 'scroll', icon: 'scroll', color: '#d6c08e', accent: '#3f7ad8', desc: 'Charts of the marsh roads, rolled and tied crooked.', rarity: 'uncommon' },
+    key:     { name: 'Old Key', kind: 'quest', shape: '1x2', art: 'key', icon: 'key', desc: 'Opens the cellar under the mill.', rarity: 'quest', drop: false }
+  };
+  var BAGS = { '10x6': null, '12x6': null, pack: ['.########.', '##########', '##########', '##########', '##########', '.########.'] };
+  var START = [['rations', 1, 0, 0, 0], ['sword', 1, 0, 1, 0], ['potion', 2, 2, 1, 0], ['shield', 1, 3, 0, 0], ['armor', 1, 5, 0, 0], ['boots', 1, 7, 0, 0],
+    ['maps', 1, 5, 2, 0], ['antidote', 1, 0, 3, 0], ['tonic', 3, 1, 3, 0], ['ring', 1, 0, 4, 0], ['coins', 37, 6, 4, 0], ['gem', 4, 7, 4, 0], ['key', 1, 8, 3, 0]];
+  var LOOT = [{ id: 'axe', n: 1 }, { id: 'amulet', n: 1 }, { id: 'helmet', n: 1 }, { id: 'bow', n: 1 }, { id: 'potion', n: 1 }];
+
+  var inv, room = null, clock = 0, hp = 42, log = [], tour = OPT.tour, ptr = null, motion = null, nextStep = 0, freezeDone = false;
+  function addLog(s) { log.push(s); if (log.length > 9) log.shift(); var el = document.getElementById('log'); if (el) el.textContent = log.join('\n'); }
+  function makeInv() {
+    var items = {};
+    Object.keys(ITEMS).forEach(function (id) {
+      var it = Object.assign({}, ITEMS[id]);
+      if (OPT.theme === 'hd' && IMG.icons && ICON_CROP[it.icon]) { it.image = IMG.icons; it.crop = ICON_CROP[it.icon]; }
+      items[id] = it;
+    });
+    var cr = OPT.bag === '12x6' ? [12, 6] : [10, 6];
+    inv = GameDNA_ShapedInventory.create({
+      items: items, mask: BAGS[OPT.bag] || null, title: 'Backpack',
+      params: { cols: cr[0], rows: cr[1], groundCols: 5, groundRows: 5, theme: PIXEL ? 'pixel' : 'hd', sortBy: OPT.sortBy, swap: OPT.swap, ground: OPT.ground, dim: PIXEL ? 0.5 : 0.42 },
+      view: function () { return VIEW; },
+      onUse: function (id) {
+        if (id === 'potion' || id === 'bread') { if (hp >= 100) return 'You are already at full health'; hp = Math.min(100, hp + (id === 'potion' ? 30 : 12)); }
+        addLog('use  ' + id + '  (HP ' + hp + ')'); return true;
+      },
+      onDrop: function (id) { if (ITEMS[id].drop === false) return 'The ' + ITEMS[id].name + ' stays with you'; return true; },
+      onChange: function (c) { addLog((c.delta > 0 ? '+' : '') + c.delta + ' ' + c.id + ' -> ' + c.count + '  (' + c.reason + ')'); },
+      onClose: function (s) { addLog('close, left on the ground: ' + (s.ground.map(function (g) { return g.n + ' ' + g.id; }).join(', ') || 'nothing')); }
+    });
+    var ok = inv.restore({ v: 1, bag: START.filter(function (r) { return !BAGS[OPT.bag] || !(r[2] === 7 && r[3] === 4) || true; }) });
+    inv.open({ loot: LOOT, title: 'Backpack' });
+  }
+
+  /* ---------- canvas size: CSS-size HD canvas (dpr) or a 320x180 pixel canvas, integer-scaled ---------- */
+  var VIEW = { x: 0, y: 0, w: 640, h: 360 }, DPR = 1;
+  function fit() {
+    var avail = Math.min(document.getElementById('stage').clientWidth - 12, 1180), HM = /^(\d+)x(\d+)$/.exec(Q.get('host') || '');
+    if (HM) {   // host-like canvas: a fixed native size scaled to the page width (as small games do), e.g. ?host=640x360
+      var NW = +HM[1], NH = +HM[2], cw = Math.max(200, avail), r = window.devicePixelRatio || 1;
+      cv.style.width = cw + 'px'; cv.style.height = Math.round(cw * NH / NW) + 'px';
+      cv.width = PIXEL ? NW : Math.max(NW, Math.round(cw * r)); cv.height = Math.round(cv.width * NH / NW); DPR = cv.width / NW; VIEW = { x: 0, y: 0, w: NW, h: NH }; return;
+    }
+    if (PIXEL) {
+      var s = Math.max(1, Math.floor(avail / 320)); cv.width = 320; cv.height = 180; cv.style.width = 320 * s + 'px'; cv.style.height = 180 * s + 'px'; VIEW = { x: 0, y: 0, w: 320, h: 180 }; DPR = 1; return;
+    }
+    var portrait = avail < 560, w = Math.max(300, avail), h = portrait ? Math.round(w * 1.45) : Math.round(w * 9 / 16);
+    DPR = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+    cv.style.width = w + 'px'; cv.style.height = h + 'px'; cv.width = Math.round(w * DPR); cv.height = Math.round(h * DPR); VIEW = { x: 0, y: 0, w: w, h: h };
+  }
+
+  /* ---------- the tour: scripted pointer and key input on the one game clock ---------- */
+  function cellC(g, x, y, fx, fy) { var r = inv.cellRect(g, x, y); return r ? { x: r.x + r.w * (fx == null ? 0.5 : fx), y: r.y + r.h * (fy == null ? 0.5 : fy) } : null; }
+  function entryC(id, g) { var e = inv.entries().filter(function (q) { return q.id === id && (!g || q.g === g); })[0]; return e ? cellC(e.g, e.cells[0][0], e.cells[0][1]) : null; }
+  function btnC(id) { var b = inv.layout().buttons.filter(function (q) { return q.id === id; })[0]; return b ? { x: b.x + b.w * 0.55, y: b.y + b.h * 0.55 } : null; }
+  function keyNav(id, g) {   // arrow presses from the cursor to an entry
+    var e = inv.entries().filter(function (q) { return q.id === id && (!g || q.g === g); })[0], c = inv.state().cursor, out = [];
+    if (!e) return out; var tx = e.cells[0][0], ty = e.cells[0][1];
+    for (var i = 0; i < Math.abs(tx - c.x); i++) out.push(tx > c.x ? 'ArrowRight' : 'ArrowLeft');
+    for (var j = 0; j < Math.abs(ty - c.y); j++) out.push(ty > c.y ? 'ArrowDown' : 'ArrowUp');
+    return out;
+  }
+  function at(id, g, fx, fy) { return function () { var e = inv.entries().filter(function (q) { return q.id === id && (!g || q.g === g); })[0]; if (!e) return null; if (g) inv.showGrid(g); return cellC(e.g, e.cells[0][0], e.cells[0][1], fx, fy); }; }
+  function bagC(x, y, fx, fy) { return function () { inv.showGrid('bag'); return cellC('bag', x, y, fx, fy); }; }
+  function gndFree() { return function () { inv.showGrid('ground'); var G = inv.grids().ground, occ = {}; if (!G) return cellC('bag', 0, 5); inv.entries().forEach(function (e) { if (e.g === 'ground') e.cells.forEach(function (c) { occ[c] = 1; }); });
+    for (var y = 0; y < G.rows - 1; y++) for (var x = 0; x < G.cols - 1; x++) if (!occ[x + ',' + y] && !occ[(x + 1) + ',' + y] && !occ[x + ',' + (y + 1)] && !occ[(x + 1) + ',' + (y + 1)]) return cellC('ground', x, y, 0.4, 0.4); return cellC('ground', 0, 0); }; }
+  var TOUR = [
+    [500, 'move', at('potion', 'ground'), 450],
+    [1000, 'down'], [1060, 'move', at('potion', 'bag'), 800], [1900, 'up'],                                                  // onto the stack: merge
+    [2250, 'move', at('helmet', 'ground', 0.3, 0.3), 420], [2720, 'down'],
+    [2780, 'move', bagC(4, 0, 0.3, 0.3), 700],                                                                                // over shield + jerkin: blocked
+    [3900, 'move', bagC(2, 2, 0.3, 0.3), 450], [4500, 'up'],                                                                 // a free 2x2: placed
+    [4800, 'move', at('bow', 'ground', 0.5, 0.35), 420], [5280, 'down'],
+    [5340, 'move', bagC(4, 4, 0.5, 0.3), 600], [6050, 'key', 'KeyR'],                                                         // turn the bow sideways
+    [6800, 'up'],
+    [7100, 'move', at('axe', 'ground', 0.4, 0.4), 520], [7700, 'down'],
+    [7760, 'move', bagC(5, 0, 0.4, 0.4), 800],                                                                                // the axe onto the jerkin alone: swap
+    [9000, 'up'],
+    [9300, 'move', gndFree(), 700], [10150, 'down'], [10200, 'up'],                                                           // the jerkin to the ground: drop
+    [10600, 'move', at('maps', 'bag', 0.3, 0.3), 650],                                                                       // hover: tooltip on the S-shaped map bundle
+    [12300, 'move', function () { return btnC('sort'); }, 600], [13050, 'down'], [13100, 'up'],                               // sort
+    [14000, 'move', at('potion', 'bag', 0.3, 0.3), 550], [14700, 'down'], [14760, 'up'],                                       // select a potion
+    [15000, 'move', function () { return btnC('use'); }, 500], [15600, 'down'], [15650, 'up'],                                // use it
+    [16500, 'hide'], [16600, 'nav', function () { return keyNav('key', 'bag'); }, 130],                                       // keys: to the quest item
+    [17700, 'key', 'KeyG'],                                                                                                  // drop: refused
+    [18700, 'nav', function () { return keyNav('rations', 'bag'); }, 130], [19600, 'key', 'KeyZ'],                             // lift the T-shaped ration pack
+    [19800, 'key', 'KeyR'], [19950, 'key', 'KeyR'], [20150, 'key', 'ArrowDown'], [20350, 'key', 'ArrowDown'], [20550, 'key', 'ArrowDown'], [20750, 'key', 'ArrowDown'],
+    [21600, 'key', 'KeyX'],                                                                                                  // put it back
+    [22200, 'key', 'KeyF'],                                                                                                  // take all from the ground
+    [26000, 'restart']
+  ];
+  var navQ = [];
+  function runTour() {
+    while (nextStep < TOUR.length && TOUR[nextStep][0] <= clock) {
+      var s = TOUR[nextStep++], kind = s[1];
+      if (kind === 'move') { var to = s[2](); if (!ptr) ptr = { x: VIEW.w * 0.62, y: VIEW.h * 0.85, down: false }; if (to) motion = { fx: ptr.x, fy: ptr.y, tx: to.x, ty: to.y, t0: clock, t1: clock + s[3] }; }
+      else if (kind === 'down') { if (ptr) { ptr.down = true; inv.pointer('down', ptr.x, ptr.y, { id: 1, button: 0 }); } }
+      else if (kind === 'up') { if (ptr) { ptr.down = false; inv.pointer('up', ptr.x, ptr.y, { id: 1, button: 0 }); } }
+      else if (kind === 'key') { inv.key(s[2], true); inv.key(s[2], false); }
+      else if (kind === 'hide') { ptr = null; motion = null; }
+      else if (kind === 'nav') { var ks = s[2](); navQ = ks.map(function (k, i) { return { at: clock + i * s[3], k: k }; }); }
+      else if (kind === 'restart') { restart(); return; }
+    }
+    while (navQ.length && navQ[0].at <= clock) { var k = navQ.shift().k; inv.key(k, true); inv.key(k, false); }
+    if (motion && ptr) {
+      var u = Math.min(1, (clock - motion.t0) / Math.max(1, motion.t1 - motion.t0)), e = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+      ptr.x = motion.fx + (motion.tx - motion.fx) * e; ptr.y = motion.fy + (motion.ty - motion.fy) * e;
+      inv.pointer('move', ptr.x, ptr.y, { id: 1 });
+      if (u >= 1) motion = null;
+    }
+  }
+  function restart() { clock = 0; nextStep = 0; ptr = null; motion = null; navQ = []; hp = 42; log = []; makeInv(); }
+  function stopTour() { if (!tour) return; tour = false; ptr = null; motion = null; navQ = []; }
+
+  /* ---------- one fixed step ---------- */
+  function step() {
+    clock += STEP;
+    if (tour) runTour();
+    inv.update(STEP);
+  }
+
+  /* ---------- render ---------- */
+  function drawBackdrop() {
+    if (PIXEL) {
+      if (!room) room = GameDNA_PixelScene.room({ cols: 20, rows: 12, w: 320, h: 180, wall: 'stone', floor: 'wood', wallH: 52, seed: 5,
+        props: [{ k: 'bookshelf', x: 40, y: 50 }, { k: 'torch', x: 92, y: 30 }, { k: 'torch', x: 228, y: 30 }, { k: 'barrel', x: 276, y: 74 }, { k: 'crate', x: 296, y: 92 },
+          { k: 'table', x: 160, y: 126 }, { k: 'chest', x: 60, y: 150 }, { k: 'sack', x: 262, y: 160 }, { k: 'pot', x: 22, y: 120 }] });
+      room.draw(ctx, clock, [], 0, 0);
+      return;
+    }
+    var bg = IMG.bg;
+    if (bg) { var s = Math.max(VIEW.w / bg.width, VIEW.h / bg.height), w = bg.width * s, h = bg.height * s; ctx.drawImage(bg, (VIEW.w - w) / 2, (VIEW.h - h) / 2, w, h); }
+    else { ctx.fillStyle = '#2a1f19'; ctx.fillRect(0, 0, VIEW.w, VIEW.h); }
+    var vg = ctx.createRadialGradient(VIEW.w / 2, VIEW.h / 2, Math.min(VIEW.w, VIEW.h) * 0.3, VIEW.w / 2, VIEW.h / 2, Math.max(VIEW.w, VIEW.h) * 0.75);
+    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.55)'); ctx.fillStyle = vg; ctx.fillRect(0, 0, VIEW.w, VIEW.h);
+  }
+  function drawPointer() {
+    if (!ptr) return;
+    var s = PIXEL ? 1 : Math.max(1, VIEW.h / 360) * 1.1, x = ptr.x, y = ptr.y, k = ptr.down ? 0.88 : 1;
+    ctx.save(); ctx.translate(x, y); ctx.scale(s * k, s * k);
+    if (PIXEL) {
+      var A = ['X.........', 'XX........', 'XWX.......', 'XWWX......', 'XWWWX.....', 'XWWWWX....', 'XWWWWWX...', 'XWWWWWWX..', 'XWWWWXXXX.', 'XWXWWX....', 'XX.XWWX...', 'X...XWX...', '.....XX...'];
+      for (var r = 0; r < A.length; r++) for (var c = 0; c < A[r].length; c++) { var ch = A[r][c]; if (ch === '.') continue; ctx.fillStyle = ch === 'X' ? '#120a0c' : '#fff6e0'; ctx.fillRect(c, r, 1, 1); }
+    } else {
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, 17); ctx.lineTo(4.2, 13.2); ctx.lineTo(7.4, 20); ctx.lineTo(10.2, 18.8); ctx.lineTo(7.2, 12.2); ctx.lineTo(12.6, 12); ctx.closePath();
+      ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 4; ctx.shadowOffsetY = 2; ctx.fillStyle = '#fffaf0'; ctx.fill(); ctx.shadowColor = 'transparent';
+      ctx.lineWidth = 1.3; ctx.strokeStyle = '#1a120e'; ctx.stroke();
+      if (ptr.down) { ctx.beginPath(); ctx.arc(0, 0, 7, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(255,230,160,0.8)'; ctx.lineWidth = 1.5; ctx.stroke(); }
+    }
+    ctx.restore();
+  }
+  function render() {
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.imageSmoothingEnabled = !PIXEL;
+    drawBackdrop();
+    inv.draw(ctx);
+    if (!inv.busy() && clock > 0) {
+      var t = PIXEL ? 'Press I or tap to open the bag' : 'Press I or tap to open the bag';
+      if (PIXEL) { ctx.fillStyle = 'rgba(10,6,6,0.8)'; ctx.fillRect(70, 80, 180, 18); GameDNA_PixelScene && 0; ctx.fillStyle = '#f4ead4'; ctx.font = '8px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(t, 160, 89); }
+      else { ctx.font = '600 ' + Math.round(16 * VIEW.h / 400) + 'px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = 'rgba(10,6,6,0.75)'; var w = ctx.measureText(t).width + 40; ctx.fillRect(VIEW.w / 2 - w / 2, VIEW.h / 2 - 22, w, 44); ctx.fillStyle = '#f2e4c4'; ctx.fillText(t, VIEW.w / 2, VIEW.h / 2); }
+    }
+    drawPointer();
+  }
+
+  /* ---------- real input (takes over from the tour) ---------- */
+  function toView(e) { var r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * VIEW.w / r.width, y: (e.clientY - r.top) * VIEW.h / r.height }; }
+  addEventListener('keydown', function (e) {
+    if (e.target && /select|input|button/i.test(e.target.tagName)) return;
+    if (!inv.busy()) { if (e.code === 'KeyI' || e.code === 'Enter' || e.code === 'KeyZ') { stopTour(); inv.open({ loot: LOOT.slice(3) }); e.preventDefault(); } return; }
+    if (inv.key(e.code, true, e.repeat)) { stopTour(); e.preventDefault(); }
+  });
+  addEventListener('keyup', function (e) { if (inv.busy()) inv.key(e.code, false); });
+  cv.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  cv.addEventListener('pointerdown', function (e) {
+    stopTour(); var p = toView(e); try { cv.setPointerCapture(e.pointerId); } catch (x) { }
+    if (!inv.busy()) { inv.open({ loot: LOOT.slice(3) }); return; }
+    inv.pointer('down', p.x, p.y, { id: e.pointerId, button: e.button, pointerType: e.pointerType }); e.preventDefault();
+  });
+  cv.addEventListener('pointermove', function (e) { if (tour) return; var p = toView(e); inv.pointer('move', p.x, p.y, { id: e.pointerId }); });
+  cv.addEventListener('pointerup', function (e) { if (tour) return; var p = toView(e); inv.pointer('up', p.x, p.y, { id: e.pointerId }); });
+  cv.addEventListener('pointercancel', function (e) { var p = toView(e); inv.pointer('cancel', p.x, p.y, { id: e.pointerId }); });
+  cv.addEventListener('wheel', function (e) { if (!inv.busy()) return; stopTour(); var p = toView(e); inv.pointer('wheel', p.x, p.y, {}); e.preventDefault(); }, { passive: false });
+  document.getElementById('b-replay').onclick = function () { tour = true; restart(); };
+  document.getElementById('b-play').onclick = function () { stopTour(); };
+  document.getElementById('b-loot').onclick = function () { stopTour(); if (inv.busy()) inv.close(); inv.open({ loot: LOOT }); };
+  addEventListener('resize', function () { if (OPT.freeze) return; fit(); render(); });
+
+  window.__state = function () {
+    return { t: Math.round(clock), actors: [], tour: tour, pointer: ptr ? { x: Math.round(ptr.x), y: Math.round(ptr.y), down: ptr.down } : null, hp: hp, inv: inv.state() };
+  };
+  window.__inv = function () { return inv; };
+
+  /* ---------- boot ---------- */
+  var acc = 0, prev = null, halted = false;
+  function frame(now) {
+    if (halted) return;
+    if (prev === null) prev = now;
+    acc += Math.min(250, now - prev); prev = now;
+    while (acc >= STEP) { step(); acc -= STEP; }
+    render(); requestAnimationFrame(frame);
+  }
+  function boot() {
+    fit(); makeInv(); render();   // first render measures the layout the tour's pointer targets use
+    if (OPT.t !== null) {
+      for (var n = Math.floor(OPT.t / STEP); n > 0; n--) step();
+      render();
+      if (OPT.freeze) { halted = true; window.__frozen = true; return; }
+    }
+    requestAnimationFrame(frame);
+  }
+  load('icons', '../../painted-ui/assets/kit/icons.webp');
+  load('bg', '../../../demo-kit/assets/scenes/forge-hall.webp');
+  if (PIXEL) boot();
+})();
+</script>
+</body>
+</html>

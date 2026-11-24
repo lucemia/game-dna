@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Expressive Portraits</title>
+<style>
+:root { --bg: #0b0d16; --panel: #141826; --line: #283048; --text: #e9ecf8; --dim: #959cb8; --accent: #ffe070; --accent2: #ff9a6a; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1200px 600px at 30% -10%, #2a2040 0%, var(--bg) 60%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 14px 20px 10px; max-width: 1240px; margin: 0 auto; }
+.code { white-space: nowrap; font: 700 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #2a1008; background: var(--accent2); padding: 6px 8px; border-radius: 4px; box-shadow: 0 0 0 1px #00000040, 0 2px 0 #b8582a; }
+h1 { font-size: 18px; margin: 0; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 18px; padding: 0 20px 20px; max-width: 1240px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.tabs { display: flex; gap: 6px; width: 100%; max-width: 780px; }
+.tabs button { flex: 1; appearance: none; border: 1px solid var(--line); background: #121628; color: var(--dim); font: 700 12px/1 inherit; padding: 9px 6px; border-radius: 7px; cursor: pointer; letter-spacing: .04em; }
+.tabs button[aria-selected=true] { color: var(--text); background: linear-gradient(#2a2440, #1c1a30); box-shadow: inset 0 -2px 0 var(--accent2); }
+.frame { padding: 6px; background: linear-gradient(#2a2444, #141226); border-radius: 8px; box-shadow: 0 0 0 1px #3e3460, 0 18px 50px #00000080; max-width: 100%; }
+canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; border-radius: 3px; touch-action: manipulation; max-width: 100%; }
+.caption { display: flex; justify-content: space-between; gap: 12px; width: 100%; max-width: 780px; color: var(--dim); font-size: 12px; }
+.caption b { color: var(--text); font-weight: 600; }
+aside { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+h2 { margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.btns button, .foot button { appearance: none; border: 1px solid #00000060; border-radius: 6px; padding: 8px 10px; cursor: pointer; color: var(--text); font: 700 12px/1 inherit; background: linear-gradient(#2a2a48, #1e1e36); box-shadow: inset 0 1px 0 #ffffff14, inset 0 -2px 0 #b8582a; }
+.btns button.main { background: linear-gradient(#ff9a6a, #d8683a); color: #2a1008; }
+.parts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; }
+.part { display: grid; grid-template-columns: 18px 1fr; align-items: center; gap: 4px; }
+.part label { grid-column: 1 / -1; font-size: 11px; color: var(--dim); display: flex; justify-content: space-between; }
+.part input[type=checkbox] { accent-color: var(--accent2); margin: 0; }
+select, input[type=number], input[type=text] { width: 100%; appearance: none; background: #0e1120; color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font: 600 12px inherit; }
+.row { margin-bottom: 10px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 5px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--accent2) var(--fill), #283048 var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 4px; background: #fff0e8; border: 2px solid #2a1008; box-shadow: 0 1px 4px #000a; cursor: pointer; }
+.seg { display: flex; background: #0e1120; border: 1px solid var(--line); border-radius: 6px; padding: 2px; gap: 2px; }
+.seg button { flex: 1; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 3px; border-radius: 4px; cursor: pointer; }
+.seg button[aria-checked=true] { background: #322a50; color: var(--text); box-shadow: inset 0 0 0 1px #4c3c70, inset 0 -2px 0 var(--accent2); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+pre { margin: 0; background: #0e1120; border: 1px solid var(--line); border-radius: 6px; padding: 8px; font: 11px/1.4 ui-monospace, Menlo, monospace; color: #c8cce0; white-space: pre-wrap; word-break: break-all; max-height: 120px; overflow: auto; }
+.foot { display: flex; justify-content: space-between; align-items: center; color: var(--dim); font-size: 11.5px; border-top: 1px solid var(--line); padding-top: 10px; gap: 8px; }
+@media (max-width: 980px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 640px; width: 100%; margin: 0 auto; } }
+@media (max-width: 560px) { header { padding: 12px 16px 8px; } main { padding: 0 16px 16px; gap: 12px; } .frame { padding: 3px; } .caption { flex-direction: column; gap: 2px; } .caption > span { white-space: normal !important; overflow-wrap: anywhere; } .two { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">D-04</span>
+  <div><h1>Expressive portraits</h1><p>Bust portraits built from a small seeded spec at native pixel size, with shaded ramps and an outline. Seven expressions change only the brows, eyes and mouth; they blink, and the mouth moves while the dialogue box types.</p></div>
+</header>
+<main>
+  <section id="stage">
+    <div class="tabs" role="tablist"><button data-view="sheet">Generator</button><button data-view="dialog">Dialogue scene</button><button data-view="cast">Character select</button></div>
+    <div class="frame"><canvas id="cv" width="256" height="224" aria-label="Portrait demo"></canvas></div>
+    <div class="caption"><span><b id="now">-</b></span><span style="white-space:nowrap"><span id="scaleinfo">256×224 native</span> · <b>R</b> randomise · <b>Z</b> advance (manual)</span></div>
+  </section>
+  <aside>
+    <div>
+      <h2>Character</h2>
+      <div class="btns"><button class="main" id="rand">Randomise (R)</button><button id="unlock">Unlock all</button><button id="prev">Seed −</button><button id="next">Seed +</button></div>
+    </div>
+    <div class="two"><div><h2>Seed</h2><input type="number" id="seed" min="1" max="99999"></div><div><h2>Name</h2><input type="text" id="name" maxlength="12"></div></div>
+    <div><h2>Parts (tick to lock)</h2><div class="parts" id="parts"></div></div>
+    <div>
+      <div class="row"><label>Enter / exit (ms) <output data-out="enterMs"></output></label><input type="range" data-key="enterMs" min="0" max="400" step="20"></div>
+      <div class="row"><label>Blink every (ms, 0 = off) <output data-out="blinkMs"></output></label><input type="range" data-key="blinkMs" min="0" max="8000" step="200"></div>
+      <div class="row"><label>Mouth frame (ms) <output data-out="mouthMs"></output></label><input type="range" data-key="mouthMs" min="40" max="200" step="10"></div>
+    </div>
+    <div class="two">
+      <div><h2>Size</h2><div class="seg" data-key="size"><button>48</button><button>64</button></div></div>
+      <div><h2>Frame</h2><div class="seg" data-key="frame"><button>window</button><button>plate</button><button>none</button></div></div>
+      <div><h2>Layout</h2><div class="seg" data-key="layout"><button>left</button><button>right</button><button>two</button></div></div>
+      <div><h2>Listener</h2><div class="seg" data-key="listener"><button>dim</button><button>hide</button></div></div>
+      <div><h2>Enter</h2><div class="seg" data-key="enter"><button>slide</button><button>fade</button><button>none</button></div></div>
+      <div><h2>Outline</h2><div class="seg" data-key="outline"><button>ink</button><button>soft</button></div></div>
+      <div><h2>Backdrop</h2><div class="seg" data-key="backdrop"><button>tint</button><button>skin</button><button>none</button></div></div>
+      <div><h2>Skin</h2><select id="skin"><option value="pixel16">pixel16</option><option value="flat-demo">flat (non-pixel)</option><option value="none">built-in (no skin)</option></select></div>
+      <div><h2>Loop</h2><div class="seg" id="loop"><button data-v="1" aria-checked="true">auto</button><button data-v="0">manual</button></div></div>
+    </div>
+    <div><h2>Spec (paste into your cast)</h2><pre id="spec"></pre></div>
+    <div class="foot"><span>Same module as <b>module/expressive-portraits.js</b> · <code>?view=dialog&amp;t=ms&amp;freeze=1</code></span><button id="reset">Reset</button></div>
+  </aside>
+</main>
+<script src="../../../skins/skin-api.js"></script>
+<script src="../../../skins/pixel16.js"></script>
+<script src="../../../pixel-kit/pixel-scene.js"></script>
+<script src="../../dialogue-box/module/dialogue-box.js"></script>
+<script src="../module/expressive-portraits.js"></script>
+<script>
+'use strict';
+(function () {
+  var STEP = 1000 / 60, W = 256;
+  var Q = new URLSearchParams(location.search), num = function (k, d) { var v = Q.get(k); return v == null || v === '' || isNaN(+v) ? d : +v; };
+  var FREEZE = Q.get('freeze') === '1', T_AT = num('t', 0), LOOP = Q.get('loop') !== '0';
+  var GP = window.GameDNA_Portraits, DB = window.GameDNA_DialogueBox, SKAPI = window.GameDNA_Skin;
+  var cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+
+  if (SKAPI) SKAPI.register({
+    id: 'flat-demo', name: 'Flat demo', pixel: false, native: { w: 256, h: 224, scale: 'fit', smoothing: true },
+    palette: { ink: '#29304d', paper: '#f4f6fb',
+      ui: { fill: '#ffffff', fillTo: '#eef1f8', edge: '#cdd2de', highlight: '#ffffff', shadow: 'rgba(40,46,90,0.25)' },
+      team: { a: '#5b6cff', b: '#ff6a5a', n: '#7b8199' },
+      overlay: { move: { fill: '#6f8cff', edge: '#4d68d6' }, attack: { fill: '#ff6f6f', edge: '#d9624f' }, threat: { fill: '#8f86ff', edge: '#5b4bff' }, heal: { fill: '#3fcf8e', edge: '#2f9e63' } },
+      fx: { hot: '#ff8a3c', cold: '#4aa8ff', heal: '#2f9e63', crit: '#f5b520', status: '#8f86ff' },
+      text: { main: '#29304d', shadow: 'rgba(0,0,0,0)', outline: '#29304d', dim: '#8a90a8', gold: '#b07a10', accent: '#5b6cff' } },
+    fonts: { ui: { type: 'canvas', family: 'system-ui, -apple-system, sans-serif', size: 7.5, weight: 600 }, num: { type: 'canvas', family: 'system-ui, sans-serif', size: 11, weight: 800 } },
+    shape: { radius: 4, padding: 4 }, shadow: { text: null, window: { blur: 4, dy: 1 } }, outline: { text: { width: 0 }, sprite: { width: 1, color: 'ink' } }, motion: { snap: false }
+  });
+
+  /* ---------------- parameters ---------------- */
+  var params = {};
+  function resetParams() { params = {}; Object.keys(GP.DEFAULTS).forEach(function (k) { params[k] = GP.DEFAULTS[k]; }); }
+  resetParams();
+  Object.keys(params).forEach(function (k) { if (Q.has(k)) params[k] = typeof params[k] === 'number' ? num(k, params[k]) : Q.get(k); });
+  var skinId = Q.get('skin') || 'pixel16', view = Q.get('view') || 'sheet';
+  function SK() { return skinId === 'none' || !SKAPI ? null : SKAPI.resolve(skinId); }
+  function skinOpt() { return skinId === 'none' ? false : skinId; }
+
+  /* ---------------- the generator's character ---------------- */
+  var PARTKEYS = ['age', 'gender', 'skin', 'head', 'hair', 'hairColor', 'eyes', 'eyeColor', 'brows', 'nose', 'mouth', 'ears', 'facial', 'headgear', 'mark', 'collar', 'cloth', 'trim', 'bg'];
+  var locks = {}, seed = num('seed', 204), cur = null, given = {};
+  PARTKEYS.forEach(function (k) { if (Q.has(k)) { given[k] = Q.get(k); locks[k] = true; } });
+  var NAMES = ['Ayla', 'Bram', 'Corin', 'Dessa', 'Elric', 'Fenna', 'Garret', 'Hollis', 'Isolde', 'Jory', 'Kestrel', 'Lio', 'Marrow', 'Nell', 'Orin', 'Pell', 'Quill', 'Rhea', 'Soren', 'Tamsin', 'Ulla', 'Vance', 'Wren', 'Yara'];
+  function build() {
+    var keep = {}; PARTKEYS.forEach(function (k) { if (locks[k] && cur) keep[k] = cur.spec[k]; if (given[k] != null) keep[k] = given[k]; });
+    var spec = GP.randomSpec(seed, keep, Object.keys(keep));
+    spec.name = document.getElementById('name').dataset.custom ? document.getElementById('name').value : NAMES[seed % NAMES.length];
+    spec.size = params.size;
+    given = {};
+    cur = GP.make(spec, { size: params.size, outline: params.outline });
+    syncParts();
+  }
+
+  /* ---------------- dialogue scene: a river ford, three speakers ---------------- */
+  var FIELD = { x: 0, y: 12, w: 256, h: 212 }, HUD = { x: 0, y: 0, w: 256, h: 12 };
+  var CAST = {
+    Rook: { seed: 4120, name: 'Rook', age: 'adult', gender: 'male', skin: 'bronze', head: 'square', hair: 'crop', hairColor: 'black', eyes: 'heavy', eyeColor: 'grey', brows: 'thick', ears: 'round', nose: 'straight', facial: 'stubble', headgear: 'none', mark: 'scar', collar: 'armor', cloth: 'navy', trim: 'cream', bg: 'slate', metal: 'steel' },
+    Mira: { seed: 77, name: 'Mira', age: 'young', gender: 'female', skin: 'fair', head: 'heart', hair: 'long', hairColor: 'auburn', eyes: 'almond', eyeColor: 'green', brows: 'arched', nose: 'button', mouth: 'full', facial: 'none', headgear: 'circlet', mark: 'freckles', collar: 'cloak', cloth: 'forest', trim: 'cream', bg: 'moss', metal: 'gold', gem: 'sapphire' },
+    Oswin: { seed: 903, name: 'Oswin', age: 'elder', gender: 'male', skin: 'deep', head: 'long', hair: 'bald', hairColor: 'grey', eyes: 'round', eyeColor: 'amber', brows: 'thick', nose: 'broad', facial: 'beard', headgear: 'hood', hood: 'trim', mark: 'earring', collar: 'robe', cloth: 'plum', trim: 'ochre', bg: 'ember' }
+  };
+  var UNITS = { oswin: { x: 70, y: 118, kind: 'mage', team: 'n' }, mira: { x: 104, y: 134, kind: 'archer', team: 'a' }, rook: { x: 176, y: 112, kind: 'knight', team: 'a' } };
+  var SCRIPT = [
+    { speaker: 'Oswin', expr: 'sad', text: 'So the north bridge is gone again?' },
+    { speaker: 'Rook', expr: 'determined', text: 'Washed out at dawn. The river rose twice its height overnight.' },
+    { speaker: 'Mira', expr: 'surprised', text: 'Twice? Then the dam at {gold}Greywater{/} must have cracked!' },
+    { speaker: 'Rook', expr: 'angry', text: 'And nobody rang the warning bell. Somebody will answer for that.' },
+    { speaker: 'Mira', expr: 'happy', text: 'Later, Captain. {p300}Grab the lanterns, we can still reach the farms!' },
+    { text: 'The two of them run for the ford, boots splashing.' },
+    { speaker: 'Oswin', expr: 'hurt', text: 'Ow... my back. {p300}Someone has to mind the gate, I suppose.' }
+  ];
+  var por, dlg, sim;
+  function unitRect(id) { var u = UNITS[String(id).toLowerCase()]; return u ? { x: u.x - 9, y: u.y - 22, w: 18, h: 22, id: id } : null; }
+  function makeScene() {
+    por = GP.create({ cast: CAST, skin: skinOpt(), params: params, bounds: FIELD, uiRects: function () { return [HUD]; } });
+    dlg = DB.create({
+      bounds: function () { return por.reserve(FIELD); }, skin: skinOpt(), params: { speed: 40, rows: 3, place: 'bottom' },
+      autoplay: function () { return LOOP; },
+      getAnchor: function (who) { return unitRect(who); },
+      uiRects: function () { return [HUD]; },
+      onLine: function (line, i, c) { por.onLine(line, i, c); }
+    });
+    por.attach(dlg);
+    sim = { t: 0, idle: 0, runs: 0 };
+  }
+  function stepScene() {
+    sim.t += STEP;
+    if (!dlg.busy()) { sim.idle += STEP; if (sim.idle >= (sim.runs ? 900 : 300)) { sim.idle = 0; sim.runs++; dlg.open(SCRIPT.map(function (l) { return Object.assign({}, l); })); } }
+    dlg.update(STEP); por.update(STEP);
+  }
+
+  /* ---------------- drawing helpers ---------------- */
+  function label(g, s, x, y, col, align) { var S = SK(); if (S) S.text(g, String(s).toUpperCase(), x, y, { font: 'ui', color: col || '#e8ecff', align: align || 'left' }); else { g.fillStyle = col || '#e8ecff'; g.font = '7px monospace'; g.textAlign = align || 'left'; g.fillText(String(s).toUpperCase(), x, y + 7); g.textAlign = 'left'; } }
+  function bgFill(g, w, h) { g.fillStyle = '#16132a'; g.fillRect(0, 0, w, h); for (var y = 0; y < h; y += 2) for (var x = (y / 2) % 2 ? 0 : 1; x < w; x += 4) { g.fillStyle = '#1c1834'; g.fillRect(x, y, 1, 1); } }
+  var simT = 0;
+  var SHORT = { neutral: 'NEUT', happy: 'HAPPY', angry: 'ANGRY', sad: 'SAD', surprised: 'SURPR', determined: 'DETER', hurt: 'HURT' };
+  function sheetH() { return params.size >= 64 ? 360 : 224; }
+  function drawSheet(g) {
+    var S = cur.size, ps = GP.panelSize(S, params.frame === 'none' ? 'window' : params.frame), cols = S >= 64 ? 3 : 4, gapX = S >= 64 ? 12 : 6, h = sheetH();
+    bgFill(g, W, h);
+    var cells = [['neutral', 'NEUTRAL'], ['happy', 'HAPPY'], ['angry', 'ANGRY'], ['sad', 'SAD'], ['surprised', 'SURPRISED'], ['determined', 'DETERMINED'], ['hurt', 'HURT'],
+      ['live', 'LIVE'], ['neutral', 'BLINK HALF', { blink: 'half' }], ['neutral', 'BLINK SHUT', { blink: 'closed' }], ['neutral', 'TALK 1', { mouth: 1 }], ['neutral', 'TALK 2', { mouth: 2 }]];
+    var x0 = Math.floor((W - (cols * ps.w + (cols - 1) * gapX)) / 2), live = ['neutral', 'happy', 'angry', 'sad', 'surprised', 'determined', 'hurt'][Math.floor(simT / 1400) % 7];
+    cells.forEach(function (c, i) {
+      var cx = x0 + (i % cols) * (ps.w + gapX), cy = 6 + Math.floor(i / cols) * (ps.h + 16);
+      var o = { skin: skinOpt(), frame: params.frame === 'none' ? 'window' : params.frame, backdrop: params.backdrop, expr: c[0], blink: 'open' };
+      if (c[0] === 'live') { o.expr = live; o.t = simT; o.blink = undefined; o.blinkMs = params.blinkMs || 1e9; o.talking = Math.floor(simT / 700) % 2 === 0; o.mouthMs = params.mouthMs; o.focus = true; }
+      if (c[2]) for (var k in c[2]) o[k] = c[2][k];
+      GP.drawPanel(g, cur, { x: cx, y: cy }, o);
+      label(g, c[0] === 'live' ? 'LIVE ' + SHORT[live] : c[1], cx + ps.w / 2, cy + ps.h + 3, c[0] === 'live' ? '#ffd070' : '#c8cce8', 'center');
+    });
+  }
+  var CASTSEEDS = [7, 4120, 77, 903, 1312, 58, 2207, 7], CASTNAMES = ['', 'Rook', 'Mira', 'Oswin', 'Quill', 'Kestrel', 'Yara', 'Pip'];
+  var castP = {}, bigP = {};
+  function castPortrait(i) {
+    var sd = CASTSEEDS[i], key = sd + '|' + params.outline;
+    if (i === 0) return cur;
+    if (!castP[key]) castP[key] = GP.make(sd === 4120 ? CAST.Rook : sd === 77 ? CAST.Mira : sd === 903 ? CAST.Oswin : { seed: sd, name: CASTNAMES[i] }, { size: 48, outline: params.outline });
+    return castP[key];
+  }
+  function drawCast(g) {
+    bgFill(g, W, 224);
+    var S = SK(), sel = Math.floor(simT / 1500) % 8, small = GP.panelSize(48, 'window');
+    for (var i = 0; i < 8; i++) {
+      var p = i === 0 && cur.size !== 48 ? GP.make(cur.spec, { size: 48, outline: params.outline }) : castPortrait(i);
+      var x = 8 + (i % 4) * 62, y = 3 + Math.floor(i / 4) * 66;
+      GP.drawPanel(g, p, { x: x, y: y }, { skin: skinOpt(), expr: i === sel ? 'happy' : 'neutral', t: simT + i * 913, blinkMs: params.blinkMs || 1e9, dim: i !== sel, focus: i === sel, backdrop: params.backdrop });
+      label(g, p.name || '?', x + small.w / 2, y + small.h + 2, i === sel ? '#ffe070' : '#9aa0c0', 'center');
+      if (i === sel && S) S.cursor(g, { x: x - 6, y: y + 20, w: 7, h: 5 }, 'hand', simT / 1000);
+    }
+    var big0 = sel === 0 ? cur : castPortrait(sel), big = bigP[big0.spec.seed + '|' + params.outline] || (bigP[big0.spec.seed + '|' + params.outline] = GP.make(big0.spec, { size: 64, outline: params.outline })), ps = GP.panelSize(64, 'window'), win = { x: 6, y: 224 - ps.h - 12, w: 244, h: ps.h + 10 };
+    if (S) S.frame(g, win, { role: 'window', team: 'a' }); else { g.fillStyle = '#1a2a6a'; g.fillRect(win.x, win.y, win.w, win.h); }
+    GP.drawPanel(g, big, { x: win.x + 5, y: win.y + 5 }, { skin: skinOpt(), expr: 'determined', t: simT, blinkMs: params.blinkMs || 1e9, backdrop: params.backdrop });
+    var tx = win.x + ps.w + 14, sp = big.spec;
+    label(g, big.name || 'Unnamed', tx, win.y + 8, '#ffe070');
+    label(g, sp.age + ' ' + (sp.collar === 'armor' ? 'knight' : sp.collar === 'robe' ? 'scholar' : sp.collar === 'cloak' ? 'ranger' : 'traveller'), tx, win.y + 20, '#c8d4ff');
+    label(g, 'LV ' + (5 + (sp.seed % 30)) + '   HP ' + (60 + sp.seed % 90) + '/' + (60 + sp.seed % 90), tx, win.y + 32);
+    label(g, 'STR ' + (8 + sp.seed % 13) + '  MAG ' + (6 + (sp.seed >> 3) % 15), tx, win.y + 44);
+  }
+  var TILE = 16, PXS = window.GameDNA_PixelScene, FORD = null;
+  // the ford drawn with the shared pixel scene kit (pixel skins only; other skins keep the plain tile map)
+  function ford() {
+    return FORD || (FORD = PXS.scene({ seed: 31, pines: true, map: [
+      'TTTTTTTTTTTTTTTT', 'TTTT,TTTT,TT,TTT', 'TT..,..T....wwwT', 'T..........,www.', '..u.........wwwT', '...........swww.', '....r.....sswww.',
+      'ppppppppppppbbpp', '....p......swww.', '.F..p......swwwT', '....p..ssssswww.', 'wwwwBwwwwwwwwwww', 'wwwwBwwwwwwwwwww', 'wwwwBwwwwwwwwwww'],
+      props: [{ k: 'sign', x: 40, y: 109 }, { k: 'lantern', x: 152, y: 108 }, { k: 'fence', x: 96, y: 160, o: { len: 62 } }, { k: 'crate', x: 22, y: 100 }, { k: 'barrel', x: 34, y: 96 }, { k: 'boulder', x: 150, y: 72 }] }));
+  }
+  /* text state for critics and tools/sprites/statecheck.py (dialogue scene only; the generator sheet and the cast view have
+     no field characters, and the bust portraits are frontal). facing uses the same rule as drawScene(): u.x > 130 ? -1 : 1 */
+  var LOOKS = { oswin: 'rook', mira: 'rook', rook: 'mira' };
+  window.__state = function () {
+    if (view !== 'dialog') return { t: Math.round(sim.t), note: 'view=' + view + ': no field characters (frontal bust portraits only)', actors: [] };
+    return { t: Math.round(sim.t), actors: Object.keys(UNITS).map(function (k) { var u = UNITS[k]; return { id: k, x: u.x, y: u.y, facing: (u.x > 130 ? -1 : 1) === -1 ? 'left' : 'right', target: LOOKS[k] }; }) };
+  };
+  function drawScene(g) {
+    var S = SK(), t = sim.t / 1000, kit = PXS && S && S.pixel !== false;
+    if (kit) {
+      ford().draw(g, sim.t, Object.keys(UNITS).map(function (k) { var u = UNITS[k]; return { y: u.y, draw: function (c) { S.unitToken(c, { x: u.x - 9, y: u.y - 22, w: 18, h: 22 }, { team: u.team, kind: u.kind, facing: u.x > 130 ? -1 : 1 }, t); } }; }));
+    } else for (var r = 0; r < 14; r++) for (var c = 0; c < 16; c++) {
+      var kind = r < 3 ? (c % 5 === 2 ? 'forest' : 'hill') : r === 3 || r === 4 ? 'forest' : (c >= 11 && c <= 13) || (r >= 11) ? 'water' : (c === 10 || r === 10) ? 'sand' : (r === 7 && c < 10) ? 'road' : 'grass';
+      if (r >= 11 && c >= 4 && c <= 6) kind = 'bridge';
+      if (S && S.tile) S.tile(g, { x: c * TILE, y: r * TILE, w: TILE, h: TILE }, kind, t);
+      else { g.fillStyle = { water: '#2a5a9a', grass: '#4a8a3a', forest: '#2a5a2a', hill: '#6a7a3a', sand: '#c8b070', road: '#a08050', bridge: '#8a5a30' }[kind]; g.fillRect(c * TILE, r * TILE, TILE, TILE); }
+    }
+    if (!kit) Object.keys(UNITS).forEach(function (k) { var u = UNITS[k]; if (S && S.unitToken) S.unitToken(g, { x: u.x - 9, y: u.y - 22, w: 18, h: 22 }, { team: u.team, kind: u.kind, facing: u.x > 130 ? -1 : 1 }, t); });
+    if (kit && S.frame) S.frame(g, { x: -2, y: -3, w: W + 4, h: 16 }, { role: 'window', team: 'n' }); else { g.fillStyle = '#0e1226'; g.fillRect(0, 0, W, 12); g.fillStyle = '#3a2c5a'; g.fillRect(0, 11, W, 1); }
+    label(g, 'GREYWATER FORD', 6, 3, '#ffe890'); label(g, dlg.busy() ? 'TALKING' : 'WAIT', W - 6, 3, '#8ab4ff', 'right');
+    var st = dlg.state();
+    if (st && st.anchor) { var a = st.anchor, bob = Math.floor(sim.t / 250) % 2; g.fillStyle = '#06061a'; g.fillRect(a.x + a.w / 2 - 3, a.y - 8 + bob, 7, 5); g.fillStyle = '#fff'; g.fillRect(a.x + a.w / 2 - 2, a.y - 7 + bob, 5, 3); }
+    dlg.draw(g); por.draw(g);
+  }
+
+  /* ---------------- render ---------------- */
+  var low = document.createElement('canvas'), lg = low.getContext('2d');
+  function render() {
+    var h = view === 'sheet' ? sheetH() : 224, S = SK(), pixel = !S || S.pixel !== false, k = pixel ? 1 : 3;
+    if (low.width !== W || low.height !== h) { low.width = W; low.height = h; }
+    if (cv.width !== W * k || cv.height !== h * k) { cv.width = W * k; cv.height = h * k; fit(); }
+    var g = pixel ? ctx : lg;
+    g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = false;
+    if (view === 'sheet') drawSheet(g); else if (view === 'cast') drawCast(g); else drawScene(g);
+    if (!pixel) { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false; ctx.drawImage(low, 0, 0, W * k, h * k); }
+    var st = dlg.state();
+    document.getElementById('now').textContent = view === 'dialog' ? (st ? (st.speaker || 'narration') + ' · ' + (por.state().left && por.state().left.expr || por.state().right && por.state().right.expr || '') + ' · ' + st.stage : 'between conversations') : view === 'cast' ? 'Standalone: character select and status' : cur.name + ' · seed ' + cur.spec.seed;
+    document.documentElement.dataset.state = JSON.stringify({ view: view, t: Math.round(simT), seed: cur.spec.seed, spec: cur.spec, dlg: st, por: por.state(), drawn: por.lastDrawn(), box: dlg.rect() });
+  }
+  function fit() {
+    var h = cv.height / (cv.width / W), avail = Math.min(document.getElementById('stage').clientWidth - 12, 780), s = Math.max(1, Math.floor(avail / W));
+    var dpr = window.devicePixelRatio || 1, ds = Math.max(1, Math.floor(avail * dpr / W)), cw = s >= 2 ? W * s : W * ds / dpr;   // whole device pixels per native pixel
+    cv.style.width = cw + 'px'; cv.style.height = Math.round(cw * h / W) + 'px';
+    document.getElementById('scaleinfo').textContent = W + '×' + h + ' native · ' + (s >= 2 ? s + '×' : ds + '× device px');
+  }
+  addEventListener('resize', fit);
+
+  /* ---------------- controls ---------------- */
+  var partsEl = document.getElementById('parts');
+  PARTKEYS.forEach(function (k) {
+    var d = document.createElement('div'); d.className = 'part';
+    d.innerHTML = '<label>' + k + '</label><input type="checkbox" title="lock" data-lock="' + k + '"><select data-part="' + k + '">' + GP.PARTS[k].map(function (v) { return '<option>' + v + '</option>'; }).join('') + '</select>';
+    partsEl.appendChild(d);
+  });
+  partsEl.addEventListener('change', function (e) {
+    var k = e.target.dataset.part, l = e.target.dataset.lock;
+    if (k) { given[k] = e.target.value; locks[k] = true; build(); }
+    if (l) locks[l] = e.target.checked;
+  });
+  function syncParts() {
+    PARTKEYS.forEach(function (k) { partsEl.querySelector('[data-part="' + k + '"]').value = cur.spec[k]; partsEl.querySelector('[data-lock="' + k + '"]').checked = !!locks[k]; });
+    document.getElementById('seed').value = seed; var nm = document.getElementById('name'); if (!nm.dataset.custom) nm.value = cur.spec.name;
+    var o = {}; ['name'].concat(PARTKEYS).forEach(function (k) { o[k] = cur.spec[k]; }); o.seed = cur.spec.seed;
+    document.getElementById('spec').textContent = JSON.stringify(o);
+  }
+  function randomise() { seed = 1 + Math.floor((seed * 7919 + 104729) % 99991); build(); }
+  document.getElementById('rand').onclick = randomise;
+  document.getElementById('unlock').onclick = function () { locks = {}; build(); };
+  document.getElementById('prev').onclick = function () { seed = Math.max(1, seed - 1); build(); };
+  document.getElementById('next').onclick = function () { seed++; build(); };
+  document.getElementById('seed').onchange = function (e) { seed = Math.max(1, +e.target.value || 1); build(); };
+  document.getElementById('name').oninput = function (e) { e.target.dataset.custom = '1'; build(); };
+  function syncControls() {
+    document.querySelectorAll('input[type=range][data-key]').forEach(function (inp) { var k = inp.dataset.key; inp.value = params[k]; inp.style.setProperty('--fill', (params[k] - inp.min) / (inp.max - inp.min) * 100 + '%'); document.querySelector('[data-out="' + k + '"]').textContent = params[k]; });
+    document.querySelectorAll('.seg[data-key]').forEach(function (seg) { seg.querySelectorAll('button').forEach(function (bt) { bt.setAttribute('aria-checked', String(bt.textContent === String(params[seg.dataset.key]))); }); });
+    document.querySelectorAll('.tabs button').forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.view === view)); });
+    document.getElementById('skin').value = skinId;
+  }
+  function applyParams(rebuild) { castP = {}; bigP = {}; if (rebuild) build(); var keep = sim; makeScene(); if (keep && !rebuild) sim = keep; syncControls(); }
+  document.querySelectorAll('input[type=range][data-key]').forEach(function (inp) { inp.addEventListener('input', function () { params[inp.dataset.key] = +inp.value; por.setParams(params); syncControls(); }); });
+  document.querySelectorAll('.seg[data-key]').forEach(function (seg) { seg.querySelectorAll('button').forEach(function (bt) { bt.addEventListener('click', function () {
+    var k = seg.dataset.key; params[k] = typeof GP.DEFAULTS[k] === 'number' ? +bt.textContent : bt.textContent; applyParams(k === 'size' || k === 'outline'); }); }); });
+  document.querySelectorAll('.tabs button').forEach(function (b) { b.addEventListener('click', function () { view = b.dataset.view; syncControls(); render(); fit(); }); });
+  document.getElementById('skin').addEventListener('change', function (e) { skinId = e.target.value; applyParams(false); });
+  function setLoop(on) { LOOP = on; document.querySelectorAll('#loop button').forEach(function (x) { x.setAttribute('aria-checked', String(+x.dataset.v === (on ? 1 : 0))); }); if (dlg && dlg.busy()) dlg.auto(on); }
+  document.querySelectorAll('#loop button').forEach(function (b) { b.addEventListener('click', function () { setLoop(!!+b.dataset.v); }); });
+  addEventListener('keydown', function (e) {
+    if (e.code === 'KeyR' && !/INPUT|SELECT/.test(document.activeElement.tagName)) { randomise(); return; }
+    if (view === 'dialog' && dlg.busy() && /^(KeyZ|Enter|Space)$/.test(e.code)) { if (LOOP) setLoop(false); dlg.key(e.code, true); e.preventDefault(); }
+  });
+  addEventListener('keyup', function (e) { if (dlg) dlg.key(e.code, false); });
+  cv.addEventListener('pointerdown', function () { if (view === 'dialog' && dlg.busy()) { if (LOOP) setLoop(false); dlg.tap(); } else if (view === 'sheet') randomise(); });
+  document.getElementById('reset').onclick = function () { resetParams(); skinId = 'pixel16'; locks = {}; seed = 7; document.getElementById('name').dataset.custom = ''; applyParams(true); setLoop(true); };
+  if (!LOOP) setLoop(false);
+
+  build(); makeScene(); syncControls(); fit();
+  function step() { simT += STEP; stepScene(); }
+  if (FREEZE) { var n = Math.floor(T_AT / STEP); for (var i = 0; i < n; i++) step(); render(); }
+  else { var last = performance.now(), acc = 0; (function loop(now) { acc += Math.min(250, now - last); last = now; while (acc >= STEP) { step(); acc -= STEP; } render(); requestAnimationFrame(loop); })(performance.now()); }
+})();
+</script>
+</body>
+</html>

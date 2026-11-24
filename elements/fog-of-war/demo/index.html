@@ -1,0 +1,2092 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fog of War</title>
+<style>
+:root {
+  --bg: #0d0b14; --panel: #16131f; --panel2: #1d1929; --line: #2c2740; --text: #ece8f6; --dim: #9a93b4; --accent: #f2c35a; --accent2: #7ab8ff;
+  --hit: #e8ecff; --crit: #ffb43a; --heal: #4ad870; --miss: #a8a8bc; --multi: #ff8a6a; --mp: #4aa8ff; --status: #b878f8; --fire: #ff8a3a; --ice: #6ad8f0; --bolt: #fff07a;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1200px 600px at 30% -10%, #241c3a 0%, var(--bg) 60%) fixed, var(--bg); min-height: 100vh; }
+header { display: flex; align-items: center; gap: 14px; padding: 14px 20px 10px; max-width: 1240px; margin: 0 auto; }
+.code { white-space: nowrap; font: 700 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #1a1206; background: var(--accent); padding: 6px 8px; border-radius: 4px; box-shadow: 0 0 0 1px #00000040, 0 2px 0 #8a6428; }
+h1 { font-size: 18px; margin: 0; letter-spacing: .01em; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; padding: 0 20px 20px; max-width: 1240px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; display: flex; flex-direction: column; align-items: center; }
+.frame { padding: 6px; background: linear-gradient(#2a2340, #15111f); border-radius: 8px; box-shadow: 0 0 0 1px #3a3352, 0 18px 50px #00000080; }
+canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; border-radius: 3px; }
+.caption { display: flex; justify-content: space-between; gap: 12px; width: 100%; max-width: 780px; margin-top: 8px; color: var(--dim); font-size: 12px; }
+.caption b { color: var(--text); font-weight: 600; }
+#status::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--heal); margin-right: 6px; box-shadow: 0 0 8px var(--heal); vertical-align: 1px; }
+aside { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+h2 { margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.triggers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.triggers button { --c: var(--hit); appearance: none; border: 1px solid #00000060; border-radius: 6px; padding: 9px 4px 7px; cursor: pointer; color: var(--text); font: 600 12px/1.1 inherit;
+  background: linear-gradient(#2a2440, #1e1a2e); box-shadow: inset 0 1px 0 #ffffff14, inset 0 -2px 0 color-mix(in srgb, var(--c) 70%, black); transition: transform .06s, background .15s; }
+.triggers button:hover { background: linear-gradient(#352d50, #241f36); }
+.triggers button:active { transform: translateY(1px); box-shadow: inset 0 1px 0 #ffffff14, inset 0 -1px 0 var(--c); }
+.triggers button i { display: block; font-style: normal; font: 800 15px/1 ui-monospace, Menlo, monospace; color: var(--c); margin-bottom: 4px; text-shadow: 0 1px 0 #000, 1px 0 0 #000, -1px 0 0 #000, 0 -1px 0 #000; }
+.triggers kbd { display: block; font: 10px/1 ui-monospace, Menlo, monospace; color: var(--dim); margin-top: 4px; }
+.triggers .wide { grid-column: span 2; }
+.row { margin-bottom: 10px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 5px; color: var(--text); }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--fill), #2e2842 var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 4px; background: #fff3d0; border: 2px solid #1a1206; box-shadow: 0 1px 4px #000a; cursor: pointer; }
+input[type=range]:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--accent2); }
+.seg { display: flex; background: #0f0d17; border: 1px solid var(--line); border-radius: 6px; padding: 2px; gap: 2px; }
+.seg button { flex: 1; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 4px; border-radius: 4px; cursor: pointer; text-transform: capitalize; }
+.seg button[aria-checked=true] { background: #2e2746; color: var(--text); box-shadow: inset 0 0 0 1px #4a4068, inset 0 -2px 0 var(--accent); }
+.seg button:hover { color: var(--text); }
+select { width: 100%; appearance: none; background: #0f0d17 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239a93b4'/%3E%3C/svg%3E") no-repeat right 10px center; color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; font: 600 12.5px inherit; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.foot { display: flex; justify-content: space-between; align-items: center; color: var(--dim); font-size: 11.5px; border-top: 1px solid var(--line); padding-top: 10px; }
+.foot button { appearance: none; background: none; border: 1px solid var(--line); color: var(--text); border-radius: 5px; padding: 5px 9px; font: 600 11.5px inherit; cursor: pointer; }
+@media (max-width: 980px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 640px; width: 100%; margin: 0 auto; } }
+@media (max-width: 560px) { header { padding: 12px 16px 8px; } main { padding: 0 16px 16px; gap: 12px; } .frame { padding: 3px; } .caption { flex-direction: column; gap: 2px; } }
+.variants { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.variants button { appearance: none; border: 1px solid var(--line); border-radius: 6px; padding: 8px 6px; cursor: pointer; color: var(--text); font: 600 12px/1.1 inherit; background: linear-gradient(#2a2440, #1e1a2e); box-shadow: inset 0 1px 0 #ffffff14; }
+.variants button:hover { background: linear-gradient(#352d50, #241f36); }
+.hint { color: var(--dim); font-size: 12px; margin: 0; }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">B-03</span>
+  <div><h1>Fog of war</h1><p>Tiles outside your units' sight sink under a drifting, dithered fog with a soft one-tile edge. Hidden enemies are not drawn, the spot where you last saw one keeps a faint silhouette, and a "!" pops when one comes into view. Forests block sight, hills extend it.</p></div>
+</header>
+<main>
+  <section id="stage">
+    <div class="frame"><canvas id="cv" width="256" height="224" aria-label="Tile map with fog of war over the areas the player's units cannot see"></canvas></div>
+    <div class="caption"><span id="status">Auto-loop</span><span><span id="scaleinfo">256×224 native</span> · click a tile to walk · keys <b>1–3</b> pick a unit, <b>arrows</b> step</span></div>
+  </section>
+  <aside>
+    <div>
+      <h2>Variants</h2>
+      <div class="variants">
+        <button type="button" data-variant='{"density":0.6,"edge":1,"drift":6,"fade":240,"scheme":"night","dither":"auto","shroud":"off"}'>Classic 16-bit</button>
+        <button type="button" data-variant='{"density":0.75,"edge":0.5,"drift":3,"fade":160,"scheme":"night","shroud":"on"}'>Unexplored shroud</button>
+        <button type="button" data-variant='{"density":0.5,"edge":1.5,"drift":12,"fade":400,"scheme":"mist"}'>Morning mist</button>
+        <button type="button" data-variant='{"density":0.7,"edge":0.75,"drift":8,"fade":240,"scheme":"ash"}'>Battle smoke</button>
+      </div>
+    </div>
+    <div><h2>Host</h2><div id="host"></div><p class="hint">These belong to the game: what blocks sight and who sees how far are callbacks the game passes in.</p></div>
+    <div><h2>Skin</h2><div class="seg" id="skinseg"><button type="button" data-skin="pixel16" aria-checked="true">pixel16</button><button type="button" data-skin="flat" aria-checked="false">flat (non-pixel)</button></div></div>
+    <div><h2>Parameters</h2><div id="params"></div></div>
+    <div class="foot"><span>Changes apply live.</span><button id="resume" type="button">Restart loop</button></div>
+  </aside>
+</main>
+<script>
+/* GameDNA skin API v0.5 · plain script, no dependencies, no import/export, one global: GameDNA_Skin
+ *
+ * A skin is one object that owns how an addon module LOOKS: palette tokens, fonts, window frames, text,
+ * numerals, grid overlays, bars, cursors, and the rules for particles, outlines, shadows and motion.
+ * Modules keep their logic and layout; every colour, glyph and frame goes through the skin. See skins/SPEC.md.
+ *
+ *   <script src="skin-api.js"><\/script> <script src="pixel16.js"><\/script> <script src="module.js"><\/script>
+ *   var skin = GameDNA_Skin.resolve(options.skin);   // id, object or undefined (-> 'pixel16')
+ *   skin.frame(ctx, {x, y, w, h}, {role: 'window', team: 'a'});
+ *   skin.text(ctx, 'HP', x, y, {font: 'ui'});   skin.number(ctx, '128', x, y, {kind: 'damage'});
+ *   skin.overlay(ctx, tileRect, 'move', tSeconds, {grow: 1, edges: {top: true}});
+ *
+ * Everything is in native canvas pixels. Time `t` is in SECONDS (float); `dt` in ms where noted.
+ *
+ * v0.5: bitmap roles. GameDNA_Skin.bitmaps.set('tile', 'grass', img, meta) registers a generated bitmap; skin.tile(),
+ * skin.prop() and skin.frame() then draw it instead of their procedural art, and skin.bitmap(ctx, rect, role, kind, opts)
+ * draws any role (portrait, prop, tile, icon, frame9, bg-layer) and returns false when nothing is registered, so the
+ * caller keeps its own drawing. With nothing registered every call draws exactly what v0.4 drew.
+ */
+(function (root) {
+  'use strict';
+  var VERSION = '0.5.0';
+  var REG = {}, ORDER = [];
+
+  /* ---------------- colour helpers ---------------- */
+  function rgb(c) {
+    if (Array.isArray(c)) return c.slice(0, 3);
+    c = String(c).trim();
+    var m;
+    if (c[0] === '#') {
+      if (c.length === 4) return [parseInt(c[1] + c[1], 16), parseInt(c[2] + c[2], 16), parseInt(c[3] + c[3], 16)];
+      return [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)];
+    }
+    if ((m = c.match(/^rgba?\(([^)]+)\)$/))) return m[1].split(',').slice(0, 3).map(function (v) { return +v; });
+    if ((m = c.match(/^(\d+)\s*,\s*(\d+)\s*,\s*(\d+)$/))) return [+m[1], +m[2], +m[3]];   // 'r,g,b'
+    return [255, 0, 255];
+  }
+  function hex(a) { return '#' + a.map(function (v) { v = Math.max(0, Math.min(255, Math.round(v))); return (v < 16 ? '0' : '') + v.toString(16); }).join(''); }
+  function rgba(c, a) { var v = rgb(c); return 'rgba(' + v[0] + ',' + v[1] + ',' + v[2] + ',' + (a == null ? 1 : a) + ')'; }
+  function mix(a, b, t) { var x = rgb(a), y = rgb(b); return hex([0, 1, 2].map(function (i) { return x[i] + (y[i] - x[i]) * t; })); }
+  // 4-step ramp [edge light, light, base, dark] from one colour (for generic bars / numerals)
+  function ramp(c) { return [mix(c, '#ffffff', 0.7), mix(c, '#ffffff', 0.3), hex(rgb(c)), mix(c, '#000000', 0.45)]; }
+
+  /* ---------------- easing (motion.ease names) ---------------- */
+  var EASE = {
+    linear: function (s) { return s; },
+    inQuad: function (s) { return s * s; },
+    outQuad: function (s) { return 1 - (1 - s) * (1 - s); },
+    inOutQuad: function (s) { return s < 0.5 ? 2 * s * s : 1 - 2 * (1 - s) * (1 - s); },
+    outCubic: function (s) { return 1 - Math.pow(1 - s, 3); },
+    outBack: function (s) { var c = 1.70158; return 1 + (c + 1) * Math.pow(s - 1, 3) + c * Math.pow(s - 1, 2); },
+    pop: function (s) { return 1 - Math.exp(-6 * s) * Math.cos(9 * s); },            // ~25 % overshoot, settles by 0.5
+    snap: function (s) { return s < 1 ? 0 : 1; }
+  };
+
+  /* ---------------- small utils ---------------- */
+  function isObj(v) { return v && typeof v === 'object' && !Array.isArray(v) && !(typeof HTMLCanvasElement !== 'undefined' && v instanceof HTMLCanvasElement); }
+  function merge(a, b) {   // deep merge of plain objects; arrays and functions replace
+    var out = {}, k;
+    for (k in a) out[k] = isObj(a[k]) ? merge(a[k], {}) : a[k];
+    for (k in b) out[k] = isObj(b[k]) && isObj(out[k]) ? merge(out[k], b[k]) : isObj(b[k]) ? merge(b[k], {}) : b[k];
+    return out;
+  }
+  function token(skin, path) {   // token(skin, 'overlay.move.fill') -> value; non-path strings pass through
+    if (typeof path !== 'string' || !/^[a-z]+(\.[A-Za-z0-9]+)+$/.test(path)) return path;
+    var v = skin.palette, parts = path.split('.');
+    for (var i = 0; i < parts.length && v != null; i++) v = v[parts[i]];
+    return v == null ? path : v;
+  }
+  var SCR = null;
+  function scratch(w, h) {
+    if (typeof document === 'undefined') return null;
+    if (!SCR) SCR = document.createElement('canvas');
+    if (SCR.width < w) SCR.width = w; if (SCR.height < h) SCR.height = h;
+    return SCR.getContext('2d', { willReadFrequently: true });
+  }
+  function mkCanvas(w, h) { var c = document.createElement('canvas'); c.width = Math.max(1, w); c.height = Math.max(1, h); return c; }
+
+  /* ---------------- transform scale ----------------
+     shadowBlur and shadowOffsetX/Y ignore the canvas transform: they are always device pixels. A skin that draws in
+     native units on a scaled backing store (ctx.setTransform(s, 0, 0, s, 0, 0)) multiplies them by scaleOf(ctx);
+     setShadow() does that for you. */
+  function scaleOf(ctx) {
+    if (!ctx || !ctx.getTransform) return 1;
+    var m = ctx.getTransform(), k = Math.sqrt(Math.abs(m.a * m.d - m.b * m.c));
+    return k > 0 && isFinite(k) ? k : 1;
+  }
+  function setShadow(ctx, col, blur, dx, dy) { var k = scaleOf(ctx); ctx.shadowColor = col; ctx.shadowBlur = (blur || 0) * k; ctx.shadowOffsetX = (dx || 0) * k; ctx.shadowOffsetY = (dy || 0) * k; }
+  function clearShadow(ctx) { ctx.shadowColor = 'rgba(0,0,0,0)'; ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; }
+
+  /* ---------------- fade layer ----------------
+     fadeLayer(ctx, alpha, rect, draw): draw(layerCtx) paints at full opacity into an offscreen layer with the same
+     transform as ctx; the layer is composited onto ctx once at globalAlpha * alpha. Use it to fade anything drawn in
+     overlapping passes (stroke outline + fill, drop + body, glow + core) in smooth skins: drawing the passes straight
+     onto ctx at alpha < 1 lets the outline show through the fill. rect (native units, optional) bounds the layer.
+     alpha >= 1 draws directly; alpha <= 0 draws nothing. Pixel skins with stepped fades usually do not need it. */
+  var POOL = [];
+  function fadeLayer(ctx, alpha, rect, draw) {
+    if (!(alpha > 0)) return;
+    if (alpha >= 1 || typeof document === 'undefined' || !ctx.getTransform) { draw(ctx); return; }
+    var m = ctx.getTransform(), cw = ctx.canvas.width, ch = ctx.canvas.height, bx = 0, by = 0, bw = cw, bh = ch;
+    if (rect) {
+      var xs = [], ys = [];
+      [[rect.x, rect.y], [rect.x + rect.w, rect.y], [rect.x, rect.y + rect.h], [rect.x + rect.w, rect.y + rect.h]].forEach(function (p) { xs.push(m.a * p[0] + m.c * p[1] + m.e); ys.push(m.b * p[0] + m.d * p[1] + m.f); });
+      bx = Math.max(0, Math.floor(Math.min.apply(null, xs)) - 2); by = Math.max(0, Math.floor(Math.min.apply(null, ys)) - 2);
+      bw = Math.min(cw, Math.ceil(Math.max.apply(null, xs)) + 2) - bx; bh = Math.min(ch, Math.ceil(Math.max.apply(null, ys)) + 2) - by;
+      if (bw <= 0 || bh <= 0) return;
+    }
+    var c = POOL.pop() || document.createElement('canvas');
+    if (c.width < bw || c.height < bh) { c.width = Math.max(c.width, bw); c.height = Math.max(c.height, bh); }
+    var g = c.getContext('2d');
+    g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, c.width, c.height);
+    g.setTransform(m.a, m.b, m.c, m.d, m.e - bx, m.f - by); g.imageSmoothingEnabled = ctx.imageSmoothingEnabled; g.globalAlpha = 1;
+    try { draw(g); } finally {
+      ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = ctx.globalAlpha * alpha;
+      ctx.drawImage(c, 0, 0, bw, bh, bx, by, bw, bh); ctx.restore(); POOL.push(c);
+    }
+  }
+
+  /* ---------------- canonical glyph items for number(..., {glyphOffset}) ----------------
+     Index-based and layout-independent, the same in every skin: the characters of str (role 'main'), then of
+     opts.suffix ('suffix'), then of opts.label ('label'). item = {i, ch, role, k (index within its role), n (count in
+     its role), u (0..1, centre of the glyph within its role by character count)}. A skin may add layout fields
+     (x, y, w, h, font, s, ...); modules must not rely on them. */
+  function glyphItems(str, o) {
+    o = o || {}; var out = [];
+    [['main', String(str)], ['suffix', o.suffix ? String(o.suffix) : ''], ['label', o.label ? String(o.label) : '']].forEach(function (p) {
+      for (var k = 0; k < p[1].length; k++) out.push({ i: out.length, ch: p[1][k], role: p[0], k: k, n: p[1].length, u: (k + 0.5) / p[1].length });
+    });
+    return out;
+  }
+
+  /* ---------------- fonts ----------------
+     bitmap: {type: 'bitmap', height, glyphs: {ch: 'row|row|...'} ('#'/'1' = ink), sep: '|', spacing: 1, space: 4,
+              advance: fixed px per char (optional), uppercase: true, split: rows drawn in color (rest in color2)}
+     canvas: {type: 'canvas', family, size, weight, style, letterSpacing, uppercase, threshold (pixel skins: alpha cut-off 0..255)} */
+  function fontOf(skin, name) { var f = skin.fonts[name || 'ui'] || skin.fonts.ui; return f; }
+  function css(f, scale) { return (f.style || 'normal') + ' ' + (f.weight || 400) + ' ' + (f.size * (scale || 1)) + 'px ' + f.family; }
+  function bitmapRows(f, ch) { var g = f.glyphs[ch] || f.glyphs['?']; if (!g) return null; if (!g._r) { var rows = typeof g === 'string' ? g.split(f.sep || '|') : g; f.glyphs[ch] = { _r: rows }; return rows; } return g._r; }
+  function bitmapW(f, s) {
+    s = String(s); if (f.uppercase) s = s.toUpperCase();
+    if (f.advance) return s.length * f.advance - (f.spacing == null ? 1 : f.spacing);
+    var w = 0, sp = f.spacing == null ? 1 : f.spacing;
+    for (var i = 0; i < s.length; i++) { if (s[i] === ' ') { w += (f.space || 4); continue; } var r = bitmapRows(f, s[i]); w += (r ? r[0].length : 4) + sp; }
+    return Math.max(0, w - sp);
+  }
+  function drawBitmap(ctx, f, s, x, y, col, col2, sh, scale) {
+    s = String(s); if (f.uppercase) s = s.toUpperCase(); scale = scale || 1;
+    var split = f.split == null ? Math.ceil(f.height * 4 / 7) : f.split, sp = f.spacing == null ? 1 : f.spacing;
+    for (var pass = sh ? 0 : 1; pass < 2; pass++) {
+      var cx = x;
+      for (var i = 0; i < s.length; i++) {
+        var ch = s[i];
+        if (ch === ' ') { cx += (f.advance || (f.space || 4)) * scale; continue; }
+        var rows = bitmapRows(f, ch); if (!rows) { cx += (f.advance || 5) * scale; continue; }
+        for (var ry = 0; ry < rows.length; ry++) for (var rx = 0; rx < rows[ry].length; rx++) {
+          var c = rows[ry][rx]; if (c !== '#' && c !== '1') continue;
+          ctx.fillStyle = pass ? (ry < split || !col2 ? col : col2) : sh;
+          ctx.fillRect(cx + (rx + (pass ? 0 : 1)) * scale, y + (ry + (pass ? 0 : 1)) * scale, scale, scale);
+        }
+        cx += (f.advance || rows[0].length + sp) * scale;
+      }
+    }
+  }
+  // canvas font rasterised to hard pixels (pixel skins): returns a cached 1-bit mask
+  var MASKS = {};
+  function mask(f, s, scale) {
+    var key = css(f, scale) + '|' + (f.threshold || 110) + '|' + (f.letterSpacing || 0) + '|' + s;
+    if (MASKS[key]) return MASKS[key];
+    var g = scratch(4, 4); if (!g) return null;
+    g.font = css(f, scale);
+    var w = Math.ceil(g.measureText(s).width + (f.letterSpacing || 0) * s.length) + 2, h = Math.ceil(f.size * scale * 1.5) + 2;
+    g = scratch(w, h); g.clearRect(0, 0, w, h); g.font = css(f, scale); g.textBaseline = 'top'; g.fillStyle = '#fff';
+    if (f.letterSpacing) { var cx = 0; for (var i = 0; i < s.length; i++) { g.fillText(s[i], cx, 0); cx += g.measureText(s[i]).width + f.letterSpacing; } }
+    else g.fillText(s, 0, 0);
+    var d = g.getImageData(0, 0, w, h).data, m = new Uint8Array(w * h), th = f.threshold || 110, mw = 0, mh = 0;
+    for (var p = 0; p < w * h; p++) if (d[p * 4 + 3] > th) { m[p] = 1; mw = Math.max(mw, p % w + 1); mh = Math.max(mh, ((p / w) | 0) + 1); }
+    return (MASKS[key] = { w: w, h: h, m: m, iw: mw, ih: mh });
+  }
+  function drawMask(ctx, M, x, y, col, dx, dy) {
+    ctx.fillStyle = col; x = Math.round(x); y = Math.round(y);
+    for (var yy = 0; yy < M.h; yy++) {
+      var run = -1;
+      for (var xx = 0; xx <= M.w; xx++) {
+        var on = xx < M.w && M.m[yy * M.w + xx];
+        if (on && run < 0) run = xx;
+        if (!on && run >= 0) { ctx.fillRect(x + run + (dx || 0), y + yy + (dy || 0), xx - run, 1); run = -1; }
+      }
+    }
+  }
+
+  /* ---------------- generic (token-driven) implementations; any skin may override ---------------- */
+  var BASE = {
+    measure: function (str, o) {
+      o = o || {}; var f = fontOf(this, o.font), s = String(str);
+      if (f.uppercase) s = s.toUpperCase();
+      if (f.type === 'bitmap') return bitmapW(f, s) * (o.scale || 1);
+      if (this.pixel) { var M = mask(f, s, o.scale); return M ? M.iw : 0; }
+      var g = scratch(4, 4); if (!g) return s.length * f.size * 0.6;
+      g.font = css(f, o.scale); return g.measureText(s).width + (f.letterSpacing || 0) * Math.max(0, s.length - 1);
+    },
+    // text(ctx, str, x, y, {font, color, color2, shadow (false = none), outline (false = none), align, scale, alpha}) -> width
+    text: function (ctx, str, x, y, o) {
+      o = o || {}; var f = fontOf(this, o.font), P = this.palette, s = String(str);
+      if (f.uppercase) s = s.toUpperCase();
+      var w = this.measure(s, o), col = token(this, o.color) || P.text.main;
+      if (o.align === 'center') x -= Math.floor(w / 2); else if (o.align === 'right') x -= w;
+      var sh = o.shadow === false ? null : token(this, o.shadow) || (this.shadow.text ? P.text.shadow : null);
+      var ol = o.outline === false ? null : token(this, o.outline) || (this.outline.text && this.outline.text.width ? P.text.outline : null);
+      var pa = ctx.globalAlpha; if (o.alpha != null) ctx.globalAlpha = pa * o.alpha;
+      if (f.type === 'bitmap') drawBitmap(ctx, f, s, x, y, col, token(this, o.color2), sh, o.scale);
+      else if (this.pixel) {
+        var M = mask(f, s, o.scale);
+        if (M) {
+          if (ol) [[-1, 0], [1, 0], [0, -1], [0, 1]].forEach(function (d) { drawMask(ctx, M, x, y, ol, d[0], d[1]); });
+          if (sh) drawMask(ctx, M, x, y, sh, (this.shadow.text || {}).dx || 1, (this.shadow.text || {}).dy || 1);
+          drawMask(ctx, M, x, y, col);
+        }
+      } else {
+        ctx.save(); ctx.font = css(f, o.scale); ctx.textBaseline = 'top'; ctx.textAlign = 'left';
+        if (f.letterSpacing && 'letterSpacing' in ctx) ctx.letterSpacing = f.letterSpacing + 'px';
+        if (sh) { var S = this.shadow.text || { dx: 1, dy: 1 }; ctx.fillStyle = sh; if (S.blur) setShadow(ctx, sh, S.blur, 0, 0); ctx.fillText(s, x + (S.dx || 0), y + (S.dy == null ? 1 : S.dy)); clearShadow(ctx); }
+        if (ol) { ctx.lineJoin = 'round'; ctx.lineWidth = (o.outlineWidth || (this.outline.text && this.outline.text.width) || 1) * 2; ctx.strokeStyle = ol; ctx.strokeText(s, x, y); }
+        ctx.fillStyle = col; ctx.fillText(s, x, y); ctx.restore();
+      }
+      ctx.globalAlpha = pa; return w;
+    },
+    // frame(ctx, rect, {role: 'window'|'plate'|'banner'|'tooltip'|'row'|'backing', team: 'a'|'b'|'n', focus, alert, disabled, alpha}) -> inner rect
+    frame: function (ctx, r, st) {
+      st = st || {};
+      if (st.role === 'row' || st.role === 'backing') return BASE.frameBand.call(this, ctx, r, st);
+      var P = this.palette, U = P.ui, sh = this.shape || {}, rad = st.role === 'plate' ? (sh.plateRadius != null ? sh.plateRadius : sh.radius || 0) : sh.radius || 0;
+      var fill = U.fill, fill2 = U.fillTo || U.fill, edge = st.alert ? P.text.accent || U.highlight : U.edge;
+      if (st.team && P.team[st.team] && st.team !== 'n') { fill = mix(fill, P.team[st.team], sh.teamTint == null ? 0.35 : sh.teamTint); fill2 = mix(fill2, P.team[st.team], sh.teamTint == null ? 0.35 : sh.teamTint); }
+      var x = r.x, y = r.y, w = r.w, h = r.h, pa = ctx.globalAlpha, path = function (g, X, Y, W, H, R) { g.beginPath(); if (g.roundRect && R) g.roundRect(X, Y, W, H, R); else g.rect(X, Y, W, H); };
+      ctx.save(); if (st.alpha != null) ctx.globalAlpha = pa * st.alpha;
+      var S = this.shadow.window;
+      if (S) { ctx.fillStyle = U.shadow; if (S.blur && !this.pixel) { setShadow(ctx, U.shadow, S.blur, S.dx || 0, S.dy || 0); path(ctx, x, y, w, h, rad); ctx.fill(); clearShadow(ctx); } else { path(ctx, x + (S.dx || 0), y + (S.dy == null ? 1 : S.dy), w, h, rad); ctx.fill(); } }
+      var gr = ctx.createLinearGradient(0, y, 0, y + h); gr.addColorStop(0, fill); gr.addColorStop(1, fill2);
+      ctx.fillStyle = gr; path(ctx, x, y, w, h, rad); ctx.fill();
+      var ew = sh.edgeWidth == null ? 1 : sh.edgeWidth;
+      if (ew) { ctx.lineWidth = ew; ctx.strokeStyle = edge; path(ctx, x + ew / 2, y + ew / 2, w - ew, h - ew, Math.max(0, rad - ew / 2)); ctx.stroke(); }
+      if (sh.innerLine) { ctx.lineWidth = sh.innerLine; ctx.strokeStyle = U.highlight; var i2 = ew + 1 + sh.innerLine / 2; path(ctx, x + i2, y + i2, w - 2 * i2, h - 2 * i2, Math.max(0, rad - i2)); ctx.stroke(); }
+      else { ctx.fillStyle = U.highlight; ctx.fillRect(x + ew + rad / 2, y + ew, w - 2 * ew - rad, 1); }
+      if (st.focus) { ctx.lineWidth = 2; ctx.strokeStyle = P.text.accent || U.highlight; path(ctx, x - 1, y - 1, w + 2, h + 2, rad + 1); ctx.stroke(); }
+      ctx.restore();
+      var pad = sh.padding == null ? 4 : sh.padding;
+      return { x: x + pad, y: y + pad, w: w - 2 * pad, h: h - 2 * pad };
+    },
+    // the two unframed roles. 'row' = selected-row band inside a menu (fill ui.select; st.focus = brighter, st.disabled = dimmer);
+    // 'backing' = a plain backdrop behind text that floats on the scene or a title band inside a window (fill ui.well).
+    // Pixel skins: a flat fillRect, so pixel16 matches the modules' own fills exactly.
+    frameBand: function (ctx, r, st) {
+      st = st || {}; var U = this.palette.ui, row = st.role === 'row', col = row ? U.select || rgba(this.palette.text.main, 0.2) : U.well || rgba(this.palette.ink, 0.4);
+      var rad = this.pixel ? 0 : (this.shape && (row ? this.shape.rowRadius : this.shape.backingRadius)) != null ? (row ? this.shape.rowRadius : this.shape.backingRadius) : Math.min(this.shape && this.shape.radius || 0, r.h / 2);
+      var pa = ctx.globalAlpha; ctx.globalAlpha = pa * (st.alpha == null ? 1 : st.alpha) * (st.disabled ? 0.5 : 1);
+      ctx.fillStyle = col;
+      if (rad > 0) { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(r.x, r.y, r.w, r.h, rad); else ctx.rect(r.x, r.y, r.w, r.h); ctx.fill(); } else ctx.fillRect(r.x, r.y, r.w, r.h);
+      if (st.focus && !this.pixel) { ctx.fillStyle = rgba(this.palette.text.accent || U.highlight, 0.9); ctx.fillRect(r.x, r.y + 1, 1.5, r.h - 2); }
+      ctx.globalAlpha = pa; return { x: r.x, y: r.y, w: r.w, h: r.h };
+    },
+    // number(ctx, str, x, y, {kind, scale, big, suffix, label, labelGap, align, baseline, alpha, age (ms since spawn), life (ms),
+    //   glyphOffset(i, item) -> {dx, dy, alpha, flash, skip, sx, sy}}) -> [{i, x, y, w, h}] one rect per drawn glyph, canonical order
+    number: function (ctx, str, x, y, o) {
+      o = o || {}; var self = this, P = this.palette, s = String(str), kind = o.kind || 'damage';
+      var col = o.color || ({ damage: P.text.main, crit: P.fx.crit, heal: P.fx.heal, mp: P.fx.cold, miss: P.text.dim || P.text.main, status: P.fx.status || P.text.accent || P.fx.cold })[kind] || P.text.main;
+      var ON = this.outline.number || {}, olc = ON.width ? token(this, ON.color || 'text.outline') : false;
+      var fo = { font: 'num', color: col, outline: olc, outlineWidth: ON.width, shadow: false, scale: (o.scale || 1) * (kind === 'crit' && o.big !== false ? 1.25 : 1) };
+      var so = { font: 'ui', color: col, outline: olc, outlineWidth: ON.width, shadow: false }, lo = { font: 'ui', color: P.fx.crit, outline: olc, outlineWidth: ON.width, shadow: false };
+      var fh = function (name, sc) { var f = fontOf(self, name); return (f.height || f.size || 10) * (sc || 1); };
+      var nh = fh('num', fo.scale), uh = fh('ui'), sp = this.fonts.num.type === 'bitmap' ? (this.fonts.num.spacing == null ? 1 : this.fonts.num.spacing) : 0;
+      var items = glyphItems(s, o), adv = [], w = 0, sw = 0, lw = 0;
+      items.forEach(function (it) { var op = it.role === 'main' ? fo : it.role === 'suffix' ? so : lo, cw = self.measure(it.ch, op); adv.push(cw); if (it.role === 'main') w += cw + sp; else if (it.role === 'suffix') sw += cw + 1; else lw += cw + 1; });
+      w = Math.max(0, w - sp); if (sw) sw += 1; lw = Math.max(0, lw - 1);
+      if (o.align === 'center') x -= (w + sw) / 2; if (o.baseline === 'bottom') y -= nh;
+      if (this.motion.snap) { x = Math.round(x); y = Math.round(y); }
+      var cx = { main: x, suffix: x + w + 2, label: x + (w + sw) / 2 - lw / 2 }, cy = { main: y, suffix: y + nh - uh, label: y - uh - (o.labelGap == null ? 3 : o.labelGap) }, out = [];
+      items.forEach(function (it, j) {
+        var d = (o.glyphOffset && o.glyphOffset(j, it)) || {}, op = it.role === 'main' ? fo : it.role === 'suffix' ? so : lo, gx = cx[it.role] + (d.dx || 0), gy = cy[it.role] + (d.dy || 0), gw = adv[j], gh = it.role === 'main' ? nh : uh;
+        cx[it.role] += gw + (it.role === 'main' ? sp : 1);
+        if (d.skip) return;
+        var a = d.alpha != null ? d.alpha : o.alpha != null ? o.alpha : 1, sx = d.sx || 1, sy = d.sy || 1;
+        var gop = merge(op, d.flash ? { color: P.fx.white || '#ffffff' } : {});
+        var paint = function (g) {
+          if (sx !== 1 || sy !== 1) { g.save(); g.translate(gx + gw / 2, gy + gh); g.scale(sx, sy); self.text(g, it.ch, -gw / 2, -gh, gop); g.restore(); }
+          else self.text(g, it.ch, gx, gy, gop);
+        };
+        if (self.pixel || a >= 1) { var pa = ctx.globalAlpha; ctx.globalAlpha = pa * a; paint(ctx); ctx.globalAlpha = pa; }
+        else fadeLayer(ctx, a, { x: gx - gw, y: gy - gh, w: gw * 3, h: gh * 3 }, paint);
+        out.push({ i: j, x: gx, y: gy, w: gw, h: gh, role: it.role });
+      });
+      return out;
+    },
+    // overlay(ctx, tileRect, 'move'|'attack'|'threat'|'heal', t, {grow 0..1, pattern, tile: {x, y}, edges: {top, right, bottom, left}, seams: {right, bottom}})
+    overlay: function (ctx, r, kind, t, o) {
+      o = o || {}; var C = this.palette.overlay[kind] || this.palette.overlay.move, gr = o.grow == null ? 1 : o.grow, os = this.overlayStyle || {};
+      if (gr <= 0) return;
+      var a = (C.alpha == null ? 0.3 : C.alpha) * gr, tx = o.tile ? o.tile.x : 0, ty = o.tile ? o.tile.y : 0, x = r.x, y = r.y, w = r.w, h = r.h;
+      if ((o.pattern || os.pattern) === 'pulsing' && Math.sin((tx + ty) * 0.55 - t * 3.2) > 0.5) a *= 1.35;
+      var pa = ctx.globalAlpha;
+      if (os.mode === 'dither') {   // pixel checkerboard: every other pixel at full colour
+        ctx.fillStyle = C.fill; for (var j = 0; j < h; j++) for (var i = (j + ((x + y) & 1)) & 1; i < w; i += 2) ctx.fillRect(x + i, y + j, 1, 1);
+      } else { ctx.fillStyle = rgba(C.fill, a); ctx.fillRect(x, y, w, h); }
+      var E = o.edges || {}, ew = os.edgeWidth || 1; ctx.fillStyle = rgba(C.edge, Math.min(1, (os.edgeAlpha == null ? 0.85 : os.edgeAlpha) * gr));
+      if (E.top) ctx.fillRect(x, y, w, ew); if (E.bottom) ctx.fillRect(x, y + h - ew, w, ew);
+      if (E.left) ctx.fillRect(x, y, ew, h); if (E.right) ctx.fillRect(x + w - ew, y, ew, h);
+      ctx.globalAlpha = pa;
+    },
+    // bar(ctx, rect, frac 0..1, kind, {style: 'gauge'|'meter', tag}) kind: charge|haste|slow|ready|queued|enemy|enemyFull|hp|hpLow|null (empty)
+    bar: function (ctx, r, frac, kind, o) {
+      o = o || {}; var P = this.palette, B = P.bars || {}, sh = this.shape || {}, rad = sh.barRadius == null ? 0 : sh.barRadius;
+      var x = r.x, y = r.y, w = r.w, h = r.h, f = Math.max(0, Math.min(1, frac || 0));
+      var path = function (X, Y, W, H, R) { ctx.beginPath(); if (ctx.roundRect && R) ctx.roundRect(X, Y, W, H, Math.min(R, H / 2)); else ctx.rect(X, Y, W, H); };
+      ctx.fillStyle = B.track || P.ui.shadow; path(x, y, w, h, rad); ctx.fill();
+      if (!kind || f <= 0) return;
+      var c = B[kind] || ({ hp: P.fx.heal, hpLow: P.fx.hot, charge: P.fx.hot, haste: P.fx.heal, slow: P.fx.cold, ready: P.text.main, queued: P.fx.cold, enemy: P.team.b, enemyFull: P.fx.crit })[kind] || P.ui.highlight;
+      var b = sh.barInset == null ? 1 : sh.barInset;
+      ctx.fillStyle = c; path(x + b, y + b, (w - 2 * b) * f, h - 2 * b, Math.max(0, rad - b)); ctx.fill();
+      ctx.fillStyle = rgba('#ffffff', 0.35); ctx.fillRect(x + b + rad / 2, y + b, Math.max(0, (w - 2 * b) * f - rad), 1);
+    },
+    // cursor(ctx, rect, 'bracket'|'hand', t, {alpha, invalid})
+    cursor: function (ctx, r, kind, t, o) {
+      o = o || {}; var P = this.palette, col = o.invalid ? P.overlay.attack.edge : P.text.accent || P.ui.highlight, pa = ctx.globalAlpha;
+      ctx.globalAlpha = pa * (o.alpha == null ? 1 : o.alpha);
+      if (kind === 'hand') { ctx.fillStyle = P.text.outline; ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x + r.w, r.y + r.h / 2); ctx.lineTo(r.x, r.y + r.h); ctx.fill(); ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(r.x + 1, r.y + 1.2); ctx.lineTo(r.x + r.w - 1.6, r.y + r.h / 2); ctx.lineTo(r.x + 1, r.y + r.h - 1.2); ctx.fill(); }
+      else {
+        var b = Math.sin(t * 6) > 0 ? 0 : -1, L = Math.max(3, Math.round(r.w / 3)), x0 = r.x + b, y0 = r.y + b, x1 = r.x + r.w - 1 - b, y1 = r.y + r.h - 1 - b;
+        [[x0, y0, 1, 1], [x1, y0, -1, 1], [x0, y1, 1, -1], [x1, y1, -1, -1]].forEach(function (c) {
+          ctx.fillStyle = P.text.outline; ctx.fillRect(Math.min(c[0], c[0] + c[2] * L) - 1, c[1] - 1, L + 2, 3); ctx.fillRect(c[0] - 1, Math.min(c[1], c[1] + c[3] * L) - 1, 3, L + 2);
+          ctx.fillStyle = col; ctx.fillRect(Math.min(c[0], c[0] + c[2] * (L - 1)), c[1], L, 1); ctx.fillRect(c[0], Math.min(c[1], c[1] + c[3] * (L - 1)), 1, L);
+        });
+      }
+      ctx.globalAlpha = pa;
+    },
+    // path(ctx, points [{x, y}] tile centres in native px, t, {tile, alpha, invalid}): the move arrow. OPTIONAL in skins
+    // (define() does not fill it in): modules call skin.path only if the skin has one, else draw their own arrow coloured
+    // from palette.overlay.path. A skin may opt into this generic one with path: GameDNA_Skin.base.path.
+    path: function (ctx, pts, t, o) {
+      o = o || {}; if (!pts || pts.length < 2) return;
+      var self = this, P = this.palette, C = (P.overlay && P.overlay.path) || {}, T = o.tile || 16, bad = o.invalid;
+      var mid = bad ? P.overlay.attack.fill : C.mid || P.overlay.move.edge, lite = bad ? P.overlay.attack.edge : C.light || P.ui.highlight, ol = C.outline || P.ink;
+      var xs = pts.map(function (p) { return p.x; }), ys = pts.map(function (p) { return p.y; });
+      var box = { x: Math.min.apply(null, xs) - T, y: Math.min.apply(null, ys) - T, w: Math.max.apply(null, xs) - Math.min.apply(null, xs) + 2 * T, h: Math.max.apply(null, ys) - Math.min.apply(null, ys) + 2 * T };
+      var a = pts[pts.length - 2], b = pts[pts.length - 1], ang = Math.atan2(b.y - a.y, b.x - a.x), hl = T * 0.42, hw = T * 0.34, tip = { x: b.x + Math.cos(ang) * T * 0.3, y: b.y + Math.sin(ang) * T * 0.3 };
+      var line = function (g) { g.beginPath(); g.moveTo(pts[0].x, pts[0].y); for (var i = 1; i < pts.length - 1; i++) g.lineTo(pts[i].x, pts[i].y); g.lineTo(tip.x - Math.cos(ang) * hl * 0.8, tip.y - Math.sin(ang) * hl * 0.8); };
+      var head = function (g) { g.beginPath(); g.moveTo(tip.x, tip.y); g.lineTo(tip.x - Math.cos(ang) * hl - Math.sin(ang) * hw, tip.y - Math.sin(ang) * hl + Math.cos(ang) * hw); g.lineTo(tip.x - Math.cos(ang) * hl + Math.sin(ang) * hw, tip.y - Math.sin(ang) * hl - Math.cos(ang) * hw); g.closePath(); };
+      fadeLayer(ctx, o.alpha == null ? 1 : o.alpha, box, function (g) {
+        g.save(); g.lineCap = 'round'; g.lineJoin = 'round';
+        g.strokeStyle = ol; g.fillStyle = ol; g.lineWidth = T * 0.3 + 2; line(g); g.stroke(); head(g); g.lineWidth = 2; g.stroke(); g.fill();
+        g.strokeStyle = mid; g.fillStyle = mid; g.lineWidth = T * 0.3; line(g); g.stroke(); head(g); g.fill();
+        g.strokeStyle = lite; g.lineWidth = Math.max(1, T * 0.08); line(g); g.stroke();
+        var u = ((t || 0) * 1.2) % 1, n = pts.length - 1, f = u * n, k = Math.min(n - 1, Math.floor(f)), r = f - k;   // a travelling spark
+        g.fillStyle = C.spark || '#ffffff'; g.beginPath(); g.arc(pts[k].x + (pts[k + 1].x - pts[k].x) * r, pts[k].y + (pts[k + 1].y - pts[k].y) * r, Math.max(1, T * 0.07), 0, 7); g.fill();
+        g.restore();
+        void self;
+      });
+    },
+    // tile(ctx, rect, kind, t): one map cell for previews and demos (not used by modules). kind: grass | forest | water | hill |
+    // mountain | road | bridge | fort | sand | wall | floor. Colours from palette.terrain.<kind> when present.
+    tile: function (ctx, r, kind, t) {
+      var Tn = merge(TERRAIN, this.palette.terrain || {}), c = Tn[kind] || Tn.grass, x = r.x, y = r.y, w = r.w, h = r.h, px = this.pixel;
+      var dk = mix(c, this.palette.ink, 0.35), lt = mix(c, '#ffffff', 0.3), base = kind === 'forest' || kind === 'hill' || kind === 'mountain' || kind === 'fort' ? Tn.grass : kind === 'bridge' ? Tn.water : c;
+      ctx.save(); ctx.fillStyle = base; ctx.fillRect(x, y, w, h);
+      var R = function (X, Y, W, H, col) { ctx.fillStyle = col; ctx.fillRect(px ? Math.round(X) : X, px ? Math.round(Y) : Y, px ? Math.round(W) : W, px ? Math.round(H) : H); };
+      var tri = function (cx, by, hw, th, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(cx, by - th); ctx.lineTo(cx + hw, by); ctx.lineTo(cx - hw, by); ctx.closePath(); ctx.fill(); };
+      if (kind === 'water' || kind === 'bridge') { var ph = Math.sin((t || 0) * 2 + x * 0.3) > 0 ? 1 : 0; R(x + w * 0.2 + ph, y + h * 0.35, w * 0.3, 1, lt); R(x + w * 0.55 - ph, y + h * 0.7, w * 0.3, 1, lt); }
+      else if (kind === 'grass' || kind === 'sand' || kind === 'floor' || kind === 'road') { R(x + w * 0.25, y + h * 0.3, Math.max(1, w * 0.12), 1, lt); R(x + w * 0.6, y + h * 0.65, Math.max(1, w * 0.12), 1, dk); }
+      if (kind === 'forest') { R(x + w * 0.45, y + h * 0.6, w * 0.1, h * 0.3, mix(Tn.road, this.palette.ink, 0.4)); ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x + w / 2, y + h * 0.42, w * 0.3, 0, 7); ctx.fill(); ctx.fillStyle = lt; ctx.beginPath(); ctx.arc(x + w * 0.42, y + h * 0.34, w * 0.1, 0, 7); ctx.fill(); }
+      if (kind === 'hill') { tri(x + w / 2, y + h * 0.85, w * 0.42, h * 0.5, c); tri(x + w * 0.42, y + h * 0.85, w * 0.16, h * 0.4, lt); }
+      if (kind === 'mountain') { tri(x + w / 2, y + h * 0.9, w * 0.46, h * 0.8, c); tri(x + w / 2, y + h * 0.9 - h * 0.55, w * 0.14, h * 0.25, '#ffffff'); }
+      if (kind === 'bridge') { R(x, y + h * 0.2, w, h * 0.6, c); for (var i = 1; i < 4; i++) R(x + w * i / 4, y + h * 0.2, 1, h * 0.6, dk); }
+      if (kind === 'fort') { R(x + w * 0.15, y + h * 0.35, w * 0.7, h * 0.55, c); for (var j = 0; j < 3; j++) R(x + w * (0.15 + j * 0.27), y + h * 0.22, w * 0.16, h * 0.15, c); R(x + w * 0.42, y + h * 0.6, w * 0.16, h * 0.3, dk); }
+      if (kind === 'wall') { R(x, y + h * 0.5, w, 1, dk); R(x + w / 2, y, 1, h * 0.5, dk); R(x + w / 4, y + h / 2, 1, h / 2, dk); }
+      ctx.restore();
+    },
+    // token(ctx, rect, unit, t): a unit piece for previews (unit = {team: 'a'|'b'|'n', kind: 'knight'|'mage'|'fighter'|'archer'|'monster',
+    // selected, dead, facing: 1|-1}). skin.token(path) with a string still looks up a palette token (see define()).
+    unitToken: function (ctx, r, u, t) {
+      u = u || {}; var P = this.palette, c = P.team[u.team] || P.team.a, ol = token(this, (this.outline.sprite && this.outline.sprite.color) || 'ink'), ow = (this.outline.sprite && this.outline.sprite.width) || 1;
+      var bob = u.selected ? (this.pixel ? (Math.floor((t || 0) * 4) % 2) : Math.sin((t || 0) * 6) * 0.8) : 0, x = r.x, y = r.y - bob, w = r.w, h = r.h;
+      var pa = ctx.globalAlpha; ctx.save(); ctx.globalAlpha = pa * (u.dead ? 0.35 : 1);
+      ctx.fillStyle = rgba(P.ink, 0.3); ctx.beginPath(); ctx.ellipse(r.x + w / 2, r.y + h * 0.92, w * 0.3, h * 0.08, 0, 0, 7); ctx.fill();
+      var body = function (g, grow) { g.beginPath(); if (g.roundRect) g.roundRect(x + w * 0.26 - grow, y + h * 0.42 - grow, w * 0.48 + 2 * grow, h * 0.48 + 2 * grow, w * 0.12); else g.rect(x + w * 0.26 - grow, y + h * 0.42 - grow, w * 0.48 + 2 * grow, h * 0.48 + 2 * grow); };
+      var head = function (g, grow) { g.beginPath(); g.arc(x + w / 2, y + h * 0.3, w * 0.17 + grow, 0, 7); };
+      ctx.fillStyle = ol; body(ctx, ow); ctx.fill(); head(ctx, ow); ctx.fill();
+      ctx.fillStyle = c; body(ctx, 0); ctx.fill(); ctx.fillStyle = mix(c, '#ffffff', 0.25); ctx.fillRect(x + w * 0.3, y + h * 0.45, w * 0.4, Math.max(1, h * 0.06));
+      ctx.fillStyle = P.skin || '#f2c49b'; head(ctx, 0); ctx.fill();
+      var k = u.kind || 'fighter', f = u.facing === -1 ? -1 : 1, hx = x + w / 2 + f * w * 0.32;
+      ctx.strokeStyle = ol; ctx.lineWidth = Math.max(1, w * 0.08); ctx.lineCap = 'round'; ctx.beginPath();
+      if (k === 'mage') { ctx.moveTo(hx, y + h * 0.2); ctx.lineTo(hx, y + h * 0.88); ctx.stroke(); ctx.fillStyle = P.fx.cold; ctx.beginPath(); ctx.arc(hx, y + h * 0.18, w * 0.08, 0, 7); ctx.fill(); }
+      else if (k === 'archer') { ctx.arc(hx - f * w * 0.05, y + h * 0.55, h * 0.22, -Math.PI / 2, Math.PI / 2, f < 0); ctx.stroke(); }
+      else if (k === 'monster') { ctx.fillStyle = '#ffffff'; ctx.fillRect(x + w * 0.4, y + h * 0.27, w * 0.06, h * 0.05); ctx.fillRect(x + w * 0.54, y + h * 0.27, w * 0.06, h * 0.05); }
+      else { ctx.moveTo(hx, y + h * 0.75); ctx.lineTo(hx, y + h * 0.3); ctx.stroke(); if (k === 'knight') { ctx.fillStyle = mix(c, P.ink, 0.3); ctx.fillRect(x + w / 2 - f * w * 0.42 - w * 0.08, y + h * 0.48, w * 0.16, h * 0.28); } }
+      ctx.restore(); ctx.globalAlpha = pa;
+    }
+  };
+  // atmosphere(ctx, view {x, y, w, h}, t, {phase, lights, ambient, focus}): optional full-screen mood layer (fog, light, vignette,
+  // darkness, grain). Phases, in draw order: 'world' (after the ground, before props and units: lighting of the floor),
+  // 'post-props' (after props and units, before world-space overlays and numbers: tilt-shift, depth blur, fog in front),
+  // 'final' (after world-space overlays, before HUD windows: motes, bloom, vignette). Hosts call only the phases listed in
+  // skin.atmospherePhases. lights = standard lights (see normLights). Generic: draws nothing.
+  BASE.atmosphere = function () { };
+  // prop(ctx, rect, kind, t, {lights, light, seed}): one standing object on a map cell, drawn depth-sorted with the units (back to
+  // front by the cell's bottom edge), after the ground and the range overlays, so overlays never swallow it. rect = the cell;
+  // the prop's foot sits on rect's bottom edge and it may rise up to one cell above rect. kind: stone | rock | tree | bush |
+  // brazier | lamp | crystal (free text allowed; unknown kinds draw as stone). light = the standard light this prop carries
+  // (brazier, lamp, crystal), if any. Generic: the skin's own tile() for the matching terrain (the pre-prop, tile-based look).
+  var PROP_TILE = { stone: 'mountain', rock: 'mountain', brazier: 'mountain', lamp: 'mountain', crystal: 'mountain', tree: 'forest', bush: 'forest' };
+  BASE.prop = function (ctx, r, kind, t) { return this.tile(ctx, r, PROP_TILE[kind] || 'mountain', t); };
+  BASE.propTile = function (kind) { return PROP_TILE[kind] || 'mountain'; };
+  /* ---------------- standard lights ----------------
+     {x, y (native px, the light's foot on the ground), r (radius, native px), col: '#rrggbb', intensity (0..1, nominal; a skin may
+     scale it internally), kind ('fire' | 'lamp' | 'magic' | 'crystal' | 'sun' | 'moon' | ... free text), h (optional height above
+     the ground, native px; default 16), flicker (optional 0..1)}. normLights() also accepts legacy fields: i (intensity),
+     col as [r, g, b] 0..1, hex, rgb. It returns NEW objects; never mutate the host's list. */
+  function normLight(l) {
+    l = l || {}; var c = l.col != null ? l.col : l.hex != null ? l.hex : l.rgb, hx;
+    if (Array.isArray(c)) hx = hex(c.map(function (v) { return v <= 1 ? v * 255 : v; })); else hx = c ? hex(rgb(c)) : '#ffffff';
+    var it = l.intensity != null ? +l.intensity : l.i != null ? +l.i : 0.5;
+    return { x: +l.x || 0, y: +l.y || 0, r: l.r != null ? +l.r : 40, col: hx, intensity: Math.max(0, it), kind: l.kind || 'lamp', h: l.h != null ? +l.h : 16, flicker: l.flicker || 0 };
+  }
+  function normLights(list) { return (list || []).map(normLight); }
+  var TERRAIN = { grass: '#78b456', forest: '#3e7a3a', water: '#4a8ed0', hill: '#b8975a', mountain: '#8c8478', road: '#cdb68a', bridge: '#a0703c', fort: '#9a98a8', sand: '#e0cc92', wall: '#6a6470', floor: '#a8a0a0' };
+
+
+  /* ---------------- bitmaps (v0.5) ----------------
+     Generated or hand-made images registered per role and kind. Registry keys are 'role|kind'; kind '*' is the role's
+     default. Global registrations apply to non-pixel skins only (pixel skins need snapped, palette-quantised art: register
+     those with meta.pixel = true, or for one skin with opts.skin = id). Per-skin registrations always apply.
+     meta (all optional): anchor [ax, ay] (0..1 of the image; default [0.5, 1] = the foot), baseline (px from the top of the
+     image to the foot line; overrides anchor y), cellsTall (prop/sprite height in cells; default 2), cells (a tile texture
+     that spans cells x cells map cells), slice [l, t, r, b] and scale (frame9), inset [l, t, r, b] (frame9 inner padding,
+     native px), fill (frame9 centre, default true), parallax (bg-layer scroll factor, default 1), pixel (true = snapped
+     pixel art, drawn without smoothing, allowed on pixel skins). */
+  var BMP = { '*': {} }, BMP_N = 0;
+  var BITMAP_ROLES = ['portrait', 'prop', 'tile', 'icon', 'frame9', 'bg-layer'];
+  function bmpRec(img, meta) {
+    if (img && img.img && !img.width && !(typeof HTMLImageElement !== 'undefined' && img instanceof HTMLImageElement)) { meta = merge(img.meta || {}, meta || {}); img = img.img; }   // a GameDNA_Assets record {img, meta}
+    if (!img) return null;
+    return { img: img, meta: meta || {} };
+  }
+  function bmpSet(role, kind, img, meta, o) {
+    var r = bmpRec(img, meta); var sk = (o && o.skin) || '*'; if (!BMP[sk]) BMP[sk] = {};
+    var key = role + '|' + (kind == null ? '*' : kind), had = !!BMP[sk][key];
+    if (!r) { if (had) { delete BMP[sk][key]; BMP_N--; } return null; }
+    BMP[sk][key] = r; if (!had) BMP_N++; return r;
+  }
+  function bmpGet(skin, role, kind) {
+    if (!BMP_N) return null;
+    var id = skin && skin.id, k1 = role + '|' + (kind == null ? '*' : kind), k2 = role + '|*', own = id && BMP[id], g = BMP['*'], r;
+    if (own && (r = own[k1] || own[k2])) return r;
+    r = g[k1] || g[k2];
+    if (r && skin && skin.pixel && !r.meta.pixel) return null;
+    return r || null;
+  }
+  function bmpReady(r) { var im = r && r.img; if (!im) return false; if (typeof im.complete === 'boolean' && (!im.complete || !im.naturalWidth)) return false; return (im.naturalWidth || im.width) > 0; }
+  function bmpSize(im) { return { w: im.naturalWidth || im.videoWidth || im.width, h: im.naturalHeight || im.videoHeight || im.height }; }
+  // draw one registered bitmap for a role into rect; returns false (nothing drawn), true, or the inner rect (frame9)
+  function bmpDraw(skin, ctx, r, role, rec, o) {
+    if (!bmpReady(rec) || !ctx || !r) return false;
+    o = o || {}; var im = rec.img, m = rec.meta, S = bmpSize(im), res = true;
+    var pa = ctx.globalAlpha, sm = ctx.imageSmoothingEnabled;
+    ctx.save();
+    try {
+      if (o.alpha != null) ctx.globalAlpha = pa * o.alpha;
+      ctx.imageSmoothingEnabled = !m.pixel; if (!m.pixel && 'imageSmoothingQuality' in ctx) ctx.imageSmoothingQuality = 'high';
+      if (role === 'tile') {
+        var n = Math.max(1, m.cells || 1), cw = S.w / n, ch = S.h / n;
+        var cx = o.col != null ? o.col : Math.round(r.x / (r.w || 1)), cy = o.row != null ? o.row : Math.round(r.y / (r.h || 1));
+        cx = ((cx % n) + n) % n; cy = ((cy % n) + n) % n;
+        ctx.drawImage(im, cx * cw, cy * ch, cw, ch, r.x, r.y, r.w, r.h);
+      } else if (role === 'icon') {
+        var pad = o.pad != null ? o.pad : 0, bw = r.w - 2 * pad, bh = r.h - 2 * pad, s1 = Math.min(bw / S.w, bh / S.h), iw = S.w * s1, ih = S.h * s1;
+        ctx.drawImage(im, r.x + pad + (bw - iw) / 2, r.y + pad + (bh - ih) / 2, iw, ih);
+      } else if (role === 'portrait') {
+        var s2 = Math.min(r.w / S.w, (o.h || r.h) / S.h), pw = S.w * s2, ph = S.h * s2, px0 = r.x + (r.w - pw) / 2, py0 = r.y + r.h - ph;
+        if (o.flip) { ctx.translate(px0 + pw, py0); ctx.scale(-1, 1); ctx.drawImage(im, 0, 0, pw, ph); } else ctx.drawImage(im, px0, py0, pw, ph);
+      } else if (role === 'frame9') {
+        var sl = m.slice || [S.w / 3, S.h / 3, S.w / 3, S.h / 3], k = o.scale || m.scale || 1, L = sl[0], T = sl[1], R = sl[2], B = sl[3];
+        var dl = L * k, dt = T * k, dr = R * k, db = B * k, x = r.x, y = r.y, w = r.w, h = r.h, mw = S.w - L - R, mh = S.h - T - B;
+        var part = function (sx, sy, sw, sh, X, Y, W, H) { if (sw > 0 && sh > 0 && W > 0 && H > 0) ctx.drawImage(im, sx, sy, sw, sh, X, Y, W, H); };
+        if (m.fill !== false) part(L, T, mw, mh, x + dl, y + dt, w - dl - dr, h - dt - db);
+        part(0, 0, L, T, x, y, dl, dt); part(L, 0, mw, T, x + dl, y, w - dl - dr, dt); part(S.w - R, 0, R, T, x + w - dr, y, dr, dt);
+        part(0, T, L, mh, x, y + dt, dl, h - dt - db); part(S.w - R, T, R, mh, x + w - dr, y + dt, dr, h - dt - db);
+        part(0, S.h - B, L, B, x, y + h - db, dl, db); part(L, S.h - B, mw, B, x + dl, y + h - db, w - dl - dr, db); part(S.w - R, S.h - B, R, B, x + w - dr, y + h - db, dr, db);
+        var ins = m.inset || [dl, dt, dr, db];
+        res = { x: x + ins[0], y: y + ins[1], w: w - ins[0] - ins[2], h: h - ins[1] - ins[3] };
+      } else if (role === 'bg-layer') {
+        var s3 = r.h / S.h, lw = S.w * s3, off = ((o.scroll || 0) * (m.parallax != null ? m.parallax : 1)) % lw; if (off < 0) off += lw;
+        ctx.beginPath(); ctx.rect(r.x, r.y, r.w, r.h); ctx.clip();
+        for (var bx = r.x - off; bx < r.x + r.w; bx += lw) ctx.drawImage(im, bx, r.y, lw + 0.5, r.h);
+      } else {   // 'prop', 'sprite' and any other role: foot on the rect's bottom centre, may rise above the rect
+        var dh = o.h || (m.cellsTall ? m.cellsTall * r.h : r.h * 2), s4 = dh / S.h, dw = S.w * s4;
+        var ax = (m.anchor && m.anchor[0] != null) ? m.anchor[0] : 0.5, ay = m.baseline != null ? m.baseline / S.h : (m.anchor && m.anchor[1] != null) ? m.anchor[1] : 1;
+        var fx = r.x + r.w / 2 + (o.dx || 0), fy = r.y + r.h + (o.dy || 0), flip = o.flip || o.facing === -1;
+        ctx.translate(fx, fy); if (flip) ctx.scale(-1, 1);
+        ctx.drawImage(im, -ax * dw, -ay * dh, dw, dh);
+      }
+    } catch (e) { res = false; }
+    ctx.restore(); ctx.globalAlpha = pa; ctx.imageSmoothingEnabled = sm;
+    return res;
+  }
+  // useAssets(assets, map): register records from a GameDNA_Assets instance (anything with get(key) -> {img, meta}).
+  // map = {'tile:grass': 'ground', 'prop:well': 'well', 'icon:key': 'icon-key'} (role:kind -> asset key); without a map,
+  // every asset whose meta has skinRole {role, kind} (or role + kind) is registered. Returns the number registered.
+  function useAssets(A, map, o) {
+    if (!A || typeof A.get !== 'function') return 0;
+    var n = 0, k, rec, rk;
+    if (map) { for (k in map) { rec = A.get(map[k]); rk = k.split(':'); if (rec && bmpSet(rk[0], rk[1] == null ? '*' : rk[1], rec, null, o)) n++; } return n; }
+    var keys = typeof A.keys === 'function' ? A.keys() : [];
+    keys.forEach(function (key) { rec = A.get(key); var m = rec && rec.meta, sr = m && (m.skinRole || (m.role && BITMAP_ROLES.indexOf(m.role) >= 0 ? { role: m.role, kind: m.kind || key } : null)); if (sr && bmpSet(sr.role, sr.kind == null ? key : sr.kind, rec, null, o)) n++; });
+    return n;
+  }
+  var BITMAPS = {
+    roles: BITMAP_ROLES,
+    set: bmpSet,
+    get: function (role, kind, skin) { return bmpGet(skin && skin._spec ? skin : resolveQuiet(skin), role, kind); },
+    has: function (role, kind, skin) { var r = BITMAPS.get(role, kind, skin); return !!(r && bmpReady(r)); },
+    remove: function (role, kind, o) { return bmpSet(role, kind, null, null, o); },
+    clear: function (skinId) { if (skinId) { BMP_N -= Object.keys(BMP[skinId] || {}).length; delete BMP[skinId]; } else { BMP = { '*': {} }; BMP_N = 0; } },
+    list: function () { var out = [], s, k; for (s in BMP) for (k in BMP[s]) out.push({ skin: s, role: k.split('|')[0], kind: k.split('|')[1] }); return out; },
+    draw: function (ctx, rect, role, rec, o) { return bmpDraw(null, ctx, rect, role, bmpRec(rec), o); },
+    useAssets: useAssets
+  };
+  function resolveQuiet(x) { return x && x._spec ? x : (REG[x || 'pixel16'] || null); }
+
+  /* ---------------- required shape ---------------- */
+  var PALETTE_KEYS = ['ink', 'paper', 'ui.fill', 'ui.edge', 'ui.highlight', 'ui.shadow', 'team.a', 'team.b', 'team.n',
+    'overlay.move.fill', 'overlay.move.edge', 'overlay.attack.fill', 'overlay.attack.edge', 'overlay.threat.fill', 'overlay.threat.edge', 'overlay.heal.fill', 'overlay.heal.edge',
+    'fx.hot', 'fx.cold', 'fx.heal', 'fx.crit', 'text.main', 'text.shadow', 'text.outline'];
+  var METHODS = ['frame', 'text', 'measure', 'number', 'overlay', 'bar', 'cursor', 'tile', 'atmosphere', 'prop'];   // filled from BASE when missing
+  var OPTIONAL = ['path'];                                                                         // bound when present, never filled
+  function validate(s) {
+    var err = [];
+    if (!s || typeof s !== 'object') return ['not an object'];
+    ['id', 'name'].forEach(function (k) { if (typeof s[k] !== 'string' || !s[k]) err.push('missing ' + k); });
+    if (typeof s.pixel !== 'boolean') err.push('pixel must be true or false');
+    if (!s.native || !s.native.w || !s.native.h) err.push('native {w, h, scale} missing');
+    PALETTE_KEYS.forEach(function (p) { var v = s.palette; p.split('.').forEach(function (k) { v = v == null ? v : v[k]; }); if (v == null) err.push('palette.' + p + ' missing'); });
+    if (!s.fonts || !s.fonts.ui) err.push('fonts.ui missing'); if (!s.fonts || !s.fonts.num) err.push('fonts.num missing');
+    ['particles', 'outline', 'shadow', 'motion'].forEach(function (k) { if (!s[k]) err.push(k + ' missing'); });
+    METHODS.concat(OPTIONAL).forEach(function (m) { if (s[m] != null && typeof s[m] !== 'function') err.push(m + ' must be a function'); });
+    return err;
+  }
+
+  var DEFAULTS = {
+    pixel: false,
+    native: { w: 256, h: 224, scale: 'fit', smoothing: true, snap: 0, supersample: false },
+    shape: { radius: 0, edgeWidth: 1, padding: 4 },
+    frameRoles: null,
+    atmospherePhases: ['world', 'final'],   // phases this skin's atmosphere() draws; hosts skip the others (e.g. add 'post-props')   // roles the skin's own frame() draws besides window/plate/banner/tooltip, e.g. ['row', 'backing']; others use the generic band
+    layout: { handW: 7, handH: 5, pointerGap: 5, rowFrame: false },
+    particles: { shape: 'square', size: [1, 3], count: 1, snap: false, blend: 'source-over', glow: 0, gravity: 0.12, drag: 0.02, life: [300, 700], colors: ['fx.hot', 'fx.crit'], trail: 0 },
+    outline: { text: { width: 0 }, number: { width: 1, max: 2, drop: 1 }, sprite: { width: 1, color: 'ink' } },
+    shadow: { text: { dx: 1, dy: 1 }, window: null, sprite: { kind: 'blob', alpha: 0.35 } },
+    motion: { stepMs: 0, snap: false, ease: { move: 'outQuad', pop: 'pop', fade: 'linear' }, fadeSteps: null, shakeInt: false, flashMax: 0.5, squash: null }
+  };
+
+  /* ---------------- registry ---------------- */
+  // define(spec, parent?) -> normalised skin. parent = id or skin; palette/rules deep-merge, methods inherit.
+  function define(spec, parent) {
+    var base = parent ? (typeof parent === 'string' ? REG[parent] : parent) : null;
+    if (parent && !base) throw new Error('GameDNA_Skin: unknown parent skin "' + parent + '"');
+    var src = base ? base._spec : {};
+    var s = merge(merge(DEFAULTS, src), spec);
+    METHODS.forEach(function (m) { if (typeof s[m] !== 'function') s[m] = BASE[m]; });
+    var drawUnit = typeof s.unitToken === 'function' ? s.unitToken : typeof s.token === 'function' && s.token.length >= 3 ? s.token : BASE.unitToken;
+    METHODS.concat(OPTIONAL).forEach(function (m) { var f = s[m]; if (typeof f !== 'function') return; s[m] = function () { return f.apply(s, arguments); }; s[m].raw = f; });
+    // frame: 'row' / 'backing' go to the generic band unless the skin lists them in frameRoles
+    var fr = s.frame.raw; s.frame = function (ctx, r, st) { var role = st && st.role; if ((role === 'row' || role === 'backing') && !(s.frameRoles && s.frameRoles.indexOf(role) >= 0)) return BASE.frameBand.call(s, ctx, r, st); return fr.call(s, ctx, r, st); }; s.frame.raw = fr;
+    // number: every skin receives the canonical item (i, ch, role, k, n, u) merged over its own layout item
+    var nr = s.number.raw; s.number = function (ctx, str, x, y, o) {
+      if (o && typeof o.glyphOffset === 'function') {
+        var C = glyphItems(str, o), user = o.glyphOffset, o2 = {}, k; for (k in o) o2[k] = o[k];
+        o2.glyphOffset = function (i, it) { var m = {}, q, c = C[i] || {}; if (it && typeof it === 'object') for (q in it) m[q] = it[q]; for (q in c) m[q] = c[q]; return user(i, m); };
+        o = o2;
+      }
+      return nr.call(s, ctx, str, x, y, o);
+    }; s.number.raw = nr;
+    // v0.5 bitmap roles: a registered bitmap replaces the procedural tile / prop / framed window; nothing registered = v0.4 call
+    var tr = s.tile.raw, pr = s.prop.raw, fw = s.frame;
+    s.tile = function (ctx, r, kind) { if (BMP_N) { var b = bmpGet(s, 'tile', kind); if (b && bmpDraw(s, ctx, r, 'tile', b)) return; } return tr.apply(s, arguments); }; s.tile.raw = tr;
+    s.prop = function (ctx, r, kind, t, o) { if (BMP_N) { var b = bmpGet(s, 'prop', kind); if (b && bmpDraw(s, ctx, r, 'prop', b, o && { flip: o.flip, h: o.h })) return; } return pr.apply(s, arguments); }; s.prop.raw = pr;
+    s.frame = function (ctx, r, st) { if (BMP_N) { var role = (st && st.role) || 'window'; if (role !== 'row' && role !== 'backing') { var b = bmpGet(s, 'frame9', role); if (b) { var inner = bmpDraw(s, ctx, r, 'frame9', b, { alpha: st && st.alpha }); if (inner && inner !== true) return inner; } } } return fw.apply(s, arguments); }; s.frame.raw = fw.raw;
+    s.bitmap = function (ctx, r, role, kind, o) { var b = bmpGet(s, role, kind); return b ? bmpDraw(s, ctx, r, role, b, o) : false; };
+    s.hasBitmap = function (role, kind) { var b = bmpGet(s, role, kind); return !!(b && bmpReady(b)); };
+    s._spec = merge(src, spec); METHODS.concat(OPTIONAL).forEach(function (m) { if (spec[m]) s._spec[m] = spec[m]; else if (src[m]) s._spec[m] = src[m]; });
+    if (!spec.token && src.token) s._spec.token = src.token; if (!spec.unitToken && src.unitToken) s._spec.unitToken = src.unitToken;
+    // token(path) looks up a palette token; token(ctx, rect, unit, t) draws a unit piece (the skin's own, or the generic one)
+    s.token = function (a) { if (a == null || typeof a === 'string') return token(s, a); return drawUnit.apply(s, arguments); };
+    s.lookup = function (path) { return token(s, path); };
+    s.unitToken = function () { return drawUnit.apply(s, arguments); };
+    s.particleColors = function () { return (s.particles.colors || []).map(function (c) { return token(s, c); }); };
+    var e = validate(s); if (e.length) throw new Error('GameDNA_Skin "' + (s.id || '?') + '": ' + e.join('; '));
+    return s;
+  }
+  function register(spec, parent) { var s = spec && spec._spec ? spec : define(spec, parent); if (!REG[s.id]) ORDER.push(s.id); REG[s.id] = s; return s; }
+  function get(id) { return REG[id] || null; }
+  // resolve(options.skin): skin object, registered id, or undefined -> 'pixel16'. Never throws: unknown -> default with a console warning.
+  function resolve(x) {
+    if (x && typeof x === 'object') return x._spec ? x : register(x);
+    var s = REG[x || 'pixel16'];
+    if (!s && x && root.console) console.warn('GameDNA_Skin: unknown skin "' + x + '", using pixel16');
+    return s || REG.pixel16 || null;
+  }
+
+  /* ---------------- motion helpers (modules call these instead of hard-coding pixel rules) ---------------- */
+  function stepTime(s, ms) { var st = s.motion.stepMs; return st > 0 ? Math.floor(ms / st) * st : ms; }   // frame-stepped clock for animation
+  function snap(s, v) { return s.motion.snap ? Math.round(v) : v; }
+  function fade(s, a) { var F = s.motion.fadeSteps; if (!F || !F.length) return a; for (var i = 0; i < F.length; i++) if (a >= F[i] - 1e-9) return F[i]; return F[F.length - 1]; }   // F descending, e.g. [1, .75, .5, .25]
+  function ease(s, name, x) { var e = (s.motion.ease && s.motion.ease[name]) || name; return (EASE[e] || EASE.linear)(Math.max(0, Math.min(1, x))); }
+  // setupCanvas(skin, canvas, ctx): smoothing per skin; returns integer scale hint for the host's CSS
+  function setup(s, ctx) { if (ctx) ctx.imageSmoothingEnabled = !!s.native.smoothing; return s.native; }
+
+  /* ---------------- fonts ready ----------------
+     Canvas fonts (web fonts, late system fonts) can change width after first use. ready(skin) resolves with the skin once
+     every canvas font in skin.fonts has loaded (document.fonts.load per font, then document.fonts.ready; 3 s cap). It drops
+     the 1-bit mask cache and calls skin.onFontsReady() if defined. Hosts await it before the first layout, or lay out
+     again after it; modules that cache widths (measure) must re-measure. Bitmap-only skins resolve at once. */
+  function ready(x) {
+    var sk = x && x._spec ? x : resolve(x), D = typeof document !== 'undefined' ? document : null;
+    if (!sk) return Promise.resolve(null);
+    var done = function () { MASKS = {}; if (typeof sk.onFontsReady === 'function') try { sk.onFontsReady(); } catch (e) { } return sk; };
+    var loads = [], k, f;
+    for (k in sk.fonts) { f = sk.fonts[k]; if (f && f.type === 'canvas' && f.family) loads.push(f); }
+    if (!loads.length || !D || !D.fonts || !D.fonts.load) return Promise.resolve(done());
+    var all = Promise.all(loads.map(function (f) { return D.fonts.load(css(f, 1), 'AZaz09').catch(function () { }); })).then(function () { return D.fonts.ready; });
+    var cap = new Promise(function (r) { setTimeout(r, 3000); });
+    return Promise.race([all, cap]).then(done, done);
+  }
+
+  root.GameDNA_Skin = {
+    version: VERSION, define: define, register: register, get: get, resolve: resolve, list: function () { return ORDER.slice(); }, validate: validate,
+    base: BASE, defaults: DEFAULTS, ease: EASE, token: token,
+    color: { rgb: rgb, hex: hex, rgba: rgba, mix: mix, ramp: ramp },
+    font: { bitmapWidth: bitmapW, drawBitmap: drawBitmap, mask: mask, drawMask: drawMask, css: css },
+    motion: { stepTime: stepTime, snap: snap, fade: fade, ease: ease }, setup: setup, canvas: mkCanvas,
+    normLight: normLight, normLights: normLights,
+    scaleOf: scaleOf, setShadow: setShadow, clearShadow: clearShadow, fadeLayer: fadeLayer, glyphItems: glyphItems, ready: ready,
+    bitmaps: BITMAPS
+  };
+})(typeof window !== 'undefined' ? window : this);
+
+</script>
+<script>
+/* GameDNA skin 'pixel16' · 16-bit console pixel (the current default look) · needs skin-api.js first
+ *
+ * Reproduces, pixel for pixel, what the v1 modules draw today:
+ *   frame role 'window'  = grid-range-path frame() (team a / b / n)      frame role 'plate' = active-time-battle mode plate
+ *   text font 'ui'       = grid-range-path 5x7 mono font (2-tone + drop) text font 'plate' = active-time-battle 5x7 font
+ *   number / glyph       = damage-numbers 7x10 digits, 5x7 letters, bold words (dilated outline + 4-tone ramp)
+ *   overlay              = grid-range-path tile overlay (color-composite tint, pulse, seams, edges)
+ *   bar style 'gauge'    = active-time-battle gauge bar                  bar style 'meter' = grid-range-path HP bar
+ *   cursor 'bracket'/'hand' = grid-range-path cursor and menu pointer
+ * skins/test.html checks each of these against the real modules (0 differing pixels).
+ */
+(function (root) {
+  'use strict';
+  var API = root.GameDNA_Skin;
+  if (!API) { if (root.console) console.error('pixel16.js: load skin-api.js first'); return; }
+
+  /* ---------- glyph tables (copied from the modules) ---------- */
+  // grid-range-path: 5x7, '1' = ink, rows separated by ','; fixed 6 px advance (space 4 px when drawn)
+  var GLYPH_UI = {
+    A: '01110,10001,10001,11111,10001,10001,10001', B: '11110,10001,10001,11110,10001,10001,11110', C: '01110,10001,10000,10000,10000,10001,01110',
+    D: '11110,10001,10001,10001,10001,10001,11110', E: '11111,10000,10000,11110,10000,10000,11111', F: '11111,10000,10000,11110,10000,10000,10000',
+    G: '01110,10001,10000,10111,10001,10001,01111', H: '10001,10001,10001,11111,10001,10001,10001', I: '01110,00100,00100,00100,00100,00100,01110',
+    J: '00111,00010,00010,00010,00010,10010,01100', K: '10001,10010,10100,11000,10100,10010,10001', L: '10000,10000,10000,10000,10000,10000,11111',
+    M: '10001,11011,10101,10101,10001,10001,10001', N: '10001,10001,11001,10101,10011,10001,10001', O: '01110,10001,10001,10001,10001,10001,01110',
+    P: '11110,10001,10001,11110,10000,10000,10000', Q: '01110,10001,10001,10001,10101,10010,01101', R: '11110,10001,10001,11110,10100,10010,10001',
+    S: '01111,10000,10000,01110,00001,00001,11110', T: '11111,00100,00100,00100,00100,00100,00100', U: '10001,10001,10001,10001,10001,10001,01110',
+    V: '10001,10001,10001,10001,10001,01010,00100', W: '10001,10001,10001,10101,10101,10101,01010', X: '10001,10001,01010,00100,01010,10001,10001',
+    Y: '10001,10001,01010,00100,00100,00100,00100', Z: '11111,00001,00010,00100,01000,10000,11111',
+    0: '01110,10001,10011,10101,11001,10001,01110', 1: '00100,01100,00100,00100,00100,00100,01110', 2: '01110,10001,00001,00010,00100,01000,11111',
+    3: '11111,00010,00100,00010,00001,10001,01110', 4: '00010,00110,01010,10010,11111,00010,00010', 5: '11111,10000,11110,00001,00001,10001,01110',
+    6: '00110,01000,10000,11110,10001,10001,01110', 7: '11111,00001,00010,00100,01000,01000,01000', 8: '01110,10001,10001,01110,10001,10001,01110',
+    9: '01110,10001,10001,01111,00001,00010,01100', '/': '00001,00010,00010,00100,01000,01000,10000', '-': '00000,00000,00000,01110,00000,00000,00000',
+    '.': '00000,00000,00000,00000,00000,01100,01100', '?': '01110,10001,00001,00010,00100,00000,00100', ' ': '000,000,000,000,000,000,000'
+  };
+  // active-time-battle: 5x7 as 35-char strings, proportional (1 and I are 4 wide, '.' is 3)
+  var GLYPH_PLATE = {
+    A: '01110100011000111111100011000110001', C: '01110100011000010000100001000101110', E: '11111100001000011110100001000011111',
+    I: '11100010000100001000010000100011100', T: '11111001000010000100001000010000100', V: '10001100011000110001100010101000100',
+    W: '10001100011000110101101011101110001', '0': '01110100011001110101110011000101110', '1': '00100011000010000100001000010001110',
+    '2': '01110100010000100010001000100011111', '5': '11111100001111000001000011000101110', '7': '11111000010001000100010000100001000',
+    '.': '00000000000000000000000000000000100', 'x': '00000000001000101010001000101010001', ' ': '00000000000000000000000000000000000'
+  };
+  // damage-numbers: 7x10 digits (2 px strokes) and 5x7 letters; words use the bold (1 px widened) letters
+  var DIGITS = {
+    0: '.#####.|##...##|##...##|##..###|##.#.##|###..##|##...##|##...##|##...##|.#####.', 1: '...##..|..###..|.####..|...##..|...##..|...##..|...##..|...##..|...##..|.######',
+    2: '.#####.|##...##|.....##|.....##|...###.|..##...|.##....|##.....|##.....|#######', 3: '.#####.|##...##|.....##|.....##|..####.|.....##|.....##|.....##|##...##|.#####.',
+    4: '....##.|...###.|..####.|.##.##.|##..##.|##..##.|#######|....##.|....##.|....##.', 5: '#######|##.....|##.....|######.|.....##|.....##|.....##|.....##|##...##|.#####.',
+    6: '..####.|.##....|##.....|##.....|######.|##...##|##...##|##...##|##...##|.#####.', 7: '#######|##...##|.....##|....##.|....##.|...##..|...##..|..##...|..##...|..##...',
+    8: '.#####.|##...##|##...##|##...##|.#####.|##...##|##...##|##...##|##...##|.#####.', 9: '.#####.|##...##|##...##|##...##|##...##|.######|.....##|.....##|....##.|.####..',
+    '+': '......|......|..##..|..##..|######|######|..##..|..##..|......|......'
+  };
+  var LETTERS = {
+    A: '.###.|#...#|#...#|#####|#...#|#...#|#...#', B: '####.|#...#|#...#|####.|#...#|#...#|####.', C: '.###.|#...#|#....|#....|#....|#...#|.###.',
+    D: '####.|#...#|#...#|#...#|#...#|#...#|####.', E: '#####|#....|#....|####.|#....|#....|#####', F: '#####|#....|#....|####.|#....|#....|#....',
+    G: '.###.|#...#|#....|#.###|#...#|#...#|.####', H: '#...#|#...#|#...#|#####|#...#|#...#|#...#', I: '###|.#.|.#.|.#.|.#.|.#.|###',
+    J: '..###|...#.|...#.|...#.|...#.|#..#.|.##..', K: '#...#|#..#.|#.#..|##...|#.#..|#..#.|#...#', L: '#....|#....|#....|#....|#....|#....|#####',
+    M: '#...#|##.##|#.#.#|#.#.#|#...#|#...#|#...#', N: '#...#|##..#|#.#.#|#..##|#...#|#...#|#...#', O: '.###.|#...#|#...#|#...#|#...#|#...#|.###.',
+    P: '####.|#...#|#...#|####.|#....|#....|#....', Q: '.###.|#...#|#...#|#...#|#.#.#|#..#.|.##.#', R: '####.|#...#|#...#|####.|#.#..|#..#.|#...#',
+    S: '.####|#....|#....|.###.|....#|....#|####.', T: '#####|..#..|..#..|..#..|..#..|..#..|..#..', U: '#...#|#...#|#...#|#...#|#...#|#...#|.###.',
+    V: '#...#|#...#|#...#|#...#|#...#|.#.#.|..#..', W: '#...#|#...#|#...#|#.#.#|#.#.#|##.##|#...#', X: '#...#|#...#|.#.#.|..#..|.#.#.|#...#|#...#',
+    Y: '#...#|#...#|.#.#.|..#..|..#..|..#..|..#..', Z: '#####|....#|...#.|..#..|.#...|#....|#####', ' ': '...|...|...|...|...|...|...',
+    '!': '#|#|#|#|#|.|#', '-': '....|....|....|####|....|....|....', '?': '.###.|#...#|....#|...#.|..#..|.....|..#..'
+  };
+  var D10 = {}, L7 = {}, BOLD = {}, k;
+  for (k in DIGITS) D10[k] = DIGITS[k].split('|');
+  for (k in LETTERS) L7[k] = LETTERS[k].split('|');
+  function letterRows(ch) { return L7[ch] || L7['?']; }
+  function boldRows(ch) {
+    if (BOLD[ch]) return BOLD[ch];
+    return (BOLD[ch] = letterRows(ch).map(function (r) { var o = ''; for (var i = 0; i <= r.length; i++) o += r[i] === '#' || r[i - 1] === '#' ? '#' : '.'; return o; }));
+  }
+  function rowsOf(font, ch) { return font === 'digit' ? D10[ch] : font === 'bold' ? boldRows(ch) : letterRows(ch); }
+
+  /* ---------- palette ---------- */
+  var palette = {
+    ink: '#06061a', paper: '#f4f6ff',
+    ui: {
+      fill: '#4c5a8a', fillTo: '#262e4e', edge: '#06061a', highlight: '#c8d4f4', shadow: '#0a0e22',
+      select: 'rgba(255,255,255,0.2)', well: 'rgba(6,8,30,0.4)', rivet: '#ffe070', rivetShade: '#7a5410',
+      plate: '#1c2458', plateLight: '#5a6ac0', plateAlert: '#3a2a6a', plateAlertLight: '#8a72d8', plateEdge: '#0a0c24'
+    },
+    // window ramps per team: 4 fill bands top->bottom, bevel light, bevel dark (grid-range-path WTH)
+    windows: {
+      a: ['#3a64d8', '#2c50b8', '#223e96', '#1a2e74', '#a8c8ff', '#0a1238'],
+      b: ['#d85a48', '#b8402e', '#922c26', '#6a1c1e', '#ffc8b8', '#2a0608'],
+      n: ['#4c5a8a', '#3e4a76', '#323c62', '#262e4e', '#c8d4f4', '#0a0e22']
+    },
+    team: { a: '#3a64d8', b: '#d85a48', n: '#4c5a8a', aLight: '#c8dcff', aDark: '#94b4f0', bLight: '#ffd8cc', bDark: '#f0a898', aText: '#d0e0ff', bText: '#ffd8cc' },
+    overlay: {
+      move: { fill: '#3064f0', edge: '#d6e8ff' }, attack: { fill: '#e43430', edge: '#ffd6c8' },
+      threat: { fill: '#a830c8', edge: '#f0d0ff' }, heal: { fill: '#30c060', edge: '#d0ffd8' },
+      path: { core: '#fff6d0', light: '#ffe486', mid: '#f0a830', dark: '#c06a14', outline: '#3a1206', spark: '#ffffff' }
+    },
+    fx: { hot: '#ff7a3a', cold: '#6ad8f0', heal: '#4ad870', crit: '#ffb43a', status: '#b878f8', white: '#ffffff' },
+    text: {
+      main: '#ffffff', main2: '#c8d4ff', shadow: '#0a0c24', outline: '#120a1e', dim: '#8088a8', dim2: '#626a88',
+      accent: '#ffe070', select: '#fff4c0', title: '#fff4c8', title2: '#e8c870', label: '#b8d0ff', label2: '#8ca8e8',
+      gold: '#ffe890', gold2: '#e8c048', plate: '#e8ecff', plateShadow: '#0a0c30', pointer: '#fff8e8', pointerEdge: '#1a0e08'
+    },
+    cursor: { light: '#fff6c0', base: '#f0b830', badLight: '#ffc0b0', bad: '#e84838', edge: '#24100a' },
+    // 4-tone ramps [edge light, light, base, dark]
+    ramps: {
+      numbers: {
+        classic: { dmg: ['#ffffff', '#f4f6ff', '#b8c4f0', '#7a86c0'], crit: ['#ffffff', '#fff2a0', '#ffb43a', '#c0601a'], heal: ['#f0fff0', '#b8ffc0', '#4ad870', '#22904a'],
+          miss: ['#ffffff', '#e4e4ec', '#a8a8bc', '#6e6e84'], mp: ['#ffffff', '#c8eeff', '#4aa8ff', '#2060c0'], status: ['#ffffff', '#f0d4ff', '#b878f8', '#7038b0'], ol: '#120a1e' },
+        warm: { dmg: ['#ffffff', '#fff0d0', '#ffa860', '#c0582a'], crit: ['#ffffff', '#ffd0d0', '#ff4a4a', '#a01830'], heal: ['#ffffff', '#e8ffb0', '#9ce040', '#4c8a18'],
+          miss: ['#ffffff', '#ece4dc', '#b0a49a', '#706460'], mp: ['#ffffff', '#c8fff4', '#38d0c8', '#1a7a88'], status: ['#ffffff', '#ffd8f0', '#f070c0', '#982870'], ol: '#1e0a0a' },
+        contrast: { dmg: ['#ffffff', '#ffffff', '#ffffff', '#c8c8d0'], crit: ['#ffffff', '#ffff60', '#ffff00', '#d0b000'], heal: ['#ffffff', '#90ff90', '#30ff70', '#10b040'],
+          miss: ['#ffffff', '#d8d8d8', '#c0c0c0', '#909090'], mp: ['#ffffff', '#90e8ff', '#40c8ff', '#2080d0'], status: ['#ffffff', '#ff98ff', '#ff60ff', '#b030b0'], ol: '#000000' },
+        flash: ['#ffffff', '#ffffff', '#ffffff', '#e8e8ff']
+      },
+      gauge: {
+        out: '#0a0c24', empty: '#1a1c3e', emptyTop: '#0e1030', dot: '#3a3e66',
+        charge: ['#fff8c8', '#f6c840', '#c08a18', '#7a5410'], haste: ['#f0ffd0', '#a8f060', '#5aa82a', '#2a5a14'],
+        slow: ['#f0e0ff', '#b08af0', '#6a4ab8', '#34206a'], ready: ['#ffffff', '#ffffff', '#e8ecff', '#a8b4f0'],
+        queued: ['#e0fbff', '#6ad8f0', '#2a8ab8', '#144a6a'], enemy: ['#ffd8d0', '#f05a50', '#b42a3a', '#6a1424'],
+        enemyFull: ['#fffbe0', '#ffe868', '#ffc030', '#b07818']
+      },
+      meter: { out: '#06040e', track: '#2a1e36', hp: '#7ce060', hpTop: '#d8ffb8', hpLow: '#f05848', hpLowTop: '#ffb0a0' }
+    }
+  };
+
+  /* ---------- text ---------- */
+  function uiW(s) { return String(s).length * 6 - 1; }   // grid-range-path textW (space counts 6 here, drawn 4)
+  function uiText(g, s, x, y, c1, c2, sh) {
+    for (var pass = sh === false ? 1 : 0; pass < 2; pass++) {
+      var cx = x, str = String(s).toUpperCase();
+      for (var i = 0; i < str.length; i++) {
+        var ch = str[i], rows = (GLYPH_UI[ch] || GLYPH_UI['?']).split(',');
+        for (var ry = 0; ry < 7; ry++) for (var rx = 0; rx < rows[ry].length; rx++) if (rows[ry][rx] === '1') {
+          g.fillStyle = pass ? (ry < 4 ? (c1 || '#ffffff') : (c2 || '#c8d4ff')) : (sh || '#0a0c24');
+          g.fillRect(cx + rx + (pass ? 0 : 1), y + ry + (pass ? 0 : 1), 1, 1);
+        }
+        cx += ch === ' ' ? 4 : 6;
+      }
+    }
+  }
+  // full coverage: characters outside the A-01 set (ACEITVW 0125 7 . x) come from the ui font's 5x7 glyphs, upper-cased,
+  // drawn in the plate's single colour; strings inside the A-01 set draw exactly as before
+  var PLATE_FB = {};
+  function plateGlyph(ch) {
+    if (GLYPH_PLATE[ch]) return GLYPH_PLATE[ch];
+    if (PLATE_FB[ch]) return PLATE_FB[ch];
+    var rows = (GLYPH_UI[String(ch).toUpperCase()] || GLYPH_UI['?']).split(','), o = '';
+    for (var r = 0; r < 7; r++) o += (rows[r] + '00000').slice(0, 5);
+    return (PLATE_FB[ch] = o);
+  }
+  function plateGlyphW(ch) { if (ch === '1' || ch === 'I') return 4; if (ch === '.') return 3; return 5; }
+  function plateW(s) { var w = 0; for (var i = 0; i < s.length; i++) w += (s[i] === ' ' ? 3 : plateGlyphW(s[i])) + 1; return Math.max(0, w - 1); }
+  function plateText(g, s, x, y, col, sh) {
+    [[1, sh], [0, col]].forEach(function (p) {
+      if (!p[1]) return; var cx = x; g.fillStyle = p[1];
+      for (var i = 0; i < s.length; i++) {
+        var ch = s[i], b = plateGlyph(ch); if (ch === ' ') { cx += 4; continue; }
+        for (var q = 0; q < 35; q++) if (b && b[q] === '1') { var gx = q % 5, gy = (q / 5) | 0; if ((ch === '1' || ch === 'I') && gx > 3) continue; if (ch === '.' && gx > 2) continue; g.fillRect(cx + gx + p[0], y + gy + p[0], 1, 1); }
+        cx += plateGlyphW(ch) + 1;
+      }
+    });
+  }
+  function letterW(s) { var w = 0; for (var i = 0; i < s.length; i++) w += letterRows(s[i])[0].length + 1; return Math.max(0, w - 1); }
+  function boldW(s) { var w = 0; for (var i = 0; i < s.length; i++) w += boldRows(s[i])[0].length + 1; return Math.max(0, w - 1); }
+
+  /* ---------- numerals: glyph sprites (outline = mask dilated by o px + 1 px drop; fill = 2-tone with 1 px edge light / shade) ---------- */
+  var GC = {};
+  function mk(w, h) { var c = document.createElement('canvas'); c.width = Math.max(1, w); c.height = Math.max(1, h); return c; }
+  function glyphSprite(font, ch, s, R, ol, o) {
+    var key = font + '|' + ch + '|' + s + '|' + R.join() + '|' + ol + '|' + o;
+    if (GC[key]) return GC[key];
+    var rows = rowsOf(font, ch), w = rows[0].length * s, h = rows.length * s;
+    var at = function (x, y) { return x >= 0 && y >= 0 && x < w && y < h && rows[(y / s) | 0][(x / s) | 0] === '#'; };
+    var cO = mk(w + 2 * o + 1, h + 2 * o + 1), cF = mk(w + 2 * o + 1, h + 2 * o + 1), gO = cO.getContext('2d'), gF = cF.getContext('2d'), x, y, dx, dy, hit;
+    gO.fillStyle = ol;
+    for (y = -o; y < h + o + 1; y++) for (x = -o; x < w + o; x++) {
+      hit = false;
+      for (dy = -o; dy <= o && !hit; dy++) for (dx = -o; dx <= o && !hit; dx++) if (at(x + dx, y + dy) || at(x + dx, y + dy - 1)) hit = true;
+      if (hit) gO.fillRect(x + o, y + o, 1, 1);
+    }
+    for (y = 0; y < h; y++) for (x = 0; x < w; x++) if (at(x, y)) {
+      gF.fillStyle = y < h / 2 ? (!at(x, y - 1) ? R[0] : R[1]) : (!at(x, y + 1) ? R[3] : R[2]);
+      gF.fillRect(x + o, y + o, 1, 1);
+    }
+    return (GC[key] = { ol: cO, fill: cF, w: w, h: h, o: o });
+  }
+  var KIND = { damage: 'dmg', dmg: 'dmg', crit: 'crit', critical: 'crit', heal: 'heal', miss: 'miss', mp: 'mp', status: 'status' };
+  function scheme(name) { return palette.ramps.numbers[name] || palette.ramps.numbers.classic; }
+  // glyph(font 'digit'|'letter'|'bold', ch, scale, {kind, scheme, flash, outline}) -> {ol, fill, w, h, o} (canvases; draw ol at x-o, y-o for every glyph first, then fill)
+  function glyph(font, ch, s, opt) {
+    opt = opt || {}; var SC = scheme(opt.scheme), R = opt.flash ? palette.ramps.numbers.flash : opt.ramp || SC[KIND[opt.kind] || 'dmg'] || SC.dmg;
+    return glyphSprite(font, ch, s, R, opt.ol || SC.ol, opt.outline == null ? 1 : opt.outline);
+  }
+  // numberLayout(text, {scale, big, suffix, label, labelGap}) — glyph boxes relative to the top-left of the number (label above, y < 0)
+  function numberLayout(text, o) {
+    o = o || {}; var s = o.scale || 1, b = o.big ? Math.min(s + 1, 2) : s, items = [], x = 0, i, ch, r;
+    text = String(text);
+    if (/^[0-9+]+$/.test(text)) {
+      for (i = 0; i < text.length; i++) { ch = text[i]; r = D10[ch]; items.push({ font: 'digit', ch: ch, x: x, s: b, w: r[0].length * b, h: 10 * b }); x += (r[0].length + 1) * b; }
+      x -= b;
+      if (o.suffix) { x += 2 * s; for (i = 0; i < o.suffix.length; i++) { ch = o.suffix[i]; r = boldRows(ch); items.push({ font: 'bold', ch: ch, x: x, s: s, w: r[0].length * s, h: 7 * s }); x += (r[0].length + 1) * s; } x -= s; }
+    } else {
+      for (i = 0; i < text.length; i++) { ch = text[i]; r = boldRows(ch); items.push({ font: 'bold', ch: ch, x: x, s: s, w: r[0].length * s, h: 7 * s }); x += (r[0].length + 1) * s; }
+      x -= s;
+    }
+    var h = 0; items.forEach(function (it) { h = Math.max(h, it.h); }); items.forEach(function (it) { it.y = h - it.h; });
+    var label = o.label ? { text: o.label, w: letterW(o.label), h: 7 } : null, labelItems = [];
+    if (label) {
+      var lx = Math.round((x - label.w) / 2), lxx = lx;
+      for (i = 0; i < label.text.length; i++) { ch = label.text[i]; labelItems.push({ font: 'letter', ch: ch, x: lxx, y: -label.h - (o.labelGap == null ? 4 : o.labelGap), s: 1, lab: 1, w: letterRows(ch)[0].length, h: 7, lx0: lxx - lx }); lxx += letterRows(ch)[0].length + 1; }
+    }
+    return { items: items, w: x, h: h, label: label, labelItems: labelItems };
+  }
+
+  /* ---------- the skin ---------- */
+  var skin = {
+    id: 'pixel16', name: '16-bit console pixel', pixel: true,
+    native: { w: 256, h: 224, scale: 'integer', smoothing: false, snap: 1, minScale: 2, note: 'draw at native res, backing store = native, CSS-scale by an integer; grid games often 240x160' },
+    palette: palette,
+    fonts: {
+      ui: { type: 'bitmap', height: 7, advance: 6, space: 4, uppercase: true, sep: ',', glyphs: GLYPH_UI, note: 'grid-range-path 5x7 mono; 2-tone (rows 0-3 color, 4-6 color2) + 1 px drop shadow' },
+      plate: { type: 'bitmap', height: 7, space: 4, coverage: 'full', note: 'active-time-battle proportional 5x7 (ACEITVW 0125 7 . x as in A-01); every other character falls back to the ui glyphs, upper-cased' },
+      num: { type: 'bitmap', height: 10, sep: '|', glyphs: DIGITS, note: 'damage-numbers 7x10 digits; use number()/glyph()' },
+      label: { type: 'bitmap', height: 7, sep: '|', glyphs: LETTERS, note: 'damage-numbers 5x7 letters (CRITICAL label)' },
+      bold: { type: 'bitmap', height: 7, note: 'letters widened 1 px to the right (MISS, POISON, MP suffix)' },
+      rules: { snap: true, smoothing: false, minSize: 7, uppercase: true, lineH: 12 }
+    },
+    shape: { radius: 0, edgeWidth: 1, padding: 4, clippedCorners: 1, rivets: true },
+    overlayStyle: { mode: 'tint', pattern: 'pulsing', composite: 'color', tintAlpha: 0.72, alpha: 0.22, pulseAlpha: 0.30, checker: [0.30, 0.17], seamAlpha: 0.12, edgeAlpha: 0.85 },
+    particles: { shape: 'square', size: [1, 2], count: 1, snap: true, blend: 'source-over', glow: 0, gravity: 0.12, drag: 0.02, life: [250, 600], colors: ['fx.white', 'fx.crit', 'fx.hot'], trail: 0, rays: 6 },
+    outline: { text: { width: 0, mode: 'drop' }, number: { width: 1, max: 2, drop: 1, mode: 'dilate', color: 'text.outline' }, sprite: { width: 1, color: 'ink', mode: 'pixel' } },
+    shadow: { text: { dx: 1, dy: 1 }, window: null, sprite: { kind: 'blob', alpha: 0.35 } },
+    motion: { stepMs: 1000 / 60, snap: true, ease: { move: 'linear', pop: 'snap', fade: 'linear' }, fadeSteps: [1, 0.75, 0.5, 0.25], shakeInt: true, flashMax: 0.35, blinkMs: 100, hitStopMs: 60 },
+
+    measure: function (str, o) {
+      o = o || {}; var f = o.font || 'ui', s = String(str);
+      if (f === 'plate') return plateW(s);
+      if (f === 'label') return letterW(s);
+      if (f === 'bold') return boldW(s) * (o.scale || 1);
+      if (f === 'num') return numberLayout(s, o).w;
+      return uiW(s);
+    },
+    // text: font 'ui' (default) {color, color2, shadow}; 'plate' {color, shadow}; 'label' | 'bold' {kind, scheme, outline}
+    text: function (ctx, str, x, y, o) {
+      o = o || {}; var f = o.font || 'ui', s = String(str), w = this.measure(s, o), T = palette.text;
+      if (o.align === 'center') x -= Math.floor(w / 2); else if (o.align === 'right') x -= w;
+      var pa = ctx.globalAlpha; if (o.alpha != null) ctx.globalAlpha = pa * o.alpha;
+      if (f === 'plate') plateText(ctx, s, x, y, o.color || T.plate, o.shadow === false ? null : o.shadow || null);
+      else if (f === 'label' || f === 'bold') {
+        var sc = o.scale || 1, cx = x, gl = [];
+        for (var i = 0; i < s.length; i++) { var rr = f === 'bold' ? boldRows(s[i]) : letterRows(s[i]); gl.push([cx, glyph(f === 'bold' ? 'bold' : 'letter', s[i], sc, o)]); cx += (rr[0].length + 1) * sc; }
+        ['ol', 'fill'].forEach(function (p) { gl.forEach(function (g) { ctx.drawImage(g[1][p], g[0] - g[1].o, y - g[1].o); }); });
+      } else uiText(ctx, s, x, y, o.color || null, o.color2 || null, o.shadow === false ? false : o.shadow || null);
+      ctx.globalAlpha = pa; return w;
+    },
+    // frame: role 'window' (default; team a | b | n) = bevelled gradient window with rivets; role 'plate' (alert = paused) = flat HUD plate
+    frame: function (g, r, st) {
+      st = st || {}; var x = r.x, y = r.y, w = r.w, h = r.h, U = palette.ui;
+      if (st.role === 'plate') {
+        var R = function (X, Y, W, H, c) { if (W <= 0 || H <= 0) return; g.fillStyle = c; g.fillRect(Math.round(X), Math.round(Y), Math.round(W), Math.round(H)); };
+        R(x, y, w, h, U.plateEdge); R(x + 1, y + 1, w - 2, h - 2, st.alert ? U.plateAlert : U.plate); R(x + 1, y + 1, w - 2, 1, st.alert ? U.plateAlertLight : U.plateLight);
+        return { x: x + 5, y: y + 3, w: w - 10, h: h - 6 };
+      }
+      var C = palette.windows[st.team] || palette.windows.n, i, pa = g.globalAlpha;
+      g.globalAlpha = pa * 0.95 * (st.alpha == null ? 1 : st.alpha);
+      for (i = 0; i < h - 2; i++) { g.fillStyle = C[Math.min(3, Math.floor(i / (h - 2) * 4))]; g.fillRect(x + 1, y + 1 + i, w - 2, 1); }
+      g.globalAlpha = pa * (st.alpha == null ? 1 : st.alpha); g.fillStyle = U.edge;
+      g.fillRect(x + 2, y, w - 4, 1); g.fillRect(x + 2, y + h - 1, w - 4, 1); g.fillRect(x, y + 2, 1, h - 4); g.fillRect(x + w - 1, y + 2, 1, h - 4);
+      g.fillRect(x + 1, y + 1, 1, 1); g.fillRect(x + w - 2, y + 1, 1, 1); g.fillRect(x + 1, y + h - 2, 1, 1); g.fillRect(x + w - 2, y + h - 2, 1, 1);
+      g.fillStyle = C[4]; g.fillRect(x + 2, y + 1, w - 4, 1); g.fillRect(x + 1, y + 2, 1, h - 5);
+      g.fillStyle = C[5]; g.fillRect(x + 2, y + h - 2, w - 4, 1); g.fillRect(x + w - 2, y + 2, 1, h - 4);
+      [[x + 2, y + 2], [x + w - 4, y + 2], [x + 2, y + h - 4], [x + w - 4, y + h - 4]].forEach(function (p) { g.fillStyle = U.rivetShade; g.fillRect(p[0], p[1], 2, 2); g.fillStyle = U.rivet; g.fillRect(p[0], p[1], 1, 1); });
+      g.globalAlpha = pa;
+      return { x: x + 4, y: y + 4, w: w - 8, h: h - 8 };
+    },
+    // number(ctx, str, x, y, {kind, scheme, scale, big, suffix, label, labelGap, outline, align: 'left'|'center', baseline: 'top'|'bottom', alpha,
+    //                         glyphOffset(i, item) -> {dx, dy, alpha, flash, skip}}) -> drawn fill rects [{x, y, w, h}]
+    // Glyphs are the number's items followed by the label's; outlines of all glyphs are drawn before any fill.
+    number: function (ctx, str, x, y, o) {
+      o = o || {}; var L = numberLayout(str, o), x0 = o.align === 'center' ? Math.round(x - L.w / 2) : Math.round(x), y0 = o.baseline === 'bottom' ? y - L.h : y;
+      var all = L.items.concat(L.labelItems), out = [], pa = ctx.globalAlpha, prev = ctx.imageSmoothingEnabled, olw = o.outline == null ? 1 : o.outline;
+      ctx.imageSmoothingEnabled = false;
+      var plan = all.map(function (it, i) { var d = (o.glyphOffset && o.glyphOffset(i, it)) || {}; return { it: it, d: d, img: d.skip ? null : glyph(it.font, it.ch, it.s, { kind: o.kind, scheme: o.scheme, flash: d.flash, outline: olw }) }; });
+      ['ol', 'fill'].forEach(function (pass) {
+        plan.forEach(function (p) {
+          if (!p.img) return; var gx = x0 + p.it.x + (p.d.dx || 0), gy = y0 + p.it.y + (p.d.dy || 0);
+          ctx.globalAlpha = pa * (p.d.alpha != null ? p.d.alpha : o.alpha != null ? o.alpha : 1);
+          ctx.drawImage(p.img[pass], gx - olw, gy - olw);
+          if (pass === 'fill') out.push({ x: gx, y: gy, w: p.img.w, h: p.img.h, ch: p.it.ch });
+        });
+      });
+      ctx.globalAlpha = pa; ctx.imageSmoothingEnabled = prev; return out;
+    },
+    // overlay(ctx, tileRect, 'move'|'attack'|'threat'|'heal', tSeconds, {grow, pattern 'solid'|'pulsing'|'checker', tile: {x, y}, edges, seams})
+    overlay: function (g, r, kind, t, o) {
+      o = o || {}; var C = palette.overlay[kind] || palette.overlay.move, gr = o.grow == null ? 1 : o.grow, S = this.overlayStyle;
+      if (!(gr > 0)) return;
+      var c0 = API.color.rgb(C.fill).join(','), c1 = API.color.rgb(C.edge).join(','), X = r.x, Y = r.y, W = r.w, H = r.h, tx = o.tile ? o.tile.x : 0, ty = o.tile ? o.tile.y : 0;
+      var pat = o.pattern || S.pattern, a2 = S.alpha, E = o.edges || {}, M = o.seams || {};
+      if (pat === 'pulsing' && Math.sin((tx + ty) * 0.55 - t * 3.2) > 0.5) a2 = S.pulseAlpha;
+      if (pat === 'checker') a2 = (tx + ty) % 2 ? S.checker[0] : S.checker[1];
+      var op = g.globalCompositeOperation;
+      g.globalCompositeOperation = 'color'; g.fillStyle = 'rgba(' + c0 + ',' + (S.tintAlpha * gr) + ')'; g.fillRect(X, Y, W, H);
+      g.globalCompositeOperation = 'source-over'; g.fillStyle = 'rgba(' + c0 + ',' + (a2 * gr) + ')'; g.fillRect(X, Y, W, H);
+      g.fillStyle = 'rgba(' + c1 + ',' + S.seamAlpha + ')'; if (M.right) g.fillRect(X + W - 1, Y, 1, H); if (M.bottom) g.fillRect(X, Y + H - 1, W, 1);
+      g.fillStyle = 'rgba(' + c1 + ',' + (S.edgeAlpha * gr) + ')';
+      if (E.top) g.fillRect(X, Y, W, 1); if (E.bottom) g.fillRect(X, Y + H - 1, W, 1);
+      if (E.left) g.fillRect(X, Y, 1, H); if (E.right) g.fillRect(X + W - 1, Y, 1, H);
+      if (op !== 'color') g.globalCompositeOperation = op;
+    },
+    // bar(ctx, rect, frac, kind, {style: 'gauge' (default) | 'meter', tag: 'haste'|'slow', px})
+    //   gauge kinds: charge haste slow ready queued enemy enemyFull, null = empty (dotted);  meter kinds: hp hpLow
+    bar: function (g, r, fr, kind, o) {
+      o = o || {}; var x = r.x, y = r.y, w = r.w, h = r.h;
+      if (o.style === 'meter' || kind === 'hp' || kind === 'hpLow') {
+        var Mt = palette.ramps.meter, low = kind === 'hpLow', iw = w - 2, f = o.px != null ? o.px : Math.round(iw * Math.max(0, fr));
+        g.fillStyle = Mt.out; g.fillRect(x, y, w, h); g.fillStyle = Mt.track; g.fillRect(x + 1, y + 1, iw, h - 2);
+        g.fillStyle = low ? Mt.hpLow : Mt.hp; g.fillRect(x + 1, y + 1, f, h - 2); g.fillStyle = low ? Mt.hpLowTop : Mt.hpTop; g.fillRect(x + 1, y + 1, f, 1);
+        return;
+      }
+      var G = palette.ramps.gauge, C = kind ? G[kind] || G.charge : null, tag = o.tag ? G[o.tag] : null;
+      var R = function (X, Y, W, H, c) { if (W <= 0 || H <= 0) return; g.fillStyle = c; g.fillRect(Math.round(X), Math.round(Y), Math.round(W), Math.round(H)); };
+      x = Math.round(x); y = Math.round(y); w = Math.round(w); h = Math.round(h);
+      R(x + 1, y, w - 2, 1, G.out); R(x + 1, y + h - 1, w - 2, 1, G.out); R(x, y + 1, 1, h - 2, G.out); R(x + w - 1, y + 1, 1, h - 2, G.out);
+      var iw2 = w - 2, ih = h - 2; R(x + 1, y + 1, iw2, ih, G.empty); R(x + 1, y + 1, iw2, 1, G.emptyTop);
+      if (!C) { for (var q = 0; q < iw2; q += 3) R(x + 1 + q, y + 1 + (ih >> 1), 1, 1, G.dot); return; }
+      var fw = o.px != null ? o.px : Math.round(Math.max(0, Math.min(1, fr)) * iw2); if (fw <= 0) return;
+      R(x + 1, y + 1, fw, ih, C[1]); R(x + 1, y + 1, fw, 1, C[0]);
+      if (ih > 2) R(x + 1, y + h - 2, fw, 1, C[2]);
+      if (fw < iw2) R(x + fw, y + 1, 1, ih, C[3]); else R(x + iw2, y + 1, 1, ih, C[0]);
+      if (tag) { R(x + 1, y + 1, 3, ih, tag[1]); R(x + 1, y + 1, 3, 1, tag[0]); R(x + 4, y + 1, 1, ih, G.out); }
+    },
+    // cursor(ctx, rect, 'bracket' | 'hand', tSeconds, {alpha, invalid}) — bracket: rect = tile; hand: rect.x/y = pointer top-left (7x5)
+    cursor: function (g, r, kind, t, o) {
+      o = o || {}; var K = palette.cursor, pa = g.globalAlpha;
+      if (kind === 'hand') {
+        var hx = r.x + (Math.floor(t * 4) % 2), hy = r.y;
+        ['.oo....', 'owwoooo', 'owwwwwo', 'owwwwo.', '.oooo..'].forEach(function (row, yy) { for (var xx = 0; xx < 7; xx++) if (row[xx] !== '.') { g.fillStyle = row[xx] === 'o' ? palette.text.pointerEdge : palette.text.pointer; g.fillRect(hx + xx, hy + yy, 1, 1); } });
+        return;
+      }
+      var T = r.w, x = r.x, y = r.y, o1 = Math.floor(t * 3.6) % 2 ? 0 : -1, col = o.invalid ? [K.badLight, K.bad] : [K.light, K.base];
+      g.globalAlpha = o.alpha == null ? 1 : o.alpha;
+      var corner = function (cx, cy, sx, sy) {
+        var pts = [], i; for (i = 0; i < 5; i++) pts.push([cx + sx * i, cy], [cx + sx * i, cy + sy]); for (i = 2; i < 5; i++) pts.push([cx, cy + sy * i], [cx + sx, cy + sy * i]);
+        g.fillStyle = K.edge; pts.forEach(function (p) { g.fillRect(p[0] - 1, p[1] - 1, 3, 3); });
+        pts.forEach(function (p) { g.fillStyle = (p[0] === cx || p[1] === cy) ? col[0] : col[1]; g.fillRect(p[0], p[1], 1, 1); });
+      };
+      corner(x + o1, y + o1, 1, 1); corner(x + T - 1 - o1, y + o1, -1, 1); corner(x + o1, y + T - 1 - o1, 1, -1); corner(x + T - 1 - o1, y + T - 1 - o1, -1, -1);
+      g.globalAlpha = pa;
+    }
+  };
+  /* ---------- scene hooks: 16-bit shaded terrain tiles and unit sprites (previews, compare page) ----------
+     Art ported from an earlier prototype's own map-fe game (original palette-string sprites; light from the top left).
+     Tiles are 16x16 native px, cached per kind / variant / water frame; any rect size is drawn nearest-neighbour. */
+  var OLN = '#1a1024';
+  var TP = {
+    grass: ['#2c5a2c', '#3c7a34', '#549a3c', '#74b84a', '#9cd462'], wood: ['#1e3e24', '#2a5428', '#386a2e', '#4c8236', '#64a040'],
+    rock: ['#3a2e3e', '#5a4a52', '#7e6c62', '#a8927a', '#ccb896'], dirt: ['#6a4a2a', '#8c6638', '#ae8648', '#cca660', '#e6c87e'],
+    water: ['#142c6c', '#1c4494', '#2a62bc', '#3e88d8', '#6cb4ec', '#bce6ff'], stone: ['#3a3448', '#58506a', '#7a7088', '#9c94a8', '#c4bccc', '#e4dcea'],
+    plank: ['#3a2014', '#5c3420', '#82502c', '#a87240', '#cc9a5c'], roof: ['#4a1420', '#7a2430', '#a8383a', '#cc5a48', '#ec8a64'],
+    sand: ['#8a7044', '#b0945c', '#ccb070', '#e2cc8c', '#f4e4ae']
+  };
+  palette.terrain = { grass: TP.grass[2], forest: TP.wood[3], water: TP.water[2], hill: TP.grass[3], mountain: TP.rock[3], road: TP.dirt[2], bridge: TP.plank[3], fort: TP.stone[3], sand: TP.sand[3], wall: TP.stone[2], floor: TP.stone[4] };
+  function th(x, y, s) { var n = Math.imul(x | 0, 73856093) ^ Math.imul(y | 0, 19349663) ^ Math.imul((s | 0) + 1, 83492791); n = Math.imul(n ^ (n >>> 13), 0x5bd1e995); n ^= n >>> 15; return (n >>> 0) / 4294967296; }
+  var TC = {};
+  function tileArt(kind, v, fr) {
+    var key = kind + '|' + v + '|' + fr; if (TC[key]) return TC[key];
+    var c = mk(16, 16), g = c.getContext('2d'), P = function (x, y, col) { if (x < 0 || y < 0 || x > 15 || y > 15) return; g.fillStyle = col; g.fillRect(x, y, 1, 1); }, x, y, i;
+    var ox = v * 16, G = TP.grass;
+    var grass = function () {
+      for (y = 0; y < 16; y++) for (x = 0; x < 16; x++) { var r = th(x + ox, y, 3), k = r > 0.965 ? 3 : r < 0.03 ? 1 : 2; P(x, y, G[k]); }
+      for (i = 0; i < 4; i++) { var tx = 1 + Math.floor(th(i, v, 5) * 13), ty = 2 + Math.floor(th(i, v, 7) * 11); P(tx, ty, G[4]); P(tx - 1, ty + 1, G[3]); P(tx + 1, ty + 1, G[3]); P(tx, ty + 1, G[1]); }
+    };
+    var water = function () {
+      var W = TP.water;
+      for (y = 0; y < 16; y++) for (x = 0; x < 16; x++) P(x, y, th(x + ox, y, 9) < 0.07 ? W[1] : W[2]);
+      [2, 7, 12].forEach(function (ry, j) { var x0 = (v * 5 + j * 6 + fr * 2) % 16; for (i = 0; i < 5; i++) P((x0 + i) % 16, ry + (i === 0 || i === 4 ? 1 : 0), i === 2 ? W[5] : W[4]); for (i = 0; i < 4; i++) P((x0 + i + 1) % 16, ry + 2, W[1]); });
+    };
+    var outlineMask = function (M, col) { for (y = 0; y < 16; y++) for (x = 0; x < 16; x++) if (!M(x, y) && (M(x + 1, y) || M(x - 1, y) || M(x, y + 1) || M(x, y - 1))) P(x, y, col); };
+    if (kind === 'water') water();
+    else if (kind === 'road') { var D = TP.dirt; for (y = 0; y < 16; y++) for (x = 0; x < 16; x++) { var r2 = th(x + ox, y, 13); P(x, y, r2 > 0.88 ? D[3] : r2 < 0.1 ? D[1] : D[2]); } for (i = 0; i < 3; i++) { var px = 2 + Math.floor(th(i, v, 15) * 12), py = 2 + Math.floor(th(i, v, 17) * 12); P(px, py, D[4]); P(px + 1, py, D[3]); P(px, py + 1, D[0]); P(px + 1, py + 1, D[1]); } }
+    else if (kind === 'sand') { var Sd = TP.sand; for (y = 0; y < 16; y++) for (x = 0; x < 16; x++) { var r3 = th(x + ox, y, 19); P(x, y, r3 > 0.9 ? Sd[4] : r3 < 0.08 ? Sd[1] : Sd[3]); } [4, 10].forEach(function (ry) { for (x = 2; x < 13; x++) P(x, ry + Math.round(Math.sin((x + v * 3) * 0.7)), Sd[2]); }); }
+    else if (kind === 'wall' || kind === 'floor') {
+      var St = TP.stone, wall = kind === 'wall';
+      for (y = 0; y < 16; y++) for (x = 0; x < 16; x++) {
+        var row = wall ? Math.floor(y / 4) : Math.floor(y / 8), off = row % 2 ? 4 : 0, bx = (x + off) % 8, by = wall ? y % 4 : y % 8;
+        var col = by === 0 ? St[wall ? 4 : 5] : (wall ? by === 3 : by === 7) || bx === 0 ? St[wall ? 1 : 2] : bx === 1 ? St[wall ? 3 : 4] : St[wall ? 2 : 3];
+        if (!wall && th(x + ox, y, 23) > 0.93 && by > 0 && bx > 0) col = St[2];
+        P(x, y, col);
+      }
+    } else {
+      grass();
+      if (kind === 'forest') {
+        var Wd = TP.wood, blobs = [[8, 6, 6.2], [4.5, 9, 3.6], [11.5, 9, 3.6]], inT = function (X, Y) { return blobs.some(function (b) { return (X - b[0]) * (X - b[0]) + (Y - b[1]) * (Y - b[1]) <= b[2] * b[2]; }); };
+        for (x = 4; x < 12; x++) P(x, 14, G[0]); for (x = 3; x < 13; x++) P(x, 13, G[1]);
+        P(7, 12, TP.plank[2]); P(8, 12, TP.plank[1]); P(7, 13, TP.plank[1]); P(8, 13, TP.plank[0]);
+        for (y = 0; y < 16; y++) for (x = 0; x < 16; x++) if (inT(x, y)) { var d = Math.hypot(x - 5.5, y - 3.5) + (th(x + ox, y, 29) - 0.5) * 2.2; P(x, y, Wd[d < 2.5 ? 4 : d < 5 ? 3 : d < 7.5 ? 2 : 1]); }
+        outlineMask(inT, Wd[0]);
+      } else if (kind === 'hill') {
+        var inH = function (X, Y) { return Y <= 13 && ((X - 8) * (X - 8)) / 49 + ((Y - 13) * (Y - 13)) / 64 <= 1; };
+        for (y = 0; y < 16; y++) for (x = 0; x < 16; x++) if (inH(x, y)) { var sh = (x - 5) + (y - 7) * 0.8; P(x, y, sh < -1 ? G[4] : sh < 4 ? G[3] : sh < 8 ? G[2] : G[1]); }
+        for (x = 2; x < 15; x++) if (inH(x, 13)) P(x, 14, G[0]);
+        P(6, 8, TP.dirt[3]); P(7, 8, TP.dirt[2]); P(9, 10, TP.dirt[2]);
+      } else if (kind === 'mountain') {
+        var R = TP.rock, inM = function (X, Y) { var w = (Y - 1) * 0.55 + (th(Y, v, 31) - 0.5); return Y >= 1 && Y <= 14 && Math.abs(X - 8) <= w; };
+        for (y = 0; y < 16; y++) for (x = 0; x < 16; x++) if (inM(x, y)) { var lit = x < 8 - (y > 8 ? (y - 8) * 0.3 : 0); P(x, y, y < 4 ? (lit ? '#f4f8ff' : '#c8d4f0') : lit ? (x < 8 - (y - 1) * 0.35 ? R[4] : R[3]) : (x > 8 + (y - 1) * 0.3 ? R[1] : R[2])); }
+        for (y = 6; y < 13; y += 3) P(8 + (y % 2), y, R[1]);
+        outlineMask(inM, R[0]);
+      } else if (kind === 'bridge') {
+        water(); var Pl = TP.plank;
+        for (y = 3; y < 13; y++) for (x = 0; x < 16; x++) { var bx2 = x % 4; P(x, y, bx2 === 0 ? Pl[4] : bx2 === 3 ? Pl[1] : Pl[3]); }
+        for (x = 0; x < 16; x++) { P(x, 2, Pl[2]); P(x, 13, Pl[2]); P(x, 1, OLN); P(x, 14, OLN); }
+        [1, 7, 13].forEach(function (px2) { P(px2, 1, Pl[3]); P(px2 + 1, 1, Pl[2]); P(px2, 0, Pl[4]); P(px2 + 1, 0, Pl[1]); });
+      } else if (kind === 'fort') {
+        var Sf = TP.stone, inF = function (X, Y) { return (X >= 2 && X <= 13 && Y >= 5 && Y <= 14) || (Y >= 3 && Y <= 4 && X >= 2 && X <= 13 && Math.floor((X - 2) / 3) % 2 === 0); };
+        for (y = 0; y < 16; y++) for (x = 0; x < 16; x++) if (inF(x, y)) { var mortar = y >= 5 && ((y - 5) % 3 === 2 || (x + (Math.floor((y - 5) / 3) % 2) * 2) % 4 === 0); P(x, y, x === 2 ? Sf[4] : x === 13 ? Sf[1] : y <= 4 ? Sf[4] : mortar ? Sf[2] : Sf[3]); }
+        for (y = 10; y < 15; y++) for (x = 6; x < 10; x++) if (!(y === 10 && (x === 6 || x === 9))) P(x, y, Sf[0]);
+        outlineMask(inF, OLN);
+        for (y = 0; y < 4; y++) P(8, y, TP.plank[1]); P(9, 0, TP.roof[3]); P(10, 0, TP.roof[3]); P(9, 1, TP.roof[2]); P(10, 1, TP.roof[4]);
+      }
+    }
+    return (TC[key] = c);
+  }
+  // tile(ctx, rect, kind, t): kind outside the 11 standard kinds draws as grass; water and bridge ripple at 3 frames per second
+  skin.tile = function (ctx, r, kind, t) {
+    var k = /^(grass|forest|water|hill|mountain|road|bridge|fort|sand|wall|floor)$/.test(kind) ? kind : 'grass';
+    var v = Math.floor(th(Math.round(r.x / 16), Math.round(r.y / 16), 1) * 4), fr = k === 'water' || k === 'bridge' ? Math.floor((t || 0) * 3) % 4 : 0;
+    var prev = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(tileArt(k, v, fr), r.x, r.y, r.w, r.h); ctx.imageSmoothingEnabled = prev;
+  };
+
+  // unit sprites: head + torso + legs + weapon parts, auto 1 px outline, team ramp 1..4 (dark -> light); 18x22, feet on the bottom row
+  var SPB = { o: OLN, s: '#f8c8a0', S: '#c8845c', e: '#2a1428', w: '#f4f4ff', v: '#a8b0d8', l: '#f0f6ff', m: '#a8b4d0', M: '#58607e', b: '#a86c38', B: '#5c3418', g: '#ffd858', G: '#b87a1c', r: '#e04848', R: '#8a1c30', h: '#c87838', H: '#7a3c1c', j: '#f0b060' };
+  var STEAM = { a: { 1: '#121a52', 2: '#2442a4', 3: '#3c72e4', 4: '#98c4ff' }, b: { 1: '#480c18', 2: '#901e26', 3: '#d4442e', 4: '#ffa47c' }, n: { 1: '#163a1c', 2: '#2c6a2c', 3: '#4ea43c', 4: '#a8e07c' } };
+  var HEAD = {
+    lord: ['......oooo......', '....oojjjhoo....', '...ojjhhhhhHo...', '..ojhhhhhhhhHo..', '..ohgggggggGHo..', '..oHsssssssSHo..', '..oHsesssesSHo..', '...oSssssSSSo...'],
+    archer: ['......oooo......', '....oo4433oo....', '...o443333322o..', '..o44333333322o.', '..o3hhhhhhhH2o..', '..o2ssssssss2o..', '..o2sesssesS2o..', '...o2SssssSS2o..'],
+    cleric: ['......oooo......', '....oowwwwoo....', '...owwwwwwwvo...', '..owww4433wwvo..', '..owvhhhhhhvvo..', '..ovhsssssshvo..', '..ovsesssesSvo..', '...ovSssssSvo...'],
+    armor: ['.....oooooo.....', '...oollllmmoo...', '..ollmmmmmmmMo..', '..olmmmmmmmMMo..', '..oMooooooooMo..', '..olmmm44mmmMo..', '..oMlmmmmmmMMo..', '...oMMMMMMMMo...'],
+    brigand: ['................', '.....oooooo.....', '...oo33334433o..', '..o3333333332o..', '..o2HhhhhhhhH2oo', '..oHsssssssSHo2o', '..oHsesssesSHo..', '...oSsBBBsSSo...']
+  };
+  var TORSO = {
+    tunic: ['...RroSSSSorR...', '..Rro4433332orR.', '..ros4433332Sor.', '..roSo43332oSor.', '..RrooBggbBoorR.', '...Rro43322orR..'],
+    plate: ['..oooMMMMMMooo..', '.ollmo4433olmMo.', 'olmmMo4332oMmMMo', 'olmMMo4332oMMMMo', '.oMMoBbggbBoMMo.', '..olmmmmmmmmMo..'],
+    robe: ['....ovSSSSvo....', '...owww44wwvo...', '..oswww44wwvSo..', '..oSow4334woSo..', '...owwg44gwvo...', '...owww44wwvvo..'],
+    light: ['....ooSSSSoo....', '...o3bb33bb2o...', '..os33bbbb32So..', '..oSo3bbbb2oSo..', '...ooBbggbBoo...', '....o433322o....']
+  };
+  var LEGS = {
+    boots: ['....oBbooBbo....', '....oBBo.oBBo...', '...oBBBo.oBBBo..', '...oooo...oooo..'],
+    plate: ['...olmMooolmMo..', '...olmMo.olmMo..', '..olmmMo.olmmMo.', '..oooooo.oooooo.'],
+    robe: ['..owwww44wwwvvo.', '..ovvvvvvvvvvvo.', '...oBBo..oBBo...', '...oooo..oooo...']
+  };
+  var WPN = {
+    sword: { x: 13, y: 6, rows: ['.l.', '.l.', 'lm.', 'lm.', 'lm.', 'lm.', 'mM.', 'GgG', '.b.', '.B.'] },
+    lance: { x: 14, y: 0, rows: ['.l.', 'llm', 'lmM', '.M.', '.b.', '.b.', '.b.', '.b.', '.b.', '.b.', '.b.', '.b.', '.b.', '.B.', '.B.', '.B.', '.B.', '.B.'] },
+    axe: { x: 13, y: 3, rows: ['.Bll.', '.bllm', '.bmmM', '.bMM.', '.b...', '.b...', '.b...', '.b...', '.b...', '.b...', '.B...', '.B...'] },
+    bow: { x: 0, y: 9, rows: ['..b', '.bw', 'b.w', 'b.w', 'b.w', 'b.w', 'b.w', '.bw', '..b'] },
+    staff: { x: 14, y: 3, rows: ['.g.', 'gwg', 'GgG', '.b.', '.b.', '.b.', '.b.', '.b.', '.b.', '.b.', '.b.', '.b.', '.B.', '.B.', '.B.', '.B.'] }
+  };
+  var KINDS = {
+    knight: { head: 'armor', torso: 'plate', legs: 'plate', wpn: 'lance' }, fighter: { head: 'brigand', torso: 'light', legs: 'boots', wpn: 'axe' },
+    mage: { head: 'cleric', torso: 'robe', legs: 'robe', wpn: 'staff' }, archer: { head: 'archer', torso: 'light', legs: 'boots', wpn: 'bow' },
+    lord: { head: 'lord', torso: 'tunic', legs: 'boots', wpn: 'sword' },
+    monster: { head: 'brigand', torso: 'light', legs: 'boots', wpn: 'axe', pal: { s: '#9cc47a', S: '#5a7e44', e: '#ff5a2a', H: '#3a2a3e', h: '#5a4a62' } }
+  };
+  var SPC = {};
+  function sprite(kind, team, frame, grey) {
+    var key = kind + team + frame + (grey ? 'g' : ''); if (SPC[key]) return SPC[key];
+    var C = KINDS[kind] || KINDS.fighter, Gd = [], y, x, k2;
+    for (y = 0; y < 22; y++) Gd.push(new Array(18).fill('.'));
+    var stamp = function (rows, ox, oy) { rows.forEach(function (r, yy) { for (var xx = 0; xx < r.length; xx++) { var ch = r[xx]; if (ch === '.') continue; if (Gd[oy + yy] && ox + xx >= 0 && ox + xx < 18) Gd[oy + yy][ox + xx] = ch; } }); };
+    var bob = frame === 1 ? 1 : 0;
+    stamp(LEGS[C.legs], 1, 18); stamp(TORSO[C.torso], 1, 12 + bob); stamp(HEAD[C.head], 1, 4 + bob);
+    var wp = WPN[C.wpn]; if (wp) stamp(wp.rows, wp.x, wp.y + bob);
+    var add = [];
+    for (y = 0; y < 22; y++) for (x = 0; x < 18; x++) if (Gd[y][x] === '.' && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(function (d) { var c2 = (Gd[y + d[1]] || [])[x + d[0]]; return c2 && c2 !== '.' && c2 !== 'o'; })) add.push([x, y]);
+    add.forEach(function (p) { Gd[p[1]][p[0]] = 'o'; });
+    var pal = {}, tm = STEAM[team] || STEAM.a;
+    for (k2 in SPB) pal[k2] = SPB[k2]; for (k2 in tm) pal[k2] = tm[k2]; if (C.pal) for (k2 in C.pal) pal[k2] = C.pal[k2];
+    if (grey) for (k2 in pal) if (k2 !== 'o') { var v3 = API.color.rgb(pal[k2]), lum = Math.round((v3[0] * 0.3 + v3[1] * 0.55 + v3[2] * 0.15) * 0.7 + 30); pal[k2] = API.color.hex([lum - 4, lum, lum + 14]); }
+    var c = mk(18, 22), g = c.getContext('2d');
+    for (y = 0; y < 22; y++) for (x = 0; x < 18; x++) { var ch = Gd[y][x]; if (ch === '.' || !pal[ch]) continue; g.fillStyle = pal[ch]; g.fillRect(x, y, 1, 1); }
+    return (SPC[key] = c);
+  }
+  // unitToken(ctx, rect, {team, kind, selected, dead, facing, noShadow}, t): 1 sprite px = 1 native px, feet on the rect's bottom
+  // edge, centred; 2-frame idle every 26 frames (stepped), selected units bob 1 px at 4 Hz, dead units grey and faded
+  skin.unitToken = function (ctx, r, u, t) {
+    u = u || {}; var team = STEAM[u.team] ? u.team : 'a', tt = t || 0, img = sprite(u.kind || 'fighter', team, Math.floor(tt * 60 / 26) % 2, !!u.dead);
+    var fx = Math.round(r.x + r.w / 2), fy = Math.round(r.y + r.h), sel = u.selected && Math.floor(tt * 4) % 2 ? 1 : 0, prev = ctx.imageSmoothingEnabled, pa = ctx.globalAlpha;
+    ctx.imageSmoothingEnabled = false;
+    if (!u.noShadow) { ctx.fillStyle = 'rgba(10,8,30,0.4)'; ctx.fillRect(fx - 4, fy - 2, 8, 1); ctx.fillRect(fx - 6, fy - 1, 12, 1); ctx.fillRect(fx - 4, fy, 8, 1); }
+    if (u.dead) ctx.globalAlpha = pa * 0.6;
+    ctx.save(); if (u.facing === -1) { ctx.translate(fx * 2, 0); ctx.scale(-1, 1); }
+    ctx.drawImage(img, fx - 9, fy - 22 - sel); ctx.restore();
+    ctx.globalAlpha = pa; ctx.imageSmoothingEnabled = prev;
+  };
+
+  var S = API.register(skin);
+  // pixel16 extras (other skins may provide the same names; modules feature-test them)
+  S.glyph = glyph; S.numberLayout = numberLayout; S.letterWidth = letterW;
+})(typeof window !== 'undefined' ? window : this);
+
+</script>
+<script>
+/* GameDNA B-03 · Fog of war · module v1 (plain script, no dependencies, one global)
+ *
+ *   const fog = GameDNA_FogOfWar.create({
+ *     cols: 16, rows: 12, tile: 16,                 // the tile map
+ *     view: { x: 0, y: 0, w: 256, h: 192 },          // screen rect (native px) where the map is drawn; tile (0,0) at view.x/y when cam = 0
+ *     skin: 'pixel16',                               // optional; needs GameDNA_Skin, else the built-in pixel16 look
+ *     params: { radius: 3, density: 0.6, ... },      // see DEFAULTS
+ *     posOf: u => ({ x: u.x, y: u.y }),              // tile of a unit (null = not on the map)
+ *     isPlayer: u => u.side === 'blue',              // whose vision counts
+ *     visionOf: (u, x, y) => 3,                      // optional: sight radius in tiles (add hill bonuses here)
+ *     blocks: (x, y) => false,                       // optional: true = this tile stops sight beyond it (forest, walls)
+ *     isAlive: u => u.hp > 0,                        // optional (default: hp > 0 and not dead)
+ *     ghostSprite: u => canvasOrImage,               // optional: the unit's own sprite, drawn as a faint silhouette
+ *     anchorOf: u => ({ x, top }),                   // optional: screen px above the unit's head for the "!" pop
+ *     uiRects: () => [{ x, y, w, h }],               // optional: screen rects the "!" pop never covers
+ *     onReveal: (unit, x, y) => {}                   // optional: an enemy just came into sight
+ *   });
+ *   fog.recompute(units)           // after anything moves (the list is kept and re-read every update)
+ *   fog.isVisible(x, y)            // tile coords -> the host skips drawing enemies where this is false
+ *   fog.update(dtMs)               // world time
+ *   fog.draw(ctx, cam)             // after the ground (and range overlays), before or after units; cam = {x, y} map scroll
+ *   fog.drawGhosts(ctx, cam)       // after units, before the HUD: last-seen silhouettes and "!" pops
+ */
+(function (root) {
+  'use strict';
+  var VERSION = '1.0.0';
+  var DEFAULTS = { radius: 3, shape: 'diamond', density: 0.6, edge: 1, drift: 6, fade: 240, ghosts: 'on', pop: 'on', popMs: 1200, linger: 250, shroud: 'off', scheme: 'night', dither: 'auto' };
+  var NUMERIC = { radius: [0, 32], density: [0, 0.95], edge: [0, 2], drift: [0, 60], fade: [0, 2000], popMs: [300, 4000], linger: [0, 2000] };
+  // built-in pixel16 fog tones: [deep, mist, ghost]
+  var SCHEMES = {
+    night: { deep: [10, 16, 44], mist: [40, 52, 96], ghost: '#b8c8f4', ghostEdge: '#5a6aa8' },
+    mist: { deep: [58, 66, 86], mist: [138, 146, 166], ghost: '#f0f2f8', ghostEdge: '#8a92aa' },
+    ash: { deep: [26, 18, 16], mist: [78, 60, 50], ghost: '#f0d4b0', ghostEdge: '#8a6a50' }
+  };
+  var BUBBLE = { ink: '#140c1c', fill: '#fff8e8', shade: '#c8bca8', bang: '#e8402a', bangHi: '#ff9a6a' };
+  // "!" bubble, 8x11: # ink, w fill, s shade, ! bang, h bang highlight
+  var BUB = ['.######.', '#wwwwww#', '#ww!hww#', '#ww!!ww#', '#ww!!ww#', '#wwwwww#', '#ww!!ww#', '#ssssss#', '.###ss#.', '...#s#..', '....#...'];
+  // fallback silhouette (12x15), drawn when the host gives no sprite
+  var FIG = ['....####....', '...######...', '..########..', '..########..', '...######...', '....####....', '..########..', '.##########.', '.##########.', '.##########.', '..########..', '..########..', '..###..###..', '..###..###..', '.####..####.'];
+  var BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map(function (v) { return (v + 0.5) / 16; });
+
+  function num(v, d) { v = +v; return isFinite(v) ? v : d; }
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function okRect(r) { return r && isFinite(r.x) && isFinite(r.y) && isFinite(r.w) && isFinite(r.h) && r.w > 0 && r.h > 0; }
+  function ov(a, b) { var w = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x), h = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y); return w > 0 && h > 0 ? w * h : 0; }
+  function hex(c) {
+    if (Array.isArray(c)) return c;
+    var s = String(c || '').trim(), m;
+    if ((m = /^#([0-9a-f]{3})$/i.exec(s))) return [0, 1, 2].map(function (i) { return parseInt(m[1][i] + m[1][i], 16); });
+    if ((m = /^#([0-9a-f]{6})/i.exec(s))) return [0, 2, 4].map(function (i) { return parseInt(m[1].substr(i, 2), 16); });
+    if ((m = /^rgba?\(([^)]+)\)/i.exec(s))) return m[1].split(',').slice(0, 3).map(function (v) { return clamp(Math.round(+v), 0, 255); });
+    return null;
+  }
+  function css(a) { return '#' + a.map(function (v) { return ('0' + clamp(Math.round(v), 0, 255).toString(16)).slice(-2); }).join(''); }
+  function mix(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
+  function hash(x, y, s) { var n = Math.imul(x | 0, 73856093) ^ Math.imul(y | 0, 19349663) ^ Math.imul((s | 0) + 1, 83492791); n = Math.imul(n ^ (n >>> 13), 0x5bd1e995); n ^= n >>> 15; return (n >>> 0) / 4294967296; }
+  function mk(w, h) { var c = root.document ? root.document.createElement('canvas') : null; if (c) { c.width = Math.max(1, w | 0); c.height = Math.max(1, h | 0); } return c; }
+
+  // tileable 64x64 value noise (two octaves), smooth-stepped, built once
+  var NOISE = null, NS = 64;
+  function noiseTex() {
+    if (NOISE) return NOISE;
+    NOISE = new Float32Array(NS * NS);
+    var oct = [[8, 0.65, 11], [16, 0.35, 23]];
+    for (var y = 0; y < NS; y++) for (var x = 0; x < NS; x++) {
+      var v = 0;
+      for (var o = 0; o < oct.length; o++) {
+        var cell = NS / oct[o][0], gx = x / cell, gy = y / cell, x0 = Math.floor(gx), y0 = Math.floor(gy), fx = gx - x0, fy = gy - y0, n = oct[o][0];
+        fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy);
+        var a = hash(x0 % n, y0 % n, oct[o][2]), b = hash((x0 + 1) % n, y0 % n, oct[o][2]), c = hash(x0 % n, (y0 + 1) % n, oct[o][2]), d = hash((x0 + 1) % n, (y0 + 1) % n, oct[o][2]);
+        v += oct[o][1] * (a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy);
+      }
+      NOISE[y * NS + x] = v;
+    }
+    return NOISE;
+  }
+  function noiseAt(x, y) { var N = NOISE; return N[(((y | 0) % NS + NS) % NS) * NS + (((x | 0) % NS + NS) % NS)]; }
+
+  function create(opt) {
+    opt = opt || {};
+    var P = {}, k;
+    for (k in DEFAULTS) P[k] = DEFAULTS[k];
+    function setParams(o) {
+      if (!o) return;
+      for (var key in o) if (key in DEFAULTS && o[key] != null && o[key] !== '') {
+        if (typeof DEFAULTS[key] === 'number') { var r = NUMERIC[key]; P[key] = r ? clamp(num(o[key], DEFAULTS[key]), r[0], r[1]) : num(o[key], DEFAULTS[key]); }
+        else P[key] = String(o[key]);
+      }
+      dirtyLook = true;
+    }
+    var dirtyLook = true;
+    setParams(opt.params);
+    noiseTex();
+
+    var warned = {};
+    function warn(key, msg) { if (warned[key]) return; warned[key] = 1; try { if (root.console) console.warn('GameDNA_FogOfWar: ' + msg); } catch (e) {} dbg({ event: 'warn', key: key, msg: msg }); }
+    function dbg(e) { if (typeof opt.debug === 'function') try { opt.debug(e); } catch (er) {} }
+    function safe(fn, args, dflt) { if (typeof fn !== 'function') return dflt; try { return fn.apply(null, args); } catch (e) { warn('cb-' + (fn.name || 'fn'), 'a callback threw: ' + e); return dflt; } }
+
+    /* ---------- skin ---------- */
+    var SKAPI = root.GameDNA_Skin || null, SK = null;
+    try { SK = SKAPI && SKAPI.resolve ? SKAPI.resolve(opt.skin) : null; } catch (e) { SK = null; }
+    var builtinLook = !SK || SK.id === 'pixel16';
+    var LOOK = null;
+    function tok(path) { if (!SK) return null; try { return SK.token ? SK.token(path) : null; } catch (e) { return null; } }
+    function look() {
+      if (LOOK && !dirtyLook) return LOOK;
+      dirtyLook = false;
+      var sc = SCHEMES[P.scheme] || SCHEMES.night, L;
+      if (builtinLook || !SK || !SK.palette) {
+        L = { deep: sc.deep, mist: sc.mist, ghost: sc.ghost, ghostEdge: sc.ghostEdge, ink: BUBBLE.ink, fill: BUBBLE.fill, shade: BUBBLE.shade, bang: BUBBLE.bang, bangHi: BUBBLE.bangHi, pixel: true };
+      } else {
+        var pal = SK.palette, fog = pal.fog || {};
+        var ink = hex(fog.deep) || hex(pal.ink) || sc.deep, paper = hex(pal.paper) || [240, 240, 240];
+        L = {
+          deep: hex(fog.deep) || mix(ink, [0, 0, 0], 0.35), mist: hex(fog.mist) || hex(pal.ui && pal.ui.shadow) || mix(ink, paper, 0.3),
+          ghost: fog.ghost || (pal.text && pal.text.dim) || css(paper), ghostEdge: fog.ghostEdge || css(mix(ink, paper, 0.45)),
+          ink: css(hex(pal.ink) || [20, 12, 28]), fill: css(paper), shade: css(mix(paper, hex(pal.ink) || [0, 0, 0], 0.2)),
+          bang: (pal.text && pal.text.accent) || (pal.fx && pal.fx.crit) || BUBBLE.bang, bangHi: (pal.fx && pal.fx.hot) || BUBBLE.bangHi,
+          pixel: SK.pixel !== false
+        };
+      }
+      var ovs = SK && SK.overlayStyle ? SK.overlayStyle.mode : null;
+      L.dither = P.dither === 'on' ? true : P.dither === 'off' ? false : (L.pixel && ovs !== 'wash');
+      L.bubbleImg = null; LOOK = L; ghostCache = {};
+      return L;
+    }
+
+    /* ---------- geometry ---------- */
+    var cols = Math.max(1, num(opt.cols, 16) | 0), rows = Math.max(1, num(opt.rows, 12) | 0), T = Math.max(2, num(opt.tile, 16) | 0);
+    var N = cols * rows;
+    function view(ctx) {
+      if (okRect(opt.view)) return opt.view;
+      var c = ctx && ctx.canvas; return { x: 0, y: 0, w: c ? c.width : cols * T, h: c ? c.height : rows * T };
+    }
+    function camOf(a, b) {
+      if (a && typeof a === 'object') return { x: num(a.x, 0), y: num(a.y, 0) };
+      return { x: num(a, 0), y: num(b, 0) };
+    }
+    function inMap(x, y) { return x >= 0 && y >= 0 && x < cols && y < rows; }
+
+    /* ---------- state ---------- */
+    var unitsSrc = typeof opt.units === 'function' || Array.isArray(opt.units) ? opt.units : null;
+    var vis = new Uint8Array(N), explored = new Uint8Array(N), lv = new Float32Array(N), target = new Float32Array(N), blockC = new Int8Array(N);
+    var ready = false, enabled = true, clock = 0, seenState = new Map(), seenAt = new Map(), lastPos = new Map(), ghosts = new Map(), pops = [], listeners = [], drawn = [], reveals = 0;
+    var lastPlayers = 0, recomputes = 0;
+    if (typeof opt.onReveal === 'function') listeners.push(opt.onReveal);
+
+    function idOf(u) { return u && u.id != null ? 'id:' + u.id : u; }
+    function aliveOf(u) {
+      if (!u) return false;
+      if (typeof opt.isAlive === 'function') return !!safe(opt.isAlive, [u], true);
+      return !(u.dead || u.removed || (u.hp != null && +u.hp <= 0));
+    }
+    function playerOf(u) {
+      if (typeof opt.isPlayer === 'function') return !!safe(opt.isPlayer, [u], false);
+      var s = u && (u.side != null ? u.side : u.team);
+      return u && (u.player === true || s === 'player' || s === 'a' || s === 'blue' || s === 'ally' || s === 'hero' || s === 0);
+    }
+    function tileOf(u) {
+      var p = typeof opt.posOf === 'function' ? safe(opt.posOf, [u], null) : (u ? { x: u.x, y: u.y } : null);
+      if (!p || !isFinite(p.x) || !isFinite(p.y)) return null;
+      var x = Math.round(+p.x), y = Math.round(+p.y);
+      return inMap(x, y) ? { x: x, y: y } : null;
+    }
+    function blocked(x, y, viewer) {
+      var i = y * cols + x;
+      if (blockC[i] === 0) blockC[i] = safe(opt.blocks, [x, y], false) ? 1 : -1;   // cached per recompute
+      return blockC[i] === 1;
+    }
+    function lineClear(x0, y0, x1, y1, viewer) {
+      var dx = Math.abs(x1 - x0), dy = Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1, err = dx - dy, x = x0, y = y0;
+      for (;;) {
+        if (x === x1 && y === y1) return true;
+        if (!(x === x0 && y === y0) && blocked(x, y, viewer)) return false;
+        var e2 = 2 * err;
+        if (e2 > -dy) { err -= dy; x += sx; }
+        if (e2 < dx) { err += dx; y += sy; }
+      }
+    }
+    function inShape(dx, dy, r) {
+      if (P.shape === 'circle') return dx * dx + dy * dy <= r * r + r * 0.8;
+      if (P.shape === 'square') return Math.max(Math.abs(dx), Math.abs(dy)) <= r;
+      return Math.abs(dx) + Math.abs(dy) <= r;
+    }
+    function cast(px, py, r, viewer) {
+      r = Math.max(0, Math.min(32, Math.round(r)));
+      for (var y = py - r; y <= py + r; y++) for (var x = px - r; x <= px + r; x++) {
+        if (!inMap(x, y)) continue;
+        var dx = x - px, dy = y - py, i = y * cols + x;
+        if (vis[i] || !inShape(dx, dy, r)) continue;
+        if (Math.max(Math.abs(dx), Math.abs(dy)) <= 1 || lineClear(px, py, x, y, viewer) || lineClear(x, y, px, py, viewer)) vis[i] = 1;
+      }
+    }
+    function listOf(list) {
+      var L = list;
+      if (typeof L === 'function') L = safe(L, [], []);
+      if (L && !Array.isArray(L) && typeof L === 'object') { try { L = Object.keys(L).map(function (k2) { return list[k2]; }); } catch (e) { L = []; } }
+      return Array.isArray(L) ? L.filter(Boolean) : [];
+    }
+
+    function recompute(list) {
+      if (list != null) unitsSrc = list;
+      if (!unitsSrc) { warn('nounits', 'recompute() was called without a unit list.'); return api; }
+      var L = listOf(unitsSrc), i;
+      vis.fill(0); blockC.fill(0);
+      var players = 0;
+      for (i = 0; i < L.length; i++) {
+        var u = L[i];
+        if (!aliveOf(u) || !playerOf(u)) continue;
+        var p = tileOf(u); if (!p) continue;
+        players++;
+        var rv = safe(opt.visionOf, [u, p.x, p.y], null), r = rv == null || rv === '' ? NaN : +rv;
+        if (!isFinite(r)) r = num(u.vision != null ? u.vision : u.sight, P.radius);
+        cast(p.x, p.y, r, u);
+      }
+      lastPlayers = players;
+      if (!players && L.length) warn('noplayers', 'no living player unit found: check isPlayer(unit) and posOf(unit). Everything stays fogged.');
+      for (i = 0; i < N; i++) if (vis[i]) explored[i] = 1;
+      // enemies: reveal events, last-seen ghosts
+      var present = new Set();
+      for (i = 0; i < L.length; i++) {
+        var e = L[i];
+        if (playerOf(e)) continue;
+        var key = idOf(e), alive = aliveOf(e), q = alive ? tileOf(e) : null;
+        if (!alive || !q) continue;
+        present.add(key);
+        var now = !!vis[q.y * cols + q.x], before = seenState.get(key);
+        if (now) {
+          if (ready && before !== true) reveal(e, q, clock - (seenAt.has(key) ? seenAt.get(key) : -1e9) < 1000);
+          seenState.set(key, true); lastPos.set(key, q); ghosts.delete(key); seenAt.set(key, clock);
+        } else if (before === true && clock - (seenAt.get(key) || 0) < P.linger) {
+          // just left sight (often because the watcher walked past): stay shown a moment, so it does not blink
+        } else {
+          if (before === true && P.ghosts !== 'off') { var lp = lastPos.get(key) || q; ghosts.set(key, { x: lp.x, y: lp.y, unit: e, since: clock }); }
+          if (before === true && pops.length) pops = pops.filter(function (pp) { return pp.key !== key; });   // a pop never follows a unit into the fog
+          seenState.set(key, false);
+        }
+      }
+      // a unit that left the list (or died) while unseen keeps its ghost until that tile is seen; seen = gone
+      seenState.forEach(function (v, key) { if (!present.has(key)) { seenState.delete(key); } });
+      ghosts.forEach(function (g, key) { if (vis[g.y * cols + g.x]) ghosts.delete(key); });
+      // targets: 0 visible, 1 fog, >1 never-seen shroud
+      var S = P.shroud === 'on' ? 1.45 : 1;
+      for (i = 0; i < N; i++) target[i] = vis[i] ? 0 : explored[i] ? 1 : S;
+      if (!ready) { for (i = 0; i < N; i++) lv[i] = target[i]; ready = true; }
+      recomputes++;
+      return api;
+    }
+    function reveal(u, q, again) {   // again: it was in view less than a second ago (walking along the edge): no second "!"
+      reveals++;
+      if (P.pop !== 'off' && !again) { pops = pops.filter(function (p) { return p.key !== idOf(u); }); pops.push({ key: idOf(u), unit: u, x: q.x, y: q.y, born: clock }); }
+      dbg({ event: 'reveal', unit: u, x: q.x, y: q.y, again: !!again });
+      for (var i = 0; i < listeners.length; i++) safe(listeners[i], [u, q.x, q.y], null);
+    }
+
+    function update(dt) {
+      dt = num(dt, 0); if (dt < 0) dt = 0;
+      clock += dt;
+      if (unitsSrc) recompute();
+      if (ready) {
+        var step = P.fade > 0 ? dt / P.fade : 99;
+        for (var i = 0; i < N; i++) { var d = target[i] - lv[i]; if (d) lv[i] = Math.abs(d) <= step ? target[i] : lv[i] + (d > 0 ? step : -step); }
+      }
+      if (pops.length) pops = pops.filter(function (p) { return clock - p.born < P.popMs; });
+      return api;
+    }
+
+    /* ---------- fog raster ---------- */
+    var buf = null, bufCtx = null, img = null, sbuf = null, sbufCtx = null, simg = null;
+    var NB = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]];
+    function lvAt(x, y) { return inMap(x, y) ? lv[y * cols + x] : -1; }
+    function draw(ctx, camA, camB) {
+      if (!ctx || !enabled || !ready) { if (!ready && enabled && ctx) warn('notready', 'draw() before the first recompute(units): nothing drawn yet.'); return; }
+      try { drawFog(ctx, camOf(camA, camB)); } catch (e) { warn('draw', 'draw failed: ' + e); }
+    }
+    function drawFog(ctx, cam) {
+      var V = view(ctx), L = look(), W = Math.max(1, Math.round(V.w)), H = Math.max(1, Math.round(V.h));
+      if (!buf || buf.width !== W || buf.height !== H) { buf = mk(W, H); if (!buf) return; bufCtx = buf.getContext('2d'); img = bufCtx.createImageData(W, H); sbuf = mk(W, H); sbufCtx = sbuf.getContext('2d'); simg = sbufCtx.createImageData(W, H); }
+      var d = img.data, sd = simg.data, A = P.density, E = P.edge, dith = L.dither, deep = L.deep, mist = L.mist;
+      var drift = P.drift * clock / 1000, n1x = drift * 0.5, n1y = drift * 0.18, n2x = -drift * 0.31, n2y = drift * 0.27;
+      var ox = Math.round(cam.x), oy = Math.round(cam.y);
+      d.fill(0); sd.fill(0);
+      var tx0 = Math.floor(ox / T), ty0 = Math.floor(oy / T), tx1 = Math.floor((ox + W - 1) / T), ty1 = Math.floor((oy + H - 1) / T);
+      for (var ty = Math.max(0, ty0); ty <= Math.min(rows - 1, ty1); ty++) for (var tx = Math.max(0, tx0); tx <= Math.min(cols - 1, tx1); tx++) {
+        var o = lv[ty * cols + tx];
+        if (o <= 0.001) continue;
+        // neighbours with less fog pull the edge down (soft ramp inside this tile, width = edge tiles)
+        var lows = [];
+        if (E > 0) for (var n = 0; n < 8; n++) { var lvN = lvAt(tx + NB[n][0], ty + NB[n][1]); if (lvN >= 0 && lvN < o - 0.001) lows.push(n, lvN); }
+        var sx0 = Math.max(0, tx * T - ox), sy0 = Math.max(0, ty * T - oy), sx1 = Math.min(W, tx * T - ox + T), sy1 = Math.min(H, ty * T - oy + T);
+        for (var sy = sy0; sy < sy1; sy++) {
+          var wy = sy + oy, v = (wy - ty * T + 0.5) / T;
+          for (var sx = sx0; sx < sx1; sx++) {
+            var wx = sx + ox, u = (wx - tx * T + 0.5) / T, f = o;
+            for (var m = 0; m < lows.length; m += 2) {
+              var nb = NB[lows[m]], dd;
+              if (nb[0] && nb[1]) { var ddx = nb[0] > 0 ? 1 - u : u, ddy = nb[1] > 0 ? 1 - v : v; dd = Math.sqrt(ddx * ddx + ddy * ddy); }
+              else dd = nb[0] > 0 ? 1 - u : nb[0] < 0 ? u : nb[1] > 0 ? 1 - v : v;
+              var c = lows[m + 1] + (o - lows[m + 1]) * Math.min(1, dd / E);
+              if (c < f) f = c;
+            }
+            if (f <= 0.001) continue;
+            var cover = f > 1 ? 1 : f, strength = f > 1 ? f : 1, b = BAYER[(wy & 3) * 4 + (wx & 3)];
+            var nz = noiseAt(wx * 0.5 + n1x, wy * 0.5 + n1y) * 0.6 + noiseAt(wx * 0.37 + n2x + 17, wy * 0.37 + n2y + 29) * 0.4, alpha, col;
+            if (dith) {
+              if (cover < 1 && cover <= b) continue;
+              col = nz > 0.5 + 0.22 * b ? mist : deep;
+              alpha = A * strength * (nz > 0.62 ? 0.9 : 1);
+            } else {
+              var mt = clamp((nz - 0.42) / 0.3, 0, 1);
+              col = [deep[0] + (mist[0] - deep[0]) * mt, deep[1] + (mist[1] - deep[1]) * mt, deep[2] + (mist[2] - deep[2]) * mt];
+              alpha = A * strength * cover * (0.92 + 0.16 * nz);
+            }
+            var j = (sy * W + sx) * 4;
+            d[j] = col[0]; d[j + 1] = col[1]; d[j + 2] = col[2]; d[j + 3] = clamp(Math.round(alpha * 255), 0, 245);
+            sd[j] = sd[j + 1] = sd[j + 2] = 128; sd[j + 3] = Math.round((dith ? 1 : cover) * Math.min(1, strength) * 0.7 * 255);   // desaturate under the fog
+          }
+        }
+      }
+      bufCtx.putImageData(img, 0, 0);
+      var pa = ctx.globalAlpha, pc = ctx.globalCompositeOperation, ps = ctx.imageSmoothingEnabled;
+      ctx.globalAlpha = 1; ctx.imageSmoothingEnabled = false;
+      ctx.globalCompositeOperation = 'saturation';
+      if (ctx.globalCompositeOperation === 'saturation') { sbufCtx.putImageData(simg, 0, 0); ctx.drawImage(sbuf, Math.round(V.x), Math.round(V.y)); }   // terrain under fog loses most of its colour
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.drawImage(buf, Math.round(V.x), Math.round(V.y));
+      ctx.globalAlpha = pa; ctx.globalCompositeOperation = pc; ctx.imageSmoothingEnabled = ps;
+    }
+
+    /* ---------- ghosts and "!" pops ---------- */
+    var ghostCache = {};
+    var silCache = typeof WeakMap === 'function' ? new WeakMap() : null;
+    function silhouette(src, L) {
+      var w = src.width | 0, h = src.height | 0; if (!w || !h) return null;
+      var cached = silCache && silCache.get(src); if (cached && cached.look === L) return cached.c;
+      var c = mk(w + 2, h + 2); if (!c) return null;
+      var g = c.getContext('2d'), m = mk(w, h), mg = m.getContext('2d');
+      mg.drawImage(src, 0, 0);
+      var sd = mg.getImageData(0, 0, w, h).data, out = g.createImageData(w + 2, h + 2), od = out.data;
+      var on = function (x, y) { return x >= 0 && y >= 0 && x < w && y < h && sd[(y * w + x) * 4 + 3] > 60; };
+      var G = hex(L.ghost) || [200, 210, 240], GE = hex(L.ghostEdge) || [90, 100, 160];
+      for (var y = -1; y <= h; y++) for (var x = -1; x <= w; x++) {
+        var j = ((y + 1) * (w + 2) + (x + 1)) * 4, col = null, a = 0;
+        if (on(x, y)) { col = G; a = L.dither ? ((x + y) & 1 ? 170 : 70) : 120; }   // two-level dithered body
+        else if (on(x - 1, y) || on(x + 1, y) || on(x, y - 1) || on(x, y + 1)) { col = GE; a = 210; }   // solid rim
+        if (col) { od[j] = col[0]; od[j + 1] = col[1]; od[j + 2] = col[2]; od[j + 3] = a; }
+      }
+      g.putImageData(out, 0, 0);
+      if (silCache) silCache.set(src, { c: c, look: L });
+      return c;
+    }
+    function fallbackFig(L) {
+      if (ghostCache.fig) return ghostCache.fig;
+      var c = mk(FIG[0].length, FIG.length), g = c.getContext('2d'); g.fillStyle = '#000';
+      FIG.forEach(function (r, y) { for (var x = 0; x < r.length; x++) if (r[x] === '#') g.fillRect(x, y, 1, 1); });
+      return (ghostCache.fig = silhouette(c, L));
+    }
+    function bubble(L) {
+      if (L.bubbleImg) return L.bubbleImg;
+      var c = mk(8, 11), g = c.getContext('2d'), C = { '#': L.ink, w: L.fill, s: L.shade, '!': L.bang, h: L.bangHi };
+      BUB.forEach(function (r, y) { for (var x = 0; x < r.length; x++) if (C[r[x]]) { g.fillStyle = C[r[x]]; g.fillRect(x, y, 1, 1); } });
+      return (L.bubbleImg = c);
+    }
+    function uiRects() {
+      var r = safe(opt.uiRects, [], []);
+      return Array.isArray(r) ? r.filter(okRect) : [];
+    }
+    function obstacleRects() {
+      var r = safe(opt.getObstacles, [], []);
+      return Array.isArray(r) ? r.filter(okRect) : [];
+    }
+    function drawGhosts(ctx, camA, camB) {
+      drawn = [];
+      if (!ctx || !enabled || !ready) return;
+      try { drawGhostsInner(ctx, camOf(camA, camB)); } catch (e) { warn('ghosts', 'drawGhosts failed: ' + e); }
+    }
+    function drawGhostsInner(ctx, cam) {
+      var V = view(ctx), L = look(), pa = ctx.globalAlpha, ps = ctx.imageSmoothingEnabled;
+      ctx.imageSmoothingEnabled = false;
+      ctx.save(); ctx.beginPath(); ctx.rect(V.x, V.y, V.w, V.h); ctx.clip();
+      if (P.ghosts !== 'off') ghosts.forEach(function (gh, key) {
+        var spr = safe(opt.ghostSprite, [gh.unit], null), flip = false;
+        if (spr && spr.img) { flip = !!spr.flip; spr = spr.img; }
+        var sil = spr && spr.width ? silhouette(spr, L) : fallbackFig(L); if (!sil) return;
+        var w = sil.width - 2, h = sil.height - 2;
+        var X = Math.round(V.x + gh.x * T - cam.x + (T - w) / 2) - 1, Y = Math.round(V.y + gh.y * T - cam.y + T - h) - 1;
+        // a slow breathing so the eye reads it as a memory, not a unit
+        var br = 0.55 + 0.15 * Math.sin((clock - gh.since) / 700);
+        ctx.globalAlpha = L.dither ? (br > 0.6 ? 0.85 : 0.7) : br + 0.15;
+        if (flip) { ctx.save(); ctx.translate(X + sil.width, Y); ctx.scale(-1, 1); ctx.drawImage(sil, 0, 0); ctx.restore(); }
+        else ctx.drawImage(sil, X, Y);
+        drawn.push({ kind: 'ghost', owner: gh.unit && gh.unit.id != null ? gh.unit.id : null, x: X + 1, y: Y + 1, w: w, h: h });
+      });
+      ctx.globalAlpha = pa; ctx.restore();
+      if (P.pop !== 'off' && pops.length) {
+        var bub = bubble(L), UI = uiRects(), OB = obstacleRects(), all = unitsSrc ? listOf(unitsSrc) : [];
+        pops.forEach(function (p) {
+          var a = clock - p.born; if (a < 0) return;
+          if (a > P.popMs - 200 && Math.floor(a / 50) % 2) return;            // blink out
+          var u = p.unit, q = aliveOf(u) ? tileOf(u) : null; if (q) { p.x = q.x; p.y = q.y; }
+          var anc = safe(opt.anchorOf, [u], null), ax, top;
+          if (anc && isFinite(anc.x) && isFinite(anc.top)) { ax = +anc.x; top = +anc.top; p.anc = { x: ax - (V.x + p.x * T - cam.x + T / 2), top: top - (V.y + p.y * T - cam.y) }; }
+          else { var off = p.anc || { x: 0, top: -3 }; ax = V.x + p.x * T - cam.x + T / 2 + off.x; top = V.y + p.y * T - cam.y + off.top; }
+          var dy = a < 70 ? Math.round(5 - 8 * a / 70) : a < 120 ? -3 + Math.round(4 * (a - 70) / 50) : a < 160 ? 1 - Math.round((a - 120) / 40) : 0;
+          // never on a neighbour: every other unit that is on screen (players and visible enemies; hidden ones are not drawn)
+          var nb = [];
+          all.forEach(function (o) {
+            if (o === u || !aliveOf(o) || !(playerOf(o) || api.isUnitVisible(o))) return;
+            var t2 = tileOf(o); if (t2) nb.push({ x: V.x + t2.x * T - cam.x, y: V.y + t2.y * T - cam.y - 4, w: T, h: T + 4 });
+          });
+          var cand = [[ax - 4, top - 12], [ax + T / 2 + 1, top - 6], [ax - T / 2 - 9, top - 6], [ax + T / 2 + 1, top - 12], [ax - T / 2 - 9, top - 12], [ax - 4, top + 2]], best = null;
+          cand.forEach(function (c, ci) {
+            var x = clamp(Math.round(c[0]), V.x + 1, V.x + V.w - 9), y = clamp(Math.round(c[1]), V.y + 4, V.y + V.h - 12), R = { x: x, y: y, w: 8, h: 11 }, s = ci * 3;
+            UI.forEach(function (r) { s += ov(R, r) * 1000; });
+            nb.forEach(function (r) { s += ov(R, r) * 400; });
+            OB.forEach(function (r) { if (r.id == null || (u && r.id !== u.id)) s += ov(R, r) * 10; });
+            if (!best || s < best.s) best = { x: x, y: y, s: s };
+          });
+          var by = clamp(best.y + dy, V.y + 1, V.y + V.h - 12);   // the rise never leaves the view
+          ctx.drawImage(bub, best.x, by);
+          drawn.push({ kind: 'pop', owner: u && u.id != null ? u.id : null, x: best.x, y: by, w: 8, h: 11 });
+        });
+      }
+      ctx.globalAlpha = pa; ctx.imageSmoothingEnabled = ps;
+    }
+
+    var api = {
+      recompute: recompute, update: update, draw: draw, drawGhosts: drawGhosts,
+      isVisible: function (x, y) {
+        if (!enabled || !ready) return true;
+        x = Math.round(+x); y = Math.round(+y);
+        return inMap(x, y) ? !!vis[y * cols + x] : false;
+      },
+      isUnitVisible: function (u) {
+        if (!enabled || !ready) return true;
+        if (playerOf(u)) return true;
+        var q = tileOf(u); if (q && vis[q.y * cols + q.x]) return true;
+        return aliveOf(u) && seenState.get(idOf(u)) === true;   // lingering a moment after leaving sight
+      },
+      isExplored: function (x, y) { return !ready || (inMap(x, y) && !!explored[y * cols + x]); },
+      onReveal: function (cb) { if (typeof cb === 'function') listeners.push(cb); return function () { listeners = listeners.filter(function (f) { return f !== cb; }); }; },
+      setParams: setParams, params: P,
+      setEnabled: function (on) { enabled = on !== false; },
+      enabled: function () { return enabled; },
+      reset: function () { explored.fill(0); vis.fill(0); ghosts.clear(); seenState.clear(); seenAt.clear(); lastPos.clear(); pops = []; ready = false; return api; },
+      ghosts: function () { var o = []; ghosts.forEach(function (g) { o.push({ x: g.x, y: g.y, unit: g.unit }); }); return o; },
+      pops: function () { return pops.map(function (p) { return { x: p.x, y: p.y, unit: p.unit, age: clock - p.born }; }); },
+      visibleTiles: function () { var c = 0; for (var i = 0; i < N; i++) c += vis[i]; return c; },
+      lastDrawn: function () { return drawn.slice(); },
+      stats: function () { return { ready: ready, players: lastPlayers, recomputes: recomputes, reveals: reveals, ghosts: ghosts.size, pops: pops.length, clock: clock }; },
+      version: VERSION
+    };
+    return api;
+  }
+  root.GameDNA_FogOfWar = { create: create, DEFAULTS: DEFAULTS, version: VERSION };
+})(typeof window !== 'undefined' ? window : this);
+
+</script>
+<script>
+/* B-03 fog of war demo: a small scouting skirmish on a 16x12 tile map, 256x224 native (map 256x192 + HUD 32).
+ * Everything fog-related goes through the module (GameDNA_FogOfWar); this file is only the host. */
+const W = 256, H = 224, T = 16, COLS = 16, ROWS = 12, MAP_H = ROWS * T, FRAME = 1000 / 60, LOOP = 16000;
+const Q = new URLSearchParams(location.search);
+const FREEZE = Q.get('freeze') === '1', T_AT = Math.max(0, +Q.get('t') || 0);
+
+const PARAMS = [
+  { key: 'radius', label: 'Base vision', type: 'range', min: 1, max: 8, step: 1, default: 3, unit: 'tiles' },
+  { key: 'density', label: 'Fog density', type: 'range', min: 0.3, max: 0.85, step: 0.05, default: 0.6, unit: '' },
+  { key: 'edge', label: 'Soft edge', type: 'range', min: 0, max: 1.5, step: 0.25, default: 1, unit: 'tiles' },
+  { key: 'drift', label: 'Drift speed', type: 'range', min: 0, max: 20, step: 1, default: 6, unit: 'px/s' },
+  { key: 'fade', label: 'Reveal fade', type: 'range', min: 0, max: 600, step: 20, default: 240, unit: 'ms' },
+  { key: 'shape', label: 'Vision shape', type: 'select', options: ['diamond', 'circle', 'square'], default: 'diamond' },
+  { key: 'scheme', label: 'Fog colour', type: 'select', options: ['night', 'mist', 'ash'], default: 'night' },
+  { key: 'dither', label: 'Dither', type: 'select', options: ['auto', 'on', 'off'], default: 'auto' },
+  { key: 'ghosts', label: 'Last-seen ghosts', type: 'select', options: ['on', 'off'], default: 'on' },
+  { key: 'pop', label: '"!" on reveal', type: 'select', options: ['on', 'off'], default: 'on' },
+  { key: 'shroud', label: 'Unexplored darker', type: 'select', options: ['off', 'on'], default: 'off' }
+];
+const HOST = [
+  { key: 'forest', label: 'Forest blocks sight', options: ['on', 'off'], default: 'on' },
+  { key: 'hills', label: 'Hills +2 vision', options: ['on', 'off'], default: 'on' },
+  { key: 'xray', label: 'Show hidden enemies', options: ['off', 'on'], default: 'off' },
+  { key: 'fog', label: 'Fog', options: ['on', 'off'], default: 'on' }
+];
+const P = {}; PARAMS.forEach(p => { P[p.key] = Q.has(p.key) ? (p.type === 'range' ? +Q.get(p.key) : Q.get(p.key)) : p.default; });
+const HO = {}; HOST.forEach(p => { HO[p.key] = Q.has(p.key) ? Q.get(p.key) : p.default; });
+let SKIN_ID = Q.get('skin') === 'flat' ? 'flat' : 'pixel16';
+
+/* a token-only, non-pixel skin: proves the fog colours and dithering come from the skin */
+if (window.GameDNA_Skin) GameDNA_Skin.register({
+  id: 'flat', name: 'flat (demo)', pixel: false,
+  native: { w: 256, h: 224, scale: 'fit', smoothing: true },
+  palette: {
+    ink: '#29304d', paper: '#f4f6fb',
+    ui: { fill: '#ffffff', edge: '#cdd2de', highlight: '#ffffff', shadow: '#5a6290' },
+    team: { a: '#6f8cff', b: '#ff8574', n: '#aeb5c6' },
+    overlay: { move: { fill: '#6f8cff', edge: '#4d68d6' }, attack: { fill: '#ff6f6f', edge: '#d9624f' }, threat: { fill: '#8f86ff', edge: '#5b4bff' }, heal: { fill: '#3fcf8e', edge: '#2f9e63' } },
+    fx: { hot: '#ff6a4a', cold: '#4ab8ff', heal: '#3fcf8e', crit: '#ffcf4a', status: '#8f86ff', white: '#ffffff' },
+    text: { main: '#29304d', shadow: 'rgba(0,0,0,0)', outline: '#ffffff', accent: '#ff5a4a', dim: '#e8ecff' },
+    fog: { deep: '#1c2246', mist: '#7a84b8', ghost: '#eef0ff', ghostEdge: '#6a74a8' }
+  },
+  overlayStyle: { mode: 'wash' },
+  fonts: { ui: { type: 'canvas', family: 'system-ui, sans-serif', size: 7, weight: 700 }, num: { type: 'canvas', family: 'system-ui, sans-serif', size: 11, weight: 800 } },
+  motion: { snap: false, fadeSteps: null, flashMax: 0.3 }
+});
+const UI = window.GameDNA_Skin ? GameDNA_Skin.get('pixel16') : null;   // the host's own HUD stays pixel16
+
+/* ===== map ===== */
+// . grass  , meadow  F forest (blocks sight)  H hill (+2 vision)  ~ river  = bridge  R road  W stone wall (blocks)  r ruin floor
+const MAP = [
+  'FF...,..F..~~HFF',
+  'F..,...FF..~~HHF',
+  '...RRRRRRRR==RRR',
+  '.,.R..F....~~...',
+  '...R.FFF...~~.WW',
+  'HH.R..F...~~..Wr',
+  'HH.R......~~.,rr',
+  '...RRRRRRR==RRRr',
+  '.,......F.~~.WWW',
+  '..FF...FF.~~...F',
+  '.FFF..,...~~..FF',
+  'FFF.......~~.FFF'
+];
+const at = (x, y) => (MAP[y] || '')[x] || '.';
+const inMap = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS;
+const blocksSight = (x, y) => { const c = at(x, y); return c === 'W' || (HO.forest === 'on' && c === 'F'); };
+
+function mk(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+function hh(x, y, s) { let n = Math.imul(x | 0, 73856093) ^ Math.imul(y | 0, 19349663) ^ Math.imul((s | 0) + 1, 83492791); n = Math.imul(n ^ (n >>> 13), 0x5bd1e995); n ^= n >>> 15; return (n >>> 0) / 4294967296; }
+const C = {
+  g0: '#2f6a2a', g1: '#3e822e', g2: '#56983a', g3: '#74b04a', g4: '#a2d062',
+  f0: '#12301e', f1: '#1d4a28', f2: '#2c6630', f3: '#468a3a', f4: '#76b04a', bark: '#4a2e1c',
+  h0: '#4a7a30', h1: '#6a9e40', h2: '#8cbc54', h3: '#b8dc78', rock: '#8a8a7a', rockD: '#5a5a50',
+  w0: '#183c7a', w1: '#22549c', w2: '#3472ba', w3: '#5a98d8', w4: '#cfe8ff',
+  d0: '#7a5a34', d1: '#9c7a48', d2: '#bc9a62', d3: '#d8bc84',
+  s0: '#2c2a36', s1: '#585664', s2: '#7c7a88', s3: '#a6a4b0', s4: '#cac8d2',
+  r0: '#5e5444', r1: '#857a64', r2: '#a69a7e', r3: '#c4b896',
+  wood0: '#4a2c16', wood1: '#7a4e28', wood2: '#a6743a', wood3: '#c8965a'
+};
+function paintGround() {
+  const c = mk(COLS * T, ROWS * T), g = c.getContext('2d');
+  const px = (x, y, col, w = 1, h = 1) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
+  for (let ty = 0; ty < ROWS; ty++) for (let tx = 0; tx < COLS; tx++) {
+    const X = tx * T, Y = ty * T, k = at(tx, ty), r = (i) => hh(tx, ty, i);
+    // grass everywhere first (dithered three-tone)
+    for (let y = 0; y < T; y++) for (let x = 0; x < T; x++) {
+      const n = hh(X + x, Y + y, 3);
+      px(X + x, Y + y, n < 0.12 ? C.g1 : n > 0.9 ? C.g3 : C.g2);
+    }
+    for (let i = 0; i < 3; i++) { const x = X + 2 + Math.floor(r(10 + i) * 11), y = Y + 3 + Math.floor(r(20 + i) * 10); px(x, y, C.g3); px(x - 1, y + 1, C.g4); px(x + 1, y + 1, C.g1); }
+    if (k === ',') for (let i = 0; i < 4; i++) { const x = X + 2 + Math.floor(r(30 + i) * 12), y = Y + 2 + Math.floor(r(40 + i) * 12); px(x, y, i % 2 ? '#f6e27a' : '#f49ac0'); px(x, y + 1, C.g1); }
+    if (k === 'R') {
+      for (let y = 0; y < T; y++) for (let x = 0; x < T; x++) {
+        const edgeX = (x < 2 && at(tx - 1, ty) !== 'R' && at(tx - 1, ty) !== '=') || (x > 13 && at(tx + 1, ty) !== 'R' && at(tx + 1, ty) !== '='), edgeY = (y < 2 && at(tx, ty - 1) !== 'R') || (y > 13 && at(tx, ty + 1) !== 'R');
+        if ((edgeX || edgeY) && hh(X + x, Y + y, 5) < 0.6) continue;
+        const n = hh(X + x, Y + y, 6); px(X + x, Y + y, n < 0.15 ? C.d1 : n > 0.93 ? C.d3 : C.d2);
+      }
+      for (let i = 0; i < 3; i++) { const x = X + 3 + Math.floor(r(50 + i) * 10), y = Y + 3 + Math.floor(r(60 + i) * 10); px(x, y, C.d0); px(x + 1, y, C.d1); }
+    }
+    if (k === 'H') {
+      g.fillStyle = C.h0; ell(g, X + 8, Y + 10, 8, 5);
+      g.fillStyle = C.h1; ell(g, X + 8, Y + 9, 7, 4);
+      g.fillStyle = C.h2; ell(g, X + 7, Y + 8, 5, 3);
+      g.fillStyle = C.h3; ell(g, X + 6, Y + 7, 2, 1);
+      px(X + 11, Y + 11, C.rockD, 3, 2); px(X + 11, Y + 11, C.rock, 2, 1);
+    }
+    if (k === '~' || k === '=') {
+      for (let y = 0; y < T; y++) for (let x = 0; x < T; x++) { const n = hh(X + x, Y + y, 7); px(X + x, Y + y, n < 0.2 ? C.w1 : C.w2); }
+      if (at(tx - 1, ty) !== '~' && at(tx - 1, ty) !== '=') { px(X, Y, C.w0, 2, T); px(X, Y, C.g1, 1, T); }
+      if (at(tx + 1, ty) !== '~' && at(tx + 1, ty) !== '=') { px(X + T - 2, Y, C.w0, 2, T); px(X + T - 1, Y, C.g1, 1, T); }
+    }
+    if (k === '=') {
+      for (let x = 0; x < T; x++) for (let y = 2; y < 14; y++) px(X + x, Y + y, x % 4 === 3 ? C.wood0 : y === 2 ? C.wood3 : hh(X + x, Y + y, 9) < 0.2 ? C.wood1 : C.wood2);
+      px(X, Y + 1, C.wood0, T, 1); px(X, Y + 14, C.wood0, T, 1); px(X, Y + 15, C.w0, T, 1);
+    }
+    if (k === 'r') for (const [x, y, w, h] of [[1, 1, 7, 6], [9, 1, 6, 6], [1, 8, 5, 7], [7, 8, 8, 7]]) { px(X + x, Y + y, C.r0, w, h); px(X + x, Y + y, hh(tx, ty, x + y) < 0.4 ? C.r1 : C.r2, w - 1, h - 1); px(X + x, Y + y, C.r3, w - 1, 1); }
+  }
+  // walls and trees in row order so lower ones overlap upper ones (depth)
+  for (let ty = 0; ty < ROWS; ty++) for (let tx = 0; tx < COLS; tx++) {
+    const X = tx * T, Y = ty * T, k = at(tx, ty);
+    if (k === 'W') {
+      px(X, Y - 4, C.s0, T, T + 4);
+      for (let row = 0; row < 5; row++) for (let col = -1; col < 3; col++) {
+        const x = X + col * 7 + (row % 2) * 3 + 1, y = Y - 3 + row * 4;
+        const x0 = Math.max(X + 1, x), x1 = Math.min(X + T - 1, x + 6); if (x1 <= x0) continue;
+        px(x0, y, hh(x, y, 11) < 0.3 ? C.s1 : C.s2, x1 - x0, 3); px(x0, y, C.s3, x1 - x0, 1);
+      }
+      px(X, Y - 4, C.s4, T, 1); px(X, Y + T - 2, C.s0, T, 2);
+    }
+    if (k === 'F') {
+      const trees = [[4, 6, 5], [11, 5, 5], [7, 11, 5], [13, 12, 4]];
+      for (const [cx, cy, rr] of trees) {
+        const x = X + cx + Math.round((hh(tx, ty, cx) - 0.5) * 2), y = Y + cy;
+        px(x - 1, y + rr - 1, C.bark, 2, 3);
+        g.fillStyle = C.f0; ell(g, x, y, rr + 1, rr);
+        g.fillStyle = C.f1; ell(g, x, y - 1, rr, rr - 1);
+        g.fillStyle = C.f2; ell(g, x - 1, y - 2, rr - 1, rr - 2);
+        g.fillStyle = C.f3; ell(g, x - 2, y - 3, Math.max(1, rr - 3), Math.max(1, rr - 3));
+        px(x - 3, y - 4, C.f4, 2, 1);
+      }
+    }
+  }
+  return c;
+}
+function ell(g, cx, cy, rx, ry) {
+  for (let y = -ry; y <= ry; y++) { const w = Math.round(rx * Math.sqrt(Math.max(0, 1 - (y * y) / (ry * ry + 0.25)))); g.fillRect(cx - w, cy + y, w * 2 + 1, 1); }
+}
+const GROUND = paintGround();
+function drawWater(g, t) {
+  for (let ty = 0; ty < ROWS; ty++) for (let tx = 0; tx < COLS; tx++) if (at(tx, ty) === '~') {
+    for (let i = 0; i < 3; i++) {
+      const ph = Math.floor(t / 140 + tx * 3 + ty * 5 + i * 7) % 18, x = tx * T + 2 + (ph + i * 5) % 11, y = ty * T + 3 + i * 5;
+      g.fillStyle = i === 1 ? C.w3 : C.w1; g.fillRect(x, y, 3, 1);
+      if (ph % 9 === 0) { g.fillStyle = C.w4; g.fillRect(x + 1, y, 1, 1); }
+    }
+  }
+}
+
+/* ===== sprites (16x16, facing right; enemies are flipped) ===== */
+const FIG = [
+  '................',
+  '......kkkk......',
+  '.....kHHHHk.....',
+  '....kHhHHHHk....',
+  '....kHssssHk....',
+  '....ksesesk.....',
+  '.....kssssk.....',
+  '....kbBBBBbk....',
+  '...kbBBlBBBbk...',
+  '...kbBBlBBBdk...',
+  '...ksdBBBBdsk...',
+  '....kdddddk.....',
+  '....kLLkLLk.....',
+  '....kLk.kLk.....',
+  '...kKKk.kKKk....',
+  '...kkk...kkk....'
+];
+const LOOK = {
+  scout: { H: '#2a6a5a', h: '#5aa890', B: '#3a7a5a', b: '#5aa878', l: '#8ad0a0', d: '#1e4a38', tool: 'bow' },
+  knight: { H: '#a8b0c0', h: '#e8eef8', B: '#2f5fb0', b: '#4a7ad0', l: '#8ab0f0', d: '#1e3a74', tool: 'sword' },
+  archer: { H: '#6a4a8a', h: '#9a7ac0', B: '#5a3a90', b: '#7a5ab8', l: '#b09ae0', d: '#34205a', tool: 'staff' },
+  raider: { H: '#5a2a24', h: '#8a4a3a', B: '#9a3a2a', b: '#c0583a', l: '#e08a5a', d: '#5a1a14', tool: 'spear' },
+  brute: { H: '#3a3a3a', h: '#6a6a6a', B: '#7a2a6a', b: '#a04a8a', l: '#c87ab0', d: '#4a1442', tool: 'axe' }
+};
+const TOOLS = {
+  sword: [[13, 3, 1, 7, '#eef4fc'], [14, 4, 1, 5, '#a8b4c8'], [12, 10, 3, 1, '#c89a3a'], [13, 11, 1, 2, '#6a4422']],
+  bow: [[13, 3, 1, 1, '#8a5a2a'], [14, 4, 1, 7, '#a06a32'], [13, 11, 1, 1, '#8a5a2a'], [12, 4, 1, 7, '#e8e0c8']],
+  staff: [[13, 1, 1, 14, '#7a5230'], [12, 0, 3, 3, '#7ad0ff'], [13, 1, 1, 1, '#ffffff']],
+  spear: [[14, 1, 1, 14, '#5a3e28'], [13, 0, 3, 2, '#d8dce4'], [14, 0, 1, 1, '#ffffff']],
+  axe: [[14, 3, 1, 11, '#5a3e28'], [11, 2, 4, 5, '#9a9aa6'], [11, 2, 4, 1, '#d0d0dc']]
+};
+function figure(kind, grey) {
+  const c = mk(16, 16), g = c.getContext('2d'), L = LOOK[kind], pal = Object.assign({ k: '#120c18', s: '#e8b48a', e: '#120c18', L: '#3a2c22', K: '#1e140e' }, L);
+  FIG.forEach((row, y) => [...row].forEach((ch, x) => { if (pal[ch]) { g.fillStyle = pal[ch]; g.fillRect(x, y, 1, 1); } }));
+  for (const [x, y, w, h, col] of TOOLS[L.tool]) { g.fillStyle = col; g.fillRect(x, y, w, h); }
+  if (grey) { const d = g.getImageData(0, 0, 16, 16); for (let i = 0; i < d.data.length; i += 4) { const v = d.data[i] * 0.3 + d.data[i + 1] * 0.5 + d.data[i + 2] * 0.2; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; } g.putImageData(d, 0, 0); }
+  return c;
+}
+const ART = {}; Object.keys(LOOK).forEach(k => { ART[k] = figure(k); });
+
+/* ===== units and the scripted loop ===== */
+const START = [
+  { id: 'wren', name: 'WREN', kind: 'scout', side: 'player', x: 2, y: 3, vision: 1 },
+  { id: 'aldric', name: 'ALDRIC', kind: 'knight', side: 'player', x: 1, y: 7, vision: 0 },
+  { id: 'lysa', name: 'LYSA', kind: 'archer', side: 'player', x: 2, y: 9, vision: 0 },
+  { id: 'raider1', name: 'RAIDER', kind: 'raider', side: 'enemy', x: 8, y: 6 },
+  { id: 'raider2', name: 'RAIDER', kind: 'raider', side: 'enemy', x: 13, y: 3 },
+  { id: 'raider3', name: 'RAIDER', kind: 'raider', side: 'enemy', x: 7, y: 10 },
+  { id: 'brute', name: 'BRUTE', kind: 'brute', side: 'enemy', x: 15, y: 6 },
+  { id: 'raider4', name: 'RAIDER', kind: 'raider', side: 'enemy', x: 12, y: 9 }
+];
+// [ms, unit, path of tiles]; walking is 220 ms per tile
+const SCRIPT = [
+  [800, 'wren', [[3, 3], [3, 2], [4, 2], [5, 2], [6, 2], [7, 2], [8, 2], [9, 2], [10, 2]]],
+  [1400, 'lysa', [[2, 8], [2, 7], [2, 6], [1, 6], [0, 6], [0, 5]]],
+  [3900, 'raider1', [[8, 5], [8, 4]]],
+  [5600, 'wren', [[9, 2], [8, 2], [7, 2], [6, 2], [5, 2], [4, 2], [3, 2]]],
+  [6000, 'aldric', [[2, 7], [3, 7], [4, 7], [5, 7]]],
+  [8600, 'raider2', [[12, 3], [11, 3]]],
+  [9200, 'raider3', [[7, 9], [6, 9], [5, 9], [5, 8]]],
+  [11200, 'aldric', [[6, 7], [7, 7], [8, 7], [9, 7]]],
+  [13200, 'aldric', [[8, 7], [7, 7]]]
+];
+const STEP_MS = 220;
+const S = { t: 0, loopT: 0, units: [], walks: [], sel: 'wren', manual: false, scriptI: 0, revealLog: [] };
+function resetWorld() {
+  S.units = START.map(u => Object.assign({}, u, { px: u.x * T, py: u.y * T, hp: 1, face: u.side === 'enemy' ? -1 : 1 }));   // the two sides start facing each other; a walk turns the unit (face = last sideways step)
+  S.walks = []; S.scriptI = 0; S.loopT = 0; S.revealLog = [];
+  if (FOG) { FOG.reset(); FOG.recompute(S.units); }
+}
+const U = id => S.units.find(u => u.id === id);
+function startWalk(u, path) { S.walks = S.walks.filter(w => w.u !== u); if (path.length) S.walks.push({ u, path: path.slice(), i: 0, p: 0 }); }
+function stepWorld(dt) {
+  S.t += dt;
+  if (!S.manual) {
+    S.loopT += dt;
+    while (S.scriptI < SCRIPT.length && S.loopT >= SCRIPT[S.scriptI][0]) { const [, id, path] = SCRIPT[S.scriptI++]; startWalk(U(id), path); }
+    if (S.loopT >= LOOP) resetWorld();
+  }
+  for (const w of S.walks) {
+    w.p += dt / STEP_MS;
+    while (w.p >= 1 && w.i < w.path.length) { w.u.x = w.path[w.i][0]; w.u.y = w.path[w.i][1]; w.i++; w.p -= 1; }
+    const from = [w.u.x, w.u.y], to = w.path[w.i] || from, f = w.i < w.path.length ? w.p : 0;
+    if (to[0] !== from[0]) w.u.face = to[0] > from[0] ? 1 : -1;
+    w.u.px = Math.round((from[0] + (to[0] - from[0]) * f) * T); w.u.py = Math.round((from[1] + (to[1] - from[1]) * f) * T);
+  }
+  S.walks = S.walks.filter(w => w.i < w.path.length);
+  FOG.update(dt);   // re-reads the unit list (posOf = drawn tile), animates the fog, ages the pops
+}
+
+/* ===== the module ===== */
+let FOG = null;
+function makeFog() {
+  FOG = GameDNA_FogOfWar.create({
+    cols: COLS, rows: ROWS, tile: T, view: { x: 0, y: 0, w: W, h: MAP_H }, skin: SKIN_ID, params: P,
+    units: () => S.units,
+    posOf: u => ({ x: Math.round(u.px / T), y: Math.round(u.py / T) }),   // the tile the unit is drawn on (mid-walk too)
+    isPlayer: u => u.side === 'player',
+    visionOf: (u, x, y) => P.radius + (u.vision || 0) + (HO.hills === 'on' && at(x, y) === 'H' ? 2 : 0),
+    blocks: (x, y) => blocksSight(x, y),
+    ghostSprite: u => ({ img: ART[u.kind], flip: flipOf(u) }),
+    uiRects: () => [{ x: 0, y: MAP_H, w: W, h: H - MAP_H }],
+    getObstacles: () => S.units.map(u => ({ x: u.px, y: u.py, w: T, h: T, id: u.id })),
+    onReveal: (u, x, y) => { S.revealLog.push({ t: S.t, id: u.id, x, y }); }
+  });
+  FOG.recompute(S.units);
+}
+resetWorld(); makeFog();
+
+/* ===== drawing ===== */
+const cv = document.getElementById('cv'), g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
+const ART_FACING = 1;   // every 16x16 unit sprite is painted looking right
+function flipOf(u) { return (u.face < 0 ? -1 : 1) !== ART_FACING; }
+function drawUnit(u) {
+  const bob = U(S.sel) === u && S.manual ? Math.floor(S.t / 260) % 2 : 0;
+  g.fillStyle = 'rgba(10,20,10,0.35)'; g.fillRect(u.px + 3, u.py + 14, 10, 2);
+  if (flipOf(u)) { g.save(); g.translate(u.px + T, u.py - bob); g.scale(-1, 1); g.drawImage(ART[u.kind], 0, 0); g.restore(); }
+  else g.drawImage(ART[u.kind], u.px, u.py - bob);
+}
+function drawXray(u) {   // debug: what the fog hides
+  g.save(); g.globalAlpha = 0.5; g.strokeStyle = '#ff5a4a'; g.setLineDash([2, 2]); g.strokeRect(u.px + 0.5, u.py + 0.5, T - 1, T - 1); g.restore();
+}
+function bracket(x, y, col) {
+  const o = Math.floor(S.t / 270) % 2;
+  for (const [cx, cy, sx, sy] of [[x - o, y - o, 1, 1], [x + 15 + o, y - o, -1, 1], [x - o, y + 15 + o, 1, -1], [x + 15 + o, y + 15 + o, -1, -1]]) {
+    g.fillStyle = '#101010'; g.fillRect(Math.min(cx, cx + sx * 3) + 1, cy + 1, 4, 1); g.fillRect(cx + 1, Math.min(cy, cy + sy * 3) + 1, 1, 4);
+    g.fillStyle = col; g.fillRect(Math.min(cx, cx + sx * 3), cy, 4, 1); g.fillRect(cx, Math.min(cy, cy + sy * 3), 1, 4);
+  }
+}
+function hud() {
+  const y = MAP_H;
+  if (UI) { UI.frame(g, { x: 0, y, w: W, h: H - y }, { role: 'window', team: 'a' }); }
+  else { g.fillStyle = '#1a2040'; g.fillRect(0, y, W, H - y); }
+  const u = U(S.sel), vis = P.radius + (u.vision || 0) + (HO.hills === 'on' && at(u.x, u.y) === 'H' ? 2 : 0);
+  const seen = S.units.filter(e => e.side === 'enemy' && FOG.isUnitVisible(e)).length, ghosts = FOG.ghosts().length;
+  const T_ = (s, x, yy, c, c2) => UI ? UI.text(g, s, x, yy, { font: 'ui', color: c || '#fff4c8', color2: c2 || '#e8c870' }) : (g.fillStyle = '#fff', g.fillText(s, x, yy + 7));
+  g.drawImage(ART[u.kind], 8, y + 8);
+  T_(u.name, 28, y + 7); T_('VISION ' + vis + (HO.hills === 'on' && at(u.x, u.y) === 'H' ? ' HILL' : ''), 28, y + 17, '#c8e0ff', '#8cb0e8');
+  T_('ENEMIES IN SIGHT ' + seen + '/5', 132, y + 7, '#ffd8cc', '#ffb0a0');
+  T_('LAST SEEN ' + ghosts, 132, y + 17, '#d0d8f8', '#a0acd8');
+}
+function draw() {
+  g.globalAlpha = 1; g.clearRect(0, 0, W, H);
+  g.drawImage(GROUND, 0, 0); drawWater(g, S.t);
+  if (HO.fog === 'on') FOG.draw(g, { x: 0, y: 0 });
+  const sorted = S.units.slice().sort((a, b) => a.py - b.py);
+  for (const u of sorted) if (u.side === 'player' || HO.fog === 'off' || FOG.isUnitVisible(u)) drawUnit(u);
+  if (HO.xray === 'on') for (const u of sorted) if (u.side === 'enemy' && HO.fog === 'on' && !FOG.isUnitVisible(u)) drawXray(u);
+  if (HO.fog === 'on') FOG.drawGhosts(g, { x: 0, y: 0 });
+  const su = U(S.sel); bracket(su.px, su.py, S.manual ? '#ffe066' : '#ffffff');
+  hud();
+}
+
+/* ===== boot: ?t=<ms>&freeze=1 replays fixed 60 Hz steps and draws once ===== */
+if (FREEZE) {
+  const n = Math.round(T_AT / FRAME); for (let i = 0; i < n; i++) stepWorld(FRAME);
+  draw();
+  document.documentElement.dataset.state = JSON.stringify({ t: Math.round(S.t), seen: S.units.filter(e => e.side === 'enemy' && FOG.isUnitVisible(e)).map(e => e.id), ghosts: FOG.ghosts().map(g2 => g2.unit.id), reveals: S.revealLog.map(r => r.id), pops: FOG.lastDrawn().filter(r => r.kind === 'pop').map(r => [r.owner, r.x, r.y]) });
+} else {
+  let acc = 0, last = performance.now();
+  const loop = now => { acc += Math.min(100, now - last); last = now; while (acc >= FRAME) { stepWorld(FRAME); acc -= FRAME; } draw(); status(); requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+}
+
+/* ===== interaction ===== */
+function status() {
+  const el = document.getElementById('status'); if (!el) return;
+  const txt = S.manual ? 'Manual: click a tile to walk ' + U(S.sel).name.toLowerCase() : 'Auto-loop ' + (S.loopT / 1000).toFixed(1) + ' s';
+  if (el.textContent !== txt) el.textContent = txt;
+}
+function pathTo(u, x, y) {   // L-shaped path, stops before walls and water
+  const out = []; let cx = u.x, cy = u.y;
+  const ok = (a, b) => inMap(a, b) && !'W~'.includes(at(a, b)) && !S.units.some(o => o !== u && o.x === a && o.y === b);
+  while (cx !== x) { const nx = cx + Math.sign(x - cx); if (!ok(nx, cy)) break; cx = nx; out.push([cx, cy]); }
+  while (cy !== y) { const ny = cy + Math.sign(y - cy); if (!ok(cx, ny)) break; cy = ny; out.push([cx, cy]); }
+  return out;
+}
+function goManual() { if (!S.manual) { S.manual = true; S.walks = []; S.units.forEach(u => { u.px = u.x * T; u.py = u.y * T; }); } }
+if (!FREEZE) {
+  cv.addEventListener('pointerdown', e => {
+    const r = cv.getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * W / T), y = Math.floor((e.clientY - r.top) / r.height * H / T);
+    if (y >= ROWS) return;
+    goManual();
+    const there = S.units.find(u => u.side === 'player' && u.x === x && u.y === y);
+    if (there) { S.sel = there.id; return; }
+    startWalk(U(S.sel), pathTo(U(S.sel), x, y));
+  });
+  addEventListener('keydown', e => {
+    if (e.target && /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
+    const k = e.key, u = U(S.sel);
+    if (k === '1' || k === '2' || k === '3') { goManual(); S.sel = ['wren', 'aldric', 'lysa'][+k - 1]; e.preventDefault(); return; }
+    const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[k];
+    if (d) { goManual(); if (!S.walks.length) startWalk(u, pathTo(u, u.x + d[0], u.y + d[1])); e.preventDefault(); }
+  });
+  document.getElementById('resume').onclick = () => { S.manual = false; resetWorld(); };
+  // parameter controls
+  const box = document.getElementById('params');
+  PARAMS.forEach(p => {
+    const row = document.createElement('div'); row.className = 'row';
+    if (p.type === 'range') {
+      row.innerHTML = `<label for="p-${p.key}">${p.label}<output id="o-${p.key}"></output></label><input type="range" id="p-${p.key}" min="${p.min}" max="${p.max}" step="${p.step}" value="${P[p.key]}">`;
+      box.appendChild(row);
+      const inp = row.querySelector('input'), out = row.querySelector('output');
+      const sync = () => { out.textContent = P[p.key] + (p.unit ? ' ' + p.unit : ''); inp.style.setProperty('--fill', ((P[p.key] - p.min) / (p.max - p.min) * 100) + '%'); };
+      inp.oninput = () => { P[p.key] = +inp.value; FOG.setParams({ [p.key]: P[p.key] }); sync(); };
+      sync();
+    } else {
+      row.innerHTML = `<label for="p-${p.key}">${p.label}</label><select id="p-${p.key}">${p.options.map(o => `<option${o === P[p.key] ? ' selected' : ''}>${o}</option>`).join('')}</select>`;
+      box.appendChild(row);
+      const sel = row.querySelector('select'); sel.onchange = () => { P[p.key] = sel.value; FOG.setParams({ [p.key]: P[p.key] }); };
+    }
+  });
+  const hb = document.getElementById('host');
+  HOST.forEach(p => {
+    const row = document.createElement('div'); row.className = 'row';
+    row.innerHTML = `<label>${p.label}</label><div class="seg">${p.options.map(o => `<button type="button" data-v="${o}" aria-checked="${o === HO[p.key]}">${o}</button>`).join('')}</div>`;
+    hb.appendChild(row);
+    row.querySelectorAll('button').forEach(b => b.onclick = () => { HO[p.key] = b.dataset.v; row.querySelectorAll('button').forEach(x => x.setAttribute('aria-checked', x === b)); });
+  });
+  document.querySelectorAll('#skinseg button').forEach(b => b.onclick = () => {
+    SKIN_ID = b.dataset.skin; document.querySelectorAll('#skinseg button').forEach(x => x.setAttribute('aria-checked', x === b));
+    makeFog();
+  });
+  document.querySelectorAll('[data-variant]').forEach(b => b.onclick = () => {
+    const v = JSON.parse(b.dataset.variant); Object.assign(P, v); FOG.setParams(v);
+    PARAMS.forEach(p => { const el = document.getElementById('p-' + p.key); if (el) { el.value = P[p.key]; el.dispatchEvent(new Event(p.type === 'range' ? 'input' : 'change')); } });
+  });
+}
+{
+  function fit() { const aw = Math.min(document.getElementById('stage').clientWidth - 16, 900), ah = innerHeight - 120; let s = Math.max(1, Math.floor(Math.min(aw / W, Math.max(ah, 300) / H))); cv.style.width = W * s + 'px'; cv.style.height = H * s + 'px'; const si = document.getElementById('scaleinfo'); if (si) si.textContent = `256×224 native · ${s}×`; }
+  addEventListener('resize', fit); fit();
+}
+/* text state for critics and tools/sprites/statecheck.py: every unit (feet = bottom centre of its tile cell, canvas px). facing = u.face, the value
+   flipOf() mirrors the sprite by; an enemy the fog hides is not drawn (noFace). */
+window.__state = () => ({ t: Math.round(S.t), actors: S.units.map(u => { const w = S.walks.find(k => k.u === u), to = w && w.path[w.i];
+  const hidden = u.side === 'enemy' && HO.fog !== 'off' && !FOG.isUnitVisible(u);
+  return { id: u.id, x: u.px + T / 2, y: u.py + T, facing: u.face < 0 ? 'left' : 'right', target: null, vx: to ? to[0] - u.x : 0, flipX: flipOf(u), noFace: hidden ? 'hidden by fog, not drawn' : undefined }; }) });
+
+</script>
+</body>
+</html>

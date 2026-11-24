@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quest Log</title>
+<style>
+  :root { --bg: #120d1a; --panel: #1d1628; --line: #3a2c4a; --text: #e9e0f4; --dim: #a597b8; --accent: #ffc94a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; overflow-x: hidden; }
+  main { max-width: 1180px; margin: 0 auto; padding: 14px 16px 28px; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin-bottom: 10px; }
+  h1 { font-size: 20px; margin: 0; letter-spacing: 0.02em; }
+  header p { margin: 0; color: var(--dim); font-size: 13px; }
+  .tabs { display: flex; gap: 6px; margin: 4px 0 10px; flex-wrap: wrap; }
+  .tabs button, .ctl button, #play { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; font: inherit; cursor: pointer; }
+  .tabs button.on { background: #3b2a52; border-color: #8f6fc0; }
+  .ctl button:hover, .tabs button:hover, #play:hover { border-color: #8f6fc0; }
+  #stage { background: #000; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; display: flex; justify-content: center; }
+  canvas#game { display: block; touch-action: manipulation; }
+  .bar { display: flex; align-items: center; gap: 10px; margin: 10px 0 4px; flex-wrap: wrap; }
+  .bar input[type=range] { flex: 1 1 200px; min-width: 120px; accent-color: #b48cff; }
+  .bar .time { font-variant-numeric: tabular-nums; color: var(--dim); min-width: 64px; }
+  .ctl { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 14px; margin-top: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+  .ctl label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--dim); }
+  .ctl select { font: inherit; background: #120d1a; color: var(--text); border: 1px solid var(--line); border-radius: 5px; padding: 4px; }
+  .ctl .row { display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-end; }
+  .keys { color: var(--dim); font-size: 12px; margin-top: 8px; }
+  kbd { background: #2a2038; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; font: 12px ui-monospace, monospace; color: var(--text); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Quest Log</h1>
+    <p>Quests with ordered steps and counters, a corner tracker, a full log, start and completion banners and world markers. The game only reports what happened (talk, collect, kill, reach); the module advances the quests.</p>
+  </header>
+  <div class="tabs" id="tabs">
+    <button data-ui="hd">HD interface</button>
+    <button data-ui="pixel">Pixel interface</button>
+  </div>
+  <div id="stage"><canvas id="game" width="384" height="216"></canvas></div>
+  <div class="bar">
+    <button id="play">Pause</button>
+    <input id="scrub" type="range" min="0" max="48000" step="50" value="0">
+    <span class="time" id="time">0.0 s</span>
+  </div>
+  <div class="ctl">
+    <div class="row"><button id="logb">Quest log (J)</button></div>
+    <label>Tracker corner <select id="corner"><option value="tr">top right</option><option value="tl">top left</option><option value="br">bottom right</option><option value="bl">bottom left</option></select></label>
+    <label>Look <select id="theme"><option value="dusk">dusk glass</option><option value="parchment">parchment</option></select></label>
+    <label>Tracked quests <select id="max"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></label>
+    <label>World markers <select id="markers"><option value="on">on</option><option value="off">off</option></select></label>
+    <label>Notices <select id="notices"><option value="banner">own banners</option><option value="toasts">C-14 toasts</option></select></label>
+    <label>Later steps in the log <select id="future"><option value="hidden">hidden</option><option value="shown">shown</option></select></label>
+  </div>
+  <p class="keys"><kbd>J</kbd> quest log &middot; in the log <kbd>&uarr;</kbd><kbd>&darr;</kbd> select, <kbd>&larr;</kbd><kbd>&rarr;</kbd> active / done, <kbd>Z</kbd> track, <kbd>X</kbd> close &middot; tap the tracker to open the log &middot; <kbd>Space</kbd> pause. The hero plays a scripted errand; scrub the timeline to replay it.</p>
+</main>
+<script src="../../../pixel-kit/pixel-scene.js"></script>
+<script src="../../pixel-font/module/pixel-font.js"></script>
+<script src="../../toasts/module/toasts.js"></script>
+<script src="../module/quest-log.js"></script>
+<script>
+/* H-03 quest log demo: drives module/quest-log.js on an original top-down pixel meadow (pixel-kit scenery and actors,
+ * code-drawn slimes, herbs and pouches). Everything is a function of one clock: ?t=<ms>&freeze=1 replays the script. */
+(function () {
+  'use strict';
+  var W = 384, H = 216, T = 16, STEP = 1000 / 60;
+  var Q = new URLSearchParams(location.search);
+  var cv = document.getElementById('game'), g = cv.getContext('2d');
+  var wc = document.createElement('canvas'); wc.width = W; wc.height = H; var w = wc.getContext('2d'); w.imageSmoothingEnabled = false;
+  var PF = GameDNA_PixelFont.create({ params: { font: 'regular', shadow: 'drop' } });
+
+  /* ---------- code-drawn sprites ---------- */
+  var SLIME = [PXS.strArt(['....oooo....', '..oolllloo..', '.olllgggllo.', '.ollgggggGo.', 'olgwkggwkgGo', 'olgkkggkkgGo', 'oggggggggGGo', 'oGgggggggGGo', '.oGGGGGGGGo.', '..oooooooo..']),
+    PXS.strArt(['............', '....oooo....', '.oollllllo..', 'olllgggglllo', 'olgwkggwkgGo', 'olgkkggkkgGo', 'oggggggggGGo', 'oGGgggggGGGo', '.oGGGGGGGGo.', '..oooooooo..'])];
+  var SQUASH = PXS.strArt(['..............', '...oooooooo...', '.oollllllllo..', 'olgwkggggwkgGo', 'oggggggggggGGo', '.oGGGGGGGGGGo.', '..oooooooooo..']);
+  var HERB = [PXS.strArt(['...o.o...', '..ovovo..', '.ovaVavo.', '..ovuvo..', '.o.oVo.o.', 'oGo.G.oGo', '.oGGGGGo.', '..oGGGo..', '...oGo...']),
+    PXS.strArt(['...o.o...', '..ovovo..', '.ovaVavo.', '..ovuvo..', '...oVo...', '.oGoGoGo.', 'oGGGGGGGo', '.ooGGGoo.', '...oGo...'])];
+  var POUCH = PXS.strArt(['..o...o..', '...ooo...', '..oyYo...', '.onnNnno.', 'onnnNNNNo', 'onnnnNNNo', 'oBnnnnNNo', '.oBBBBBo.', '..ooooo..']);
+  var BRAZIER = PXS.strArt(['oooooooooo', 'oXssssssXo', '.oxxxxxxo.', '..oXssXo..', '..oXssXo..', '..oxxxxo..', '.oXssssXo.', 'oooooooooo']);
+
+  /* ---------- the level ---------- */
+  var C = 34, R = 28;
+  function level() {
+    var m = [], r, c;
+    for (r = 0; r < R; r++) { m.push([]); for (c = 0; c < C; c++) m[r].push('.'); }
+    var set = function (cc, rr, ch) { if (cc >= 0 && rr >= 0 && cc < C && rr < R) m[rr][cc] = ch; };
+    var rect = function (c0, r0, c1, r1, ch) { for (var y = r0; y <= r1; y++) for (var x = c0; x <= c1; x++) set(x, y, ch); };
+    for (r = 0; r < R; r++) for (c = 0; c < C; c++) { var n = PXS.noise(c * 16, r * 16, 70, 11); if (n > 0.62) m[r][c] = ','; else if (n < 0.3) m[r][c] = ':'; }
+    var riverX = function (rr) { return 14 + Math.round(1.2 * Math.sin(rr / 3.4)); };
+    for (r = 0; r < R; r++) { var x0 = riverX(r); set(x0, r, 'w'); set(x0 + 1, r, 'w'); }
+    var path = function (pts) { for (var i = 0; i < pts.length - 1; i++) { var a = pts[i], b = pts[i + 1], dx = Math.sign(b[0] - a[0]), dy = Math.sign(b[1] - a[1]), x = a[0], y = a[1]; set(x, y, 'p'); while (x !== b[0] || y !== b[1]) { x += dx; y += dy; set(x, y, 'p'); } } };
+    path([[8, 22], [8, 9], [24, 9], [24, 6], [27, 6]]);
+    path([[3, 18], [12, 18]]);
+    for (c = 10; c < 20; c++) if (m[9][c] === 'w') m[9][c] = 'b';
+    rect(25, 2, 31, 7, 'c');
+    for (c = 25; c <= 31; c++) { set(c, 2, '#'); }
+    set(25, 3, '#'); set(31, 3, '#'); set(25, 4, '#'); set(31, 4, '#');
+    for (r = 0; r < R; r++) for (c = 0; c < C; c++) {
+      var edge = Math.min(r, c, R - 1 - r, C - 1 - c);
+      if (edge < 1 || (edge < 2 && PXS.hash(c, r, 5) < 0.55)) m[r][c] = PXS.hash(c, r, 9) < 0.25 ? 'P' : 'T';
+    }
+    var keep = function (cc, rr) {
+      if (m[rr][cc] !== '.' && m[rr][cc] !== ',' && m[rr][cc] !== ':') return true;
+      for (var dy = -1; dy <= 1; dy++) for (var dx = -1; dx <= 1; dx++) { var q = (m[rr + dy] || [])[cc + dx]; if (q === 'p' || q === 'c' || q === '#' || q === 'b') return true; }
+      if (cc >= 16 && cc <= 27 && rr >= 10 && rr <= 18) return true;     // the meadow the script walks through
+      if (cc >= 2 && cc <= 13 && rr >= 12 && rr <= 21) return true;      // the village
+      return false;
+    };
+    for (r = 2; r < R - 2; r++) for (c = 2; c < C - 2; c++) if (!keep(c, r)) { var nn = PXS.noise(c * 16, r * 16, 40, 23); if (nn > 0.64) m[r][c] = PXS.hash(c, r, 3) < 0.3 ? 't' : 'T'; else if (PXS.hash(c, r, 31) < 0.03) m[r][c] = 'R'; else if (PXS.hash(c, r, 37) < 0.05) m[r][c] = 'F'; else if (PXS.hash(c, r, 41) < 0.03) m[r][c] = 'u'; }
+    rect(3, 20, 6, 21, 'f');
+    var rows = m.map(function (rw) { return rw.join(''); });
+    var props = [
+      { k: 'house', x: 4 * T + 8, y: 14 * T + 4, o: { roof: 'red' } }, { k: 'house', x: 11 * T, y: 14 * T + 4, o: { roof: 'blue', wall: 'stone' } },
+      { k: 'house', x: 4 * T, y: 23 * T, o: { roof: 'thatch', wall: 'timber', w: 40 } },
+      { k: 'stall', x: 11 * T + 8, y: 16 * T + 4 }, { k: 'well', x: 3 * T + 8, y: 17 * T + 10 }, { k: 'lantern', x: 7 * T + 2, y: 16 * T + 8 },
+      { k: 'barrel', x: 13 * T, y: 16 * T + 8 }, { k: 'crate', x: 12 * T + 12, y: 19 * T + 12 }, { k: 'sign', x: 9 * T + 8, y: 10 * T + 12 }, { k: 'hay', x: 2 * T + 8, y: 20 * T + 4 },
+      { k: 'statue', x: 28 * T + 8, y: 3 * T + 14 }, { k: 'pillar', x: 26 * T + 4, y: 6 * T + 14 }, { k: 'pillar', x: 30 * T + 12, y: 6 * T + 14 },
+      { k: 'torch', x: 26 * T + 4, y: 4 * T + 12 }, { k: 'torch', x: 30 * T + 12, y: 4 * T + 12 }, { k: 'log', x: 21 * T, y: 19 * T + 6 }, { k: 'stump', x: 18 * T, y: 7 * T + 8 }];
+    return { rows: rows, sc: PXS.scene({ seed: 23, map: rows, props: props }) };
+  }
+
+  /* ---------- quests (data only: the module owns progress) ---------- */
+  var QUESTS = [
+    { id: 'remedy', title: 'A Remedy for Maren', giver: 'Elder Maren', kind: 'main', reward: '40 coins, Healer\'s Satchel',
+      desc: 'A fever is spreading through the village. Maren needs moonherbs from the east meadow and the shrine fire lit again.',
+      steps: [{ text: 'Gather moonherbs', on: 'collect:moonherb', count: 3 }, { text: 'Clear the slimes by the ford', on: 'kill:slime', count: 3 },
+        { text: 'Light the shrine brazier', on: 'reach:shrine', at: { x: 28 * T + 8, y: 6 * T + 4 }, radius: 14 }, { text: 'Return to Elder Maren', on: 'talk:maren' }] },
+    { id: 'pouches', title: 'Pell\'s Lost Pouches', giver: 'Pell the trader', kind: 'side', reward: 'Lucky charm',
+      desc: 'Pell dropped two coin pouches somewhere between the village and the old shrine.',
+      steps: [{ text: 'Find the coin pouches', on: 'collect:pouch', count: 2 }, { text: 'Bring them to Pell', on: 'talk:pell' }] }
+  ];
+  var WHERE = { maren: { x: 6 * T + 8, y: 15 * T + 10 }, pell: { x: 11 * T + 8, y: 18 * T + 4 } };
+  var HERBS = [{ id: 'herb-1', x: 19 * T + 8, y: 12 * T + 8 }, { id: 'herb-2', x: 17 * T + 8, y: 15 * T + 8 }, { id: 'herb-3', x: 21 * T + 8, y: 16 * T + 8 }, { id: 'herb-4', x: 22 * T + 4, y: 17 * T + 12 }];
+  var POUCHES = [{ id: 'pouch-1', x: 8 * T + 8, y: 12 * T + 10 }, { id: 'pouch-2', x: 26 * T + 4, y: 6 * T + 10 }];
+  var SLIMES = [{ id: 'slime-1', x: 24 * T + 8, y: 15 * T + 8, ax: 6, ay: 4, w: 0.9, ph: 0 }, { id: 'slime-2', x: 26 * T + 8, y: 13 * T + 4, ax: 8, ay: 3, w: 0.7, ph: 2 },
+    { id: 'slime-3', x: 24 * T + 4, y: 11 * T + 2, ax: 5, ay: 5, w: 1.1, ph: 4 }, { id: 'slime-4', x: 29 * T, y: 17 * T, ax: 10, ay: 6, w: 0.5, ph: 1 }];
+
+  /* ---------- the script: walks, waits, talks and the events they fire (tile units for walks) ---------- */
+  var SPEED = 64;   // px per second
+  var SCRIPT = [
+    { wait: 500 }, { face: 'up', say: { who: 'maren', name: 'Elder Maren', text: 'The fever spreads, child. Bring me moonherbs from the east meadow, and light the old shrine fire.' }, ms: 2600, ev: ['start', 'remedy'] },
+    { to: [8.5, 17.6] }, { to: [10.0, 18.25] }, { face: 'right', say: { who: 'pell', name: 'Pell', text: 'You are heading east? I dropped two coin pouches on that road. Find them for me?' }, ms: 2300, ev: ['start', 'pouches'] },
+    { to: [8.5, 18.25] }, { to: [8.5, 12.6], take: 'pouch-1' }, { to: [8.5, 9.5] }, { to: [16.5, 9.5] }, { to: [19.5, 9.5] },
+    { to: [19.5, 12.5], take: 'herb-1' }, { to: [17.5, 13.2] }, { to: [17.5, 15.5], take: 'herb-2' }, { to: [21.5, 16.5], take: 'herb-3' }, { to: [22.25, 17.6], take: 'herb-4' },
+    { to: [23.2, 15.8] }, { swing: 'slime-1', ms: 520 }, { to: [25.4, 13.7] }, { swing: 'slime-2', ms: 520 }, { to: [24.5, 11.6] }, { swing: 'slime-3', ms: 520 },
+    { to: [24.5, 9.5] }, { to: [24.5, 6.6] }, { to: [26.3, 6.6], take: 'pouch-2' }, { to: [28.5, 6.6] }, { face: 'up', ms: 700 },
+    { face: 'down', ms: 4200, log: true },
+    { to: [24.5, 6.6] }, { to: [24.5, 9.5] }, { to: [8.5, 9.5] }, { to: [8.5, 15.6] }, { face: 'left', say: { who: 'maren', name: 'Elder Maren', text: 'Moonherbs, and the shrine burns again! The village owes you. Take this satchel.' }, ms: 2600, ev: ['talk', 'maren'] }, { face: 'left', ms: 1600 },
+    { to: [8.5, 18.25] }, { to: [10.0, 18.25] }, { face: 'right', say: { who: 'pell', name: 'Pell', text: 'Both pouches! Here, a lucky charm for the road.' }, ms: 2200, ev: ['talk', 'pell'] }, { face: 'right', ms: 1600 },
+    { face: 'down', ms: 600, ev: ['kill', 'slime'] }, { wait: 3800 }];
+  var START = [6.5, 17.6];
+  var TL = [];   // timeline: each item with t0, t1, from, to
+  (function build() {
+    var t = 0, p = START.slice(), face = 'up';
+    SCRIPT.forEach(function (s) {
+      var it = { s: s, t0: t, from: p.slice() };
+      if (s.to) { var d = Math.hypot(s.to[0] - p[0], s.to[1] - p[1]) * T; it.t1 = t + d / SPEED * 1000; it.to = s.to.slice(); p = s.to.slice(); if (Math.abs(s.to[0] - it.from[0]) >= Math.abs(s.to[1] - it.from[1])) face = s.to[0] > it.from[0] ? 'right' : 'left'; else face = s.to[1] > it.from[1] ? 'down' : 'up'; }
+      else { it.t1 = t + (s.ms || s.wait || 0); it.to = p.slice(); if (s.face) face = s.face; }
+      if (s.swing) { var sl = SLIMES.filter(function (q) { return q.id === s.swing; })[0]; face = Math.abs(sl.x - p[0] * T) > Math.abs(sl.y - p[1] * T) ? (sl.x > p[0] * T ? 'right' : 'left') : (sl.y > p[1] * T ? 'down' : 'up'); }
+      it.face = face; TL.push(it); t = it.t1;
+    });
+  })();
+  var DUR = TL[TL.length - 1].t1;
+  document.getElementById('scrub').max = String(Math.ceil(DUR / 50) * 50);
+
+  /* ---------- the running game ---------- */
+  var L = level(), QL = null, TO = null, clock = 0, hero = null, idx = 0, taken = {}, dead = {}, deadAt = {}, fired = {}, logScripted = false, coins = 12;
+  var UI = Q.get('ui') === 'pixel' ? 'pixel' : 'hd';
+  var opts = { corner: Q.get('corner') || 'tr', theme: Q.get('theme') || 'dusk', max: Q.get('max') || '2', markers: Q.get('markers') || 'on', notices: Q.get('notices') || 'banner', future: Q.get('future') || 'hidden' };
+  var css = { w: W, h: H, dpr: 1 }, manualLog = null;
+
+  function heroAt(tms) {
+    var i = 0; while (i < TL.length - 1 && tms >= TL[i].t1) i++;
+    var it = TL[i], u = it.t1 > it.t0 ? Math.max(0, Math.min(1, (tms - it.t0) / (it.t1 - it.t0))) : 1;
+    var x = (it.from[0] + (it.to[0] - it.from[0]) * u) * T, y = (it.from[1] + (it.to[1] - it.from[1]) * u) * T;
+    return { x: x, y: y, face: it.face, moving: !!it.s.to && u < 1, item: it, i: i, u: u, swing: it.s.swing ? (tms - it.t0) : -1 };
+  }
+  // during a conversation the camera eases down a little so both speakers sit in the upper part of the screen, clear of the
+  // dialogue box at the bottom (a pure function of the clock, like everything else)
+  function talkShift() { var it = hero.item; if (!it.s.say) return 0; var a = clock - it.t0, b = it.t1 - clock; return H * 0.2 * Math.min(Math.max(0, Math.min(1, a / 450)), Math.max(0, Math.min(1, b / 450))); }
+  function camera() {
+    var cx = Math.round(Math.max(0, Math.min(C * T - W, hero.x - W / 2))), cy = Math.round(Math.max(0, Math.min(R * T - H, hero.y - 8 - H / 2 + talkShift())));
+    return { x: cx, y: cy, w: W, h: H };
+  }
+  function sayNow() { var it = hero.item; return it.s.say && clock < it.t1 ? { s: it.s.say, age: clock - it.t0 } : null; }
+  // HUD and dialogue rects in the coordinates the module draws in (native px or CSS px)
+  function k() { return UI === 'pixel' ? 1 : css.w / W; }
+  function hudRect() { return UI === 'pixel' ? { x: 4, y: 4, w: 64, h: 17 } : { x: 10, y: 10, w: Math.round(css.w * 0.2 + 40), h: Math.round(16 + css.w * 0.022) }; }
+  // the dialogue box goes to the half of the screen the speakers are not in (bottom by default)
+  function speakersLow() { var cam = camera(), sn = sayNow(); if (!sn) return false; var n = NPCS.filter(function (q) { return q.id === sn.s.who; })[0], ys = [hero.y - cam.y, n ? n.y - cam.y : 0]; return Math.max(ys[0], ys[1]) > H * 0.52; }
+  function dlgRect() {
+    var top = false;   // always at the bottom: the camera lifts the speakers above it while they talk (decided per conversation, never per frame)
+    if (UI === 'pixel') return { x: 8, y: top ? 26 : H - 50, w: W - 16, h: 44 };
+    var phone = css.w < 520, hh = Math.round(phone ? 96 : Math.max(84, css.w * 0.105)), ww = Math.round(css.w * (phone ? 0.94 : 0.76)), x = Math.round((css.w - ww) / 2);
+    var hud = hudRect();
+    return { x: x, y: top ? hud.y + hud.h + 8 : Math.round(css.h - css.w * 0.02 - hh), w: ww, h: hh };
+  }
+  function safeRects() { var s = [hudRect()]; if (sayNow()) s.push(dlgRect()); if (TO) try { TO.rects().forEach(function (r) { s.push(r); }); } catch (e) { } return s; }
+  function build() {
+    var view = function () { return UI === 'pixel' ? { x: 0, y: 0, w: W, h: H } : { x: 0, y: 0, w: css.w, h: css.h }; };
+    TO = null;
+    if (opts.notices === 'toasts') TO = GameDNA_Toasts.create({ bounds: view, uiRects: function () { var s = [hudRect()]; if (sayNow()) s.push(dlgRect()); var r = QL && QL.rect(); if (r) s.push(r); return s; }, params: { edge: 'top', max: 2, render: UI === 'pixel' ? 'crisp' : 'smooth' } });
+    QL = GameDNA_QuestLog.create({
+      view: view, safeRects: function () { var s = [hudRect()]; if (sayNow()) s.push(dlgRect()); if (TO) TO.rects().forEach(function (r) { s.push(r); }); return s; },
+      quests: QUESTS, toasts: TO, camera: camera,
+      locate: function (target) { if (WHERE[target]) return { x: WHERE[target].x, y: WHERE[target].y - 20 }; if (target === 'moonherb') return HERBS.filter(function (h) { return !taken[h.id]; }).map(function (h) { return { x: h.x, y: h.y - 12 }; });
+        if (target === 'slime') return SLIMES.filter(function (q) { return !dead[q.id] && q.id !== 'slime-4'; }).map(function (q) { var p = slimePos(q); return { x: p.x, y: p.y - 14 }; });
+        if (target === 'pouch') return POUCHES.filter(function (h) { return !taken[h.id]; }).map(function (h) { return { x: h.x, y: h.y - 12 }; }); return null; },
+      player: function () { return { x: hero.x, y: hero.y - 4 }; },
+      quiet: function () { return !!sayNow() || talkShift() > 0; },   // banners wait while someone is talking (and while the camera settles after)
+      obstacles: function () { var cam = camera(), sc = UI === 'pixel' ? 1 : css.w / W; return NPCS.map(function (n) { return { x: (n.x - cam.x - 9) * sc, y: (n.y - cam.y - 20) * sc, w: 18 * sc, h: 22 * sc }; }); },
+      params: { corner: opts.corner, theme: opts.theme, max: +opts.max, markers: opts.markers, future: opts.future, render: UI === 'pixel' ? 'crisp' : 'smooth' }
+    });
+  }
+  function slimePos(q) { var s = clock / 1000; return { x: q.x + q.ax * Math.sin(s * q.w + q.ph), y: q.y + q.ay * Math.sin(s * q.w * 1.3 + q.ph * 1.7) }; }
+  function fire(key, fn) { if (fired[key]) return; fired[key] = clock; fn(); }
+  function step() {
+    clock += STEP; hero = heroAt(clock);
+    // events of every item whose end has been crossed (and pickups on the way)
+    for (var i = 0; i <= hero.i; i++) {
+      var it = TL[i], done = clock >= it.t1;
+      if (it.s.take && done) fire('take-' + it.s.take, (function (id) { return function () { taken[id] = clock; var kind = id.indexOf('herb') === 0 ? 'moonherb' : 'pouch'; QL.event('collect', kind); }; })(it.s.take));
+      if (it.s.swing && clock >= it.t0 + 170) fire('kill-' + it.s.swing, (function (id) { return function () { var sl = SLIMES.filter(function (z) { return z.id === id; })[0]; dead[id] = clock; deadAt[id] = slimePos(sl); QL.event('kill', 'slime'); }; })(it.s.swing));
+      if (it.s.ev && done) fire('ev-' + i, (function (ev) { return function () { if (ev[0] === 'start') QL.start(ev[1]); else QL.event(ev[0], ev[1]); if (ev[0] === 'talk' && ev[1] === 'maren') coins += 40; }; })(it.s.ev));
+    }
+    // the scripted log moment: open, move the selection, close
+    var lg = TL.filter(function (t) { return t.s.log; })[0];
+    if (manualLog == null) {
+      var inLog = clock >= lg.t0 + 300 && clock < lg.t1 - 300;
+      if (inLog && !QL.isLogOpen()) QL.input('log');
+      if (inLog && !fired['log-down'] && clock >= lg.t0 + 2100) fire('log-down', function () { QL.input('down'); });
+      if (!inLog && QL.isLogOpen() && clock >= lg.t1 - 300 && clock < lg.t1 + 100) QL.input('back');
+    }
+    QL.update(STEP); if (TO) TO.update(STEP);
+  }
+  function simTo(tms) {
+    clock = 0; taken = {}; dead = {}; deadAt = {}; fired = {}; coins = 12; build(); hero = heroAt(0);
+    var n = Math.floor(tms / STEP); for (var i = 0; i < n; i++) step();
+  }
+
+  /* ---------- drawing: world (native px) ---------- */
+  function npcFace(n) { var dx = hero.x - n.x, dy = hero.y - n.y; if (Math.hypot(dx, dy) > 6 * T) return 'down'; return Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'); }
+  var NPCS = [{ id: 'maren', pal: 'elder', x: 6 * T + 8, y: 15 * T + 10 }, { id: 'pell', pal: 'merchant', x: 11 * T + 8, y: 18 * T + 4 }];
+  function drawWorld(cam) {
+    var ox = -cam.x, oy = -cam.y, ex = [];
+    // the brazier on the shrine plaza, lit once the step is done
+    var lit = fired['ev-reach'] || (QL.quest('remedy').step >= 3 || QL.isDone('remedy'));
+    ex.push({ y: 6 * T + 2, draw: function (gg) { var bx = 28 * T + 8 + ox, by = 6 * T + 2 + oy; gg.drawImage(BRAZIER, Math.round(bx - 5), Math.round(by - 8)); if (lit) { PXS.glow(gg, bx, by - 10, 22, '#ffb040', 0.9); PXS.drawProp(gg, 'campfire', bx, by - 5, {}, clock); } } });
+    HERBS.forEach(function (h) { var tk = taken[h.id]; if (tk && clock - tk > 600) return; ex.push({ y: h.y, draw: function (gg) {
+      if (tk) { var a = (clock - tk) / 600; for (var s = 0; s < 5; s++) { gg.fillStyle = s % 2 ? '#e8d8ff' : '#9ae0ff'; gg.fillRect(Math.round(h.x + ox - 6 + s * 3), Math.round(h.y + oy - 10 - a * 16 - (s % 3) * 3), 1, 1 + (s % 2)); } return; }
+      PXS.glow(gg, h.x + ox, h.y + oy - 6, 9, '#b48cff', 0.55 + 0.2 * Math.sin(clock / 300 + h.x)); gg.drawImage(HERB[Math.floor(clock / 500 + h.x) % 2], Math.round(h.x + ox - 4), Math.round(h.y + oy - 9)); } }); });
+    POUCHES.forEach(function (p) { if (taken[p.id]) return; ex.push({ y: p.y, draw: function (gg) { gg.fillStyle = 'rgba(16,10,30,0.35)'; gg.fillRect(Math.round(p.x + ox) - 3, Math.round(p.y + oy), 7, 1); gg.drawImage(POUCH, Math.round(p.x + ox - 4), Math.round(p.y + oy - 9 + (Math.floor(clock / 400) % 2))); } }); });
+    SLIMES.forEach(function (q) { var dt = dead[q.id] ? clock - dead[q.id] : -1; if (dt > 760) return; var p = dt >= 0 ? deadAt[q.id] : slimePos(q);
+      ex.push({ y: p.y, draw: function (gg) {
+        var X = Math.round(p.x + ox), Y = Math.round(p.y + oy);
+        if (dt >= 0) {   // hit flash, squash, then a puff cloud and a few slime droplets
+          if (dt < 90) { gg.drawImage(SLIME[0], X - 6, Y - 10); gg.globalAlpha = 0.55; gg.drawImage(SLIME_W, X - 6, Y - 10); gg.globalAlpha = 1; return; }
+          if (dt < 200) gg.drawImage(SQUASH, X - 7, Y - 7);
+          var a = Math.min(1, (dt - 90) / 670), al = (a < 0.6 ? 1 : 1 - (a - 0.6) / 0.4).toFixed(2);
+          [[-5, -4, 4], [4, -5, 4], [0, -9, 3], [-8, -1, 3], [7, -1, 3], [0, -2, 4]].forEach(function (c, i) { puff(gg, Math.round(X + c[0] * (1 + a * 1.1)), Math.round(Y + c[1] * (1 + a * 0.7) - a * 5), Math.round(c[2] + a * 2.5 - (i % 2) * a * 1.5), al); });
+          if (a < 0.5) for (var sp = 0; sp < 4; sp++) { var an2 = sp * Math.PI / 2 + 0.6, rr4 = 6 + a * 22; gg.fillStyle = '#ffffff'; gg.fillRect(Math.round(X + Math.cos(an2) * rr4), Math.round(Y - 5 + Math.sin(an2) * rr4 * 0.7), 2, 2); }
+          for (var s = 0; s < 6; s++) { var an = -Math.PI * (0.15 + s * 0.14), rr2 = 4 + a * 11; gg.fillStyle = s % 2 ? '#84c656' : '#4c9a3e'; gg.fillRect(Math.round(X + Math.cos(an) * rr2), Math.round(Y - 4 + Math.sin(an) * rr2 + a * a * 10), 2, 2); }
+          return; }
+        gg.fillStyle = 'rgba(16,10,30,0.35)'; gg.fillRect(X - 5, Y, 10, 1); gg.drawImage(SLIME[Math.floor(clock / 260 + q.ph * 3) % 2], X - 6, Y - 10); } }); });
+    NPCS.forEach(function (n) { var f = npcFace(n); n.face = f; ex.push({ y: n.y, draw: function (gg) { PXS.actor(gg, n.x + ox, n.y + oy, { pal: n.pal, dir: f, frame: Math.floor(clock / 700) % 2 }); } }); });
+    var hf = hero.face;
+    ex.push({ y: hero.y, draw: function (gg) {
+      if (hero.swing >= 0 && hero.swing < 340 && hf === 'up') drawSwing(gg, hero.x + ox, hero.y + oy, hf, hero.swing, true);
+      PXS.actor(gg, hero.x + ox, hero.y + oy, { pal: 'hero', dir: hf, frame: hero.moving ? Math.floor(clock / 150) % 2 : 0 });
+      if (hero.swing >= 0 && hero.swing < 340) drawSwing(gg, hero.x + ox, hero.y + oy, hf, hero.swing, false);
+    } });
+    L.sc.draw(w, clock, ex, ox, oy);
+    var vg = w.createRadialGradient(W / 2, H / 2, 90, W / 2, H / 2, 260); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(10,6,20,0.35)'); w.fillStyle = vg; w.fillRect(0, 0, W, H);
+  }
+  /* sword swing: a short blade held in the hero's hand (hilt, guard, blade, light tip), wound up, swept through the target and
+     held; a solid white smear follows the blade during the strike. Pixel lines at native resolution. */
+  function pxLine(gg, x0, y0, ang, r0, r1, col, wide) { for (var t = r0; t <= r1; t += 0.5) { var X = Math.round(x0 + Math.cos(ang) * t), Y = Math.round(y0 + Math.sin(ang) * t); gg.fillStyle = col; if (wide) gg.fillRect(X - 1, Y - 1, 3, 3); else gg.fillRect(X, Y, 1, 1); } }
+  function drawSwing(gg, x, y, face, ms, behind) {
+    var A0 = { right: 0, down: Math.PI / 2, left: Math.PI, up: -Math.PI / 2 }[face], dir = face === 'left' || face === 'up' ? -1 : 1;
+    var hand = { right: [3, -6], left: [-4, -6], down: [4, -5], up: [-4, -9] }[face], hx = Math.round(x + hand[0]), hy = Math.round(y + hand[1]);
+    var from = A0 - dir * 1.75, to = A0 + dir * 1.05, k = ms < 70 ? 0 : ms < 170 ? (ms - 70) / 100 : 1, ang = from + (to - from) * (1 - (1 - k) * (1 - k));
+    if (behind !== (face === 'up')) return;
+    if (ms >= 70 && ms < 260) {   // smear: a solid crescent between the wind-up angle and the blade
+      var fadeA = ms < 170 ? 0.75 : 0.75 * (1 - (ms - 170) / 90);
+      for (var r = 6; r <= 11; r++) { var steps = Math.ceil(Math.abs(ang - from) * r * 1.4); for (var i = 0; i <= steps; i++) { var a = from + (ang - from) * i / Math.max(1, steps); gg.fillStyle = r >= 10 ? 'rgba(255,255,255,' + fadeA + ')' : 'rgba(200,226,255,' + (fadeA * 0.7) + ')'; gg.fillRect(Math.round(hx + Math.cos(a) * r), Math.round(hy + Math.sin(a) * r), 1, 1); } }
+    }
+    pxLine(gg, hx, hy, ang, 2, 11, '#1a1024', true);      // outline
+    pxLine(gg, hx, hy, ang, 3, 11, '#c8d4e8', false);     // blade
+    pxLine(gg, hx + Math.cos(ang + 1.57) * 0.6, hy + Math.sin(ang + 1.57) * 0.6, ang, 4, 10, '#f4f8ff', false);
+    gg.fillStyle = '#ffffff'; gg.fillRect(Math.round(hx + Math.cos(ang) * 11), Math.round(hy + Math.sin(ang) * 11), 1, 1);
+    var gx = Math.round(hx + Math.cos(ang) * 2.5), gy = Math.round(hy + Math.sin(ang) * 2.5), px = -Math.sin(ang), py = Math.cos(ang);
+    gg.fillStyle = '#d8a030'; for (var g2 = -2; g2 <= 2; g2++) gg.fillRect(Math.round(gx + px * g2), Math.round(gy + py * g2), 1, 1);   // guard
+    gg.fillStyle = '#6a4422'; gg.fillRect(hx, hy, 1, 1); gg.fillRect(Math.round(hx - Math.cos(ang)), Math.round(hy - Math.sin(ang)), 1, 1);   // grip in the hand
+  }
+  function whiteOf(c) { var o = document.createElement('canvas'); o.width = c.width; o.height = c.height; var x = o.getContext('2d'); x.drawImage(c, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#ffffff'; x.fillRect(0, 0, o.width, o.height); return o; }
+  var SLIME_W = whiteOf(SLIME[0]);
+  function puff(gg, X, Y, r, a) { if (r < 1) return; for (var dy = -r; dy <= r; dy++) for (var dx = -r; dx <= r; dx++) { var d = dx * dx + dy * dy; if (d > r * r) continue; gg.fillStyle = d > (r - 1) * (r - 1) && dy > 0 ? 'rgba(120,150,130,' + a + ')' : 'rgba(236,248,240,' + a + ')'; gg.fillRect(X + dx, Y + dy, 1, 1); } }
+  function heart(gg, x, y, full) { var P = full ? ['#e8404a', '#ff8a8a', '#a8283a'] : ['#4a3a4e', '#5c4a60', '#2e2234']; gg.fillStyle = '#160e1c'; gg.fillRect(x + 1, y, 2, 1); gg.fillRect(x + 4, y, 2, 1); gg.fillRect(x, y + 1, 7, 3); gg.fillRect(x + 1, y + 4, 5, 1); gg.fillRect(x + 2, y + 5, 3, 1); gg.fillRect(x + 3, y + 6, 1, 1);
+    gg.fillStyle = P[0]; gg.fillRect(x + 1, y + 1, 2, 2); gg.fillRect(x + 4, y + 1, 2, 2); gg.fillRect(x + 1, y + 3, 5, 1); gg.fillRect(x + 2, y + 4, 3, 1); gg.fillRect(x + 3, y + 5, 1, 1); gg.fillStyle = P[1]; gg.fillRect(x + 1, y + 1, 1, 1); gg.fillStyle = P[2]; gg.fillRect(x + 5, y + 2, 1, 2); }
+  var COIN = PXS.strArt(['.ooo.', 'oyyYo', 'oyuYo', 'oyYYo', '.ooo.']);
+  function drawHudPixel() {
+    var r = hudRect(); w.fillStyle = '#0b0814'; w.fillRect(r.x - 1, r.y, r.w + 2, r.h); w.fillRect(r.x, r.y - 1, r.w, r.h + 2); w.fillStyle = '#221a30'; w.fillRect(r.x, r.y, r.w, r.h); w.fillStyle = '#2c2240'; w.fillRect(r.x, r.y, r.w, 8); w.fillStyle = '#4c3f68'; w.fillRect(r.x, r.y, r.w, 1);
+    for (var i = 0; i < 3; i++) heart(w, r.x + 3 + i * 9, r.y + 5, true);
+    w.drawImage(COIN, r.x + 32, r.y + 6); PF.draw(w, String(coins), r.x + 39, r.y + 5, { color: '#ffe08a' });
+  }
+  function drawDialogPixel() {
+    var sn = sayNow(); if (!sn) return; var r = dlgRect();
+    w.fillStyle = '#0b0814'; w.fillRect(r.x - 1, r.y, r.w + 2, r.h); w.fillRect(r.x, r.y - 1, r.w, r.h + 2); w.fillStyle = '#1c1630'; w.fillRect(r.x, r.y, r.w, r.h); w.fillStyle = '#4c3f68'; w.fillRect(r.x, r.y, r.w, 1);
+    PXS.actor(w, r.x + 14, r.y + 26, { pal: sn.s.who === 'maren' ? 'elder' : 'merchant', dir: 'down', frame: 0, noShadow: true });
+    PF.draw(w, sn.s.name, r.x + 28, r.y + 4, { color: '#ffe08a' });
+    PF.draw(w, sn.s.text, r.x + 28, r.y + 15, { width: r.w - 36, reveal: Math.floor(sn.age / 1000 * 45), color: '#f4eefc' });
+  }
+  /* ---------- drawing: HD interface (CSS px on the display canvas) ---------- */
+  var FAM = '"Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif';
+  function glass(x, y, ww, hh, r) { g.save(); g.shadowColor = 'rgba(4,2,12,0.5)'; g.shadowBlur = 10; g.shadowOffsetY = 3; var gr = g.createLinearGradient(0, y, 0, y + hh); gr.addColorStop(0, 'rgba(30,25,44,0.88)'); gr.addColorStop(1, 'rgba(15,12,24,0.88)'); g.beginPath(); g.roundRect(x, y, ww, hh, r); g.fillStyle = gr; g.fill(); g.restore(); g.beginPath(); g.roundRect(x + 0.5, y + 0.5, ww - 1, hh - 1, r); g.strokeStyle = 'rgba(255,255,255,0.12)'; g.lineWidth = 1; g.stroke(); }
+  function hdHeart(x, y, s, full) { g.beginPath(); g.moveTo(x, y + s * 0.85); g.bezierCurveTo(x - s * 1.1, y + s * 0.1, x - s * 0.7, y - s * 0.8, x, y - s * 0.3); g.bezierCurveTo(x + s * 0.7, y - s * 0.8, x + s * 1.1, y + s * 0.1, x, y + s * 0.85); g.fillStyle = full ? '#ff5a64' : '#4a3a4e'; g.fill(); g.strokeStyle = 'rgba(20,6,12,0.8)'; g.lineWidth = 1.2; g.stroke(); g.beginPath(); g.arc(x - s * 0.4, y - s * 0.15, s * 0.18, 0, Math.PI * 2); g.fillStyle = 'rgba(255,255,255,0.55)'; g.fill(); }
+  function drawHudHD() {
+    var r = hudRect(), s = r.h * 0.26; glass(r.x, r.y, r.w, r.h, 8);
+    for (var i = 0; i < 3; i++) hdHeart(r.x + r.h * 0.5 + i * s * 2.6, r.y + r.h / 2, s, true);
+    var cx = r.x + r.h * 0.5 + 3 * s * 2.6 + s * 0.6, cy = r.y + r.h / 2;
+    g.beginPath(); g.arc(cx, cy, s * 0.9, 0, Math.PI * 2); g.fillStyle = '#ffc94a'; g.fill(); g.strokeStyle = '#7a5410'; g.lineWidth = 1.2; g.stroke(); g.beginPath(); g.arc(cx, cy, s * 0.55, 0, Math.PI * 2); g.strokeStyle = 'rgba(122,84,16,0.6)'; g.stroke();
+    g.font = '700 ' + Math.round(r.h * 0.42) + 'px ' + FAM; g.fillStyle = '#ffe9b0'; g.textBaseline = 'middle'; g.textAlign = 'left'; g.fillText(String(coins), cx + s * 1.5, cy + 1);
+  }
+  function drawDialogHD() {
+    var sn = sayNow(); if (!sn) return; var r = dlgRect(), p = Math.round(r.h * 0.16), fs = Math.max(13, Math.round(css.w * 0.0145)), ns = Math.round(fs * 0.86);
+    glass(r.x, r.y, r.w, r.h, 10);
+    // portrait: the pixel actor at an integer scale in a framed square
+    var ps = r.h - 2 * p, sc = Math.max(1, Math.floor(ps / 18)); g.save(); g.beginPath(); g.roundRect(r.x + p, r.y + p, ps, ps, 6); g.fillStyle = 'rgba(255,255,255,0.06)'; g.fill(); g.strokeStyle = 'rgba(255,201,74,0.5)'; g.lineWidth = 1; g.stroke(); g.clip();
+    g.imageSmoothingEnabled = false; var pc = document.createElement('canvas'); pc.width = 18; pc.height = 18; PXS.actor(pc.getContext('2d'), 9, 17, { pal: sn.s.who === 'maren' ? 'elder' : 'merchant', dir: 'down', frame: 0, noShadow: true });
+    g.drawImage(pc, Math.round(r.x + p + (ps - 18 * sc) / 2), Math.round(r.y + p + (ps - 18 * sc) / 2 + sc * 2), 18 * sc, 18 * sc); g.restore();
+    var tx = r.x + p * 2 + ps, tw = r.x + r.w - p - tx;
+    g.font = '800 ' + ns + 'px ' + FAM; g.fillStyle = '#ffc94a'; g.textBaseline = 'top'; g.textAlign = 'left'; try { g.letterSpacing = '1px'; } catch (e) { } g.fillText(sn.s.name.toUpperCase(), tx, r.y + p); try { g.letterSpacing = '0px'; } catch (e) { }
+    g.font = '500 ' + fs + 'px ' + FAM; g.fillStyle = '#f1ecfa';
+    var shown = sn.s.text.slice(0, Math.floor(sn.age / 1000 * 45)), words = sn.s.text.split(' '), lines = [], cur = '', n = 0;
+    words.forEach(function (wd) { var t = cur ? cur + ' ' + wd : wd; if (cur && g.measureText(t).width > tw) { lines.push(cur); cur = wd; } else cur = t; }); if (cur) lines.push(cur);
+    lines.forEach(function (ln, i) { var vis = ln.slice(0, Math.max(0, shown.length - n)); n += ln.length + 1; g.fillText(vis, tx, r.y + p + ns + 8 + i * fs * 1.35); });
+  }
+
+  function render() {
+    var cam = camera();
+    w.setTransform(1, 0, 0, 1, 0, 0); w.imageSmoothingEnabled = false; w.fillStyle = '#000'; w.fillRect(0, 0, W, H);
+    drawWorld(cam);
+    if (UI === 'pixel') { drawHudPixel(); drawDialogPixel(); QL.draw(w); if (TO) TO.draw(w); }
+    g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = false; g.drawImage(wc, 0, 0, cv.width, cv.height);
+    if (UI === 'hd') { g.setTransform(css.dpr, 0, 0, css.dpr, 0, 0); g.imageSmoothingEnabled = true; drawHudHD(); drawDialogHD(); QL.draw(g); if (TO) TO.draw(g); }
+  }
+
+  /* ---------- text state for checks and critics ---------- */
+  window.__state = function () {
+    var cam = camera(), sc = UI === 'pixel' ? 1 : css.w / W, actors = [], hf = hero.face;
+    var hx = Math.round((hero.x - cam.x) * sc), hy = Math.round((hero.y - cam.y) * sc);
+    actors.push(hf === 'left' || hf === 'right' ? { id: 'hero', x: hx, y: hy, facing: hf, vx: hero.moving ? (hf === 'right' ? 1 : -1) : 0, target: hero.swing >= 0 ? hero.item.s.swing : null }
+      : { id: 'hero', x: hx, y: hy, facing: null, noFace: 'top-down ' + hf + ' frame' });
+    NPCS.forEach(function (n) { var f = n.face || npcFace(n), x = Math.round((n.x - cam.x) * sc), y = Math.round((n.y - cam.y) * sc); actors.push(f === 'left' || f === 'right' ? { id: n.id, x: x, y: y, facing: f, target: 'hero' } : { id: n.id, x: x, y: y, noFace: 'top-down ' + f + ' frame' + (Math.hypot(hero.x - n.x, hero.y - n.y) <= 6 * T ? ' (looks at the hero)' : ' (idle)') }); });
+    SLIMES.forEach(function (q) { if (dead[q.id] && clock - dead[q.id] > 760) return; var p = dead[q.id] ? deadAt[q.id] : slimePos(q); actors.push({ id: q.id, x: Math.round((p.x - cam.x) * sc), y: Math.round((p.y - cam.y) * sc), noFace: 'frontal art' + (dead[q.id] ? ' (defeated)' : '') }); });
+    var evs = Object.keys(fired).filter(function (k2) { return fired[k2] > clock - 1500; });
+    return { t: Math.round(clock), ui: UI, camera: cam, safeRects: safeRects(), actors: actors, recentEvents: evs, quests: QL.state(), drawn: QL.lastDrawn(), stats: QL.stats() };
+  };
+  window.__ql = function () { return QL; };
+  window.__demoStep = function (n) { for (var i = 0; i < (n || 1); i++) step(); render(); return clock; };
+  window.__cssScale = function () { return UI === 'pixel' ? 1 : css.w / W; };
+  window.__dlgRect = function () { return sayNow() ? dlgRect() : null; };
+  window.__timeline = function () { return TL.map(function (it, i) { return { i: i, t0: Math.round(it.t0), t1: Math.round(it.t1), s: it.s }; }); };
+  window.__fired = function () { return fired; };
+  window.__questCast = { slime: SLIME, hero: { actor: 'hero' }, maren: { actor: 'elder' }, pell: { actor: 'merchant' } };
+
+  /* ---------- page controls ---------- */
+  var playing = true;
+  function syncUi() {
+    document.querySelectorAll('#tabs button').forEach(function (b) { b.classList.toggle('on', b.dataset.ui === UI); });
+    ['corner', 'theme', 'max', 'markers', 'notices', 'future'].forEach(function (k2) { document.getElementById(k2).value = opts[k2]; });
+  }
+  function rebuildAt(t) { simTo(t); render(); }
+  document.querySelectorAll('#tabs button').forEach(function (b) { b.onclick = function () { UI = b.dataset.ui; fit(); rebuildAt(clock); syncUi(); }; });
+  ['corner', 'theme', 'max', 'markers', 'notices', 'future'].forEach(function (k2) { document.getElementById(k2).onchange = function (e) { opts[k2] = e.target.value; rebuildAt(clock); }; });
+  function toggleLog() { manualLog = true; if (QL.isLogOpen()) QL.input('back'); else QL.input('log'); render(); }
+  document.getElementById('logb').onclick = toggleLog;
+  document.getElementById('play').onclick = function () { playing = !playing; this.textContent = playing ? 'Pause' : 'Play'; };
+  document.getElementById('scrub').oninput = function (e) { manualLog = null; simTo(+e.target.value); render(); };
+  var KEYS = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', KeyZ: 'ok', Enter: 'ok', KeyX: 'back', Escape: 'back' };
+  addEventListener('keydown', function (e) {
+    if (e.code === 'KeyJ') { toggleLog(); e.preventDefault(); return; }
+    if (QL.isLogOpen() && KEYS[e.code]) { manualLog = true; QL.input(KEYS[e.code]); render(); e.preventDefault(); return; }
+    if (e.code === 'Space') { playing = !playing; document.getElementById('play').textContent = playing ? 'Pause' : 'Play'; e.preventDefault(); }
+  });
+  cv.addEventListener('pointerdown', function (e) {
+    var r = cv.getBoundingClientRect(), x = (e.clientX - r.left) * (UI === 'pixel' ? W / r.width : css.w / r.width), y = (e.clientY - r.top) * (UI === 'pixel' ? H / r.height : css.h / r.height);
+    if (QL.tap(x, y)) { manualLog = true; render(); }
+  });
+  function fit() {
+    var avail = Math.min(document.getElementById('stage').clientWidth || W, 1180), dpr = window.devicePixelRatio || 1, kk = Math.floor(avail / W);
+    var cw = kk >= 2 ? W * Math.min(kk, 3) : avail;
+    css = { w: cw, h: Math.round(cw * H / W), dpr: dpr };
+    cv.style.width = cw + 'px'; cv.style.height = css.h + 'px';
+    var bw = Math.round(cw * dpr), bh = Math.round(css.h * dpr); if (cv.width !== bw || cv.height !== bh) { cv.width = bw; cv.height = bh; }
+  }
+  addEventListener('resize', function () { fit(); render(); });
+
+  /* ---------- boot ---------- */
+  fit(); syncUi();
+  var t0 = Q.has('t') ? Math.max(0, +Q.get('t') || 0) : 0;
+  simTo(t0);
+  if (Q.get('log') === '1') { manualLog = true; QL.input('log'); if (Q.get('tab') === 'done') QL.input('right'); }
+  render();
+  document.getElementById('scrub').value = String(t0); document.getElementById('time').textContent = (clock / 1000).toFixed(1) + ' s';
+  if (Q.get('freeze') === '1') { window.__frozen = true; return; }
+  var acc = 0, prev = null;
+  function loop(now) {
+    if (prev == null) prev = now; var dt = Math.min(250, now - prev); prev = now;
+    if (playing) { acc += dt; while (acc >= STEP) { step(); acc -= STEP; } if (clock > DUR) { manualLog = null; simTo(0); } }
+    render(); document.getElementById('time').textContent = (clock / 1000).toFixed(1) + ' s'; if (playing) document.getElementById('scrub').value = String(Math.round(clock / 50) * 50);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,3 @@
+assets/gen/**/*.png
+assets/gen/**/run.log
+assets/gen/**/last.txt

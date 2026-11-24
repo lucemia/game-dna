@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flat Skin Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --bg: #eef0f6; --card: #ffffff; --ink: #29304d; --muted: #7b8199; --accent: #5b4bff; --line: rgba(41,48,77,.08); }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); }
+  body { font: 500 14px/1.5 Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; padding: 28px 16px 40px; }
+  main { max-width: 1056px; margin: 0 auto; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin: 0 0 16px; }
+  h1 { font-size: 22px; font-weight: 800; letter-spacing: -.01em; margin: 0; }
+  .pill { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); background: #e9e6ff; border-radius: 99px; padding: 3px 10px; }
+  .sub { color: var(--muted); margin: 0; flex-basis: 100%; }
+  .stage { background: var(--card); border-radius: 22px; padding: 12px; box-shadow: 0 14px 40px rgba(41,48,77,.12), 0 1px 2px rgba(41,48,77,.06); }
+  canvas { display: block; width: 100%; height: auto; aspect-ratio: 256 / 224; border-radius: 14px; background: #e4e8f1; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 14px 4px 0; color: var(--muted); font-size: 12.5px; font-weight: 600; }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .sw { width: 14px; height: 14px; border-radius: 5px; display: inline-block; }
+  .tokens { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 22px 0 0; }
+  .tok { background: var(--card); border-radius: 14px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 14px rgba(41,48,77,.06); }
+  .tok i { width: 26px; height: 26px; border-radius: 9px; flex: none; box-shadow: inset 0 0 0 1px var(--line); }
+  .tok b { display: block; font-size: 12px; font-weight: 700; } .tok small { color: var(--muted); font: 600 11px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  footer { color: var(--muted); font-size: 12px; margin-top: 18px; }
+  code { font: 600 12px ui-monospace, SFMono-Regular, Menlo, monospace; background: #e3e6ef; border-radius: 6px; padding: 1px 5px; }
+  @media (max-width: 560px) { body { padding: 18px 16px 28px; } h1 { font-size: 19px; } .stage { padding: 6px; border-radius: 16px; } canvas { border-radius: 11px; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Flat vector / minimal geometric</h1><span class="pill">skin · flat</span>
+    <p class="sub">Grid range + path arrow, bouncing damage numbers and a menu window with its pointer, drawn by the real modules through <code>GameDNA_Skin</code> on the canonical shared scene (<code>../scene/shared-scene.js</code>: same map, seed and moment as every style; map cells via <code>skin.tile</code>, pieces via <code>skin.unitToken</code>).</p>
+  </header>
+  <div class="stage"><canvas id="c" width="1024" height="896"></canvas></div>
+  <div class="legend">
+    <span><i class="sw" style="background:rgba(95,139,255,.45);box-shadow:inset 0 0 0 1.5px #4f74ff"></i>Movement</span>
+    <span><i class="sw" style="background:rgba(255,111,111,.4);box-shadow:inset 0 0 0 1.5px #ff5a5a"></i>Attack range</span>
+    <span><i class="sw" style="background:linear-gradient(90deg,#5b4bff,#7d6bff);height:5px;width:22px;border-radius:3px"></i>Planned path</span>
+  </div>
+  <div class="tokens" id="tokens"></div>
+  <footer>Deterministic: <code>?t=1400&amp;freeze=1</code> draws one moment (ms). Without <code>freeze</code> the scene loops every 4 s. <code>?focus=grid|numbers|window</code> picks one element; <code>?skin=pixel16</code> draws the same scene in the reference skin. All styles side by side: <a href="../compare.html?only=flat&amp;t=1400&amp;freeze=1">compare.html</a>.</footer>
+</main>
+
+<script src="../skin-api.js"></script>
+<script src="../pixel16.js"></script>
+<script src="flat.js"></script>
+<script src="../../elements/grid-range-path/module/grid-range-path.js"></script>
+<script src="../../elements/damage-numbers/module/damage-numbers.js"></script>
+<script src="../../elements/window-cursor/module/window-cursor.js"></script>
+<script src="../scene/shared-scene.js"></script>
+<script>
+'use strict';
+var Q = new URLSearchParams(location.search), S = GameDNA_Scene;
+var ID = Q.get('skin') || 'flat', T0 = Q.has('t') ? +Q.get('t') : S.DEFAULT_T, FREEZE = Q.get('freeze') === '1', FOCUS = Q.get('focus') || 'all';
+var SK = GameDNA_Skin.resolve(ID), PAL = SK.palette, cv = document.getElementById('c');
+function width() { return Math.max(256, Math.round((cv.getBoundingClientRect().width || 1024) * (window.devicePixelRatio || 1))); }
+function render(T) { S.draw(cv, ID, T, { width: width(), focus: FOCUS }); document.documentElement.dataset.t = String(T); }
+
+/* token chips (documentation only) */
+(function () {
+  var list = [['ink', PAL.ink], ['paper', PAL.paper], ['ui.accent', PAL.ui.accent], ['team.a', PAL.team.a], ['team.b', PAL.team.b], ['overlay.move', PAL.overlay.move.fill], ['overlay.attack', PAL.overlay.attack.fill], ['terrain.grass', PAL.terrain && PAL.terrain.grass], ['terrain.water', PAL.terrain && PAL.terrain.water], ['text.label', PAL.text.label]];
+  document.getElementById('tokens').innerHTML = list.filter(function (x) { return x[1]; }).map(function (x) { return '<div class="tok"><i style="background:' + x[1] + '"></i><div><b>' + x[0] + '</b><small>' + x[1] + '</small></div></div>'; }).join('');
+})();
+
+function start() {
+  if (FREEZE) { render(T0); document.documentElement.dataset.ready = '1'; window.addEventListener('resize', function () { render(T0); }); return; }
+  var t0 = performance.now();
+  (function loop() { render((T0 + performance.now() - t0) % S.LOOP); requestAnimationFrame(loop); })();
+  document.documentElement.dataset.ready = '1';
+}
+S.ready([ID]).then(start, start);
+</script>
+</body>
+</html>

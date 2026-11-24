@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Palette Swap</title>
+<style>
+:root {
+  --bg: #0d0b14; --panel: #16131f; --line: #2c2740; --text: #ece8f6; --dim: #9a93b4; --accent: #f2c35a; --accent2: #8ae4ff;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1200px 600px at 30% -10%, #241c3a 0%, var(--bg) 60%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 14px 20px 10px; max-width: 1240px; margin: 0 auto; }
+.code { white-space: nowrap; font: 700 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #1a1206; background: var(--accent); padding: 6px 8px; border-radius: 4px; box-shadow: 0 0 0 1px #00000040, 0 2px 0 #8a6428; }
+h1 { font-size: 18px; margin: 0; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; padding: 0 20px 20px; max-width: 1240px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; display: flex; flex-direction: column; align-items: center; }
+.frame { padding: 6px; background: linear-gradient(#2a2340, #15111f); border-radius: 8px; box-shadow: 0 0 0 1px #3a3352, 0 18px 50px #00000080; max-width: 100%; }
+canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; border-radius: 3px; touch-action: manipulation; cursor: pointer; }
+.caption { display: flex; justify-content: space-between; gap: 12px; width: 100%; max-width: 780px; margin-top: 8px; color: var(--dim); font-size: 12px; }
+.caption b { color: var(--text); font-weight: 600; }
+.caption > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+aside { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+h2 { margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.row { margin-bottom: 10px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 5px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--fill), #2e2842 var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 4px; background: #fff3d0; border: 2px solid #1a1206; box-shadow: 0 1px 4px #000a; cursor: pointer; }
+.seg { display: flex; background: #0f0d17; border: 1px solid var(--line); border-radius: 6px; padding: 2px; gap: 2px; }
+.seg button { flex: 1; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 3px; border-radius: 4px; cursor: pointer; text-transform: capitalize; white-space: nowrap; }
+.seg button[aria-checked=true] { background: #2e2746; color: var(--text); box-shadow: inset 0 0 0 1px #4a4068, inset 0 -2px 0 var(--accent); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+select { width: 100%; appearance: none; background: #0f0d17; color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; font: 600 12px inherit; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center; font: 700 11px ui-monospace, Menlo, monospace; color: var(--dim); }
+.stats div { background: #0f0d17; border: 1px solid var(--line); border-radius: 6px; padding: 6px 2px; }
+.stats span { display: block; font-size: 16px; color: var(--accent2); }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.chips button { appearance: none; border: 1px solid var(--line); background: #0f0d17; color: var(--dim); font: 600 11.5px/1 inherit; padding: 6px 8px; border-radius: 5px; cursor: pointer; }
+.chips button[aria-checked=true] { color: #1a1206; background: var(--accent); border-color: var(--accent); }
+.foot { display: flex; justify-content: space-between; align-items: center; color: var(--dim); font-size: 11.5px; border-top: 1px solid var(--line); padding-top: 10px; gap: 8px; }
+.foot button { appearance: none; background: none; border: 1px solid var(--line); color: var(--text); border-radius: 5px; padding: 5px 9px; font: 600 11.5px inherit; cursor: pointer; }
+code { font: 11px ui-monospace, Menlo, monospace; color: var(--accent2); }
+@media (max-width: 980px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 640px; width: 100%; margin: 0 auto; } }
+@media (max-width: 560px) { header { padding: 12px 16px 8px; } main { padding: 0 16px 16px; gap: 12px; } .frame { padding: 3px; } .caption { flex-direction: column; gap: 2px; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">D-01</span>
+  <div><h1>Palette-swap variants</h1><p>One sprite, many looks: team colours, elite and rare foes, poison, stone, frozen, a low-HP pulse and a greyed "already acted" state, built from the sprite's own colour ramps and cached. The game keeps its art and calls <code>variant(sprite, name)</code> where it draws.</p></div>
+</header>
+<main>
+  <section id="stage">
+    <div class="frame"><canvas id="cv" width="320" height="256" aria-label="Roster of six sprites in twelve palette variants"></canvas></div>
+    <div class="caption"><span><b id="selname">Knight</b> · <span id="selvar">team-blue</span></span><span><span id="scaleinfo">320×256 native</span> · click a cell · arrows</span></div>
+  </section>
+  <aside>
+    <div class="stats"><div><span id="s-src">0</span>sprites</div><div><span id="s-var">0</span>cached</div><div><span id="s-hit">0</span>hit rate</div><div><span id="s-ms">0</span>build ms</div></div>
+    <div><h2>Inspect variant</h2><div class="chips" id="chips"></div></div>
+    <div class="two">
+      <div><h2>Sprite</h2><select id="sprite"></select></div>
+      <div><h2>Tour</h2><div class="seg" id="loop"><button data-v="1" aria-checked="true">auto</button><button data-v="0">manual</button></div></div>
+    </div>
+    <div>
+      <h2>Ramp detection</h2>
+      <div class="row"><label>Hue tolerance (°) <output data-out="hueTol"></output></label><input type="range" data-key="hueTol" min="8" max="60" step="2"></div>
+      <div class="two">
+        <div><h2>Ramps</h2><div class="seg" id="mode"><button data-v="auto" aria-checked="true">detected</button><button data-v="hand">hand-set</button></div></div>
+        <div><h2>Protect skin</h2><div class="seg" data-key="protectSkin"><button>auto</button><button>on</button><button>off</button></div></div>
+      </div>
+    </div>
+    <div class="row"><h2>Team swap recolours</h2><div class="seg" data-key="target"><button data-v="primary">primary</button><button data-v="primary+secondary">+second</button><button data-v="all">all</button></div></div>
+    <div>
+      <div class="row"><label>Status strength <output data-out="strength"></output></label><input type="range" data-key="strength" min="0.2" max="1" step="0.05"></div>
+      <div class="row"><label>Low-HP pulse (Hz) <output data-out="pulseHz"></output></label><input type="range" data-key="pulseHz" min="0.5" max="4" step="0.25"></div>
+      <div class="row"><label>Pulse steps <output data-out="pulseSteps"></output></label><input type="range" data-key="pulseSteps" min="2" max="8" step="1"></div>
+      <div class="row"><label>Spent brightness <output data-out="spentDim"></output></label><input type="range" data-key="spentDim" min="0.3" max="0.9" step="0.05"></div>
+    </div>
+    <div class="two">
+      <div><h2>Elite ramp</h2><select data-key="elite"><option>violet</option><option>crimson</option><option>gold</option><option>shadow</option></select></div>
+      <div><h2>Elite outline</h2><div class="seg" data-key="eliteEdge"><button>on</button><button>off</button></div></div>
+      <div><h2>Keep outline</h2><div class="seg" data-key="keepOutline"><button>on</button><button>off</button></div></div>
+      <div><h2>Skin</h2><select id="skin"><option value="pixel16">pixel16</option><option value="none">built-in</option></select></div>
+    </div>
+    <div class="foot"><span>Same module as <b>module/palette-swap.js</b> · URL: <code>?t=ms&amp;freeze=1</code>, <code>?hueTol=40</code>, <code>?sprite=2&amp;variant=elite</code></span><button id="reset">Reset</button></div>
+  </aside>
+</main>
+<script src="../../../skins/skin-api.js"></script>
+<script src="../../../skins/pixel16.js"></script>
+<script src="../module/palette-swap.js"></script>
+<script>
+'use strict';
+(function () {
+  var W = 320, H = 256, STEP = 1000 / 60;
+  var Q = new URLSearchParams(location.search), num = function (k, d) { var v = Q.get(k); return v == null || v === '' || isNaN(+v) ? d : +v; };
+  var FREEZE = Q.get('freeze') === '1', T_AT = num('t', 0), LOOP = Q.get('loop') !== '0' && !Q.has('variant') && !Q.has('sprite');
+  var cv = document.getElementById('cv'), ctx = cv.getContext('2d'), PSM = window.GameDNA_PaletteSwap, SKAPI = window.GameDNA_Skin;
+  ctx.imageSmoothingEnabled = false;
+
+  /* ---------------- the roster (original sprites; four palette-indexed string sprites, two drawn on canvases) ---------------- */
+  var O = '#140e1c', SKN = '#f2bc94', SKS = '#c27c5c';
+  var ROSTER = [
+    { name: 'Knight', kind: 'rows', spec: { pal: { o: O, W: '#f0f4fa', h: '#aab2c4', g: '#666c84', C: '#84e0cc', c: '#2c9c8c', d: '#186058', s: SKN, k: SKS, y: '#f4cc4c', Y: '#a0701c' }, rows: [
+      '......oooo......',
+      '.....oWWhgo.....',
+      '....oWhhhhgo....',
+      '....ohhyyhgo....',
+      '....oooooooo....',
+      '....ohsskkgo....',
+      '.....oskkgo.....',
+      '...ooCCccdoo....',
+      '..oWhoCccdohgo..',
+      '..ohgoCccdoggo..',
+      '..oggoCcddogo...',
+      '...ooyYyyyYo....',
+      '....oCcccddo....',
+      '....occcdddo....',
+      '....ohgo.ohgo...',
+      '....ohgo.ohgo...',
+      '...oWhgo.oWhgo..',
+      '...ooooo.ooooo..'] },
+      hand: { primary: ['#186058', '#2c9c8c', '#84e0cc'] } },
+    { name: 'Sage', kind: 'rows', spec: { pal: { o: O, C: '#d8a8f8', c: '#9454d0', d: '#56288a', D: '#34164e', s: SKN, k: SKS, b: '#8a5a2a', B: '#4e3014', j: '#9cf4ff', J: '#2aa8d8', w: '#e8e4dc', y: '#f4cc4c' }, rows: [
+      '.......oo....oo.',
+      '......oCco..ojJo',
+      '.....oCccdo.oJJo',
+      '.....occcdo..obo',
+      '....oCccyddo.obo',
+      '..ooooooooooooBo',
+      '....osskkso..obo',
+      '....owwwwwo..obo',
+      '...oCcwwwcdo.obo',
+      '..oCccowcccdobBo',
+      '..occcoyccdddsko',
+      '..occcocccdddoo.',
+      '...occocccddDo..',
+      '...oCccccddDDo..',
+      '..oCcccccdddDDo.',
+      '..occccccddDDDo.',
+      '..oooooooooooooo'] },
+      hand: { primary: ['#34164e', '#56288a', '#9454d0', '#d8a8f8'] } },
+    { name: 'Ranger', kind: 'rows', spec: { pal: { o: O, C: '#b0e878', c: '#5ea43c', d: '#2e6224', L: '#d8a466', l: '#9a6434', m: '#5a3a1c', s: SKN, k: SKS, w: '#dcd4c0', b: '#7a4a22' }, rows: [
+      '......oooo......',
+      '.....oCCcdo.....',
+      '....oCccccdo....',
+      '....occsskdo....',
+      '....ocskokdo.ob.',
+      '.....oskkdo..obo',
+      '....ooCccdoo.o.b',
+      '...oCcclllcdo.ob',
+      '..oskoLllmmcobwb',
+      '..okkoLlllmoskob',
+      '...ooollllmookob',
+      '....oCccddo..o.b',
+      '....occcdddo.obo',
+      '....olmo.olmo.b.',
+      '....olmo.olmo...',
+      '...oLlmo.oLlmo..',
+      '...ooooo.ooooo..'] },
+      hand: { primary: ['#2e6224', '#5ea43c', '#b0e878'] } },
+    { name: 'Slime', kind: 'rows', spec: { pal: { o: O, W: '#ffffff', C: '#ffc0e0', c: '#ea64a8', d: '#a8306c', D: '#5e1840', e: '#1a0a14' }, rows: [
+      '................',
+      '................',
+      '................',
+      '................',
+      '.......oo.......',
+      '......oCWo......',
+      '.....oCWCco.....',
+      '....oCWCccco....',
+      '...oCCccccccdo..',
+      '..oCcccccccccdo.',
+      '..occeocceocddo.',
+      '.oCcceocceoccddo',
+      '.occcccccccccddo',
+      '.occcccccccccddo',
+      '.odcccccccccdDDo',
+      '..oddddddddDDDo.',
+      '...oooooooooooo.'] },
+      hand: { primary: ['#5e1840', '#a8306c', '#ea64a8', '#ffc0e0'] } },
+    { name: 'Hound', kind: 'canvas', draw: drawHound,
+      hand: { primary: ['#6a3216', '#b0602c', '#e89a5a'] } },
+    { name: 'Drake', kind: 'canvas', draw: drawDrake,
+      hand: { primary: ['#16403a', '#2a7a62', '#4cb88a', '#c08e52', '#9ae8b4', '#e8c88a'] } }
+  ];
+  function mk(w, h) { var c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+  function px(g, col, x, y, w, h) { g.fillStyle = col; g.fillRect(x, y, w || 1, h || 1); }
+  // a hound drawn with fillRect on a canvas (a source the host already draws)
+  function drawHound() {
+    var c = mk(20, 16), g = c.getContext('2d'), L = '#e89a5a', M = '#b0602c', D = '#6a3216', B = '#f4e2c4', o = O;
+    var rows = [
+      '..............oo....',
+      '.............oLLo...',
+      '............oLMMLo..',
+      '...........oLMMeMLoo',
+      '.o.........oMMMMMMMo',
+      'oLo.......oLMMMMoooo',
+      'oLMo..oooooLMMMMBo..',
+      '.oMMooLLLLLMMMMBBo..',
+      '..oMMLLLMMMMMMBBo...',
+      '...oMMMMMMMMMMMDo...',
+      '...oDMMMMMMMMDDDo...',
+      '...oDDBBDDDDDDDDo...',
+      '...oMDo.oMDooMDo....',
+      '...oMo..oMo.oMDo....',
+      '..oMMo.oMMo.oMMo....',
+      '..oooo.oooo.oooo....'];
+    var pal = { o: o, L: L, M: M, D: D, B: B, e: '#ffe070' };
+    rows.forEach(function (r, y) { for (var x = 0; x < r.length; x++) if (pal[r[x]]) px(g, pal[r[x]], x, y); });
+    return c;
+  }
+  // a drake with a tan belly (tests the skin-like-colour rule) drawn on a canvas
+  function drawDrake() {
+    var c = mk(22, 20), g = c.getContext('2d'), pal = { o: O, a: '#9ae8b4', b: '#4cb88a', c: '#2a7a62', d: '#16403a', t: '#e8c88a', u: '#c08e52', e: '#ffe070', w: '#f4f0e0', r: '#c83a3a' };
+    var rows = [
+      '.............ooo......',
+      '..oo........oabbo.....',
+      '.oaao......oabbbbo....',
+      '.oabbo....oabbebbooo..',
+      '.obbcbo...obbbbbbbbwo.',
+      '..obccbo..obbbbbooooo.',
+      '..obcccbo.obbbbbo.....',
+      '...obcccboobbbbo......',
+      '....occcbbbbbbto......',
+      '...oobbbbbbbbtto......',
+      '..obbbbbbbbbbttuo.....',
+      '.obbcbbbbbbbttuo......',
+      '.obccbbbbbbttuuo......',
+      'oobccccbbbtttuo.......',
+      'obcccccccbttuuo.......',
+      '.occdccccbtuuo........',
+      '..odddcccccuo.........',
+      '..oddo.oddoo..........',
+      '..obbo..obbo..........',
+      '..oooo..oooo..........'];
+    rows.forEach(function (r, y) { for (var x = 0; x < r.length; x++) if (pal[r[x]]) px(g, pal[r[x]], x, y); });
+    return c;
+  }
+  ROSTER.forEach(function (r) { r.src = r.kind === 'rows' ? r.spec : r.draw(); });
+
+  var COLS = [
+    { v: 'base', l: 'ORG' }, { v: 'team-blue', l: 'BLU' }, { v: 'team-red', l: 'RED' }, { v: 'team-green', l: 'GRN' }, { v: 'team-yellow', l: 'YEL' },
+    { v: 'elite', l: 'ELT' }, { v: 'rare', l: 'RAR' }, { v: 'poison', l: 'PSN' }, { v: 'petrify', l: 'STN' }, { v: 'frozen', l: 'ICE' },
+    { v: 'lowhp', l: 'LOW' }, { v: 'team-red+spent', l: 'DON' }
+  ];
+  var GROUPS = [{ from: 1, to: 4, l: 'TEAM' }, { from: 5, to: 6, l: 'FOE' }, { from: 7, to: 10, l: 'STATUS' }, { from: 11, to: 11, l: '' }];
+
+  /* ---------------- parameters (element.json defaults, URL overrides) ---------------- */
+  var params = {};
+  function resetParams() { params = {}; Object.keys(PSM.DEFAULTS).forEach(function (k) { params[k] = PSM.DEFAULTS[k]; }); }
+  resetParams();
+  Object.keys(params).forEach(function (k) { if (Q.has(k)) params[k] = typeof params[k] === 'number' ? num(k, params[k]) : Q.get(k); });
+  var skinId = Q.get('skin') || 'pixel16', mode = Q.get('ramps') === 'hand' ? 'hand' : 'auto';
+  var selRow = Math.max(0, Math.min(ROSTER.length - 1, num('sprite', 0) | 0)), selCol = 1;
+  if (Q.has('variant')) COLS.forEach(function (c, i) { if (c.v === Q.get('variant')) selCol = i; });
+
+  var PS, SK;
+  function build() {
+    PS = PSM.create({ params: params, skin: skinId === 'none' ? false : skinId });
+    SK = skinId === 'none' || !SKAPI ? null : SKAPI.resolve(skinId);
+    if (mode === 'hand') ROSTER.forEach(function (r) { PS.setRamps(r.src, r.hand); });
+  }
+  build();
+
+  /* ---------------- background (stone hall, baked once) ---------------- */
+  var BG = mk(W, H);
+  (function () {
+    var g = BG.getContext('2d');
+    for (var y = 0; y < H; y += 16) for (var x = 0; x < W; x += 16) {
+      var v = ((x * 7 + y * 13) >> 4) % 4;
+      px(g, ['#1c1a2a', '#201d30', '#1a1826', '#221f33'][v], x, y, 16, 16);
+      px(g, '#2c2840', x, y, 16, 1); px(g, '#2c2840', x, y, 1, 16); px(g, '#121019', x, y + 15, 16, 1); px(g, '#121019', x + 15, y, 1, 16);
+      if ((x * 3 + y * 5) % 7 === 0) { px(g, '#29253b', x + 4, y + 6, 3, 1); px(g, '#121019', x + 4, y + 7, 3, 1); }
+    }
+  })();
+
+  /* ---------------- layout ---------------- */
+  var GX = 18, GY = 31, CW = 24, CH = 26, PANEL = { x: 4, y: 4, w: W - 8, h: GY + ROSTER.length * CH + 4 - 4 };
+  function cellRect(r, c) { return { x: GX + c * CW, y: GY + r * CH, w: CW, h: CH }; }
+
+  var F35 = { A: '25755', B: '65656', C: '34443', D: '65556', E: '74647', F: '74644', G: '34553', H: '55755', I: '72227', J: '11152', K: '55655',
+    L: '44447', M: '57555', N: '65555', O: '25552', P: '65644', Q: '25573', R: '65655', S: '34216', T: '72222', U: '55557', V: '55552',
+    W: '55575', X: '55255', Y: '55222', Z: '71247', 0: '75557', 1: '26227', 2: '61247', 3: '61216', 4: '55711', 5: '74616', 6: '34757',
+    7: '71222', 8: '75757', 9: '75716', '+': '02720', '-': '00700', '.': '00002' };
+  function txt(s, x, y, color, align) {
+    if (SK) return SK.text(ctx, s, x, y, { font: 'ui', color: color, align: align });
+    // built-in: a 3x5 pixel font (no skin loaded), crisp at any scale
+    var str = String(s).toUpperCase(), w = str.length * 4 - 1;
+    if (align === 'center') x -= w >> 1; else if (align === 'right') x -= w;
+    for (var pass = 0; pass < 2; pass++) {
+      ctx.fillStyle = pass ? color : '#06061a';
+      for (var i = 0; i < str.length; i++) { var f = F35[str[i]]; if (!f) continue; for (var ry = 0; ry < 5; ry++) for (var b = 0; b < 3; b++) if ((f.charCodeAt(ry) - 48) & (4 >> b)) ctx.fillRect(x + i * 4 + b + (pass ? 0 : 1), y + 1 + ry + (pass ? 0 : 1), 1, 1); }
+    }
+    return w;
+  }
+  function win(r, team) {
+    if (SK) return SK.frame(ctx, r, { role: 'window', team: team || 'n' });
+    px(ctx, '#06061a', r.x, r.y, r.w, r.h); px(ctx, '#2a3150', r.x + 1, r.y + 1, r.w - 2, r.h - 2); return { x: r.x + 4, y: r.y + 4, w: r.w - 8, h: r.h - 8 };
+  }
+  function band(r) { if (SK) SK.frame(ctx, r, { role: 'backing' }); else px(ctx, 'rgba(6,8,30,0.4)', r.x, r.y, r.w, r.h); }
+  var tok = function (p, d) { return SK && SK.lookup ? (SK.lookup(p) || d) : d; };
+
+  var t = 0;
+  function paint() {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(BG, 0, 0);
+    win(PANEL);
+    GROUPS.forEach(function (gp) {
+      if (!gp.l) return;
+      var x0 = GX + gp.from * CW + 2, x1 = GX + (gp.to + 1) * CW - 2;
+      px(ctx, tok('text.label2', '#8ca8e8'), x0, 18, x1 - x0, 1);
+      txt(gp.l, (x0 + x1) >> 1, 9, tok('text.label', '#b8d0ff'), 'center');
+    });
+    COLS.forEach(function (c, i) { txt(c.l, GX + i * CW + CW / 2, 21, i === selCol ? tok('text.select', '#fff4c0') : tok('text.dim', '#8088a8'), 'center'); });
+    ROSTER.forEach(function (r, ri) {
+      if (ri % 2 === 0) band({ x: GX - 2, y: GY + ri * CH, w: COLS.length * CW + 4, h: CH });
+      COLS.forEach(function (c, ci) {
+        var v = PS.variant(r.src, c.v), cell = cellRect(ri, ci);
+        if (!v || !v.width) return;
+        var bob = ((Math.floor(t / 533) + ri + ci) % 2), x = cell.x + ((CW - v.width) >> 1), y = cell.y + CH - 3 - v.height + (bob && ri === selRow ? -1 : 0);
+        px(ctx, 'rgba(0,0,0,0.35)', cell.x + 6, cell.y + CH - 3, CW - 12, 1);
+        ctx.drawImage(v, x, y);
+      });
+    });
+    var sc = cellRect(selRow, selCol);
+    if (SK) SK.cursor(ctx, { x: sc.x + 2, y: sc.y + 2, w: CW - 4, h: CH - 4 }, 'bracket', t / 1000, {});
+    else {   // built-in bracket: four 1 px corners, light over a dark drop
+      var bo = (Math.floor(t / 266) % 2), bx0 = sc.x + 1 - bo, by0 = sc.y + 1 - bo, bx1 = sc.x + CW - 2 + bo, by1 = sc.y + CH - 2 + bo;
+      [['#06061a', 1], ['#ffe070', 0]].forEach(function (pc) {
+        var d = pc[1]; ctx.fillStyle = pc[0];
+        [[bx0, by0, 1, 1], [bx1, by0, -1, 1], [bx0, by1, 1, -1], [bx1, by1, -1, -1]].forEach(function (k) {
+          ctx.fillRect(Math.min(k[0], k[0] + k[2] * 4) + d, k[1] + d, 5, 1); ctx.fillRect(k[0] + d, Math.min(k[1], k[1] + k[3] * 4) + d, 1, 5);
+        });
+      });
+    }
+    if (SK) SK.cursor(ctx, { x: 6, y: GY + selRow * CH + (CH >> 1) - 2, w: 7, h: 5 }, 'hand', t / 1000, {});
+    else px(ctx, '#ffe070', 6, GY + selRow * CH + (CH >> 1) - 1, 6, 3);
+
+    // inspector: detected ramps -> what the selected variant makes of them, a 2x preview, cache counters
+    var sel = ROSTER[selRow], col = COLS[selCol], iy = PANEL.y + PANEL.h + 4, ih = H - iy - 4;
+    PS.drawRamps(ctx, sel.src, 4, iy, { variant: col.v === 'base' ? null : col.v, w: 196, h: ih, swatch: 7, maxSwatches: 6 });
+    var pv = win({ x: 204, y: iy, w: 54, h: ih });
+    var v = PS.variant(sel.src, col.v);
+    if (v && v.width) ctx.drawImage(v, 0, 0, v.width, v.height, 204 + ((54 - v.width * 2) >> 1), iy + ih - 6 - v.height * 2, v.width * 2, v.height * 2);
+    win({ x: 262, y: iy, w: 54, h: ih });
+    var st = PS.stats();
+    txt(sel.name.toUpperCase(), 289, iy + 7, tok('text.accent', '#ffe070'), 'center');
+    txt(col.l, 289, iy + 17, tok('text.main', '#ffffff'), 'center');
+    txt('C ' + st.variants, 289, iy + 31, tok('text.label', '#b8d0ff'), 'center');
+    txt('HIT ' + Math.round(st.hitRate * 100), 289, iy + 41, tok('text.label', '#b8d0ff'), 'center');
+  }
+
+  /* ---------------- clock, tour, input ---------------- */
+  var TOUR_MS = 900;
+  function tour() {
+    if (!LOOP) return;
+    var k = Math.floor(t / TOUR_MS), n = COLS.length - 1;
+    selRow = Math.floor(k / n) % ROSTER.length; selCol = 1 + (k % n);
+  }
+  function step() { t += STEP; PS.update(STEP); tour(); }
+  function hud() {
+    var st = PS.stats();
+    document.getElementById('s-src').textContent = ROSTER.length;
+    document.getElementById('s-var').textContent = st.variants;
+    document.getElementById('s-hit').textContent = Math.round(st.hitRate * 100) + '%';
+    document.getElementById('s-ms').textContent = st.buildMs.toFixed(1);
+    document.getElementById('selname').textContent = ROSTER[selRow].name;
+    document.getElementById('selvar').textContent = COLS[selCol].v + (mode === 'hand' ? ' · hand-set ramps' : ' · detected ramps');
+    document.querySelectorAll('#chips button').forEach(function (b, i) { b.setAttribute('aria-checked', String(i === selCol)); });
+    document.getElementById('sprite').value = String(selRow);
+  }
+  cv.addEventListener('pointerdown', function (e) {
+    var r = cv.getBoundingClientRect(), x = (e.clientX - r.left) * W / r.width, y = (e.clientY - r.top) * H / r.height;
+    var c = Math.floor((x - GX) / CW), rr = Math.floor((y - GY) / CH);
+    if (c >= 0 && c < COLS.length && rr >= 0 && rr < ROSTER.length) { selCol = c; selRow = rr; setLoop(false); }
+  });
+  addEventListener('keydown', function (e) {
+    var k = e.key, used = true;
+    if (k === 'ArrowLeft') selCol = (selCol + COLS.length - 1) % COLS.length;
+    else if (k === 'ArrowRight') selCol = (selCol + 1) % COLS.length;
+    else if (k === 'ArrowUp') selRow = (selRow + ROSTER.length - 1) % ROSTER.length;
+    else if (k === 'ArrowDown') selRow = (selRow + 1) % ROSTER.length;
+    else used = false;
+    if (used) { e.preventDefault(); setLoop(false); }
+  });
+
+  /* ---------------- controls ---------------- */
+  var chips = document.getElementById('chips');
+  COLS.forEach(function (c, i) { var b = document.createElement('button'); b.textContent = c.v; b.onclick = function () { selCol = i; setLoop(false); }; chips.appendChild(b); });
+  var sel = document.getElementById('sprite');
+  ROSTER.forEach(function (r, i) { var o = document.createElement('option'); o.value = i; o.textContent = r.name + (r.kind === 'rows' ? ' (string sprite)' : ' (canvas)'); sel.appendChild(o); });
+  sel.onchange = function () { selRow = +sel.value; setLoop(false); };
+  function setLoop(on) { LOOP = on; document.querySelectorAll('#loop button').forEach(function (b) { b.setAttribute('aria-checked', String((b.dataset.v === '1') === on)); }); }
+  document.querySelectorAll('#loop button').forEach(function (b) { b.onclick = function () { setLoop(b.dataset.v === '1'); }; });
+  setLoop(LOOP);
+  function fill(inp) { inp.style.setProperty('--fill', ((inp.value - inp.min) / (inp.max - inp.min) * 100) + '%'); }
+  function syncControls() {
+    document.querySelectorAll('input[data-key]').forEach(function (inp) { inp.value = params[inp.dataset.key]; fill(inp); var o = document.querySelector('[data-out=' + inp.dataset.key + ']'); if (o) o.textContent = params[inp.dataset.key]; });
+    document.querySelectorAll('.seg[data-key]').forEach(function (s) { s.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-checked', String((b.dataset.v || b.textContent) === String(params[s.dataset.key]))); }); });
+    document.querySelectorAll('select[data-key]').forEach(function (s) { s.value = params[s.dataset.key]; });
+    document.querySelectorAll('#mode button').forEach(function (b) { b.setAttribute('aria-checked', String(b.dataset.v === mode)); });
+    document.getElementById('skin').value = skinId;
+  }
+  function changed() { PS.setParams(params); if (mode === 'hand') ROSTER.forEach(function (r) { PS.setRamps(r.src, r.hand); }); syncControls(); }
+  document.querySelectorAll('input[data-key]').forEach(function (inp) { inp.oninput = function () { params[inp.dataset.key] = +inp.value; changed(); }; });
+  document.querySelectorAll('.seg[data-key] button').forEach(function (b) { b.onclick = function () { params[b.parentNode.dataset.key] = b.dataset.v || b.textContent; changed(); }; });
+  document.querySelectorAll('select[data-key]').forEach(function (s) { s.onchange = function () { params[s.dataset.key] = s.value; changed(); }; });
+  document.querySelectorAll('#mode button').forEach(function (b) { b.onclick = function () { mode = b.dataset.v; ROSTER.forEach(function (r) { PS.setRamps(r.src, mode === 'hand' ? r.hand : null); }); syncControls(); }; });
+  document.getElementById('skin').onchange = function (e) { skinId = e.target.value; var tt = PS.time(); build(); PS.update(tt); syncControls(); };
+  document.getElementById('reset').onclick = function () { resetParams(); mode = 'auto'; skinId = 'pixel16'; build(); syncControls(); setLoop(true); t = 0; };
+  syncControls();
+
+  /* ---------------- scale & loop ---------------- */
+  function fit() {
+    var avail = Math.min(cv.parentNode.parentNode.clientWidth - 12, 980), k = Math.max(1, Math.floor(avail / W));
+    cv.style.width = W * k + 'px'; cv.style.height = H * k + 'px';
+    document.getElementById('scaleinfo').textContent = W + '×' + H + ' native · ' + k + '×';
+  }
+  addEventListener('resize', fit); fit();
+
+  window.__demo = { ps: function () { return PS; }, roster: ROSTER, cols: COLS, sel: function () { return { row: selRow, col: selCol, variant: COLS[selCol].v }; } };
+  if (FREEZE) {
+    for (var i = 0, n = Math.floor(T_AT / STEP); i < n; i++) step();
+    paint(); hud();
+    document.documentElement.setAttribute('data-ready', '1');
+  } else {
+    var last = performance.now(), acc = 0, hudT = 0;
+    (function loop(now) {
+      if (now !== undefined) { acc += Math.min(250, now - last); last = now; }
+      while (acc >= STEP) { step(); acc -= STEP; }
+      paint();
+      if (now === undefined || now - hudT > 200) { hud(); hudT = now || 0; }
+      requestAnimationFrame(loop);
+    })();
+    document.documentElement.setAttribute('data-ready', '1');
+  }
+})();
+</script>
+</body>
+</html>

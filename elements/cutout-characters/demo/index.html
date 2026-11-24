@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cutout characters</title>
+<style>
+  :root {
+    --bg: #100e12; --panel: #19161c; --panel2: #231f28; --line: #322c38; --fg: #f1ece4; --muted: #a79e96; --gold: #f0bf6a; --ember: #ff9a4a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  body { overflow-x: hidden; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px 56px; }
+  header { padding: 26px 0 6px; }
+  .eyebrow { color: var(--gold); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; font-weight: 600; }
+  h1 { font-size: 30px; line-height: 1.15; margin: 6px 0 8px; letter-spacing: -.01em; }
+  header p { color: var(--muted); max-width: 800px; margin: 0; }
+  .stage { position: relative; margin-top: 18px; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); background: #000; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+  #scene { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; }
+  .hud { position: absolute; left: 10px; top: 10px; font: 11.5px ui-monospace, SFMono-Regular, Menlo, monospace; color: #e8e2da; background: rgba(14,10,12,.6); border: 1px solid rgba(255,255,255,.08); border-radius: 8px; padding: 6px 9px; pointer-events: none; white-space: pre; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px 18px; margin-top: 12px; padding: 12px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; align-items: center; }
+  .group { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+  .lbl { color: var(--muted); font-size: 13px; margin-right: 2px; }
+  .btn { background: var(--panel2); color: var(--fg); border: 1px solid var(--line); border-radius: 9px; padding: 5px 11px; font: inherit; font-size: 13px; cursor: pointer; }
+  .btn:hover { border-color: var(--gold); }
+  .btn.on { border-color: var(--gold); box-shadow: inset 0 -2px 0 var(--gold); }
+  .note { color: var(--muted); font-size: 13px; margin-top: 12px; max-width: 860px; }
+  .note code { color: var(--fg); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">L-10 &middot; Generated art</div>
+    <h1>Layered cutout characters</h1>
+    <p>Three original adventurers in a meadow at dusk, each painted once as separate cut-out parts and moved by a small bone rig in code: feet stay planted by IK, the idle breathes, attacks wind up before they strike, hits knock the body back and the cape follows on a spring. No frame-by-frame drawing.</p>
+  </header>
+
+  <div class="stage">
+    <canvas id="scene" width="960" height="540"></canvas>
+    <div class="hud" id="hud"></div>
+  </div>
+
+  <div class="controls">
+    <div class="group"><span class="lbl">Who</span>
+      <button class="btn on" data-who="all">All</button><button class="btn" data-who="sword">Sword</button><button class="btn" data-who="spear">Spear</button><button class="btn" data-who="mage">Mage</button></div>
+    <div class="group"><span class="lbl">Play</span>
+      <button class="btn on" data-anim="auto">Spar (auto)</button><button class="btn" data-anim="idle">Idle</button><button class="btn" data-anim="walk">Walk</button>
+      <button class="btn" data-anim="attack">Attack</button><button class="btn" data-anim="slash">Slash</button><button class="btn" data-anim="hurt">Hurt</button><button class="btn" data-anim="guard">Guard</button><button class="btn" data-anim="cheer">Cheer</button></div>
+    <div class="group"><span class="lbl">Key light</span>
+      <button class="btn on" data-light="left">From left</button><button class="btn" data-light="right">From right</button><button class="btn" data-light="off">Baked only</button></div>
+    <div class="group"><span class="lbl">Speed</span>
+      <button class="btn" data-speed="0.25">&frac14;&times;</button><button class="btn on" data-speed="1">1&times;</button></div>
+  </div>
+  <p class="note">URL: <code>?t=&lt;ms&gt;&amp;freeze=1</code> draws one deterministic frame of the auto spar (sword slash 600 ms, spear thrust 3000 ms, mage bolt 5200 ms); <code>?light=right</code>, <code>?stats=0</code> hides the readout (<code>?stats=1</code> shows it on phones), <code>?anim=attack&amp;who=sword</code> starts on a button. Keys: 1-3 pick, A attack, H hurt, W walk, L light.</p>
+</div>
+
+<script src="../../../demo-kit/kit-art.js"></script>
+<script src="../module/cutout-characters.js"></script>
+<script src="../assets/pack.js"></script>
+<script src="../../../demo-kit/kit.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Q = new URLSearchParams(location.search);
+  var VW = 960, VH = 540, STEP = 1000 / 60;
+  var narrow = (document.documentElement.clientWidth || innerWidth) < 600;
+  var S = { t: Q.has('t') ? Math.max(0, +Q.get('t') || 0) : null, freeze: Q.get('freeze') === '1', stats: Q.has('stats') ? Q.get('stats') !== '0' : !narrow, off: { sword: 0, spear: 0, mage: 0 },
+    light: Q.get('light') || 'left', who: Q.get('who') || 'all', mode: Q.get('anim') || 'auto', speed: 1, clock: 0, frame: 0, sparks: [] };
+  var cv = document.getElementById('scene'), ctx = cv.getContext('2d'), hud = document.getElementById('hud');
+  if (!S.stats) hud.style.display = 'none';
+  if (narrow) { hud.style.fontSize = '10px'; hud.style.padding = '2px 6px'; hud.style.top = 'auto'; hud.style.bottom = '6px'; }
+  var cut = GameDNA_Cutout.load(window.GameDNA_CutoutPack, { base: '../assets/', onReady: function () { if (window.GameDNA_DemoKit) window.GameDNA_DemoKit.ready(boot); else boot(); } });
+
+  // the cast: feet x, feet y, height, facing
+  var CAST = [
+    { id: 'sword', x: 392, y: 470, h: 300, facing: 1 },
+    { id: 'mage', x: 170, y: 430, h: 256, facing: 1 },
+    { id: 'spear', x: 668, y: 466, h: 304, facing: -1 }
+  ];
+  // auto spar: a 7.2 s loop of who attacks whom (pure function of the clock)
+  var CYCLE = 7200, SCRIPT = [
+    { at: 600, who: 'sword', target: 'spear' },
+    { at: 3000, who: 'spear', target: 'sword' },
+    { at: 5200, who: 'mage', target: 'spear' }
+  ];
+  var actors = {};
+
+  // ---- backdrop: the shared painted meadow at dusk from the repo's demo kit (the low sun on the left is the key light) ----
+  var KIT = window.GameDNA_DemoKit, GROUND = 452;
+  function drawBackdrop(g) {
+    if (!(KIT && KIT.backdrop(g, 'meadow-dusk', { x: 0, y: 0, w: VW, h: VH, groundY: GROUND }))) { g.fillStyle = '#6b5a4a'; g.fillRect(0, 0, VW, VH); }
+  }
+  // painted-style effects: flat warm shapes with the characters' brown line, no additive glow lines
+  var LINE = 'rgba(92,48,28,';
+  function shard(g, x, y, ang, r0, r1, wdt, fill, a) {   // a tapered kite from r0 to r1 along ang
+    var c = Math.cos(ang), s = Math.sin(ang), mx = x + c * (r0 + (r1 - r0) * 0.3), my = y + s * (r0 + (r1 - r0) * 0.3);
+    g.beginPath(); g.moveTo(x + c * r0, y + s * r0); g.lineTo(mx - s * wdt, my + c * wdt); g.lineTo(x + c * r1, y + s * r1); g.lineTo(mx + s * wdt, my - c * wdt); g.closePath();
+    g.fillStyle = fill; g.globalAlpha = a; g.fill(); g.lineWidth = 1.4; g.lineJoin = 'round'; g.strokeStyle = LINE + (0.7 * a) + ')'; g.globalAlpha = 1; g.stroke();
+  }
+  function hitFlare(g, x, y, k, warm) {   // k 0..1: a short star of uneven shards that opens and thins, plus a small core
+    var a = k < 0.5 ? 1 : Math.max(0, 1 - (k - 0.5) / 0.5), open = 1 - Math.pow(1 - Math.min(1, k * 2.2), 2), N = 9;
+    for (var i = 0; i < N; i++) {
+      var u = hash(i * 3.7 + 1), ang = -1.9 + i * (6.283 / N) + (u - 0.5) * 0.5, len = (i % 2 ? 26 : 46) * (0.7 + u * 0.6);
+      shard(g, x, y, ang, 7 + open * 10, 10 + open * len, (i % 2 ? 2.6 : 4.2) * (1 - k * 0.6), i % 3 === 0 ? (warm ? '#ffb45e' : '#ffd98a') : '#fff4d8', a);
+    }
+    g.globalAlpha = a; g.beginPath(); g.arc(x, y, 9 * (1 - k * 0.7) + 2, 0, 7); g.fillStyle = '#fffaf0'; g.fill();
+    g.lineWidth = 1.4; g.strokeStyle = LINE + (0.6 * a) + ')'; g.stroke(); g.globalAlpha = 1;
+  }
+  function bolt(g, x, y, px, py, r, a) {   // an ember with a tapered tail back along its path
+    var dx = x - px, dy = y - py, d = Math.sqrt(dx * dx + dy * dy) || 1, nx = -dy / d, ny = dx / d;
+    g.globalAlpha = a; g.beginPath(); g.moveTo(px, py); g.quadraticCurveTo(x + nx * r * 0.9 - dx * 0.2, y + ny * r * 0.9 - dy * 0.2, x + nx * r, y + ny * r);
+    g.arc(x, y, r, Math.atan2(ny, nx), Math.atan2(-ny, -nx), true); g.quadraticCurveTo(x - nx * r * 0.9 - dx * 0.2, y - ny * r * 0.9 - dy * 0.2, px, py); g.closePath();
+    g.fillStyle = '#ff9a3c'; g.fill(); g.lineWidth = 1.6; g.lineJoin = 'round'; g.strokeStyle = LINE + (0.75 * a) + ')'; g.stroke();
+    g.beginPath(); g.arc(x, y, r * 0.62, 0, 7); g.fillStyle = '#ffe9a8'; g.fill(); g.beginPath(); g.arc(x - r * 0.15, y - r * 0.15, r * 0.28, 0, 7); g.fillStyle = '#fffaf0'; g.fill();
+    g.globalAlpha = 1;
+  }
+  function hash(i) { var x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+
+  // ---- simulation (fixed 60 Hz step; everything visible derives from here) ----
+  function boot() {
+    CAST.forEach(function (c) { actors[c.id] = cut.actor(c.id, { h: c.h }); });
+    if (S.mode !== 'auto') setMode(S.mode);
+    wireUI();
+    if (S.t !== null) {
+      for (var n = Math.floor(S.t / STEP); n > 0; n--) step();
+      render();
+      if (S.freeze) { window.__frozen = true; document.documentElement.dataset.ready = '1'; return; }
+    }
+    document.documentElement.dataset.ready = '1';
+    var acc = 0, prev = null;
+    function frame(now) {
+      if (prev === null) prev = now;
+      acc += Math.min(250, now - prev) * S.speed; prev = now;
+      while (acc >= STEP) { step(); acc -= STEP; }
+      render(); requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+  function castOf(id) { for (var i = 0; i < CAST.length; i++) if (CAST[i].id === id) return CAST[i]; return null; }
+  function step() {
+    S.clock += STEP; S.frame++;
+    if (S.mode === 'auto') {
+      var ph = S.clock % CYCLE, prevPh = (S.clock - STEP) % CYCLE;
+      SCRIPT.forEach(function (s) {
+        if (prevPh < s.at && ph >= s.at || (ph < prevPh && s.at <= ph)) {
+          var tgt = s.target;
+          if (s.who === 'mage') {   // the bolt leaves the crystal at the strike and lands ~200 ms later
+            actors.mage.play('cast', { onHit: function (a) {
+              var c = castOf('mage'), p = a.point('tip', c.x, c.y, { h: c.h, facing: c.facing }), T = castOf(tgt);
+              if (p) S.sparks.push({ x: p.x, y: p.y, age: 0, mage: true, tx: T.x, ty: T.y - T.h * 0.55, tgt: tgt, landed: false });
+            } });
+          } else actors[s.who].play(s.who === 'sword' ? 'slash' : 'attack', { onHit: function (a) {
+            actors[tgt].play('hurt');
+            var c = castOf(s.who), p = a.point('tip', c.x, c.y, { h: c.h, facing: c.facing });
+            if (p) S.sparks.push({ x: p.x, y: p.y, age: 0, mage: false });
+          } });
+        }
+      });
+    }
+    CAST.forEach(function (c) {
+      // walk mode: the walker really travels at the walk cycle's ground speed (feet must not slide), wrapping round
+      var v = S.mode === 'walk' && sel(c.id) ? WALK_V : 0;
+      if (v) { S.off[c.id] += v * STEP / 1000; var X = c.x + S.off[c.id]; if (X > VW + 150) S.off[c.id] -= VW + 300; }
+      actors[c.id].update(STEP, { h: c.h, facing: faceOf(c), vx: v });
+    });
+    for (var i = S.sparks.length - 1; i >= 0; i--) {
+      var sp = S.sparks[i]; sp.age += STEP;
+      if (sp.mage && !sp.landed && sp.age >= 200) { sp.landed = true; actors[sp.tgt].play('hurt'); }
+      if (sp.age > (sp.mage ? 520 : 360)) S.sparks.splice(i, 1);
+    }
+  }
+  function sel(id) { return S.who === 'all' || S.who === id; }
+  // Walk mode: all walkers face right and travel at one ground speed, each loop matched to it with lib.walkSpeed, so
+  // planted feet stay put and the spacing between walkers never changes (they wrap round in single file)
+  var WALK_V = 190;
+  function faceOf(c) { return S.mode === 'walk' && sel(c.id) ? 1 : c.facing; }
+  function setMode(m) {
+    S.mode = m;
+    CAST.forEach(function (c) {
+      var a = actors[c.id]; if (!a) return;
+      if (!sel(c.id) && m !== 'auto') return;
+      S.off[c.id] = 0;
+      if (m === 'auto' || m === 'idle') { a.loop('idle'); a.pose(null); }
+      else if (m === 'walk') { a.pose(null); a.loop('walk', { speed: WALK_V / (cut.walkSpeed(c.id) * c.h) }); }
+      else if (m === 'cheer') { a.pose(null); a.loop(m); }
+      else if (m === 'guard') a.pose('guard', 1);
+      else a.play(m === 'attack' && c.id === 'mage' ? 'cast' : m === 'attack' && c.id === 'sword' ? 'slash' : m);
+    });
+  }
+
+  // ---- render ----
+  var hudMs = 0, hudN = 0, hudShown = 0;
+  function render() {
+    var dpr = window.devicePixelRatio || 1, r = cv.getBoundingClientRect(), w = Math.max(VW, Math.round((r.width || VW) * dpr)), h = Math.round(w * VH / VW);
+    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+    ctx.setTransform(w / VW, 0, 0, h / VH, 0, 0);
+    drawBackdrop(ctx);
+
+    var light = S.light === 'off' ? null : S.light;
+    var t0 = performance.now();
+    var order = CAST.slice().sort(function (a, b) { return a.y - b.y; });
+    order.forEach(function (c) {
+      actors[c.id].draw(ctx, c.x + S.off[c.id], c.y, { h: c.h, facing: faceOf(c), flash: 'auto', light: light, swoosh: c.id !== 'mage' });
+    });
+    var dt = performance.now() - t0;
+    S.sparks.forEach(function (s) {
+      if (s.mage) {   // an ember arcs from the crystal, then bursts where it lands
+        var kk = Math.min(1, s.age / 200), k0 = Math.max(0, kk - 0.22);
+        function at(q) { return [s.x + (s.tx - s.x) * q, s.y + (s.ty - s.y) * q - Math.sin(q * Math.PI) * 110]; }
+        if (s.age < 200) { var p1 = at(kk), p0 = at(k0); bolt(ctx, p1[0], p1[1], p0[0], p0[1], 11, 1); }
+        else hitFlare(ctx, s.tx, s.ty, Math.min(1, (s.age - 200) / 320), true);
+      } else hitFlare(ctx, s.x, s.y, Math.min(1, s.age / 360), false);
+    });
+    hudMs += dt; hudN++;
+    if (S.stats && (hudN >= 30 || S.freeze || hudShown === 0)) {
+      var st = cut.stats, a0 = actors.sword.info();
+      hud.textContent = narrow ? 'draw ' + (hudMs / hudN).toFixed(2) + ' ms  ' + w + 'x' + h : 'characters ' + CAST.length + '  draw ' + (hudMs / hudN).toFixed(2) + ' ms\nbacking ' + w + 'x' + h + '  mips ' + st.mipBuilds + '  layers ' + st.layerAllocs + '\nsword ' + a0.anim + ' k=' + a0.k.toFixed(2) + '  t=' + Math.round(S.clock) + ' ms';
+      hudMs = 0; hudN = 0; hudShown = 1;
+    }
+    window.__cutout = { clock: S.clock, frame: S.frame, mode: S.mode, light: S.light, actors: CAST.map(function (c) { var i = actors[c.id].info(); return { id: c.id, anim: i.anim, k: +i.k.toFixed(3), cape: +i.cape.toFixed(2) }; }) };
+  }
+
+  /* text state for critics and tools/sprites/statecheck.py (960-wide stage px): each fighter targets the one it attacks in SCRIPT; in walk
+     mode the walkers have no target and face their travel direction. facing = faceOf(c), the value update() and draw() get. */
+  window.__state = function () { return { t: Math.round(S.clock), actors: CAST.map(function (c) {
+    var walking = S.mode === 'walk' && sel(c.id), foe = SCRIPT.filter(function (s) { return s.who === c.id; })[0];
+    return { id: c.id, x: Math.round(c.x + S.off[c.id]), y: c.y, facing: faceOf(c) > 0 ? 'right' : 'left', target: walking || !foe ? null : foe.target, vx: walking ? WALK_V : 0, kind: 'cutout rig (L-10 pack, native right)' };
+  }) }; };
+
+  // ---- UI ----
+  function wireUI() {
+    function group(attr, fn) {
+      var bs = document.querySelectorAll('[data-' + attr + ']');
+      bs.forEach(function (b) { b.addEventListener('click', function () { if (attr !== 'anim' || b.dataset.anim === 'auto' || true) { bs.forEach(function (x) { x.classList.toggle('on', x === b); }); } fn(b.dataset[attr]); if (S.freeze) render(); }); });
+      return bs;
+    }
+    group('who', function (v) { S.who = v; });
+    group('anim', function (v) { setMode(v); });
+    group('light', function (v) { S.light = v; });
+    group('speed', function (v) { S.speed = +v; });
+    document.querySelectorAll('[data-light]').forEach(function (b) { b.classList.toggle('on', b.dataset.light === S.light); });
+    document.querySelectorAll('[data-anim]').forEach(function (b) { b.classList.toggle('on', b.dataset.anim === S.mode); });
+    document.querySelectorAll('[data-who]').forEach(function (b) { b.classList.toggle('on', b.dataset.who === S.who); });
+    addEventListener('keydown', function (e) {
+      var k = e.key.toLowerCase();
+      if (k === '1' || k === '2' || k === '3') S.who = ['sword', 'mage', 'spear'][+k - 1];
+      else if (k === 'a') setMode('attack'); else if (k === 'h') setMode('hurt'); else if (k === 'w') setMode('walk');
+      else if (k === 'l') S.light = S.light === 'left' ? 'right' : 'left';
+    });
+    addEventListener('resize', function () { render(); });
+  }
+})();
+</script>
+</body>
+</html>

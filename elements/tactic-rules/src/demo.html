@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conditional Tactic Rules</title>
+<style>
+:root {
+  --bg: #0c0a12; --panel: #16131f; --line: #2a2540; --text: #ece8f6; --dim: #9a93b4; --accent: #ffc857; --fired: #5fe0b0; --bad: #ff7a68; --lead: #8fb8ff;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1100px 560px at 25% -10%, #2a1d3a 0%, var(--bg) 62%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 16px 20px 10px; max-width: 1280px; margin: 0 auto; }
+.code { white-space: nowrap; font: 800 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #1a1206; background: linear-gradient(#ffe08a, var(--accent)); padding: 6px 8px; border-radius: 5px; box-shadow: 0 2px 10px #ffc85740; }
+h1 { font-size: 19px; margin: 0; letter-spacing: .01em; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; max-width: 900px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; padding: 0 20px 24px; max-width: 1280px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.frame { padding: 6px; background: linear-gradient(#2a2340, #14101e); border-radius: 12px; box-shadow: 0 0 0 1px #3a3352, 0 24px 60px #000a; }
+#game { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; background: #000; touch-action: none; cursor: pointer; }
+.caption { display: flex; justify-content: space-between; gap: 12px; color: var(--dim); font-size: 12px; padding: 0 4px; }
+.caption b { color: var(--text); font-weight: 600; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px 14px; min-width: 0; }
+.card p { margin: 0 0 10px; color: var(--dim); font-size: 12.5px; }
+h2 { margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+#log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow: auto; }
+#log li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 10px; align-items: start; padding: 7px 9px; border-radius: 8px; background: #1c1828; border: 1px solid #2a2540; font-size: 12.5px; }
+#log li:first-child { border-color: #4a3f22; background: linear-gradient(90deg, #2a2216, #1c1828 60%); }
+#log .chip { font: 800 11px/1 ui-monospace, Menlo, monospace; padding: 4px 6px; border-radius: 5px; color: #16121f; background: var(--accent); min-width: 34px; text-align: center; }
+#log .chip.else { background: #a7a0c2; } #log .chip.auto { background: var(--lead); } #log .chip.none { background: var(--bad); }
+#log .what { min-width: 0; overflow-wrap: anywhere; } #log .what b { color: #fff; }
+#log .trace { grid-column: 2; display: flex; flex-wrap: wrap; gap: 4px; }
+#log .trace span { font-size: 11px; padding: 1px 6px; border-radius: 4px; background: #262135; color: var(--dim); overflow-wrap: anywhere; }
+#log .trace span.fired { background: #163a2e; color: var(--fired); } #log .trace span.unusable { background: #3a1d1a; color: #ffb0a4; } #log .trace span.off { opacity: .55; text-decoration: line-through; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pair figure { margin: 0; min-width: 0; }
+.pair canvas { display: block; width: 100%; image-rendering: pixelated; image-rendering: crisp-edges; border-radius: 6px; box-shadow: 0 0 0 1px #3a3352; background: #000; }
+.pair figcaption { font-size: 12px; color: var(--dim); margin-top: 6px; }
+.pair figcaption b { color: var(--text); }
+aside { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.row { margin-bottom: 10px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 5px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--fill), #2e2842 var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #fff3d0; border: 2px solid #1a1206; box-shadow: 0 1px 6px #000a; cursor: pointer; }
+input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: #fff3d0; border: 2px solid #1a1206; }
+.seg { display: flex; background: #0f0d17; border: 1px solid var(--line); border-radius: 7px; padding: 2px; gap: 2px; flex-wrap: wrap; }
+.seg button { flex: 1 1 28%; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 4px; border-radius: 5px; cursor: pointer; }
+.seg button[aria-checked=true] { background: #2e2746; color: var(--text); box-shadow: inset 0 0 0 1px #4a4068, inset 0 -2px 0 var(--accent); }
+.seg button:hover { color: var(--text); }
+.tog { display: flex; gap: 6px; flex-wrap: wrap; }
+.tog button { flex: 1 1 28%; appearance: none; background: #0f0d17; border: 1px solid var(--line); color: var(--text); border-radius: 7px; padding: 8px 8px; font: 600 12px inherit; cursor: pointer; }
+.tog button.primary { background: linear-gradient(#ffd57a, #f0b23a); color: #1a1206; border-color: #00000060; box-shadow: inset 0 1px 0 #fff6, 0 2px 10px #ffc85733; }
+.tog button[aria-pressed=true] { box-shadow: inset 0 -2px 0 var(--fired); }
+.units { display: flex; flex-direction: column; gap: 8px; }
+.unit { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; font-size: 12.5px; }
+.unit select { appearance: none; background: #0f0d17; color: var(--text); border: 1px solid var(--line); border-radius: 7px; padding: 6px 26px 6px 8px; font: 600 12px inherit; background-image: linear-gradient(45deg, transparent 50%, var(--dim) 50%), linear-gradient(135deg, var(--dim) 50%, transparent 50%); background-position: right 12px center, right 7px center; background-size: 5px 5px; background-repeat: no-repeat; }
+.unit b { display: block; } .unit small { color: var(--dim); }
+.foot { color: var(--dim); font-size: 11.5px; border-top: 1px solid var(--line); padding-top: 10px; }
+.foot code { color: var(--text); overflow-wrap: anywhere; }
+kbd { font: 600 11px ui-monospace, Menlo, monospace; background: #241f33; border: 1px solid #3a3352; border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; color: var(--text); }
+@media (max-width: 1000px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 680px; width: 100%; margin: 0 auto; } }
+@media (max-width: 560px) { header { padding: 12px 16px 8px; } main { padding: 0 16px 16px; gap: 12px; } .frame { padding: 3px; } .caption { flex-direction: column; gap: 2px; } .pair { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">A-13</span>
+  <div><h1>Conditional tactic rules</h1><p>Every unit decides with an ordered list of rules, "condition → action": the first rule that holds and whose action is usable wins, otherwise the default. The evaluator is pure and explains itself (which rule fired and why the ones above it did not); players edit the list in a compact editor, and a plate in battle says why each unit did what it did.</p></div>
+</header>
+<main>
+  <section id="stage">
+    <div class="frame"><canvas id="game" width="1280" height="720" aria-label="A dusk arena: three heroes fight by their tactic rules"></canvas></div>
+    <div class="caption"><span><b>Watch:</b> every action comes from a rule; the plate names the unit, the rule and the target. At 9.5 s the editor opens on Sel, lowers "3+ foes → Volley" to 2+ and moves it to the top; her next turn casts Volley.</span><span><kbd>T</kbd> edit rules · <kbd>Space</kbd> pause</span></div>
+    <div class="card">
+      <h2>Decision log</h2>
+      <p>Each line is one <code>decide()</code>: the rule that fired, its reason, and the trace of every rule checked above it.</p>
+      <ol id="log"></ol>
+    </div>
+    <div class="card">
+      <h2>On a native pixel canvas</h2>
+      <p>The same module on 256 × 144 canvases, scaled with nearest-neighbour: built-in 5×7 and 3×5 bitmap fonts, whole-pixel plates and target ticks, and the editor at native size.</p>
+      <div class="pair">
+        <figure><canvas id="px" width="256" height="144"></canvas><figcaption><b>Why plate, crisp</b>: unit · rule, action → target, ticks on the target.</figcaption></figure>
+        <figure><canvas id="px2" width="256" height="224"></canvas><figcaption><b>Editor, crisp</b> (256 × 224): rows, value cell in edit, the live "Now:" line.</figcaption></figure>
+      </div>
+    </div>
+  </section>
+  <aside>
+    <div class="tog"><button type="button" id="edit" class="primary">Edit rules (T)</button><button type="button" id="pause" aria-pressed="false">Pause</button><button type="button" id="restart">Restart</button></div>
+    <div class="tog"><button type="button" id="script" aria-pressed="true">Script: on</button><button type="button" id="slow" aria-pressed="false">Speed: 1×</button></div>
+    <div>
+      <h2>Rule books</h2>
+      <div class="units" id="units"></div>
+    </div>
+    <div><h2>Parameters</h2><div id="params"></div></div>
+    <div class="foot">Deterministic: <code>?t=11000&amp;freeze=1</code> shows the same frame every time. Parameters work in the URL, e.g. <code>?theme=slate&amp;whyMs=2600</code>; <code>?editor=1</code> opens the editor.</div>
+  </aside>
+</main>
+<script src="../../../demo-kit/kit-art.js"></script>
+<script src="../../cutout-characters/module/cutout-characters.js"></script>
+<script src="../../cutout-characters/assets/pack.js"></script>
+<script src="../../../demo-kit/kit.js"></script>
+<script>/*MODULE*/</script>
+<script>/*MAIN*/</script>
+</body>
+</html>

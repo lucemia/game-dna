@@ -1,0 +1,180 @@
+{
+ "id": "talking-portraits",
+ "code": "D-05",
+ "kind": "addon",
+ "name": "Talking portraits",
+ "family": "talking-portraits",
+ "oneLiner": "Portraits animated by the dialogue: a typewriter that owns the line (or follows the game's own), a mouth that moves only while a letter is typed and shuts on spaces, punctuation, pauses and when the line ends, seeded random blinks, 1 px idle breathing, and an emotion tag per line (or inside it) that changes the face through a short blink-through with a 1 px posture beat, never a one-frame jump. Faces are code-drawn 16-bit busts from the D-04 generator (expressive-portraits.js, used through its API) or the game's own portrait through a draw callback; the speaker's framed panel sits in the game's dialogue box with a name plate, and any face can sit in a HUD and react to hits.",
+ "fits": [
+  "RPGs and adventures with dialogue boxes (villagers, quest givers, cutscenes)",
+  "turn-based battles that want battle barks and faces that wince when hit",
+  "visual-novel scenes inside a game",
+  "party HUDs and status screens with living faces"
+ ],
+ "notFor": [
+  "voice-acted games that need lip sync to audio (the mouth follows the typed text, not phonemes)",
+  "full-body characters (portraits are busts)",
+  "HD painted portraits (D-04 faces are 16-bit pixel art; a painted portrait can still use the draw callback if it has mouth and eye frames)"
+ ],
+ "interfaces": {
+  "time": "any",
+  "coords": "screen",
+  "layer": "ui",
+  "needs": [
+   "every place the game sets a dialogue or message line (open and each advance) and where it closes",
+   "the confirm key / tap handler (a press first finishes a typing line)",
+   "a fixed update step, also while the dialogue pauses the game (also the ?t= fast-forward)",
+   "the dialogue box rect in native px, drawn by the game; the game's own text drawing",
+   "a cast: a D-04 portrait spec or a draw callback per speaking character; expressive-portraits.js loaded first for specs"
+  ],
+  "provides": [
+   "the speaker's framed portrait inside the dialogue box and a name plate, with the text rect beside it (drawSpeaker -> layout)",
+   "the typed text as rows wrapped on the full line (no word jumps)",
+   "press() that finishes a typing line before the game advances",
+   "faces anywhere with drawFace, react(name, emotion, ms) for hits and wins",
+   "follow(text, shown) for games that keep their own typewriter",
+   "state() per face (emotion, eyes, mouth, transition) for tests"
+  ]
+ },
+ "params": [
+  {
+   "key": "cps",
+   "label": "Typing speed (chars/s)",
+   "type": "range",
+   "min": 10,
+   "max": 90,
+   "step": 5,
+   "default": 40
+  },
+  {
+   "key": "mouthMs",
+   "label": "Mouth frame (ms)",
+   "type": "range",
+   "min": 50,
+   "max": 160,
+   "step": 10,
+   "default": 80
+  },
+  {
+   "key": "transMs",
+   "label": "Expression change (ms)",
+   "type": "range",
+   "min": 120,
+   "max": 400,
+   "step": 20,
+   "default": 200
+  },
+  {
+   "key": "blinkMin",
+   "label": "Blink gap min (ms)",
+   "type": "range",
+   "min": 1000,
+   "max": 5000,
+   "step": 100,
+   "default": 2200
+  },
+  {
+   "key": "blinkMax",
+   "label": "Blink gap max (ms)",
+   "type": "range",
+   "min": 2000,
+   "max": 9000,
+   "step": 100,
+   "default": 5600
+  },
+  {
+   "key": "breathMs",
+   "label": "Breathing period (ms, 0 = off)",
+   "type": "select",
+   "options": [
+    3600,
+    2400,
+    0
+   ],
+   "default": 3600
+  },
+  {
+   "key": "size",
+   "label": "Portrait size (native px)",
+   "type": "select",
+   "options": [
+    48,
+    64
+   ],
+   "default": 48
+  },
+  {
+   "key": "frame",
+   "label": "Panel frame",
+   "type": "select",
+   "options": [
+    "window",
+    "plate",
+    "none"
+   ],
+   "default": "window"
+  },
+  {
+   "key": "nameTag",
+   "label": "Name plate",
+   "type": "select",
+   "options": [
+    "on",
+    "off"
+   ],
+   "default": "on"
+  }
+ ],
+ "variants": [
+  {
+   "name": "Classic 16-bit RPG (default)",
+   "params": {
+    "cps": 40,
+    "size": 48,
+    "frame": "window"
+   }
+  },
+  {
+   "name": "Chatty (fast text, quick mouth)",
+   "params": {
+    "cps": 60,
+    "mouthMs": 60
+   }
+  },
+  {
+   "name": "Solemn (slow text, slow changes)",
+   "params": {
+    "cps": 25,
+    "mouthMs": 110,
+    "transMs": 320,
+    "breathMs": 2400
+   }
+  },
+  {
+   "name": "Battle barks (no frame, large faces)",
+   "params": {
+    "frame": "none",
+    "size": 64,
+    "cps": 45
+   }
+  }
+ ],
+ "basketFiles": [
+  {
+   "from": "elements/expressive-portraits/module/expressive-portraits.js",
+   "to": "expressive-portraits.js"
+  }
+ ],
+ "assets": [
+  "module/talking-portraits.js: the element as one dependency-free script (global GameDNA_TalkingPortraits): typewriter with punctuation holds, mouth sync, blinks, breathing, emotion transitions, the speaker panel and name plate (5x7 caps built in), faces for HUDs",
+  "faces from elements/expressive-portraits/module/expressive-portraits.js (D-04), used through make() / draw() only; no image files",
+  "demo only: pixel-kit tavern room and actors, C-03 pixel-font for the dialogue text"
+ ],
+ "status": "draft",
+ "module": {
+  "file": "module/talking-portraits.js",
+  "global": "GameDNA_TalkingPortraits",
+  "version": "1.2.0",
+  "docs": "module/README.md"
+ }
+}

@@ -1,0 +1,64 @@
+{
+  "id": "pixel-font",
+  "code": "C-03",
+  "kind": "addon",
+  "name": "Pixel bitmap font",
+  "family": "text-rendering",
+  "oneLiner": "Every letter on a low-res canvas drawn from an original 1-bit bitmap font at whole pixels, so text is as crisp as the sprites at any scale; inline colour codes, word wrap, drop shadow or outline, and a typewriter that reveals dialogue letter by letter with pauses and blips.",
+  "fits": [
+    "turn-based RPG battle",
+    "platformer",
+    "action RPG",
+    "tactics / strategy RPG",
+    "adventure / dialogue scenes",
+    "roguelike",
+    "arcade (score, lives, timers)"
+  ],
+  "notFor": [
+    "games with non-Latin scripts (CJK, Arabic): the glyph set is printable ASCII plus a few symbols",
+    "high-resolution, smoothly scaled UIs where a vector font is wanted",
+    "long-form reading (documents, books): an 8 px font is for short game text"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "the game's text draw calls (fillText or a bitmap-text helper) and width helpers",
+      "frame clock in ms from the game's fixed step (for the typewriter only)",
+      "optional: the places where a message, caption or dialogue line is set, and the confirm key that advances it"
+    ],
+    "provides": [
+      "text widths and wrapped lines for layout",
+      "typewriter progress (done, characters shown) and a blip callback for sound",
+      "list of drawn text boxes (for tests and other overlays)"
+    ]
+  },
+  "params": [
+    { "key": "font", "label": "Font", "type": "select", "options": ["regular", "mono", "small"], "default": "regular" },
+    { "key": "hudFont", "label": "HUD font", "type": "select", "options": ["small", "regular", "mono"], "default": "small" },
+    { "key": "scale", "label": "Scale", "type": "select", "options": ["1", "2"], "default": "1" },
+    { "key": "shadow", "label": "Shadow", "type": "select", "options": ["drop", "outline", "both", "none"], "default": "drop" },
+    { "key": "color", "label": "Default colour", "type": "select", "options": ["white", "gold", "title", "cyan", "green"], "default": "white" },
+    { "key": "cps", "label": "Characters / second", "type": "range", "min": 10, "max": 120, "step": 5, "default": 40 },
+    { "key": "blipEvery", "label": "Blip every n letters", "type": "range", "min": 1, "max": 6, "step": 1, "default": 2 },
+    { "key": "pause", "label": "Pause after . ! ? (ms)", "type": "range", "min": 0, "max": 400, "step": 20, "default": 160 }
+  ],
+  "variants": [
+    { "name": "Console dialogue", "params": { "font": "regular", "shadow": "drop", "cps": 40, "pause": 160 } },
+    { "name": "Arcade outline", "params": { "font": "regular", "scale": "2", "shadow": "outline", "color": "gold", "cps": 60, "pause": 80 } },
+    { "name": "Tiny HUD", "params": { "font": "small", "hudFont": "small", "shadow": "drop" } },
+    { "name": "Slow storyteller", "params": { "font": "regular", "shadow": "both", "cps": 22, "pause": 300, "blipEvery": 1 } }
+  ],
+  "assets": [
+    "module/pixel-font.js: the element as one dependency-free script (global GameDNA_PixelFont): original 'regular' 6x8 proportional and 'small' 5x7 bitmap fonts (full printable ASCII plus ... arrows, heart, middle dot), layout, wrap, colour codes, shadows, typewriter, drawing",
+    "no image, font or audio files"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/pixel-font.js",
+    "global": "GameDNA_PixelFont",
+    "version": "1.0.0",
+    "docs": "module/README.md"
+  }
+}

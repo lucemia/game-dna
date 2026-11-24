@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Toasts &amp; Unlock Pop-ups</title>
+<style>
+:root {
+  --bg: #0b0912; --panel: #15121f; --line: #2a2540; --text: #ece8f6; --dim: #9a93b4; --accent: #ffb43a; --accent2: #7ab8ff;
+  --ach: #ffc53d; --quest: #5fc8ff; --item: #7fe39a; --unlock: #c48bff; --level: #ff9e4a; --info: #a9b7d6; --warn: #ff6457; --phys: #dfe5f3;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1100px 560px at 25% -10%, #2a1d40 0%, var(--bg) 62%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 16px 20px 10px; max-width: 1280px; margin: 0 auto; }
+.code { white-space: nowrap; font: 800 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #1a1206; background: linear-gradient(#ffd27a, var(--accent)); padding: 6px 8px; border-radius: 5px; box-shadow: 0 2px 10px #ffb43a40; }
+h1 { font-size: 19px; margin: 0; letter-spacing: .01em; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; max-width: 880px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; padding: 0 20px 24px; max-width: 1280px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.frame { padding: 6px; background: linear-gradient(#2a2340, #14101e); border-radius: 12px; box-shadow: 0 0 0 1px #3a3352, 0 24px 60px #000a; }
+#game { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; background: #000; }
+.caption { display: flex; justify-content: space-between; gap: 12px; color: var(--dim); font-size: 12px; padding: 0 4px; }
+.caption b { color: var(--text); font-weight: 600; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 12px; color: var(--dim); }
+.legend span::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 3px; background: var(--c); margin-right: 5px; vertical-align: -1px; box-shadow: 0 0 8px var(--c); }
+.cmp { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px 14px; }
+.cmp h2 { margin: 0 0 2px; }
+.cmp p { margin: 0 0 10px; color: var(--dim); font-size: 12.5px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pair figure { margin: 0; }
+.pair canvas { display: block; width: 100%; aspect-ratio: 16 / 9; image-rendering: pixelated; image-rendering: crisp-edges; border-radius: 6px; box-shadow: 0 0 0 1px #3a3352; background: #000; }
+.pair figcaption { font-size: 12px; color: var(--dim); margin-top: 6px; }
+.pair figcaption b { color: var(--text); }
+aside { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+h2 { margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.triggers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.triggers button { --c: var(--phys); appearance: none; border: 1px solid #00000060; border-radius: 7px; padding: 8px 2px 7px; cursor: pointer; color: var(--text); font: 600 11.5px/1.1 inherit;
+  background: linear-gradient(#2a2440, #1d192c); box-shadow: inset 0 1px 0 #ffffff14, inset 0 -2px 0 var(--c); transition: transform .06s, background .15s; }
+.triggers button:hover { background: linear-gradient(#352d50, #241f36); }
+.triggers button:active { transform: translateY(1px) scale(.98); }
+.triggers button i { display: block; font-style: normal; font: 900 15px/1 inherit; color: var(--c); margin-bottom: 3px; text-shadow: 0 0 10px var(--c), 0 1px 0 #000; }
+.row { margin-bottom: 10px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 5px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--fill), #2e2842 var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #fff3d0; border: 2px solid #1a1206; box-shadow: 0 1px 6px #000a; cursor: pointer; }
+input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: #fff3d0; border: 2px solid #1a1206; }
+.seg { display: flex; background: #0f0d17; border: 1px solid var(--line); border-radius: 7px; padding: 2px; gap: 2px; }
+.seg button { flex: 1; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 4px; border-radius: 5px; cursor: pointer; text-transform: capitalize; }
+.seg button[aria-checked=true] { background: #2e2746; color: var(--text); box-shadow: inset 0 0 0 1px #4a4068, inset 0 -2px 0 var(--accent); }
+.seg button:hover { color: var(--text); }
+.tog { display: flex; gap: 6px; }
+.tog button { flex: 1; appearance: none; background: #0f0d17; border: 1px solid var(--line); color: var(--text); border-radius: 7px; padding: 7px 8px; font: 600 12px inherit; cursor: pointer; }
+.tog button[aria-pressed=true] { box-shadow: inset 0 -2px 0 var(--heal); }
+.foot { color: var(--dim); font-size: 11.5px; border-top: 1px solid var(--line); padding-top: 10px; }
+.foot code { color: var(--text); }
+@media (max-width: 1000px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 680px; width: 100%; margin: 0 auto; } }
+@media (max-width: 560px) { header { padding: 12px 16px 8px; } main { padding: 0 16px 16px; gap: 12px; } .frame { padding: 3px; } .caption { flex-direction: column; gap: 2px; } .pair { grid-template-columns: 1fr; } .triggers { grid-template-columns: repeat(3, 1fr); } }
+
+.triggers { grid-template-columns: repeat(3, 1fr); }
+.chk { display: flex; gap: 6px; flex-wrap: wrap; }
+.chk button { flex: 1 1 30%; }
+.seg.wrap { flex-wrap: wrap; }
+.seg.wrap button { flex: 1 1 30%; text-transform: none; }
+.triggers button { font-size: 11px; }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">C-14</span>
+  <div><h1>Toasts &amp; unlock pop-ups</h1><p>Achievement, quest and item-get notices slide in from a screen edge, stack and glide, leave on a visible timer, merge duplicates into one card with a punching ×N badge, and queue when more arrive than fit. They keep to a safe area, move around the game's HUD rects, and never pause the game or take input.</p></div>
+</header>
+<main>
+  <section id="stage">
+    <div class="frame"><canvas id="game" width="640" height="360" aria-label="A meadow camp at nightfall with toast notifications"></canvas></div>
+    <div class="caption"><span><b>Watch:</b> three Moonherbs merge into one card (×3) while the quest card updates in place; the achievement lands with a sheen; a burst of five loot drops queues behind a “+2 more” chip. The minimap and HUD are never covered.</span><span>Keys 1–7 push toasts</span></div>
+    <div class="legend"><span style="--c:var(--ach)">achievement</span><span style="--c:var(--quest)">quest</span><span style="--c:var(--item)">item</span><span style="--c:var(--unlock)">unlock</span><span style="--c:var(--level)">level up</span><span style="--c:var(--info)">notice</span><span style="--c:var(--warn)">warning</span></div>
+    <div class="cmp">
+      <h2>On a native pixel canvas</h2>
+      <p>The same moment on a 256 × 144 canvas scaled up with nearest-neighbour. The module picks its crisp mode by itself there: built-in 5×7 and 3×5 bitmap fonts, 7×7 pixel icons, whole-pixel motion and a stepped fade.</p>
+      <div class="pair">
+        <figure><canvas id="px" width="256" height="144"></canvas><figcaption><b>Crisp mode</b>: pixel card, accent strip, icon, ×N badge, timer line.</figcaption></figure>
+        <figure><canvas id="px2" width="256" height="144"></canvas><figcaption><b>Crisp, bottom-left, frost theme</b>: the same events stacking upward.</figcaption></figure>
+      </div>
+    </div>
+  </section>
+  <aside>
+    <div>
+      <h2>Push a toast</h2>
+      <div class="triggers">
+        <button type="button" data-fire="achievement" style="--c:var(--ach)"><i>★</i>Achievement</button>
+        <button type="button" data-fire="quest" style="--c:var(--quest)"><i>⚑</i>Quest</button>
+        <button type="button" data-fire="item" style="--c:var(--item)"><i>◆</i>Item</button>
+        <button type="button" data-fire="burst" style="--c:var(--item)"><i>×6</i>Loot burst</button>
+        <button type="button" data-fire="unlock" style="--c:var(--unlock)"><i>⊙</i>Unlock</button>
+        <button type="button" data-fire="level" style="--c:var(--level)"><i>▲</i>Level up</button>
+        <button type="button" data-fire="info" style="--c:var(--info)"><i>i</i>Notice</button>
+        <button type="button" data-fire="warning" style="--c:var(--warn)"><i>!</i>Warning</button>
+        <button type="button" data-fire="clear" style="--c:var(--phys)"><i>⌫</i>Clear</button>
+      </div>
+    </div>
+    <div class="tog"><button type="button" id="auto" aria-pressed="true">Script: on</button><button type="button" id="slow" aria-pressed="false">Speed: 1×</button><button type="button" id="reset">Reset</button></div>
+    <div class="tog"><button type="button" id="hud" aria-pressed="true">HUD: on</button><button type="button" id="rects" aria-pressed="false">Avoid rects: hidden</button></div>
+    <div><h2>Parameters</h2><div id="params"></div></div>
+    <div class="foot">Deterministic: <code>?t=6900&amp;freeze=1</code> shows the same frame every time. Any parameter can be set in the URL, e.g. <code>?edge=bottom-left&amp;theme=frost</code>.</div>
+  </aside>
+</main>
+<script>/*MODULE*/</script>
+<script src="../../../demo-kit/kit-art.js"></script>
+<script src="../../cutout-characters/module/cutout-characters.js"></script>
+<script src="../../cutout-characters/assets/pack.js"></script>
+<script src="../../../demo-kit/kit.js"></script>
+<script>/*MAIN*/</script>
+</body>
+</html>

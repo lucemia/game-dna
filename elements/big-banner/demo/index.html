@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Big Banner Text</title>
+<style>
+:root {
+  --bg: #0d0b14; --panel: #16131f; --line: #2c2740; --text: #ece8f6; --dim: #9a93b4; --accent: #f2c35a; --accent2: #7ab8ff;
+  --phase: #6a9cff; --enemy: #ff7a5a; --clear: #ffc030; --defeat: #a898c8; --warn: #ffa030; --info: #c8d4f4;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1200px 600px at 30% -10%, #241c3a 0%, var(--bg) 60%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 14px 20px 10px; max-width: 1240px; margin: 0 auto; }
+.code { white-space: nowrap; font: 700 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #1a1206; background: var(--accent); padding: 6px 8px; border-radius: 4px; box-shadow: 0 0 0 1px #00000040, 0 2px 0 #8a6428; }
+h1 { font-size: 18px; margin: 0; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; padding: 0 20px 20px; max-width: 1240px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; display: flex; flex-direction: column; align-items: center; }
+.frame { padding: 6px; background: linear-gradient(#2a2340, #15111f); border-radius: 8px; box-shadow: 0 0 0 1px #3a3352, 0 18px 50px #00000080; }
+canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; border-radius: 3px; }
+.caption { display: flex; justify-content: space-between; gap: 12px; width: 100%; max-width: 780px; margin-top: 8px; color: var(--dim); font-size: 12px; }
+.caption b { color: var(--text); font-weight: 600; }
+#lamp { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 0; background: #5ad86a; box-shadow: 0 0 8px #5ad86a; }
+#lamp.on { background: #ff6a4a; box-shadow: 0 0 8px #ff6a4a; }
+aside { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+h2 { margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.triggers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.triggers button { --c: var(--phase); appearance: none; border: 1px solid #00000060; border-radius: 6px; padding: 8px 4px 6px; cursor: pointer; color: var(--text); font: 600 11.5px/1.1 inherit;
+  background: linear-gradient(#2a2440, #1e1a2e); box-shadow: inset 0 1px 0 #ffffff14, inset 0 -2px 0 color-mix(in srgb, var(--c) 70%, black); }
+.triggers button:hover { background: linear-gradient(#352d50, #241f36); }
+.triggers button:active { transform: translateY(1px); }
+.triggers button i { display: block; font-style: normal; font: 800 12px/1 ui-monospace, Menlo, monospace; color: var(--c); margin-bottom: 4px; letter-spacing: .04em; text-shadow: 0 1px 0 #000, 1px 0 0 #000, -1px 0 0 #000, 0 -1px 0 #000; }
+.triggers kbd { display: block; font: 10px/1 ui-monospace, Menlo, monospace; color: var(--dim); margin-top: 4px; }
+.row { margin-bottom: 10px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 5px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--fill), #2e2842 var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 4px; background: #fff3d0; border: 2px solid #1a1206; box-shadow: 0 1px 4px #000a; cursor: pointer; }
+.seg { display: flex; background: #0f0d17; border: 1px solid var(--line); border-radius: 6px; padding: 2px; gap: 2px; }
+.seg button { flex: 1; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 4px; border-radius: 4px; cursor: pointer; text-transform: capitalize; }
+.seg button[aria-checked=true] { background: #2e2746; color: var(--text); box-shadow: inset 0 0 0 1px #4a4068, inset 0 -2px 0 var(--accent); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+select { width: 100%; appearance: none; background: #0f0d17; color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; font: 600 12px inherit; }
+.foot { display: flex; justify-content: space-between; align-items: center; color: var(--dim); font-size: 11.5px; border-top: 1px solid var(--line); padding-top: 10px; gap: 8px; }
+.foot button { appearance: none; background: none; border: 1px solid var(--line); color: var(--text); border-radius: 5px; padding: 5px 9px; font: 600 11.5px inherit; cursor: pointer; }
+@media (max-width: 980px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 640px; width: 100%; margin: 0 auto; } }
+@media (max-width: 560px) { header { padding: 12px 16px 8px; } main { padding: 0 16px 16px; gap: 12px; } .frame { padding: 3px; } .caption { flex-direction: column; gap: 2px; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">C-04</span>
+  <div><h1>Big banner text</h1><p>Phase, wave and result banners: chunky letters slide in over a translucent band, hold, and wipe out. Queued so two never overlap; the host can read whether input should wait.</p></div>
+</header>
+<main>
+  <section id="stage">
+    <div class="frame"><canvas id="cv" width="256" height="224" aria-label="Battlefield with phase banners"></canvas></div>
+    <div class="caption"><span><span id="lamp"></span><b id="state">Ready</b> · <span id="now">no banner</span></span><span><span id="scaleinfo">256×224 native</span> · keys <b>1–8</b>, <b>D</b> dismiss</span></div>
+  </section>
+  <aside>
+    <div>
+      <h2>Show</h2>
+      <div class="triggers">
+        <button data-act="phase" style="--c:var(--phase)"><i>PLAYER</i>Phase<kbd>1</kbd></button>
+        <button data-act="enemy" style="--c:var(--enemy)"><i>ENEMY</i>Enemy<kbd>2</kbd></button>
+        <button data-act="wave" style="--c:var(--info)"><i>WAVE 2</i>Wave<kbd>3</kbd></button>
+        <button data-act="warn" style="--c:var(--warn)"><i>WARNING</i>Warn<kbd>4</kbd></button>
+        <button data-act="clear" style="--c:var(--clear)"><i>CLEAR</i>Stage clear<kbd>5</kbd></button>
+        <button data-act="victory" style="--c:var(--clear)"><i>VICTORY</i>Sticky<kbd>6</kbd></button>
+        <button data-act="defeat" style="--c:var(--defeat)"><i>DEFEAT</i>Defeat<kbd>7</kbd></button>
+        <button data-act="burst" style="--c:var(--accent2)"><i>×3</i>Queue test<kbd>8</kbd></button>
+        <button data-act="dismiss" style="--c:var(--dim)"><i>⏎</i>Dismiss<kbd>D</kbd></button>
+      </div>
+    </div>
+    <div class="row"><h2>Enter</h2><div class="seg" data-key="enter"><button>slide</button><button>scale</button><button>drop</button><button>wipe</button></div></div>
+    <div class="row"><h2>Exit</h2><div class="seg" data-key="exit"><button>wipe</button><button>slide</button><button>fade</button></div></div>
+    <div>
+      <div class="row"><label>Enter (ms) <output data-out="enterMs"></output></label><input type="range" data-key="enterMs" min="120" max="500" step="10"></div>
+      <div class="row"><label>Hold (ms) <output data-out="holdMs"></output></label><input type="range" data-key="holdMs" min="300" max="1500" step="50"></div>
+      <div class="row"><label>Exit (ms) <output data-out="exitMs"></output></label><input type="range" data-key="exitMs" min="120" max="500" step="10"></div>
+      <div class="row"><label>Letter stagger (drop) <output data-out="stagger"></output></label><input type="range" data-key="stagger" min="0" max="80" step="5"></div>
+      <div class="row"><label>Band opacity <output data-out="band"></output></label><input type="range" data-key="band" min="0" max="1" step="0.05"></div>
+    </div>
+    <div class="two">
+      <div><h2>Letter size</h2><div class="seg" data-key="size"><button>1</button><button>2</button><button>3</button></div></div>
+      <div><h2>Position</h2><div class="seg" data-key="position"><button>upper</button><button>center</button><button>lower</button></div></div>
+      <div><h2>Overlap</h2><div class="seg" data-key="queue"><button>queue</button><button>replace</button></div></div>
+      <div><h2>Blocks input</h2><div class="seg" data-key="block"><button>on</button><button>off</button></div></div>
+      <div><h2>Glint</h2><div class="seg" data-key="glint"><button>on</button><button>off</button></div></div>
+      <div><h2>Skin</h2><select id="skin"><option value="pixel16">pixel16</option><option value="flat-demo">flat (non-pixel)</option></select></div>
+    </div>
+    <div class="two">
+      <div><h2>Speed</h2><div class="seg" id="speed"><button data-v="1" aria-checked="true">1×</button><button data-v="0.5">½×</button><button data-v="0.25">¼×</button></div></div>
+      <div><h2>Loop</h2><div class="seg" id="loop"><button data-v="1" aria-checked="true">auto</button><button data-v="0">manual</button></div></div>
+    </div>
+    <div class="foot"><span>Same module as <b>module/big-banner.js</b> · URL: <code>?t=ms&amp;freeze=1</code>, <code>?enter=drop</code></span><button id="reset">Reset</button></div>
+  </aside>
+</main>
+<script src="../../../skins/skin-api.js"></script>
+<script src="../../../skins/pixel16.js"></script>
+<script src="../../../pixel-kit/pixel-scene.js"></script>
+<script src="../module/big-banner.js"></script>
+<script>
+'use strict';
+(function () {
+  var W = 256, H = 224, FIELD_H = 176, STEP = 1000 / 60;
+  var Q = new URLSearchParams(location.search), num = function (k, d) { var v = Q.get(k); return v == null || v === '' || isNaN(+v) ? d : +v; };
+  var FREEZE = Q.get('freeze') === '1', T_AT = num('t', 0), SPEED = 1, LOOP = Q.get('loop') !== '0';
+  var cv = document.getElementById('cv'), SKAPI = window.GameDNA_Skin, BB = window.GameDNA_BigBanner;
+
+  // a token-only, non-pixel skin to prove the banner draws through the skin (system fonts, smooth edges)
+  if (SKAPI) SKAPI.register({
+    id: 'flat-demo', name: 'Flat demo', pixel: false, native: { w: 256, h: 224, scale: 'fit', smoothing: true },
+    palette: { ink: '#29304d', paper: '#f4f6fb',
+      ui: { fill: '#ffffff', fillTo: '#eef1f8', edge: '#cdd2de', highlight: '#ffffff', shadow: 'rgba(40,46,90,0.25)' },
+      team: { a: '#5b6cff', b: '#ff6a5a', n: '#7b8199' },
+      overlay: { move: { fill: '#6f8cff', edge: '#4d68d6' }, attack: { fill: '#ff6f6f', edge: '#d9624f' }, threat: { fill: '#8f86ff', edge: '#5b4bff' }, heal: { fill: '#3fcf8e', edge: '#2f9e63' } },
+      fx: { hot: '#ff8a3c', cold: '#4aa8ff', heal: '#2f9e63', crit: '#f5b520', status: '#8f86ff' },
+      text: { main: '#ffffff', shadow: 'rgba(0,0,0,0)', outline: '#29304d' } },
+    fonts: { ui: { type: 'canvas', family: 'system-ui, -apple-system, sans-serif', size: 7, weight: 700 }, num: { type: 'canvas', family: 'system-ui, sans-serif', size: 11, weight: 800 },
+      display: { type: 'canvas', family: 'system-ui, -apple-system, "Segoe UI", sans-serif', size: 10, weight: 900, uppercase: true } },
+    shape: { radius: 4, padding: 4 }, shadow: { text: null, window: { blur: 4, dy: 1 } }, outline: { text: { width: 1 } }, motion: { snap: false }
+  });
+
+  /* ---------------- parameters (element.json defaults, URL overrides) ---------------- */
+  var params = {}; Object.keys(BB.DEFAULTS).forEach(function (k) { params[k] = BB.DEFAULTS[k]; });
+  Object.keys(params).forEach(function (k) { if (Q.has(k)) params[k] = typeof params[k] === 'number' ? num(k, params[k]) : Q.get(k); });
+  var skinId = Q.get('skin') || 'pixel16';
+
+  /* ---------------- scene art (original, drawn once) ---------------- */
+  function mk(w, h) { var c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+  function hashf(i) { var x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+  var BG = mk(W, H), b = BG.getContext('2d');
+  (function () {
+    var sky = ['#1a1240', '#2a1a58', '#44206a', '#6a2a6e', '#9a3a62', '#c85a52', '#e8844a', '#f4ac58'];
+    for (var y = 0; y < 82; y++) { var f = y / 82 * sky.length, i = Math.floor(f), d = (f - i) > (((y * 7) % 4) / 4) ? 1 : 0; b.fillStyle = sky[Math.min(sky.length - 1, i + d)]; b.fillRect(0, y, W, 1); }
+    for (var s = 0; s < 40; s++) { var sx = Math.floor(hashf(s) * W), sy = Math.floor(hashf(s + 99) * 34); b.fillStyle = s % 5 ? '#c8b8f0' : '#ffffff'; b.fillRect(sx, sy, 1, 1); }
+    b.fillStyle = '#ffe2a0'; for (var r = 0; r < 12; r++) { var hw = Math.round(Math.sqrt(144 - r * r)); b.fillRect(186 - hw, 72 - r, hw * 2, 1); }
+    b.fillStyle = '#fff4d0'; for (r = 0; r < 8; r++) { hw = Math.round(Math.sqrt(64 - r * r)); b.fillRect(186 - hw, 72 - r, hw * 2, 1); }
+    var ridge = function (base, amp, fr, ph, c1, c2) { for (var x = 0; x < W; x++) { var top = Math.round(base - Math.abs(Math.sin(x * fr + ph)) * amp - Math.max(0, Math.sin(x * fr * 2.3 + ph)) * amp * 0.4); b.fillStyle = c1; b.fillRect(x, top, 1, 110 - top); b.fillStyle = c2; b.fillRect(x, top, 1, 1); } };
+    ridge(70, 22, 0.031, 0.4, '#4a2a6a', '#7a4a8a'); ridge(82, 14, 0.047, 2.1, '#2e2050', '#5a3a72');
+    // keep on the far hill
+    var kx = 40, ky = 52; b.fillStyle = '#1c1238';
+    b.fillRect(kx, ky, 26, 22); b.fillRect(kx - 4, ky - 10, 8, 32); b.fillRect(kx + 22, ky - 8, 8, 30); b.fillRect(kx + 9, ky - 16, 8, 16);
+    for (var c = 0; c < 4; c++) { b.fillRect(kx - 4 + c * 2, ky - 12, 1, 2); b.fillRect(kx + 22 + c * 2, ky - 10, 1, 2); }
+    b.fillStyle = '#ffcf6a'; b.fillRect(kx + 12, ky - 10, 2, 3); b.fillRect(kx + 4, ky + 6, 2, 3); b.fillRect(kx + 17, ky + 8, 2, 3);
+    b.fillStyle = '#ff7a5a'; b.fillRect(kx + 13, ky - 22, 1, 6); b.fillRect(kx + 14, ky - 22, 4, 3);
+    // field: tiles with grass tufts
+    for (var ty = 88; ty < FIELD_H; ty += 8) for (var tx = 0; tx < W; tx += 8) {
+      var k = ((tx >> 3) + (ty >> 3)) % 2, depth = (ty - 88) / (FIELD_H - 88);
+      b.fillStyle = k ? (depth < 0.3 ? '#2e5a3a' : '#3a6e3e') : (depth < 0.3 ? '#2a5236' : '#346638'); b.fillRect(tx, ty, 8, 8);
+      if (hashf(tx * 3 + ty) > 0.6) { b.fillStyle = '#5a9a4a'; b.fillRect(tx + 2, ty + 3, 1, 2); b.fillRect(tx + 4, ty + 2, 1, 3); }
+      if (hashf(tx + ty * 5) > 0.93) { b.fillStyle = '#f0d070'; b.fillRect(tx + 5, ty + 5, 1, 1); }
+    }
+    b.fillStyle = '#20402a'; b.fillRect(0, 88, W, 2);
+    // dirt road
+    for (var y2 = 96; y2 < FIELD_H; y2++) { var cx = 128 + Math.round(Math.sin(y2 / 14) * 6), hw2 = 8 + Math.round((y2 - 96) / 7); b.fillStyle = '#7a5a3a'; b.fillRect(cx - hw2, y2, hw2 * 2, 1); b.fillStyle = '#9a7650'; b.fillRect(cx - hw2 + 2, y2, hw2 * 2 - 4, 1); if (y2 % 6 === 0) { b.fillStyle = '#6a4a2e'; b.fillRect(cx - 3, y2, 2, 1); } }
+  })();
+
+  // sprites: '.' clear, letters index the palette
+  function sprite(rows, pal) {
+    var c = mk(rows[0].length, rows.length), g = c.getContext('2d');
+    rows.forEach(function (r, y) { for (var x = 0; x < r.length; x++) if (pal[r[x]]) { g.fillStyle = pal[r[x]]; g.fillRect(x, y, 1, 1); } });
+    return c;
+  }
+  var OUT = '#120a1e';
+  var KNIGHT = sprite([
+    '....oooo....', '...ohhhho...', '..ohhwwhho..', '..ohssssho..', '..oossssoo..', '.oaaattaaao.', 'oaabbbbbbaao', 'oabbbybbbbao',
+    'osabbbbbbaso', 'osoabbbbaoso', '.o.aabbaa.o.', '...oaaaao...', '...obo.obo..', '...obo.obo..', '..oddo.oddo.', '..ooo...ooo.'],
+    { o: OUT, h: '#c8d0e8', w: '#ffffff', s: '#f0c8a0', a: '#3a64d8', b: '#2a4aa8', t: '#ffe070', y: '#ffe070', d: '#4a3a2a' });
+  var MAGE = sprite([
+    '.....oo.....', '....ompo....', '...omppo....', '..omppppo...', '.ooooooooo..', '..ossssso...', '..osesseo...', '..opppppo...', '.oppqppppo..',
+    '.opqqppppo..', 'oppqqppppo..', 'opqqqqppppo.', 'oppppppppoo.', '.oooooooo...'],
+    { o: OUT, m: '#b878f8', p: '#7038b0', q: '#5a2890', s: '#f0c8a0', e: '#20102a' });
+  var ARCHER = sprite([
+    '....ooo.....', '...oggfo....', '..ogsssoo...', '..osesseo...', '..ooffffoo..', '.ogggggggo..', 'oggfgggggo.l', 'ogofgggogol.', '.o.ogggo.ol.',
+    '...offfo..l.', '...ofofo....', '..oddoddo...', '..ooo.ooo...'],
+    { o: OUT, g: '#3a8a4a', f: '#2a6a3a', s: '#f0c8a0', e: '#20102a', d: '#5a3a2a', l: '#c8a060' });
+  var SLIME = sprite([
+    '.....oooo.....', '...oossssoo....', '..osswssssso...', '.osswwssssssso.', '.osssssssesso..', 'ossesssssssso..', 'osssssssssssso.', 'ossssssssssssso',
+    '.ottttttttttto.', '..ooooooooooo..'],
+    { o: OUT, s: '#5ad870', w: '#e0ffe0', e: '#10301a', t: '#2a8a4a' });
+  var BAT = sprite([
+    'o............o', 'oo....oo....oo', 'owo..oeeo..owo', 'owwoowrrwoowwo', '.owwwwwwwwwwo.', '..owoowwoowo..', '...o..oo..o...'],
+    { o: OUT, w: '#6a4a9a', e: '#9a7ac8', r: '#ff4a4a' });
+  var OGRE = sprite([
+    '....oooooo....', '...ossssssoo...', '..osrsssrssso..', '..ossssssssso..', '..osswwwwssso..', '.ooossssssooo..', 'ossoccccccossso', 'osssccccccsssso',
+    'ossoccccccoosso', '.oooccccccoooo.', '...occccccco...', '...occoooccco..', '..obbo...obbo..', '..oooo...oooo..'],
+    { o: OUT, s: '#c87a4a', r: '#ffe070', w: '#f4f0e0', c: '#6a4a2a', b: '#3a2a1a' });
+  var UNITS = [
+    { img: KNIGHT, x: 52, y: 128, ph: 0 }, { img: MAGE, x: 30, y: 150, ph: 1.3 }, { img: ARCHER, x: 72, y: 152, ph: 2.1 },
+    { img: SLIME, x: 182, y: 132, ph: 0.5 }, { img: BAT, x: 206, y: 112, ph: 1.7, fly: 1 }, { img: OGRE, x: 214, y: 150, ph: 2.6 }
+  ];
+  // pixel skins: the field is a drawn meadow from the shared pixel scene kit (pixel-kit/pixel-scene.js) under the dusk sky,
+  // tinted once for the evening light; units are the pixel16 skin's 18x22 unit sprites plus one shaded slime
+  var PXS = window.GameDNA_PixelScene, FIELD_Y = 84;
+  function kitOn() { var S0 = SKAPI ? SKAPI.resolve(skinId) : null; return !!PXS && !!S0 && S0.pixel !== false && !!S0.unitToken; }
+  var BGK = null;
+  function buildKit() {
+    var sc = PXS.scene({ seed: 33, pines: true, map: [
+      '................',
+      'TT.TTP..TTPT.TTT',
+      '.......pp.......',
+      '.......pp...,,..',
+      '.......ppp..,,,.',
+      '..,,....pp......',
+      '........ppp.....'], props: [{ k: 'boulder', x: 240, y: 62 }, { k: 'bush', x: 104, y: 100 }, { k: 'rock', x: 160, y: 50 }, { k: 'stump', x: 14, y: 66 }, { k: 'bush', x: 164, y: 104, o: { v: 1 } }, { k: 'flowers', x: 96, y: 56, o: { v: 1 } }, { k: 'log', x: 236, y: 102 }] });
+    BGK = mk(W, H); var q = BGK.getContext('2d'); q.drawImage(BG, 0, 0);
+    // layer = ground (from map row 1 down) + standing props; the treeline (map row 1) rises over the far ridge
+    var f = mk(W, H), fq = f.getContext('2d'); fq.drawImage(sc.ground(0), 0, 16, W, 96, 0, FIELD_Y, W, 96);
+    sc.items.slice().sort(function (a, c) { return a.y - c.y; }).forEach(function (it) { it.draw(fq, 0, 0, FIELD_Y - 16); });
+    q.drawImage(f, 0, 0);
+    // evening light: one flat multiply over the field and the trees (no gradient, pixels stay whole)
+    var m = mk(W, H), mq = m.getContext('2d'); mq.drawImage(f, 0, 0); mq.globalCompositeOperation = 'source-in'; mq.fillStyle = '#b89ac4'; mq.fillRect(0, 0, W, H);
+    q.globalCompositeOperation = 'multiply'; q.drawImage(m, 0, 0); q.globalCompositeOperation = 'source-over';
+  }
+  function blob(w, h, ramp) {
+    var c = mk(w + 2, h + 2), q = c.getContext('2d'), cx = w / 2, cy = h * 0.58, rx = w / 2 - 0.5, ry = h * 0.42, x, y;
+    for (y = 0; y < h; y++) for (x = 0; x < w; x++) {
+      var dx = (x + 0.5 - cx) / rx, dy = (y + 0.5 - cy) / ry; if (dy < 0) dy *= 0.78 + 0.22 * (1 - Math.abs(dx));
+      var d = dx * dx + dy * dy; if (d > 1) continue;
+      var l = -dx * 0.5 - dy * 0.75 + (1 - d) * 0.4;
+      q.fillStyle = l > 0.62 ? ramp[3] : l > 0.18 ? ramp[2] : l > -0.3 ? ramp[1] : ramp[0]; q.fillRect(x + 1, y + 1, 1, 1);
+    }
+    var ey = Math.round(h * 0.5) + 1, ex = Math.round(w * 0.3) + 1; q.fillStyle = '#1a0e22'; q.fillRect(ex, ey, 2, 3); q.fillRect(w - ex, ey, 2, 3); q.fillStyle = '#ffffff'; q.fillRect(ex, ey, 1, 1); q.fillRect(w - ex, ey, 1, 1);
+    var id = q.getImageData(0, 0, w + 2, h + 2), a = id.data, add = [], W2 = w + 2, H2 = h + 2, op = function (X, Y) { return X >= 0 && Y >= 0 && X < W2 && Y < H2 && a[(Y * W2 + X) * 4 + 3] > 0; };
+    for (y = 0; y < H2; y++) for (x = 0; x < W2; x++) if (!op(x, y) && (op(x + 1, y) || op(x - 1, y) || op(x, y + 1) || op(x, y - 1))) add.push([x, y]);
+    q.fillStyle = OUT; add.forEach(function (p2) { q.fillRect(p2[0], p2[1], 1, 1); });
+    return c;
+  }
+  var KSLIME = blob(22, 17, ['#1e6a3a', '#34a850', '#6ad870', '#e0ffe0']);
+  var KUNITS = [
+    { kind: 'knight', team: 'a', x: 56, y: 126, f: 1 }, { kind: 'mage', team: 'a', x: 30, y: 148, f: 1 }, { kind: 'archer', team: 'a', x: 78, y: 156, f: 1 }, { kind: 'lord', team: 'a', x: 90, y: 128, f: 1 },
+    { img: KSLIME, x: 176, y: 150 }, { kind: 'monster', team: 'b', x: 180, y: 124, f: -1 }, { kind: 'fighter', team: 'b', x: 210, y: 140, f: -1 }, { kind: 'mage', team: 'b', x: 234, y: 160, f: -1 }
+  ];
+  function kRect(u, t) { return u.img ? { x: u.x - (u.img.width >> 1), y: u.y - u.img.height + ((Math.floor(t / 420) % 2) ? 1 : 0), w: u.img.width, h: u.img.height } : { x: u.x - 9, y: u.y - 22, w: 18, h: 22 }; }
+  function unitRect(u, t) { var bob = u.fly ? Math.round(Math.sin(t / 220 + u.ph) * 3) : ((Math.floor(t / 420 + u.ph) % 2) ? -1 : 0); return { x: u.x - (u.img.width >> 1), y: u.y - u.img.height + bob, w: u.img.width, h: u.img.height }; }
+
+  /* ---------------- the module ---------------- */
+  var HUD = [{ x: 0, y: FIELD_H, w: 96, h: H - FIELD_H }, { x: 96, y: FIELD_H, w: W - 96, h: H - FIELD_H }];
+  var sim = { t: 0, turn: 1, phaseLabel: 'PLAYER', loopAt: 0 };
+  var bn;
+  function makeBanner() {
+    bn = BB.create({
+      bounds: { x: 0, y: 0, w: W, h: FIELD_H }, skin: skinId, params: params,
+      getObstacles: function () { return (kitOn() ? KUNITS.map(function (u, i) { var r = kRect(u, sim.t); r.id = 'u' + i; return r; }) : UNITS.map(function (u, i) { var r = unitRect(u, sim.t); r.id = 'u' + i; return r; })).concat(HUD); },
+      onStart: function (e) { if (e.kind === 'phase' && /PLAYER/.test(e.text)) sim.phaseLabel = 'PLAYER'; if (e.kind === 'enemy') sim.phaseLabel = 'ENEMY'; }
+    });
+  }
+  makeBanner();
+
+  /* ---------------- scripted loop (deterministic: driven by sim time) ---------------- */
+  var LOOP_MS = 15400;
+  var SCRIPT = [
+    [200, function () { bn.show('PLAYER PHASE', { kind: 'phase', sub: 'TURN 1' }); }],
+    [1900, function () { bn.show('ENEMY PHASE', { kind: 'enemy' }); }],
+    [3600, function () { sim.turn = 2; bn.show('WAVE 2', { kind: 'info', sub: 'REINFORCEMENTS ARRIVE' }); bn.show('PLAYER PHASE', { kind: 'phase', sub: 'TURN 2' }); }],
+    [6900, function () { bn.show('WARNING', { kind: 'warn', sub: 'A GREAT BEAST APPROACHES' }); }],
+    [8700, function () { bn.show('STAGE CLEAR', { kind: 'clear' }); }],
+    [10400, function () { bn.show('VICTORY', { kind: 'clear', hold: 0, sub: 'PRESS Z TO CONTINUE' }); }],
+    [12400, function () { bn.dismiss(); }],
+    [13200, function () { bn.show('DEFEAT', { kind: 'defeat', sub: 'THE KEEP HAS FALLEN' }); }]
+  ];
+  var sIdx = 0;
+  function stepSim() {
+    sim.t += STEP;
+    if (LOOP) {
+      var lt = sim.t - sim.loopAt;
+      while (sIdx < SCRIPT.length && lt >= SCRIPT[sIdx][0]) { SCRIPT[sIdx][1](); sIdx++; }
+      if (lt >= LOOP_MS) { sim.loopAt = sim.t; sIdx = 0; sim.turn = 1; bn.clear(); }
+    }
+    bn.update(STEP);
+  }
+
+  /* ---------------- drawing ---------------- */
+  var SKN = function () { return SKAPI ? SKAPI.resolve(skinId) : null; };
+  var low = mk(W, H), lg = low.getContext('2d'); lg.imageSmoothingEnabled = false;
+  function drawWorld(g) {
+    var t = sim.t;
+    if (kitOn()) {
+      if (!BGK) buildKit();
+      g.drawImage(BGK, 0, 0);
+      for (var j = 0; j < 14; j++) { var ex = (j * 37 + t * (0.012 + (j % 3) * 0.006)) % (W + 10) - 5, ey = 92 + ((j * 29) % 80) - ((t * 0.01 + j * 13) % 30); g.fillStyle = j % 2 ? '#ffcf6a' : '#ff8a4a'; g.fillRect(Math.round(ex), Math.round(ey), 1, 1); }
+      var SK0 = SKN();
+      KUNITS.slice().sort(function (a, c) { return a.y - c.y; }).forEach(function (u) {
+        var r = kRect(u, t);
+        if (u.img) { g.fillStyle = 'rgba(10,8,30,0.4)'; g.fillRect(u.x - 8, u.y - 2, 16, 2); g.fillRect(u.x - 6, u.y, 12, 1); g.drawImage(u.img, r.x, r.y); }
+        else SK0.unitToken(g, r, { team: u.team, kind: u.kind, facing: u.f }, t / 1000);
+      });
+      return;
+    }
+    g.drawImage(BG, 0, 0);
+    // drifting embers
+    for (var i = 0; i < 14; i++) { var x = (i * 37 + t * (0.012 + (i % 3) * 0.006)) % (W + 10) - 5, y = 92 + ((i * 29) % 80) - ((t * 0.01 + i * 13) % 30); g.fillStyle = i % 2 ? '#ffcf6a' : '#ff8a4a'; g.fillRect(Math.round(x), Math.round(y), 1, 1); }
+    UNITS.slice().sort(function (a, c) { return a.y - c.y; }).forEach(function (u) {
+      var r = unitRect(u, t);
+      g.fillStyle = 'rgba(10,20,10,0.45)'; g.fillRect(u.x - (u.img.width >> 1) + 2, u.y + (u.fly ? 10 : 0), u.img.width - 4, 2);
+      g.drawImage(u.img, r.x, r.y);
+    });
+  }
+  function drawHud(g) {
+    var S = SKN();
+    if (S) {
+      S.frame(g, HUD[0], { team: sim.phaseLabel === 'ENEMY' ? 'b' : 'a' });
+      S.text(g, 'TURN ' + sim.turn, 10, FIELD_H + 10, { font: 'ui' });
+      S.text(g, sim.phaseLabel + ' PHASE', 10, FIELD_H + 22, { font: 'ui', color: sim.phaseLabel === 'ENEMY' ? '#ffd8cc' : '#d0e0ff' });
+      S.frame(g, HUD[1], { team: 'n' });
+      var busy = bn.busy();
+      S.text(g, 'INPUT', 106, FIELD_H + 10, { font: 'ui' });
+      S.text(g, busy ? 'WAIT' : 'READY', 146, FIELD_H + 10, { font: 'ui', color: busy ? '#ffb0a0' : '#b8ffc0' });
+      S.text(g, 'QUEUE ' + Math.max(0, bn.count() - 1), 106, FIELD_H + 22, { font: 'ui' });
+      if (S.bar) S.bar(g, { x: 106, y: FIELD_H + 34, w: 140, h: 4 }, busy ? 0.3 : 1, busy ? 'hpLow' : 'hp', { style: 'meter' });
+    }
+  }
+
+  var ctx = cv.getContext('2d');
+  function render() {
+    var S = SKN(), pixel = !S || S.pixel !== false, k = pixel ? 1 : 3;
+    if (cv.width !== W * k) { cv.width = W * k; cv.height = H * k; fit(); }
+    if (pixel) {
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false;
+      drawWorld(ctx); drawHud(ctx); bn.draw(ctx);
+    } else {
+      drawWorld(lg);
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false; ctx.drawImage(low, 0, 0, W * k, H * k);
+      ctx.setTransform(k, 0, 0, k, 0, 0); ctx.imageSmoothingEnabled = true; drawHud(ctx); bn.draw(ctx);
+    }
+    var c = bn.current();
+    document.getElementById('lamp').className = bn.busy() ? 'on' : '';
+    document.getElementById('state').textContent = bn.busy() ? 'Input waits' : 'Ready';
+    document.getElementById('now').textContent = c ? c.text + ' (' + c.kind + ', ' + c.stage + (c.sticky ? ', sticky' : '') + ')' + (bn.count() > 1 ? ' + ' + (bn.count() - 1) + ' queued' : '') : 'no banner';
+    document.documentElement.dataset.state = JSON.stringify({ t: Math.round(sim.t), banner: c, busy: bn.busy(), rect: bn.rect(), count: bn.count() });
+  }
+  function fit() {
+    var avail = Math.min(document.getElementById('stage').clientWidth - 12, 780), s = Math.max(1, Math.floor(avail / W));
+    cv.style.width = W * s + 'px'; cv.style.height = H * s + 'px';
+    document.getElementById('scaleinfo').textContent = '256×224 native · ' + s + '×';
+  }
+  addEventListener('resize', fit); fit();
+
+  /* ---------------- controls ---------------- */
+  var ACT = {
+    phase: function () { bn.show('PLAYER PHASE', { kind: 'phase', sub: 'TURN ' + sim.turn }); },
+    enemy: function () { bn.show('ENEMY PHASE', { kind: 'enemy' }); },
+    wave: function () { bn.show('WAVE ' + (++sim.turn), { kind: 'info', sub: 'REINFORCEMENTS ARRIVE' }); },
+    warn: function () { bn.show('WARNING', { kind: 'warn', sub: 'A GREAT BEAST APPROACHES' }); },
+    clear: function () { bn.show('STAGE CLEAR', { kind: 'clear' }); },
+    victory: function () { bn.show('VICTORY', { kind: 'clear', hold: 0, sub: 'PRESS D TO DISMISS' }); },
+    defeat: function () { bn.show('DEFEAT', { kind: 'defeat', sub: 'THE KEEP HAS FALLEN' }); },
+    burst: function () { bn.show('ENEMY PHASE', { kind: 'enemy' }); bn.show('WAVE ' + (++sim.turn), { kind: 'info' }); bn.show('PLAYER PHASE', { kind: 'phase', sub: 'TURN ' + sim.turn }); },
+    dismiss: function () { bn.dismiss(); }
+  };
+  function manual() { if (LOOP) setLoop(false); }
+  document.querySelectorAll('.triggers button').forEach(function (btn) { btn.addEventListener('click', function () { manual(); ACT[btn.dataset.act](); }); });
+  addEventListener('keydown', function (e) { var m = { 1: 'phase', 2: 'enemy', 3: 'wave', 4: 'warn', 5: 'clear', 6: 'victory', 7: 'defeat', 8: 'burst', d: 'dismiss', D: 'dismiss' }[e.key]; if (m) { manual(); ACT[m](); } });
+  function syncControls() {
+    document.querySelectorAll('input[type=range][data-key]').forEach(function (inp) {
+      var k = inp.dataset.key; inp.value = params[k];
+      var fill = (params[k] - inp.min) / (inp.max - inp.min) * 100; inp.style.setProperty('--fill', fill + '%');
+      document.querySelector('[data-out="' + k + '"]').textContent = params[k];
+    });
+    document.querySelectorAll('.seg[data-key]').forEach(function (seg) { seg.querySelectorAll('button').forEach(function (bt) { bt.setAttribute('aria-checked', String(bt.textContent === String(params[seg.dataset.key]))); }); });
+    document.getElementById('skin').value = skinId;
+  }
+  document.querySelectorAll('input[type=range][data-key]').forEach(function (inp) { inp.addEventListener('input', function () { params[inp.dataset.key] = +inp.value; bn.setParams(params); syncControls(); }); });
+  document.querySelectorAll('.seg[data-key]').forEach(function (seg) { seg.querySelectorAll('button').forEach(function (bt) { bt.addEventListener('click', function () { var k = seg.dataset.key; params[k] = typeof BB.DEFAULTS[k] === 'number' ? +bt.textContent : bt.textContent; bn.setParams(params); syncControls(); }); }); });
+  document.getElementById('skin').addEventListener('change', function (e) { skinId = e.target.value; makeBanner(); sim.loopAt = sim.t; sIdx = 0; });
+  function seg(id, fn) { var el = document.getElementById(id); el.querySelectorAll('button').forEach(function (bt) { bt.addEventListener('click', function () { el.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-checked', String(x === bt)); }); fn(+bt.dataset.v); }); }); }
+  seg('speed', function (v) { SPEED = v; });
+  function setLoop(on) { LOOP = on; document.querySelectorAll('#loop button').forEach(function (x) { x.setAttribute('aria-checked', String(+x.dataset.v === (on ? 1 : 0))); }); if (on) { sim.loopAt = sim.t; sIdx = 0; bn.clear(); } }
+  seg('loop', function (v) { setLoop(!!v); });
+  if (!LOOP) setLoop(false);
+  document.getElementById('reset').addEventListener('click', function () { Object.keys(BB.DEFAULTS).forEach(function (k) { params[k] = BB.DEFAULTS[k]; }); skinId = 'pixel16'; makeBanner(); syncControls(); setLoop(true); });
+  syncControls();
+
+  /* text state for critics and tools/sprites/statecheck.py: who stands where, which way each unit is drawn, which side it fights */
+  window.__state = function () {
+    var kit = kitOn(), list = kit ? KUNITS : UNITS, mean = function (team) { var a = KUNITS.filter(function (u) { return u.team === team; }); return Math.round(a.reduce(function (s, u) { return s + u.x; }, 0) / a.length); };
+    return { t: Math.round(sim.t), actors: list.map(function (u, i) {
+      if (!kit || u.img) return { id: (kit ? 'slime' : 'unit') + i, x: u.x, y: u.y, facing: null, target: null, noFace: 'frontal art' };
+      return { id: u.team + '-' + u.kind + i, x: u.x, y: u.y, facing: u.f === -1 ? 'left' : 'right', target: mean(u.team === 'a' ? 'b' : 'a') };
+    }) };
+  };
+
+  /* ---------------- run ---------------- */
+  if (FREEZE) {
+    var n = Math.floor(T_AT / STEP); for (var i = 0; i < n; i++) stepSim(); render();
+  } else {
+    var last = performance.now(), acc = 0;
+    (function loop(now) { acc += Math.min(250, now - last) * SPEED; last = now; while (acc >= STEP) { stepSim(); acc -= STEP; } render(); requestAnimationFrame(loop); })(performance.now());
+  }
+})();
+</script>
+</body>
+</html>

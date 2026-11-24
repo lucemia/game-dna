@@ -1,0 +1,841 @@
+{
+ "format": "gamedna-rig-table/1",
+ "note": "ONE table per character. Sizes and joints in U (U = rest height / 16). Parts attach by parent joint + pivot; only the pelvis has a height (hipY). Checked by tools/sprites/rigtable.py check.",
+ "skeleton": "pelvis > torso > head, collar, armN > foreN > weapon, armF > foreF > shield, cape; pelvis > thighN > shinN > footN, thighF > shinF > footF, skirt",
+ "tolerances": {
+  "U": 0.05,
+  "pairs": 0.15
+ },
+ "characters": [
+  {
+   "id": "sword",
+   "U": 35.491,
+   "heightU": 16,
+   "hipY": 7.71,
+   "sole": 0.72,
+   "sizes": {
+    "head": [
+     4.45,
+     4.56
+    ],
+    "torso": [
+     4.25,
+     4.62
+    ],
+    "collar": [
+     2.09,
+     1.16
+    ],
+    "pelvis": [
+     4.06,
+     3.89
+    ],
+    "cape": [
+     5.13,
+     4.82
+    ],
+    "armN": [
+     2.0,
+     3.49
+    ],
+    "foreN": [
+     1.27,
+     3.49
+    ],
+    "armF": [
+     1.52,
+     3.27
+    ],
+    "foreF": [
+     1.38,
+     3.32
+    ],
+    "weapon": [
+     7.04,
+     1.63
+    ],
+    "shield": [
+     2.65,
+     3.66
+    ],
+    "thighN": [
+     1.83,
+     4.68
+    ],
+    "footN": [
+     2.31,
+     1.24
+    ],
+    "shinN": [
+     2.31,
+     5.02
+    ],
+    "thighF": [
+     1.86,
+     4.56
+    ],
+    "footF": [
+     2.62,
+     1.27
+    ],
+    "shinF": [
+     2.62,
+     5.02
+    ]
+   },
+   "joints": {
+    "head": {
+     "parent": "torso",
+     "at": "head",
+     "parentJoint": [
+      2.17,
+      0.55
+     ],
+     "pivot": [
+      2.86,
+      3.24
+     ]
+    },
+    "torso": {
+     "parent": "pelvis",
+     "at": "torso",
+     "parentJoint": [
+      2.1,
+      0.42
+     ],
+     "pivot": [
+      2.17,
+      4.31
+     ]
+    },
+    "collar": {
+     "parent": "torso",
+     "at": "collar",
+     "parentJoint": [
+      2.73,
+      0.89
+     ],
+     "pivot": [
+      1.04,
+      0.58
+     ]
+    },
+    "pelvis": {
+     "parent": null,
+     "at": "ground + hipY",
+     "pivot": [
+      2.1,
+      1.75
+     ]
+    },
+    "cape": {
+     "parent": "torso",
+     "at": "cape",
+     "parentJoint": [
+      2.13,
+      0.59
+     ],
+     "pivot": [
+      3.06,
+      0.28
+     ]
+    },
+    "armN": {
+     "parent": "torso",
+     "at": "armN",
+     "parentJoint": [
+      0.92,
+      1.4
+     ],
+     "pivot": [
+      0.9,
+      0.72
+     ]
+    },
+    "foreN": {
+     "parent": "armN",
+     "at": "fore",
+     "parentJoint": [
+      0.89,
+      2.66
+     ],
+     "pivot": [
+      0.63,
+      0.49
+     ]
+    },
+    "armF": {
+     "parent": "torso",
+     "at": "armF",
+     "parentJoint": [
+      3.13,
+      1.4
+     ],
+     "pivot": [
+      0.77,
+      0.52
+     ]
+    },
+    "foreF": {
+     "parent": "armF",
+     "at": "fore",
+     "parentJoint": [
+      0.67,
+      2.53
+     ],
+     "pivot": [
+      0.63,
+      0.46
+     ]
+    },
+    "weapon": {
+     "parent": "foreN",
+     "at": "hand",
+     "parentJoint": [
+      0.67,
+      3.05
+     ],
+     "pivot": [
+      0.98,
+      0.82
+     ]
+    },
+    "shield": {
+     "parent": "foreF",
+     "at": "hand",
+     "parentJoint": [
+      0.78,
+      2.88
+     ],
+     "pivot": [
+      0.97,
+      1.84
+     ]
+    },
+    "thighN": {
+     "parent": "pelvis",
+     "at": "thighN",
+     "parentJoint": [
+      1.43,
+      2.4
+     ],
+     "pivot": [
+      0.92,
+      0.6
+     ]
+    },
+    "footN": {
+     "parent": "shinN",
+     "at": "ankle",
+     "parentJoint": [
+      0.93,
+      4.29
+     ],
+     "pivot": [
+      0.93,
+      0.52
+     ]
+    },
+    "shinN": {
+     "parent": "thighN",
+     "at": "shin",
+     "parentJoint": [
+      0.78,
+      3.77
+     ],
+     "pivot": [
+      1.1,
+      0.49
+     ]
+    },
+    "thighF": {
+     "parent": "pelvis",
+     "at": "thighF",
+     "parentJoint": [
+      2.73,
+      2.4
+     ],
+     "pivot": [
+      0.94,
+      0.58
+     ]
+    },
+    "footF": {
+     "parent": "shinF",
+     "at": "ankle",
+     "parentJoint": [
+      1.06,
+      4.27
+     ],
+     "pivot": [
+      1.06,
+      0.52
+     ]
+    },
+    "shinF": {
+     "parent": "thighF",
+     "at": "shin",
+     "parentJoint": [
+      0.99,
+      3.88
+     ],
+     "pivot": [
+      1.08,
+      0.48
+     ]
+    }
+   },
+   "bones": {
+    "armN": 1.94,
+    "foreN": 2.57,
+    "armF": 2.01,
+    "foreF": 2.42,
+    "thighN": 3.18,
+    "shinN": 3.81,
+    "thighF": 3.31,
+    "shinF": 3.79
+   },
+   "neck": {
+    "piece": "head",
+    "region": "head piece below its chin landmark",
+    "overlay": "collar",
+    "halfWidthU": 0.9,
+    "minOverTorsoU2": 0.25,
+    "minOverlayOverHeadU2": 0.05,
+    "headTiltDeg": 12
+   }
+  },
+  {
+   "id": "spear",
+   "U": 37.488,
+   "heightU": 16,
+   "hipY": 7.6,
+   "sole": 0.69,
+   "sizes": {
+    "head": [
+     3.25,
+     4.16
+    ],
+    "torso": [
+     4.19,
+     4.72
+    ],
+    "pelvis": [
+     4.16,
+     5.68
+    ],
+    "cape": [
+     5.6,
+     5.6
+    ],
+    "armN": [
+     1.71,
+     3.31
+    ],
+    "foreN": [
+     1.44,
+     3.33
+    ],
+    "armF": [
+     1.65,
+     3.23
+    ],
+    "foreF": [
+     1.39,
+     3.31
+    ],
+    "weapon": [
+     10.83,
+     1.87
+    ],
+    "thighN": [
+     1.76,
+     4.48
+    ],
+    "footN": [
+     2.03,
+     1.17
+    ],
+    "shinN": [
+     2.03,
+     4.75
+    ],
+    "thighF": [
+     1.87,
+     4.61
+    ],
+    "footF": [
+     2.93,
+     1.2
+    ],
+    "shinF": [
+     2.93,
+     4.75
+    ]
+   },
+   "joints": {
+    "head": {
+     "parent": "torso",
+     "at": "head",
+     "parentJoint": [
+      2.09,
+      0.74
+     ],
+     "pivot": [
+      1.62,
+      3.71
+     ]
+    },
+    "torso": {
+     "parent": "pelvis",
+     "at": "torso",
+     "parentJoint": [
+      2.07,
+      0.38
+     ],
+     "pivot": [
+      2.09,
+      4.4
+     ]
+    },
+    "pelvis": {
+     "parent": null,
+     "at": "ground + hipY",
+     "pivot": [
+      2.07,
+      1.44
+     ]
+    },
+    "cape": {
+     "parent": "torso",
+     "at": "cape",
+     "parentJoint": [
+      2.09,
+      0.5
+     ],
+     "pivot": [
+      3.08,
+      0.37
+     ]
+    },
+    "armN": {
+     "parent": "torso",
+     "at": "armN",
+     "parentJoint": [
+      0.78,
+      1.43
+     ],
+     "pivot": [
+      0.94,
+      0.53
+     ]
+    },
+    "foreN": {
+     "parent": "armN",
+     "at": "fore",
+     "parentJoint": [
+      0.84,
+      2.18
+     ],
+     "pivot": [
+      0.61,
+      0.43
+     ]
+    },
+    "armF": {
+     "parent": "torso",
+     "at": "armF",
+     "parentJoint": [
+      3.49,
+      1.43
+     ],
+     "pivot": [
+      0.83,
+      0.51
+     ]
+    },
+    "foreF": {
+     "parent": "armF",
+     "at": "fore",
+     "parentJoint": [
+      0.88,
+      2.12
+     ],
+     "pivot": [
+      0.54,
+      0.43
+     ]
+    },
+    "weapon": {
+     "parent": "foreN",
+     "at": "hand",
+     "parentJoint": [
+      0.82,
+      2.84
+     ],
+     "pivot": [
+      3.26,
+      0.93
+     ]
+    },
+    "thighN": {
+     "parent": "pelvis",
+     "at": "thighN",
+     "parentJoint": [
+      1.26,
+      2.28
+     ],
+     "pivot": [
+      0.88,
+      0.57
+     ]
+    },
+    "footN": {
+     "parent": "shinN",
+     "at": "ankle",
+     "parentJoint": [
+      0.82,
+      4.05
+     ],
+     "pivot": [
+      0.82,
+      0.48
+     ]
+    },
+    "shinN": {
+     "parent": "thighN",
+     "at": "shin",
+     "parentJoint": [
+      0.78,
+      3.83
+     ],
+     "pivot": [
+      0.96,
+      0.41
+     ]
+    },
+    "thighF": {
+     "parent": "pelvis",
+     "at": "thighF",
+     "parentJoint": [
+      2.48,
+      2.28
+     ],
+     "pivot": [
+      0.93,
+      0.58
+     ]
+    },
+    "footF": {
+     "parent": "shinF",
+     "at": "ankle",
+     "parentJoint": [
+      1.04,
+      4.04
+     ],
+     "pivot": [
+      1.04,
+      0.5
+     ]
+    },
+    "shinF": {
+     "parent": "thighF",
+     "at": "shin",
+     "parentJoint": [
+      0.81,
+      3.94
+     ],
+     "pivot": [
+      0.9,
+      0.41
+     ]
+    }
+   },
+   "bones": {
+    "armN": 1.66,
+    "foreN": 2.42,
+    "armF": 1.61,
+    "foreF": 2.39,
+    "thighN": 3.26,
+    "shinN": 3.64,
+    "thighF": 3.36,
+    "shinF": 3.63
+   },
+   "neck": {
+    "piece": "head",
+    "region": "head piece below its chin landmark",
+    "overlay": null,
+    "halfWidthU": 0.9,
+    "minOverTorsoU2": 0.25,
+    "minOverlayOverHeadU2": 0,
+    "headTiltDeg": 12
+   }
+  },
+  {
+   "id": "mage",
+   "U": 31.531,
+   "heightU": 16,
+   "hipY": 7.41,
+   "sole": 0.69,
+   "sizes": {
+    "head": [
+     4.12,
+     4.69
+    ],
+    "torso": [
+     3.52,
+     5.52
+    ],
+    "pelvis": [
+     3.87,
+     3.81
+    ],
+    "skirt": [
+     5.84,
+     5.84
+    ],
+    "armN": [
+     1.71,
+     4.5
+    ],
+    "foreN": [
+     2.79,
+     4.6
+    ],
+    "armF": [
+     1.78,
+     4.5
+    ],
+    "foreF": [
+     2.76,
+     4.57
+    ],
+    "weapon": [
+     1.87,
+     10.21
+    ],
+    "thighN": [
+     1.78,
+     4.25
+    ],
+    "footN": [
+     2.6,
+     1.17
+    ],
+    "shinN": [
+     2.6,
+     4.76
+    ],
+    "thighF": [
+     1.71,
+     4.19
+    ],
+    "footF": [
+     2.6,
+     1.17
+    ],
+    "shinF": [
+     2.6,
+     4.69
+    ]
+   },
+   "joints": {
+    "head": {
+     "parent": "torso",
+     "at": "head",
+     "parentJoint": [
+      2.3,
+      1.12
+     ],
+     "pivot": [
+      2.49,
+      3.55
+     ]
+    },
+    "torso": {
+     "parent": "pelvis",
+     "at": "torso",
+     "parentJoint": [
+      1.93,
+      0.27
+     ],
+     "pivot": [
+      1.76,
+      5.13
+     ]
+    },
+    "pelvis": {
+     "parent": null,
+     "at": "ground + hipY",
+     "pivot": [
+      1.93,
+      1.35
+     ]
+    },
+    "skirt": {
+     "parent": "pelvis",
+     "at": "skirt",
+     "parentJoint": [
+      1.93,
+      0.49
+     ],
+     "pivot": [
+      2.92,
+      0.16
+     ]
+    },
+    "armN": {
+     "parent": "torso",
+     "at": "armN",
+     "parentJoint": [
+      0.66,
+      1.67
+     ],
+     "pivot": [
+      0.86,
+      0.58
+     ]
+    },
+    "foreN": {
+     "parent": "armN",
+     "at": "fore",
+     "parentJoint": [
+      0.75,
+      3.72
+     ],
+     "pivot": [
+      1.29,
+      0.5
+     ]
+    },
+    "armF": {
+     "parent": "torso",
+     "at": "armF",
+     "parentJoint": [
+      2.96,
+      1.67
+     ],
+     "pivot": [
+      0.9,
+      0.57
+     ]
+    },
+    "foreF": {
+     "parent": "armF",
+     "at": "fore",
+     "parentJoint": [
+      0.81,
+      3.61
+     ],
+     "pivot": [
+      0.85,
+      0.49
+     ]
+    },
+    "weapon": {
+     "parent": "foreF",
+     "at": "hand",
+     "parentJoint": [
+      1.97,
+      3.52
+     ],
+     "pivot": [
+      0.94,
+      6.11
+     ]
+    },
+    "thighN": {
+     "parent": "pelvis",
+     "at": "thighN",
+     "parentJoint": [
+      1.29,
+      1.9
+     ],
+     "pivot": [
+      0.9,
+      0.55
+     ]
+    },
+    "footN": {
+     "parent": "shinN",
+     "at": "ankle",
+     "parentJoint": [
+      1.04,
+      4.07
+     ],
+     "pivot": [
+      1.04,
+      0.49
+     ]
+    },
+    "shinN": {
+     "parent": "thighN",
+     "at": "shin",
+     "parentJoint": [
+      0.76,
+      3.62
+     ],
+     "pivot": [
+      1.04,
+      0.42
+     ]
+    },
+    "thighF": {
+     "parent": "pelvis",
+     "at": "thighF",
+     "parentJoint": [
+      2.53,
+      1.9
+     ],
+     "pivot": [
+      0.86,
+      0.54
+     ]
+    },
+    "footF": {
+     "parent": "shinF",
+     "at": "ankle",
+     "parentJoint": [
+      1.06,
+      4.0
+     ],
+     "pivot": [
+      1.06,
+      0.48
+     ]
+    },
+    "shinF": {
+     "parent": "thighF",
+     "at": "shin",
+     "parentJoint": [
+      0.79,
+      3.55
+     ],
+     "pivot": [
+      0.98,
+      0.42
+     ]
+    }
+   },
+   "bones": {
+    "armN": 3.14,
+    "foreN": 3.22,
+    "armF": 3.03,
+    "foreF": 3.23,
+    "thighN": 3.08,
+    "shinN": 3.65,
+    "thighF": 3.02,
+    "shinF": 3.59
+   },
+   "neck": {
+    "piece": "head",
+    "region": "head piece below its chin landmark",
+    "overlay": null,
+    "halfWidthU": 0.9,
+    "minOverTorsoU2": 0.25,
+    "minOverlayOverHeadU2": 0,
+    "headTiltDeg": 12
+   }
+  }
+ ]
+}

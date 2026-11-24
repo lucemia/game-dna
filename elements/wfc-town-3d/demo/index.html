@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wave-collapse Town Builder</title>
+<style>
+  :root { --ink: #3d3026; --soft: #7a5a3a; --card: rgba(255, 251, 242, 0.95); --line: rgba(120, 90, 60, 0.22); --blue: #5fa3d0; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #2c8fb4; font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif; color: var(--ink); }
+  #stage { position: fixed; left: 0; top: 0; right: 300px; bottom: 0; }
+  #gl, #hud { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; }
+  #hud { pointer-events: none; }
+  #panel { position: fixed; right: 0; top: 0; bottom: 0; width: 300px; overflow-y: auto; background: #fbf5e9; border-left: 1px solid var(--line); box-sizing: border-box; padding: 16px 16px 24px; }
+  h1 { font-size: 17px; margin: 0 0 2px; } .sub { font-size: 12px; color: var(--soft); margin: 0 0 14px; line-height: 1.4; }
+  .grp { background: #fffdf8; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; }
+  .grp h2 { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--soft); margin: 0 0 8px; }
+  label { display: flex; justify-content: space-between; align-items: center; font-size: 13px; margin: 6px 0 2px; } label b { font-size: 12px; color: var(--soft); }
+  input[type=range] { width: 100%; accent-color: #5fa3d0; }
+  .row { display: flex; gap: 6px; flex-wrap: wrap; }
+  button { font: inherit; font-size: 13px; font-weight: bold; color: var(--ink); background: #f1e6d4; border: 1px solid var(--line); border-radius: 10px; padding: 7px 10px; cursor: pointer; }
+  button.on { background: var(--blue); color: #fff; border-color: transparent; }
+  .chip { width: 34px; height: 34px; border-radius: 50%; padding: 0; border: 3px solid transparent; }
+  .chip.on { border-color: var(--ink); }
+  .keys { font-size: 12px; color: var(--soft); line-height: 1.6; }
+  @media (max-width: 700px) { #stage { right: 0; bottom: 42%; } #panel { left: 0; top: 58%; width: auto; border-left: 0; border-top: 1px solid var(--line); } }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="gl"></canvas><canvas id="hud"></canvas></div>
+<div id="panel">
+  <h1>Wave-collapse town builder</h1>
+  <p class="sub">Click a cell to raise it: sea becomes land, land becomes a house, a house gains a storey. Walls, doors, roofs, stairs and arches resolve from the neighbours. Right-click or Remove lowers it.</p>
+  <div class="grp"><h2>Build</h2>
+    <div class="row"><button id="bGrow" class="on">Build</button><button id="bShrink">Remove</button><button id="bUndo">Undo</button><button id="bRedo">Redo</button></div>
+    <div class="row" style="margin-top:6px"><button id="bReroll">Re-roll town</button><button id="bPlay">Watch it build</button><button id="bClear">Empty island</button></div>
+  </div>
+  <div class="grp"><h2>Palette</h2><div class="row" id="chips"></div></div>
+  <div class="grp"><h2>Rule weights</h2>
+    <label>Arches <b id="vArch"></b></label><input id="arch" type="range" min="0" max="20" step="0.5">
+    <label>Turrets <b id="vTurret"></b></label><input id="turret" type="range" min="0" max="20" step="0.5">
+    <label>Flat terraces <b id="vFlat"></b></label><input id="flat" type="range" min="0" max="6" step="0.1">
+    <label>Front doors <b id="vDoor"></b></label><input id="door" type="range" min="0" max="6" step="0.1">
+    <label>Balconies <b id="vBalc"></b></label><input id="balc" type="range" min="0" max="3" step="0.05">
+    <label>Seed <b id="vSeed"></b></label><input id="seed" type="range" min="1" max="40" step="1">
+  </div>
+  <div class="grp"><h2>Camera and look</h2>
+    <label>Pitch <b id="vPitch"></b></label><input id="pitch" type="range" min="20" max="70" step="1">
+    <label>Zoom <b id="vZoom"></b></label><input id="zoom" type="range" min="0.6" max="2.4" step="0.05">
+    <label>Gulls <b id="vGulls"></b></label><input id="gulls" type="range" min="0" max="6" step="1">
+    <div class="row" style="margin-top:6px"><button id="bShadow" class="on">Soft shadows</button><button id="bL">Turn left</button><button id="bR">Turn right</button></div>
+  </div>
+  <div class="grp keys">Keys: arrows move the cursor, Z build, X remove, U undo, Y redo, Q / E turn, + / - zoom, 1-4 palettes. Drag to orbit, wheel to zoom.</div>
+</div>
+<script src="three.min.js"></script>
+<script src="../module/wfc-town-3d.js"></script>
+<script>
+'use strict';
+const STEP = 1000 / 60, Q = new URLSearchParams(location.search), FREEZE = Q.get('freeze') === '1', T_AT = +Q.get('t') || 0;
+const G = 14, M = GameDNA_WfcTown3D;
+const VILLAGE = [
+  '00000000000000',
+  '00000111110000',
+  '00011223211000',
+  '00112252221100',
+  '00122111132100',
+  '01123131213210',
+  '01121131112110',
+  '01221111122310',
+  '00133222313100',
+  '00112141221100',
+  '00011222110000',
+  '00000111100000',
+  '00000000000000',
+  '00000000000000'];
+const EMPTY = ['00000000000000', '00000000000000', '00000000000000', '00000000000000', '00000111100000', '00001111110000', '00001111110000', '00001111110000', '00001111110000', '00000111100000', '00000000000000', '00000000000000', '00000000000000', '00000000000000'];
+// "Watch it build": a scripted sequence of clicks on the empty island (the same edits a player would make)
+const PLAY = [[6, 6], [7, 6], [6, 6], [7, 6], [5, 6], [8, 6], [5, 6], [8, 6], [6, 6], [6, 8], [7, 8], [8, 8], [6, 8], [8, 8], [7, 8], [7, 8], [4, 7], [9, 7], [5, 9], [8, 9], [6, 4], [7, 4], [6, 4], [3, 6], [10, 6], [5, 5], [6, 6], [6, 6]];
+const S = {
+  palette: Q.get('palette') || 'harbour', seed: +(Q.get('seed') || 7), arch: +(Q.get('arch') || 9), turret: +(Q.get('turret') || 7), flat: +(Q.get('flat') || 0.8), door: +(Q.get('door') || 2.6), balc: +(Q.get('balcony') || Q.get('balc') || 0.38), radius: +(Q.get('radius') || 2),
+  pitch: +(Q.get('pitch') || 36), zoom: +(Q.get('zoom') || 1.05), gulls: +(Q.get('gulls') || 3), shadows: Q.get('shadows') || 'soft', yaw: +(Q.get('yaw') || 40), mode: 'grow', scene: Q.get('scene') || 'village'
+};
+function applyWeights() { M.setWeight('arch', S.arch); M.setWeight('turret', S.turret); M.setWeight('flat', S.flat); M.setWeight('roofStair', S.flat * 1.6); M.setWeight('D', S.door); M.setWeight('K', S.balc); }
+applyWeights();
+const glc = document.getElementById('gl'), hud = document.getElementById('hud');
+let v = null, t = 0, cursor = { x: 7, z: 6 }, hoverOn = false, usingKeys = false, playI = -1, playWait = 0, panelInfo = null;
+function make() {
+  if (v && v.scene()) { const sc = v.scene(); while (sc.children.length) sc.remove(sc.children[0]); }
+  v = M.create({ canvas: glc, overlay: hud, w: G, d: G, maxH: 7, seed: S.seed, radius: S.radius, heights: S.scene === 'empty' || S.scene === 'play' ? EMPTY : VILLAGE,
+    params: { palette: S.palette, pitch: S.pitch, zoom: S.zoom, yaw: S.yaw, gulls: S.gulls, shadows: S.shadows } });
+  fit();
+}
+function fit() { const r = glc.getBoundingClientRect(); v.resize(r.width, r.height, Math.min(3, devicePixelRatio || 1)); }
+addEventListener('resize', fit);
+// ---- panel wiring
+const ids = { arch: 'vArch', turret: 'vTurret', flat: 'vFlat', door: 'vDoor', balc: 'vBalc', seed: 'vSeed', pitch: 'vPitch', zoom: 'vZoom', gulls: 'vGulls' };
+Object.keys(ids).forEach(k => {
+  const el = document.getElementById(k); el.value = S[k]; document.getElementById(ids[k]).textContent = S[k];
+  el.addEventListener('input', () => {
+    S[k] = +el.value; document.getElementById(ids[k]).textContent = S[k];
+    if (k === 'pitch') v.setPitch(S.pitch); else if (k === 'zoom') v.setZoom(S.zoom); else if (k === 'gulls') v.setParams({ gulls: S.gulls });
+    else if (k === 'seed') { const rows = v.town.heights(); make(); v.load(rows); }
+    else { applyWeights(); v.resolveAll(); }
+  });
+});
+const chips = document.getElementById('chips');
+function drawChips() { chips.innerHTML = ''; v.palettes().forEach(p => { const b = document.createElement('button'); b.className = 'chip' + (p.id === S.palette ? ' on' : ''); b.title = p.name; b.style.background = 'conic-gradient(' + p.swatch[0] + ' 0 33%, ' + p.swatch[1] + ' 0 66%, ' + p.swatch[2] + ' 0)'; b.onclick = () => { S.palette = p.id; v.setParams({ palette: p.id }); drawChips(); }; chips.appendChild(b); }); }
+function setMode(m) { S.mode = m; document.getElementById('bGrow').classList.toggle('on', m === 'grow'); document.getElementById('bShrink').classList.toggle('on', m === 'shrink'); }
+document.getElementById('bGrow').onclick = () => setMode('grow'); document.getElementById('bShrink').onclick = () => setMode('shrink');
+document.getElementById('bUndo').onclick = () => v.undo(); document.getElementById('bRedo').onclick = () => v.redo();
+document.getElementById('bReroll').onclick = () => { S.seed = S.seed % 40 + 1; document.getElementById('seed').value = S.seed; document.getElementById('vSeed').textContent = S.seed; const rows = v.town.heights(); make(); v.load(rows); };
+document.getElementById('bClear').onclick = () => { v.load(EMPTY); };
+document.getElementById('bPlay').onclick = () => { v.load(EMPTY); playI = 0; playWait = 400; };
+document.getElementById('bShadow').onclick = e => { S.shadows = S.shadows === 'soft' ? 'off' : 'soft'; v.setParams({ shadows: S.shadows }); e.target.classList.toggle('on', S.shadows === 'soft'); };
+document.getElementById('bL').onclick = () => v.orbit(-45); document.getElementById('bR').onclick = () => v.orbit(45);
+// ---- canvas input
+let drag = null;
+function xy(e) { const r = glc.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+glc.addEventListener('contextmenu', e => e.preventDefault());
+glc.addEventListener('pointerdown', e => { const [x, y] = xy(e); drag = { x, y, x0: x, y0: y, moved: false, b: e.button }; try { glc.setPointerCapture(e.pointerId); } catch (er) {} });
+glc.addEventListener('pointermove', e => { const [x, y] = xy(e);
+  if (drag) { if (Math.abs(x - drag.x0) + Math.abs(y - drag.y0) > 8) drag.moved = true; if (drag.moved) { v.orbit(-(x - drag.x) * 0.35); v.setPitch(v.camera3().pitch + (y - drag.y) * 0.2); } drag.x = x; drag.y = y; }
+  if (!drag || !drag.moved) { const c = v.pick(x, y); hoverOn = !!c; if (c) { cursor = { x: c.x, z: c.z }; usingKeys = false; } } });
+glc.addEventListener('pointerup', e => { const [x, y] = xy(e); if (drag && !drag.moved) { const c = v.pick(x, y); if (c) { cursor = { x: c.x, z: c.z }; if (drag.b === 2 || S.mode === 'shrink') v.shrink(c.x, c.z); else v.grow(c.x, c.z); } } drag = null; });
+glc.addEventListener('pointerleave', () => { hoverOn = false; });
+glc.addEventListener('wheel', e => { v.zoomBy(e.deltaY < 0 ? 1.1 : 1 / 1.1); e.preventDefault(); }, { passive: false });
+addEventListener('keydown', e => {
+  const k = e.key, ar = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+  if (ar[k]) { const d = v.gridDirFromScreen(ar[k][0], ar[k][1]); cursor = { x: Math.max(0, Math.min(G - 1, cursor.x + d[0])), z: Math.max(0, Math.min(G - 1, cursor.z + d[1])) }; usingKeys = true; e.preventDefault(); }
+  else if (k === 'z' || k === 'Z' || k === ' ') { v.grow(cursor.x, cursor.z); usingKeys = true; e.preventDefault(); }
+  else if (k === 'x' || k === 'X') { v.shrink(cursor.x, cursor.z); usingKeys = true; }
+  else if (k === 'u' || k === 'U') v.undo(); else if (k === 'y' || k === 'Y') v.redo();
+  else if (k === 'q' || k === 'Q') v.orbit(-45); else if (k === 'e' || k === 'E') v.orbit(45);
+  else if (k === '+' || k === '=') v.zoomBy(1.15); else if (k === '-') v.zoomBy(1 / 1.15);
+  else if (/^[1-4]$/.test(k)) { S.palette = v.palettes()[+k - 1].id; v.setParams({ palette: S.palette }); drawChips(); }
+});
+// ---- column inspector: what the wave collapse chose for the cell under the cursor (plain words, not socket codes)
+const DIRN = ['east', 'south', 'west', 'north'];
+function describe(tl, H, y) {
+  if (!tl) return '';
+  const sides = k => [0, 1, 2, 3].filter(d => tl.s[d] === k).map(d => DIRN[d]);
+  switch (tl.id) {
+    case 'water': return 'Open sea';
+    case 'grass': return 'Garden';
+    case 'path': return 'Lane to the ' + sides('p').join(', ');
+    case 'land-stair': return 'Stair up to the ' + sides('u')[0] + ' roof';
+    case 'arch': return 'Arch, lane runs ' + (tl.s[0] === 'A' ? 'east-west' : 'north-south');
+    case 'house': case 'storey': { const p = []; if (sides('D').length) p.push('door ' + sides('D')[0]); if (sides('K').length) p.push('balcony ' + sides('K')[0]); if (sides('S').length) p.push('stair landing ' + sides('S')[0]); const w = sides('W').length; if (w) p.push(w + (w > 1 ? ' window walls' : ' window wall')); return (y === 0 ? 'Ground floor' : 'Floor ' + (y + 1)) + (p.length ? ': ' + p.join(', ') : ': inner block'); }
+    case 'roof-gable': return 'Gable roof, ridge ' + (tl.s[1] === 'e' ? 'east-west' : 'north-south');
+    case 'roof-hip': return 'Hip roof'; case 'roof-flat': return 'Roof terrace'; case 'roof-stair': return 'Terrace, stair to the ' + sides('u')[0]; case 'roof-turret': return 'Turret';
+    default: return tl.id;
+  }
+}
+function drawInspector(g) {
+  const W = glc.clientWidth, H = v.town.H(cursor.x, cursor.z), col = v.town.column(cursor.x, cursor.z), lines = col.map((tl, y) => describe(tl, H, y)).reverse();
+  if (!(hoverOn || usingKeys) || FREEZE && !Q.get('inspect')) return;
+  g.font = 'bold 13px "Trebuchet MS", system-ui, sans-serif';
+  const w = Math.min(W - 24, Math.max(200, ...lines.map(l => g.measureText(l).width + 30))), h = 34 + lines.length * 20, x = 12, y = 12;
+  g.save(); g.shadowColor = 'rgba(20,40,60,0.28)'; g.shadowBlur = 14; g.shadowOffsetY = 4; g.fillStyle = 'rgba(255,251,242,0.95)'; g.beginPath(); g.roundRect ? g.roundRect(x, y, w, h, 12) : g.rect(x, y, w, h); g.fill(); g.restore();
+  g.fillStyle = '#7a5a3a'; g.font = 'bold 11px "Trebuchet MS", system-ui, sans-serif'; g.fillText('CELL ' + cursor.x + ', ' + cursor.z + ' (TOP FIRST)', x + 14, y + 20);
+  g.font = '13px "Trebuchet MS", system-ui, sans-serif'; g.fillStyle = '#3d3026'; lines.forEach((l, i) => g.fillText(l, x + 14, y + 42 + i * 20));
+}
+// ---- loop
+function step() {
+  t += STEP;
+  if (playI >= 0) { playWait -= STEP; if (playWait <= 0) { const c = PLAY[playI++]; if (c) { cursor = { x: c[0], z: c[1] }; v.grow(c[0], c[1]); playWait = 520; } else playI = -1; } }
+  v.setHover(hoverOn || usingKeys || playI >= 0 ? cursor : null, S.mode);
+  v.update(STEP);
+}
+function draw() { v.render(); const g = v.overlayContext(); if (g) drawInspector(g); }
+window.__state = () => Object.assign(v.state(), { demo: { scene: S.scene, cursor, mode: S.mode, play: playI } });
+make(); drawChips();
+if (S.scene === 'play') { playI = 0; playWait = 400; }
+if (Q.get('cursor')) { const c = Q.get('cursor').split(','); cursor = { x: +c[0], z: +c[1] }; usingKeys = true; }
+if (FREEZE) { const n = Math.round(T_AT / STEP); for (let i = 0; i < n; i++) step(); draw(); window.__advance = ms => { for (let i = 0; i < Math.round(ms / STEP); i++) step(); draw(); return window.__state(); }; window.__frozen = true; }
+else { let acc = 0, last = performance.now(); const f = now => { acc += Math.min(250, now - last); last = now; while (acc >= STEP) { step(); acc -= STEP; } draw(); requestAnimationFrame(f); }; requestAnimationFrame(f); }
+</script>
+</body>
+</html>

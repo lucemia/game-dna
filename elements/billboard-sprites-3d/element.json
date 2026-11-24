@@ -1,0 +1,152 @@
+{
+  "id": "billboard-sprites-3d",
+  "code": "N-02",
+  "kind": "addon",
+  "name": "Painted billboard sprites in a 3D diorama",
+  "family": "actor-art-3d",
+  "requires": [],
+  "worksWith": [
+    "third-person-3d (N-01 starter)",
+    "tactics-grid-3d (N-03 starter)",
+    "bark-bubbles (H-05) via bb.anchor",
+    "damage-numbers via bb.anchor",
+    "demo-kit painted cast and L-10 cutout heroes as art sources"
+  ],
+  "oneLiner": "Painted 2D characters stand in a three.js world as camera-facing billboards: yaw-only quads with their feet on the floor or tile top, the side they look at chosen on screen from the camera (target first, then move direction) with painted left / right variants and no mirror for art that must not be mirrored, walk frames advanced by distance (a hop for single pictures), attack / hurt / down motion, a hit flash inside the material, soft blob shadows, depth-correct alpha and screen anchors for 2D overlays.",
+  "fits": [
+    "3D tactics and grid battles with painted units",
+    "third-person or isometric 3D exploration with 2D characters",
+    "diorama-style RPG towns and battles",
+    "3D board and strategy games that want painted pieces"
+  ],
+  "notFor": [
+    "first-person games (sprites seen from above or very close look flat)",
+    "cameras that look straight down (pitch above about 60 deg)",
+    "games that need true 3D character animation, ragdolls or per-limb hit boxes",
+    "pixel-art 2D games without a three.js scene (use L-10 or a 2D sprite element)"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "3d",
+    "layer": "actor",
+    "needs": [
+      "three.js scene, camera and renderer (window.THREE, 0.149.0)",
+      "per unit, every frame: feet position x, z on the floor and the id it targets (or null)",
+      "floor height under a point: groundY(x, z) or the ground meshes",
+      "events: attack start, hit taken, death, restart / respawn",
+      "the art: kitSource (demo kit), or imageSource / canvasSource with the art's native facing and painted variants"
+    ],
+    "provides": [
+      "bb.add / move / setTarget / play / flash / set / update(dt)",
+      "bb.anchor(id, 'head' | 'feet' | 'center'): screen point in CSS px for bubbles, numbers, HP bars",
+      "bb.state(): per actor the drawn side read back from the quad uv, flipX, variant, target, screen x / y, facesMove",
+      "checks/facing-3d.py (8 directions x 4 camera yaws, 2 mutants), checks/feet.py (lowest opaque row within 1 px at 2x)"
+    ]
+  },
+  "params": [
+    {
+      "key": "filter",
+      "label": "Filtering",
+      "type": "select",
+      "options": [
+        "smooth",
+        "crisp"
+      ],
+      "default": "smooth"
+    },
+    {
+      "key": "mode",
+      "label": "Billboard",
+      "type": "select",
+      "options": [
+        "camera",
+        "cylinder"
+      ],
+      "default": "camera"
+    },
+    {
+      "key": "shadow",
+      "label": "Shadow",
+      "type": "select",
+      "options": [
+        "blob",
+        "both",
+        "sprite",
+        "none"
+      ],
+      "default": "blob"
+    },
+    {
+      "key": "flashMs",
+      "label": "Hit flash (ms)",
+      "type": "range",
+      "min": 80,
+      "max": 420,
+      "step": 10,
+      "default": 200
+    },
+    {
+      "key": "height",
+      "label": "Human height (world units)",
+      "type": "range",
+      "min": 0.4,
+      "max": 4,
+      "step": 0.1,
+      "default": 1.6
+    },
+    {
+      "key": "push",
+      "label": "Depth push toward camera",
+      "type": "range",
+      "min": 0,
+      "max": 0.5,
+      "step": 0.01,
+      "default": 0.15
+    },
+    {
+      "key": "lightProbe",
+      "label": "Torch light on sprites",
+      "type": "range",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0
+    }
+  ],
+  "variants": [
+    {
+      "name": "Painted diorama (default)",
+      "params": {
+        "filter": "smooth",
+        "mode": "camera",
+        "shadow": "blob"
+      }
+    },
+    {
+      "name": "Pixel pieces",
+      "params": {
+        "filter": "crisp",
+        "mode": "camera",
+        "shadow": "blob"
+      }
+    },
+    {
+      "name": "Free-roam camera",
+      "params": {
+        "mode": "cylinder",
+        "shadow": "both"
+      }
+    }
+  ],
+  "assets": "none of its own: uses the demo kit (painted sprites with painted @left / @right variants) and the L-10 rigged heroes; any game art via imageSource / canvasSource",
+  "status": "built",
+  "module": {
+    "file": "module/billboard-sprites-3d.js",
+    "global": "GameDNA_Billboards3D",
+    "version": "1.0.3",
+    "readme": "module/README.md",
+    "needsThree": "0.149.0"
+  },
+  "hostRequires": "a three.js scene: three.js 0.149.0 as window.THREE (scene, camera, renderer)",
+  "basketFiles": [{"from": "vendor/three@0.149.0/three.min.js", "to": "three.min.js"}, {"from": "demo-kit/kit-art.js", "to": "demo-kit/kit-art.js"}, {"from": "demo-kit/kit.js", "to": "demo-kit/kit.js"}, {"from": "elements/cutout-characters/module/cutout-characters.js", "to": "demo-kit/cutout-characters.js"}, {"from": "elements/cutout-characters/assets/pack.js", "to": "demo-kit/pack.js"}]
+}

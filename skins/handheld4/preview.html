@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Handheld4 Skin Preview</title>
+<style>
+  :root { --bg: #181c17; --fg: #e4ecd2; --muted: #9daa8c; --line: #313a2d; --stage: #0f130e; --accent: #dfe9b4; }
+  @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg: #eef1e4; --fg: #1a2a20; --muted: #56654c; --line: #c9d2b6; --stage: #dfe5cf; --accent: #1a2a20; } }
+  :root[data-theme="dark"] { --bg: #181c17; --fg: #e4ecd2; --muted: #9daa8c; --line: #313a2d; --stage: #0f130e; --accent: #dfe9b4; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 1120px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 19px; margin: 0 0 2px; letter-spacing: .01em; }
+  .sub { color: var(--muted); margin: 0 0 12px; font-size: 13px; max-width: 72ch; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 0 0 12px; font-size: 13px; }
+  .controls a { color: var(--muted); text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; }
+  .controls a[aria-current="true"] { color: var(--bg); background: var(--accent); border-color: var(--accent); }
+  .controls label { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); }
+  .row { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px; align-items: start; }
+  figure { margin: 0; min-width: 0; }
+  .stage { background: var(--stage); border: 1px solid var(--line); border-radius: 6px; padding: 8px; display: flex; justify-content: center; overflow: hidden; }
+  canvas { display: block; max-width: 100%; height: auto; image-rendering: pixelated; }
+  figcaption { color: var(--muted); font-size: 12px; margin-top: 6px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 10px 0 0; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .meta b { color: var(--fg); font-weight: 600; }
+  .ramps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+  .sw { display: flex; gap: 2px; margin-top: 4px; }
+  .sw i { flex: 1; height: 10px; display: block; }
+  ul { margin: 14px 0 0; padding-left: 18px; color: var(--muted); font-size: 13px; }
+  ul b { color: var(--fg); }
+  @media (max-width: 760px) { main { padding: 12px 16px; } .row { grid-template-columns: minmax(0, 1fr); } .ramps { grid-template-columns: minmax(0, 1fr); } }
+</style>
+</head>
+<body>
+<main>
+  <h1>handheld4 · 4-shade handheld pixel</h1>
+  <p class="sub">The shared scene (seed 7, same moments as every style) drawn through the <code>handheld4</code> skin: exactly four shades, 8×8 cells, a chunky 8×8 font, pattern-coded ranges, inverted numbers and plates. <code>?t=ms&amp;freeze=1</code> for one moment, <code>&amp;pal=sepia|grey</code>, <code>&amp;lcd=1</code> pixel grid, <code>&amp;ghost=1</code> LCD ghosting, <code>&amp;focus=grid|numbers|window</code>.</p>
+  <div class="controls" id="controls"></div>
+  <div class="row">
+    <figure><div class="stage"><canvas id="main" aria-label="handheld4 skin: the shared tactics scene"></canvas></div>
+      <figcaption id="cap">grid-range-path, damage-numbers and window-cursor drawing through the skin; map, props and units from its tile / prop / unitToken hooks</figcaption>
+      <div class="meta" id="meta">loading…</div></figure>
+    <figure><div class="stage"><canvas id="parts" aria-label="handheld4 parts sheet"></canvas></div>
+      <figcaption>Parts sheet: the four range patterns, path, every number kind (and its fade steps), bars, plates, cursor phases.</figcaption></figure>
+  </div>
+  <div class="ramps" id="ramps"></div>
+  <ul>
+    <li><b>Range</b>: move = S1 checker with a double S3/S0 boundary (an S2 band walks through it); attack = dark \ stripes with a dashed edge; threat = sparse / stripes with a dotted edge. Pattern, not hue, tells them apart.</li>
+    <li><b>Path</b>: a light road with a dark outline and marching dashes, so it reads over every pattern.</li>
+    <li><b>Numbers</b>: light digits with a dark outline on any ground; heal and CRITICAL are inverted; crit flashes by inversion; fades step every shade toward the lightest, the last step flickers.</li>
+    <li><b>Window</b>: light body, dark/light/dark double border, S1 band on the selected row, a solid arrowhead pointer; the turn plate is inverted.</li>
+  </ul>
+</main>
+
+<script src="../skin-api.js"></script>
+<script src="../pixel16.js"></script>
+<script src="handheld4.js"></script>
+<script src="../../elements/grid-range-path/module/grid-range-path.js"></script>
+<script src="../../elements/damage-numbers/module/damage-numbers.js"></script>
+<script src="../../elements/window-cursor/module/window-cursor.js"></script>
+<script src="../scene/shared-scene.js"></script>
+<script>
+'use strict';
+var Q = new URLSearchParams(location.search), FREEZE = Q.get('freeze') === '1', T0 = Q.has('t') ? +Q.get('t') : GameDNA_Scene.DEFAULT_T;
+var FOCUS = ['grid', 'numbers', 'window'].indexOf(Q.get('focus')) >= 0 ? Q.get('focus') : 'all';
+var PALS = { moss: 'handheld4', sepia: 'handheld4-sepia', grey: 'handheld4-grey' }, PAL = PALS[Q.get('pal')] ? Q.get('pal') : 'moss', ID = PALS[PAL];
+var opt = { lcd: Q.get('lcd') === '1', ghost: Q.get('ghost') === '1' };
+var SK = GameDNA_Skin.get(ID), mainC = document.getElementById('main'), partsC = document.getElementById('parts');
+
+/* ---------- controls (links keep the URL deterministic) ---------- */
+function href(ch) { var q = new URLSearchParams(location.search); for (var k in ch) { if (ch[k] == null) q.delete(k); else q.set(k, ch[k]); } return '?' + q.toString(); }
+(function () {
+  var c = document.getElementById('controls');
+  Object.keys(PALS).forEach(function (p) { var a = document.createElement('a'); a.href = href({ pal: p === 'moss' ? null : p }); a.textContent = GameDNA_Skin.get(PALS[p]).rampName; if (p === PAL) a.setAttribute('aria-current', 'true'); c.appendChild(a); });
+  [['lcd', 'Pixel grid'], ['ghost', 'LCD ghosting']].forEach(function (o) {
+    var l = document.createElement('label'), i = document.createElement('input'); i.type = 'checkbox'; i.checked = opt[o[0]];
+    i.addEventListener('change', function () { opt[o[0]] = i.checked; try { history.replaceState(null, '', href((function () { var x = {}; x[o[0]] = i.checked ? '1' : null; return x; })())); } catch (e) {} if (FREEZE) render(T0); });
+    l.appendChild(i); l.appendChild(document.createTextNode(o[1])); c.appendChild(l);
+  });
+})();
+
+/* ---------- main scene: whole-number scale, optional post effects ---------- */
+var ghostC = document.createElement('canvas');
+function scaleFor(c) { var dpr = window.devicePixelRatio || 1, avail = Math.floor(c.parentNode.clientWidth * dpr) - 16 * dpr; return Math.max(1, Math.min(4, Math.floor(avail / 256))); }
+function render(t) {
+  var k = scaleFor(mainC), dpr = window.devicePixelRatio || 1;
+  if (opt.ghost) GameDNA_Scene.draw(ghostC, ID, Math.max(0, t - 66), { width: 256 * k, focus: FOCUS });
+  var info = GameDNA_Scene.draw(mainC, ID, t, { width: 256 * k, focus: FOCUS });
+  mainC.style.width = (256 * k / dpr) + 'px';
+  if (opt.ghost || opt.lcd) SK.post(mainC.getContext('2d'), { scale: k, grid: opt.lcd, ghost: opt.ghost ? ghostC : null });
+  return { k: k, info: info };
+}
+
+/* ---------- palette audit at native 1x (no post effects) ---------- */
+var auditC = document.createElement('canvas');
+function audit(t) {
+  GameDNA_Scene.draw(auditC, ID, t, { width: 256, focus: FOCUS });
+  var d = auditC.getContext('2d').getImageData(0, 0, auditC.width, auditC.height).data, used = {}, off = 0, semi = 0, set = {};
+  SK.shades.forEach(function (c) { set[c] = 1; });
+  for (var i = 0; i < d.length; i += 4) { if (d[i + 3] !== 255) semi++; var h = '#' + [d[i], d[i + 1], d[i + 2]].map(function (v) { return (v < 16 ? '0' : '') + v.toString(16); }).join(''); used[h] = 1; if (!set[h]) off++; }
+  return { colours: Object.keys(used).length, off: off, semi: semi };
+}
+
+/* ---------- parts sheet (native 128 x 224, drawn straight through the skin) ---------- */
+function parts(t) {
+  var W = 128, H = 224, k = Math.max(2, Math.min(4, scaleFor(partsC) * 2)), dpr = window.devicePixelRatio || 1;
+  var off = document.createElement('canvas'); off.width = W; off.height = H; var g = off.getContext('2d'); g.imageSmoothingEnabled = false;
+  var S = SK.shades; g.fillStyle = S[0]; g.fillRect(0, 0, W, H);
+  for (var y = 0; y < 3; y++) for (var x = 0; x < 8; x++) SK.tile(g, { x: x * 16, y: y * 16, w: 16, h: 16 }, 'grass', t);
+  [['move', 0], ['attack', 2], ['threat', 4], ['heal', 6]].forEach(function (o) {
+    for (var dx = 0; dx < 2; dx++) for (var dy = 0; dy < 2; dy++) SK.overlay(g, { x: (o[1] + dx) * 16, y: dy * 16, w: 16, h: 16 }, o[0], t, { grow: 1, tile: { x: o[1] + dx, y: dy }, pattern: o[0] === 'move' ? 'pulsing' : null, edges: { top: dy === 0, bottom: dy === 1, left: dx === 0, right: dx === 1 } });
+  });
+  SK.path(g, [{ x: 8, y: 40 }, { x: 24, y: 40 }, { x: 40, y: 40 }, { x: 40, y: 24 + 16 }, { x: 56, y: 40 }], t, {});
+  SK.path(g, [{ x: 72, y: 40 }, { x: 88, y: 40 }, { x: 104, y: 40 }], t, { invalid: true });
+  // numbers: each kind, then the damage fade steps
+  g.fillStyle = S[1]; g.fillRect(0, 50, W, 66);
+  for (var q = 0; q < W; q += 2) { g.fillStyle = S[2]; g.fillRect(q, 82 + (q & 2 ? 1 : 0), 1, 1); }
+  var nx = 2; [['128', 'damage'], ['+30', 'heal'], ['MISS', 'miss'], ['12', 'mp']].forEach(function (n) { SK.number(g, n[0], nx, 54, { kind: n[1] }); nx += SK.measure(n[0]) + 6; });
+  SK.number(g, '57', 20, 76, { kind: 'crit', big: true, label: 'CRITICAL', labelGap: 3 });
+  SK.number(g, '57', 84, 76, { kind: 'crit', big: true, glyphOffset: function () { return { flash: true }; } });
+  [1, 0.75, 0.5, 0.25].forEach(function (a, i) { SK.number(g, '99', 4 + i * 31, 100, { kind: 'damage', alpha: a, age: 0 }); });
+  // bars
+  SK.bar(g, { x: 4, y: 122, w: 58, h: 6 }, 0.85, 'hp', { style: 'meter' }); SK.bar(g, { x: 66, y: 122, w: 58, h: 6 }, 0.25, 'hpLow', { style: 'meter' });
+  SK.bar(g, { x: 4, y: 131, w: 58, h: 6 }, 0.6, 'charge', { style: 'gauge' }); SK.bar(g, { x: 66, y: 131, w: 58, h: 6 }, 0.6, 'slow', { style: 'gauge' });
+  // windows: plate, tooltip, foe window with a row band, disabled text
+  SK.frame(g, { x: 4, y: 141, w: 54, h: 13 }, { role: 'plate' }); SK.text(g, 'Turn 3', 9, 144, { color: SK.palette.text.plate });
+  SK.frame(g, { x: 62, y: 141, w: 62, h: 13 }, { role: 'tooltip' }); SK.text(g, 'Def+2', 68, 144);
+  var inn = SK.frame(g, { x: 4, y: 158, w: 120, h: 40 }, { role: 'window', team: 'b' });
+  SK.text(g, 'Ghoul', inn.x + 2, inn.y + 2, { color: SK.palette.text.title });
+  SK.frame(g, { x: inn.x + 9, y: inn.y + 13, w: inn.w - 9, h: 12 }, { role: 'row' }); SK.text(g, 'Claw', inn.x + 12, inn.y + 15);
+  SK.cursor(g, { x: inn.x + 1, y: inn.y + 15, w: 6, h: 7 }, 'hand', t);
+  SK.text(g, 'Howl', inn.x + 12, inn.y + 27, { color: SK.palette.text.dim });
+  // cursor phases (both inversion states) and an invalid bracket
+  SK.cursor(g, { x: 8, y: 204, w: 16, h: 16 }, 'bracket', 0); SK.cursor(g, { x: 40, y: 204, w: 16, h: 16 }, 'bracket', 0.25); SK.cursor(g, { x: 72, y: 204, w: 16, h: 16 }, 'bracket', 0, { invalid: true });
+  SK.cursor(g, { x: 100, y: 208, w: 6, h: 7 }, 'hand', 0, { invalid: true }); SK.cursor(g, { x: 112, y: 208, w: 6, h: 7 }, 'hand', 0, { alpha: 0.5 });
+  partsC.width = W * k; partsC.height = H * k; var pg = partsC.getContext('2d'); pg.imageSmoothingEnabled = false; pg.drawImage(off, 0, 0, W * k, H * k);
+  partsC.style.width = (W * k / dpr) + 'px';
+}
+
+/* ---------- the three ramps side by side ---------- */
+var rampCs = [];
+(function () {
+  var box = document.getElementById('ramps');
+  Object.keys(PALS).forEach(function (p) {
+    var S = GameDNA_Skin.get(PALS[p]), f = document.createElement('figure'), st = document.createElement('div'), c = document.createElement('canvas'), cap = document.createElement('figcaption'), sw = document.createElement('div');
+    st.className = 'stage'; c.setAttribute('aria-label', S.rampName + ' ramp'); st.appendChild(c); f.appendChild(st);
+    sw.className = 'sw'; S.shades.forEach(function (h) { var i = document.createElement('i'); i.style.background = h; i.title = h; sw.appendChild(i); });
+    cap.textContent = S.rampName + ' (' + PALS[p] + '): ' + S.shades.join(' '); f.appendChild(sw); f.appendChild(cap); box.appendChild(f); rampCs.push({ id: PALS[p], c: c });
+  });
+})();
+function ramps(t) { rampCs.forEach(function (r) { GameDNA_Scene.draw(r.c, r.id, t, { width: 256, focus: FOCUS }); r.c.style.width = '100%'; }); }
+
+function frame(t) {
+  var R = render(t); parts(t / 1000); ramps(t);
+  return R;
+}
+GameDNA_Scene.ready([ID]).then(function () {
+  var R = frame(T0), A = audit(T0), de = document.documentElement;
+  document.getElementById('meta').innerHTML = '<span>skin <b>' + ID + '</b></span><span>t <b>' + Math.round(T0) + ' ms</b></span><span>scale <b>×' + R.k + '</b></span>' +
+    '<span>shades on screen <b>' + A.colours + '</b></span><span>off-ramp px <b>' + A.off + '</b></span><span>non-opaque px <b>' + A.semi + '</b></span><span>numbers <b>' + (R.info.numbers || 0) + '</b></span>';
+  de.dataset.colours = A.colours; de.dataset.offPalette = A.off; de.dataset.semi = A.semi; de.dataset.ready = '1';
+  de.dataset.overflowX = String(de.scrollWidth > de.clientWidth);
+  window.__h4 = { info: R.info, audit: A };
+  if (FREEZE) return;
+  var t0 = performance.now() - T0, last = -1;
+  (function loop(now) { var t = (now - t0) % GameDNA_Scene.LOOP, st = Math.floor(t / SK.motion.stepMs); if (st !== last) { last = st; render(st * SK.motion.stepMs); } requestAnimationFrame(loop); })(performance.now());
+});
+window.addEventListener('resize', function () { if (FREEZE) frame(T0); });
+</script>
+</body>
+</html>

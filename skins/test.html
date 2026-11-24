@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skin test</title>
+<style>
+  :root { --bg: #11131c; --fg: #e8ecf6; --muted: #8a90a8; --ok: #6ee08a; --bad: #ff6a5a; }
+  body { margin: 0; padding: 16px; background: var(--bg); color: var(--fg); font: 13px/1.45 system-ui, -apple-system, sans-serif; }
+  h1 { font-size: 16px; margin: 0 0 4px; } h2 { font-size: 13px; margin: 18px 0 6px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+  figure { margin: 0; } figcaption { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  canvas.px { image-rendering: pixelated; width: 768px; height: 672px; max-width: 100%; height: auto; background: #000; }
+  canvas.hi { width: 768px; max-width: 100%; height: auto; background: #000; }
+  canvas.cmp { image-rendering: pixelated; width: 320px; height: auto; background: #000; }
+  table { border-collapse: collapse; } td, th { padding: 2px 10px 2px 0; text-align: left; font-variant-numeric: tabular-nums; }
+  .ok { color: var(--ok); } .bad { color: var(--bad); }
+</style>
+</head>
+<body>
+<h1>GameDNA skin test</h1>
+<div id="sum">running…</div>
+
+<h2>pixel16 showcase (native 256×224, ×3)</h2>
+<div class="row">
+  <figure><canvas id="show" class="px" width="256" height="224"></canvas><figcaption>window, text, numbers, overlays, bars and cursors, all drawn through <code>skin.*</code> only</figcaption></figure>
+</div>
+
+<h2>parity: module (left) vs pixel16 skin (right)</h2>
+<table id="par"><tr><th>case</th><th>differing pixels</th></tr></table>
+<div class="row" id="cmp"></div>
+
+<h2>API smoke test: token-only skin (no methods, pixel: false), same drawing code</h2>
+<div class="row"><figure><canvas id="demo" class="hi" width="768" height="672"></canvas><figcaption>generic implementations from skin-api.js; not one of the 8 styles</figcaption></figure></div>
+
+<h2>scene hooks (tile, token, path, number sx/sy + faded glyphs): pixel16 and the token-only skin</h2>
+<div class="row">
+  <figure><canvas id="scene16" class="px" width="160" height="64" style="width:480px;height:192px"></canvas><figcaption>pixel16: its own tiles and sprites (no path(): generic path shown)</figcaption></figure>
+  <figure><canvas id="sceneDemo" class="hi" width="480" height="192" style="width:480px"></canvas><figcaption>token-only skin, after GameDNA_Skin.ready()</figcaption></figure>
+</div>
+
+<h2>API checks (v2)</h2>
+<table id="api"><tr><th>check</th><th>result</th></tr></table>
+
+<script src="skin-api.js"></script>
+<script src="pixel16.js"></script>
+<script src="../elements/grid-range-path/module/grid-range-path.js"></script>
+<script src="../elements/active-time-battle/module/active-time-battle.js"></script>
+<script src="../elements/damage-numbers/module/damage-numbers.js"></script>
+<script src="../elements/window-cursor/module/window-cursor.js"></script>
+<script>
+'use strict';
+var SK = GameDNA_Skin, P16 = SK.resolve();   // default = pixel16
+var q = new URLSearchParams(location.search), T = q.has('t') ? +q.get('t') / 1000 : 0.4;   // seconds
+
+/* ---------------- 1. showcase: only skin calls ---------------- */
+function ground(g, x0, y0, cols, rows, T) {
+  for (var y = 0; y < rows; y++) for (var x = 0; x < cols; x++) {
+    var X = x0 + x * T, Y = y0 + y * T, river = x === 5 || (x === 6 && y > 4);
+    g.fillStyle = river ? '#3a78c8' : (x + y) % 2 ? '#5aa844' : '#64b04c'; g.fillRect(X, Y, T, T);
+    g.fillStyle = river ? '#5a98e0' : '#7cc45c'; g.fillRect(X + 3 + (x * 5 + y * 3) % 8, Y + 4 + (x * 7 + y) % 7, 2, 1);
+    g.fillStyle = river ? '#2a5aa0' : '#4a8838'; g.fillRect(X + 9 - (x * 3 + y) % 6, Y + 11 - (y * 5) % 6, 2, 1);
+  }
+}
+function region(cx, cy, r0, r1) { var s = []; for (var y = 0; y < 7; y++) for (var x = 0; x < 10; x++) { var d = Math.abs(x - cx) + Math.abs(y - cy); if (d >= r0 && d <= r1) s.push(x + ',' + y); } return new Set(s); }
+function paintSet(g, sk, set, kind, t, x0, y0) {
+  var has = function (x, y) { return set.has(x + ',' + y); };
+  set.forEach(function (k) {
+    var x = +k.split(',')[0], y = +k.split(',')[1];
+    sk.overlay(g, { x: x0 + x * 16, y: y0 + y * 16, w: 16, h: 16 }, kind, t, { tile: { x: x, y: y }, edges: { top: !has(x, y - 1), bottom: !has(x, y + 1), left: !has(x - 1, y), right: !has(x + 1, y) }, seams: { right: has(x + 1, y), bottom: has(x, y + 1) } });
+  });
+}
+function unit(g, X, Y, col) {   // tiny stand-in sprite (16x16 tile)
+  g.fillStyle = '#06061a'; g.fillRect(X + 4, Y + 2, 8, 13); g.fillStyle = col; g.fillRect(X + 5, Y + 7, 6, 7); g.fillStyle = '#f2c49b'; g.fillRect(X + 5, Y + 3, 6, 4);
+}
+function showcase(g, sk, t) {
+  var P = sk.palette, X0 = 4, Y0 = 4;
+  g.fillStyle = '#0c0e1e'; g.fillRect(0, 0, 256, 224);
+  ground(g, X0, Y0, 10, 7, 16);
+  paintSet(g, sk, region(2, 3, 0, 2), 'move', t, X0, Y0);
+  paintSet(g, sk, region(2, 3, 3, 3), 'attack', t, X0, Y0);
+  paintSet(g, sk, region(8, 3, 0, 1), 'threat', t, X0, Y0);
+  paintSet(g, sk, new Set(['7,5', '8,5', '7,6', '8,6']), 'heal', t, X0, Y0);
+  unit(g, X0 + 32, Y0 + 48, P.team.a); unit(g, X0 + 128, Y0 + 48, P.team.b); unit(g, X0 + 112, Y0 + 96, P.team.a);
+  sk.cursor(g, { x: X0 + 64, y: Y0 + 48, w: 16, h: 16 }, 'bracket', t);
+  // floating numbers (top-left anchored, bottom baseline above sprites)
+  sk.number(g, '128', X0 + 40, Y0 + 44, { kind: 'damage', align: 'center', baseline: 'bottom' });
+  sk.number(g, '57', X0 + 136, Y0 + 44, { kind: 'crit', big: true, label: 'CRITICAL', labelGap: 6, align: 'center', baseline: 'bottom' });
+  sk.number(g, '+30', X0 + 120, Y0 + 94, { kind: 'heal', align: 'center', baseline: 'bottom' });
+  sk.number(g, '12', X0 + 86, Y0 + 110, { kind: 'mp', suffix: 'MP', align: 'center', baseline: 'bottom' });
+  sk.number(g, 'MISS', X0 + 22, Y0 + 86, { kind: 'miss', align: 'center', baseline: 'bottom' });
+  sk.number(g, 'POISON', X0 + 40, Y0 + 110, { kind: 'status', align: 'center', baseline: 'bottom' });
+  // unit window (team a)
+  var ux = 166, uy = 4; sk.frame(g, { x: ux, y: uy, w: 86, h: 42 }, { role: 'window', team: 'a' });
+  g.fillStyle = P.ink; g.fillRect(ux + 4, uy + 4, 20, 24); g.fillStyle = P.team.aLight || P.team.a; g.fillRect(ux + 5, uy + 5, 18, 11); g.fillStyle = P.team.aDark || P.team.a; g.fillRect(ux + 5, uy + 16, 18, 11);
+  unit(g, ux + 6, uy + 9, P.team.a);
+  sk.text(g, 'ROWAN', ux + 28, uy + 5, { color: P.text.main, color2: P.team.aText });
+  sk.text(g, 'HP', ux + 28, uy + 15, { color: P.text.gold, color2: P.text.gold2 }); sk.text(g, '14/20', ux + 81, uy + 15, { align: 'right' });
+  sk.bar(g, { x: ux + 27, y: uy + 24, w: 54, h: 5 }, 14 / 20, 'hp', { style: 'meter' });
+  sk.text(g, 'MOVE', ux + 6, uy + 32, { color: P.text.label, color2: P.text.label2 }); sk.text(g, '2/5', ux + 81, uy + 32, { align: 'right', color: P.text.title, color2: P.text.title2 });
+  // terrain window (neutral) and command menu (team a, pointer, selected row, disabled row)
+  var tx = 166, ty = 48; sk.frame(g, { x: tx, y: ty, w: 52, h: 42 }, { role: 'window', team: 'n' });
+  g.fillStyle = P.ui.well || P.ui.shadow; g.fillRect(tx + 4, ty + 4, 44, 11);
+  sk.text(g, 'FOREST', tx + 26, ty + 6, { align: 'center', color: P.text.title, color2: P.text.title2 });
+  sk.text(g, 'DEF', tx + 6, ty + 18, { color: P.text.label, color2: P.text.label2 }); sk.text(g, '1', tx + 46, ty + 18, { align: 'right' });
+  sk.text(g, 'AVO', tx + 6, ty + 29, { color: P.text.label, color2: P.text.label2 }); sk.text(g, '20', tx + 46, ty + 29, { align: 'right' });
+  var mx = 166, my = 91, items = [['ATTACK', 1], ['ITEM', 0], ['WAIT', 1]], mw = 62; sk.frame(g, { x: mx, y: my, w: mw, h: items.length * 12 + 10 }, { role: 'window', team: 'a' });
+  items.forEach(function (it, i) {
+    if (i === 0) { g.fillStyle = P.ui.select || 'rgba(255,255,255,.2)'; g.fillRect(mx + 3, my + 5 + i * 12, mw - 6, 11); }
+    sk.text(g, it[0], mx + 18, my + 7 + i * 12, { color: !it[1] ? P.text.dim : i === 0 ? P.text.select : P.text.main, color2: !it[1] ? P.text.dim2 : null });
+  });
+  sk.cursor(g, { x: mx + 6, y: my + 8, w: 7, h: 5 }, 'hand', t);
+  // mode plate + gauge HUD
+  var pl = sk.measure('ACTIVE x1.0', { font: 'plate' }); sk.frame(g, { x: 4, y: 120, w: pl + 10, h: 13 }, { role: 'plate' });
+  sk.text(g, 'ACTIVE x1.0', 9, 123, { font: 'plate', color: P.text.plate, shadow: P.text.plateShadow });
+  var pw = sk.measure('WAIT x1.0', { font: 'plate' }); sk.frame(g, { x: 70, y: 120, w: pw + 18, h: 13 }, { role: 'plate', alert: true });
+  sk.text(g, 'WAIT x1.0', 75, 123, { font: 'plate', color: P.text.accent, shadow: P.text.plateShadow });
+  g.fillStyle = P.text.accent; g.fillRect(75 + pw + 3, 123, 2, 7); g.fillRect(75 + pw + 6, 123, 2, 7);
+  sk.frame(g, { x: 4, y: 138, w: 248, h: 82 }, { role: 'window', team: 'n' });
+  [['ROWAN', 0.62, 'charge', null], ['MIRA', 0.35, 'haste', null], ['BRAM', 1, 'ready', 'haste'], ['ILSA', 1, 'queued', 'slow'], ['OSRIC', 0, null, null]].forEach(function (r, i) {
+    var y = 144 + i * 15; sk.text(g, r[0], 12, y);
+    var hp = String(120 + i * 37); sk.text(g, hp, 104, y, { align: 'right' });
+    sk.bar(g, { x: 112, y: y + 1, w: 132, h: 6 }, r[1], r[2], { tag: r[3] });
+  });
+  sk.bar(g, { x: X0 + 125, y: Y0 + 66, w: 22, h: 4 }, 0.45, 'enemy'); sk.bar(g, { x: 140, y: 124, w: 22, h: 4 }, 1, 'enemyFull');
+}
+var show = document.getElementById('show').getContext('2d'); show.imageSmoothingEnabled = false; showcase(show, P16, T);
+
+/* ---------------- 2. parity with the v1 modules ---------------- */
+var results = [];
+var diffAt = [];
+function diff(a, b) {
+  var W = a.canvas.width, A = a.getImageData(0, 0, W, a.canvas.height).data, B = b.getImageData(0, 0, W, b.canvas.height).data, n = 0; diffAt = [];
+  for (var i = 0; i < A.length; i += 4) if (A[i] !== B[i] || A[i + 1] !== B[i + 1] || A[i + 2] !== B[i + 2] || A[i + 3] !== B[i + 3]) { n++; if (diffAt.length < 6) diffAt.push([(i / 4) % W, ((i / 4) / W) | 0, [A[i], A[i + 1], A[i + 2]].join(), [B[i], B[i + 1], B[i + 2]].join()]); }
+  return n;
+}
+function pair(name, w, h, drawA, drawB) {
+  var ca = document.createElement('canvas'), cb = document.createElement('canvas'); ca.width = cb.width = w; ca.height = cb.height = h;
+  var a = ca.getContext('2d', { willReadFrequently: true }), b = cb.getContext('2d', { willReadFrequently: true });
+  try { drawA(a); drawB(b); var n = diff(a, b); results.push(n ? [name, n, diffAt] : [name, n]); }
+  catch (e) { results.push([name, 'error: ' + e.message]); console.error(e); }
+  ca.className = cb.className = 'cmp'; ca.style.width = cb.style.width = (w * 2) + 'px';
+  var f = document.createElement('figure'); f.appendChild(ca); f.appendChild(document.createTextNode(' ')); f.appendChild(cb);
+  var cap = document.createElement('figcaption'); cap.textContent = name; f.appendChild(cap); document.getElementById('cmp').appendChild(f);
+}
+
+// B-01 grid-range-path: overlays, cursor, unit/terrain windows (select mode) and the command menu (menu mode)
+function gridCase(menu) {
+  var units = [{ id: 'h', name: 'Rowan', side: 'player', x: 3, y: 3, hp: 5, max: 20, move: 3, range: '1-2' }, { id: 'e', name: 'Brigand', side: 'enemy', x: 6, y: 3, hp: 12, max: 18 }];
+  var occ = function (x, y) { for (var i = 0; i < units.length; i++) if (units[i].x === x && units[i].y === y) return units[i]; return null; };
+  var GR = GameDNA_GridRange.create({ cols: 10, rows: 8, tile: 16, cost: function (x, y) { return x === 2 && y === 4 ? 2 : x === 5 && y === 1 ? 99 : 1; }, occupant: occ,
+    terrain: function () { return { name: 'Forest', def: 1, avo: 20 }; }, setUnitPos: function (u, x, y) { u.x = x; u.y = y; }, onWait: function () {}, params: { overlay: 'pulsing' }, cursor: { x: 3, y: 3 }, skin: false });   // module side = built-in drawing
+  GR.confirm(); if (menu) GR.confirm();
+  var N = menu ? 9 : 40, t = 0; for (var i = 0; i < N; i++) { GR.update(); t += 1 / 60; }
+  var drawGround = function (g) { ground(g, 0, 0, 10, 8, 16); };
+  pair('grid ' + (menu ? 'menu' : 'select') + ' (frame, text ui, overlay, cursor, meter)', 160, 128,
+    function (g) { drawGround(g); GR.drawUnder(g, { x: 0, y: 0 }); GR.drawOver(g, { x: 0, y: 0 }, []); },
+    function (g) {
+      drawGround(g); var sk = P16, Pl = sk.palette, age = N - (menu ? 0 : 0);
+      if (!menu) {   // overlays: same fade-in rule as the module (grow from path cost)
+        var keys = function (S) { return Array.from(S.keys()); }, has = function (S, x, y) { return x >= 0 && y >= 0 && x < 10 && y < 8 && S.has(y * 10 + x); };
+        [[GR.reach, 'move'], [GR.fringe, 'attack']].forEach(function (pr) {
+          keys(pr[0]).forEach(function (k) {
+            var tx = k % 10, ty = (k / 10) | 0, d = pr[1] === 'move' ? GR.reach.get(k).cost : 3 + 1, gr = Math.max(0, Math.min(1, (age * 0.55 - d) / 2)), S = pr[0];
+            sk.overlay(g, { x: tx * 16, y: ty * 16, w: 16, h: 16 }, pr[1], t, { grow: gr, tile: { x: tx, y: ty }, pattern: 'pulsing',
+              seams: { right: has(S, tx + 1, ty), bottom: has(S, tx, ty + 1) }, edges: { top: !has(S, tx, ty - 1), bottom: !has(S, tx, ty + 1), left: !has(S, tx - 1, ty), right: !has(S, tx + 1, ty) } });
+          });
+        });
+        var c = GR.cursor; sk.cursor(g, { x: c.px, y: c.py, w: 16, h: 16 }, 'bracket', t);
+      }
+      var u = units[0], R = {}; GR.getUIRects().forEach(function (r) { R[r.kind] = r; });
+      var ur = R.unit, x = ur.x, y = ur.y, ext = !menu;
+      sk.frame(g, { x: x, y: y, w: 88, h: ext ? 42 : 32 }, { team: 'a' });
+      g.fillStyle = Pl.ink; g.fillRect(x + 4, y + 4, 20, 24); g.fillStyle = Pl.team.aLight; g.fillRect(x + 5, y + 5, 18, 11); g.fillStyle = Pl.team.aDark; g.fillRect(x + 5, y + 16, 18, 11);
+      sk.text(g, u.name.slice(0, 9), x + 28, y + 5, { color: Pl.text.main, color2: Pl.team.aText });
+      var hs = u.hp + '/' + u.max; sk.text(g, 'HP', x + 28, y + 15, { color: Pl.text.gold, color2: Pl.text.gold2 }); sk.text(g, hs, x + 83, y + 15, { align: 'right' });
+      sk.bar(g, { x: x + 27, y: y + 24, w: 56, h: 5 }, Math.max(0, u.hp) / u.max, u.hp / u.max < 0.34 ? 'hpLow' : 'hp', { style: 'meter', px: Math.round(54 * Math.max(0, u.hp) / u.max) });
+      if (ext) { var ex = GR.pathCost() + '/' + 3; sk.text(g, 'MOVE', x + 6, y + 32, { color: Pl.text.label, color2: Pl.text.label2 }); sk.text(g, ex, x + 83, y + 32, { align: 'right', color: Pl.text.title, color2: Pl.text.title2 }); }
+      if (menu) {
+        var cm = GR.commands(), mr = R.menu, mw = mr.w; sk.frame(g, { x: mr.x, y: mr.y, w: mw, h: cm.length * 12 + 10 }, { team: 'a' });
+        cm.forEach(function (c, i) { if (i === GR.menuIndex) sk.frame(g, { x: mr.x + 3, y: mr.y + 5 + i * 12, w: mw - 6, h: 11 }, { role: 'row' }); sk.text(g, c.label, mr.x + 18, mr.y + 7 + i * 12, { color: !c.enabled ? Pl.text.dim : i === GR.menuIndex ? Pl.text.select : Pl.text.main, color2: !c.enabled ? Pl.text.dim2 : null }); });
+        sk.cursor(g, { x: mr.x + 6, y: mr.y + 8 + GR.menuIndex * 12, w: 7, h: 5 }, 'hand', t);
+      }
+      var tr = R.terrain; sk.frame(g, { x: tr.x, y: tr.y, w: 52, h: 42 }, { team: 'n' }); sk.frame(g, { x: tr.x + 4, y: tr.y + 4, w: 44, h: 11 }, { role: 'backing' });
+      sk.text(g, 'Forest', tr.x + 26, tr.y + 6, { align: 'center', color: Pl.text.title, color2: Pl.text.title2 });
+      sk.text(g, 'DEF', tr.x + 6, tr.y + 18, { color: Pl.text.label, color2: Pl.text.label2 }); sk.text(g, '1', tr.x + 46, tr.y + 18, { align: 'right' });
+      sk.text(g, 'AVO', tr.x + 6, tr.y + 29, { color: Pl.text.label, color2: Pl.text.label2 }); sk.text(g, '20', tr.x + 46, tr.y + 29, { align: 'right' });
+    });
+}
+gridCase(false); gridCase(true);
+
+// A-01 active-time-battle: hero gauges (charge / haste tag / ready / queued), enemy gauges, mode plate (active, wait paused)
+function atbCase(ticks, wait) {
+  var ATB = GameDNA_ATB.create({ seed: 7, mode: wait ? 'wait' : 'active', combatants: [{ id: 'h1', side: 'party', speed: 30 }, { id: 'h2', side: 'party', speed: 55 }, { id: 'h3', side: 'party', speed: 12 }, { id: 'e1', side: 'enemy', speed: 40 }, { id: 'e2', side: 'enemy', speed: 18 }],
+    chooseEnemyAction: function () { return { target: 'h1' }; }, performAction: function () {} });
+  ATB.setStatus('h3', 'slow', 60); ATB.setStatus('e2', 'haste', 60);
+  for (var i = 0; i < ticks; i++) ATB.update();
+  var vis = ticks, ids = ['h1', 'h2', 'h3'], en = [{ id: 'e1', x: 40, footY: 30 }, { id: 'e2', x: 90, footY: 34 }];
+  pair('atb ' + ticks + ' ticks ' + (wait ? 'wait' : 'active') + ' (bar gauge, frame plate, text plate)', 160, 80,
+    function (g) { g.fillStyle = '#20243a'; g.fillRect(0, 0, 160, 80); ids.forEach(function (id, i) { ATB.drawGauge(g, id, 60, 46 + i * 10, 90, 6); }); ATB.drawEnemyGauges(g, en, 44); ATB.drawModePlate(g, 4, 4); },
+    function (g) {
+      var sk = P16, Pl = sk.palette; g.fillStyle = '#20243a'; g.fillRect(0, 0, 160, 80);
+      ids.forEach(function (id, i) {
+        var c = ATB.get(id), s = c.status, tag = s === 'haste' || s === 'slow' ? s : null, r = { x: 60, y: 46 + i * 10, w: 90, h: 6 };
+        if (c.state === 'dead') sk.bar(g, r, 0, null);
+        else if (c.state === 'ready') sk.bar(g, r, 1, Math.floor(vis / 6) % 4 === 3 ? 'charge' : 'ready', { tag: tag });
+        else if (c.state !== 'charge') sk.bar(g, r, 1, 'queued', { tag: tag });
+        else sk.bar(g, r, c.gauge, tag || 'charge');
+      });
+      en.forEach(function (e) {
+        var c = ATB.get(e.id); if (c.state === 'dead') return; var ch = c.state === 'charge';
+        sk.bar(g, { x: Math.round(e.x - 11), y: Math.min(44 - 5, Math.round(e.footY) + 2), w: 22, h: 4 }, ch ? c.gauge : 1, ch ? (c.status === 'slow' ? 'slow' : c.status === 'haste' ? 'haste' : 'enemy') : 'enemyFull');
+      });
+      var Pm = ATB.params(), paused = Pm.mode === 'wait' && ATB.menuHero() && !ATB.isOver(), s = (Pm.mode === 'wait' ? 'WAIT' : 'ACTIVE') + ' x' + Pm.speed.toFixed(Pm.speed * 4 % 2 ? 2 : 1);
+      var tw = sk.measure(s, { font: 'plate' }); sk.frame(g, { x: 4, y: 4, w: tw + 10 + (paused ? 8 : 0), h: 13 }, { role: 'plate', alert: paused });
+      sk.text(g, s, 9, 7, { font: 'plate', color: paused ? Pl.text.accent : Pl.text.plate, shadow: Pl.text.plateShadow });
+      if (paused) { g.fillStyle = Pl.text.accent; g.fillRect(9 + tw + 3, 7, 2, 7); g.fillRect(9 + tw + 6, 7, 2, 7); }
+    });
+}
+atbCase(60, false); atbCase(170, false); atbCase(170, true);
+
+// E-01 damage-numbers: every kind, crit label, MP suffix, all three schemes, scale 2, outline 2
+function dnCase(params, at) {
+  var A = { a: { x: 30, top: 70 }, b: { x: 90, top: 70 }, c: { x: 150, top: 70 }, d: { x: 40, top: 130 }, e: { x: 110, top: 130 }, f: { x: 170, top: 130 } };
+  var DN = GameDNA_DamageNumbers.create({ skin: false, bounds: { x: 0, y: 0, w: 200, h: 150 }, params: params, getAnchor: function (id) { var a = A[id]; return a && { x: a.x, top: a.top, w: 16, h: 24 }; }, getObstacles: function () { return []; } });
+  DN.spawn('a', 128, 'damage'); DN.spawn('b', 57, 'crit'); DN.spawn('c', 30, 'heal'); DN.spawn('d', 12, 'mp'); DN.spawn('e', 'poison', 'status'); DN.spawn('f', 0, 'miss');
+  for (var t = 0; t < at; t += 50) DN.update(50);
+  var spec = { a: ['128', 'damage'], b: ['57', 'crit'], c: ['+30', 'heal'], d: ['12', 'mp', 'MP'], e: ['POISON', 'status'], f: ['MISS', 'miss'] };
+  pair('damage-numbers ' + JSON.stringify(params) + ' @' + at + 'ms (number)', 200, 150,
+    function (g) { g.fillStyle = '#2a2438'; g.fillRect(0, 0, 200, 150); DN.draw(g); },
+    function (g) {
+      g.fillStyle = '#2a2438'; g.fillRect(0, 0, 200, 150);
+      var Pm = DN.params, drawn = (function () { var c = document.createElement('canvas'); c.width = 200; c.height = 150; DN.draw(c.getContext('2d')); return DN.lastDrawn(); })();
+      var o = Pm.scheme === 'contrast' ? 2 : Math.max(1, Math.min(2, +Pm.outline || 1));
+      ['a', 'b', 'c', 'd', 'e', 'f'].forEach(function (id) {
+        var mine = drawn.filter(function (d) { return d.target === id; }), sp = spec[id], crit = sp[1] === 'crit';
+        if (!mine.length) return;
+        var sc = +Pm.scale, L1 = P16.numberLayout(sp[0], { scale: sc, big: crit && Pm.crit === 'burst', suffix: sp[2] });
+        if (mine[0].w !== L1.items[0].w) sc = 1;   // the module drew this one at 1x (no room at full scale)
+        var L = P16.numberLayout(sp[0], { scale: sc, big: crit && Pm.crit === 'burst', suffix: sp[2], label: crit && Pm.crit !== 'plain' ? 'CRITICAL' : null }), all = L.items.concat(L.labelItems);
+        P16.number(g, sp[0], 0, 0, { kind: sp[1], scheme: Pm.scheme, scale: sc, big: crit && Pm.crit === 'burst', suffix: sp[2], label: crit && Pm.crit !== 'plain' ? 'CRITICAL' : null, outline: o,
+          glyphOffset: function (i, it) {
+            var d = mine[i]; if (!d) return { skip: true };
+            // the module's per-glyph age: digits stagger 40 ms; label letters start at (n-1)*40 + 25 % of life, 3 ms per px
+            var nd = L.items.length, D = 1150, a = it.lab ? at - ((nd - 1) * 40 + D * 0.25) - it.lx0 * 3 : at - i * 40;
+            return { dx: d.x - it.x, dy: d.y - it.y, flash: crit && Pm.crit !== 'plain' && a >= 0 && a < 120 && Math.floor(a / 40) % 2 === 0 };
+          } });
+      });
+    });
+}
+dnCase({}, 700); dnCase({ scheme: 'warm', scale: 2 }, 650); dnCase({ scheme: 'contrast' }, 500); dnCase({ outline: 2, crit: 'label' }, 300);
+
+// C-01 window-cursor: the module's built-in look (skin: false) vs the same calls routed through pixel16
+function wcCase(steps) {
+  var mk = function (skin) {
+    var W = GameDNA_WindowCursor.create({ view: { x: 0, y: 0, w: 200, h: 120 }, skin: skin, getObstacles: function () { return [{ x: 150, y: 40, w: 16, h: 24, id: 'slime' }]; }, params: { open: 6 } });
+    W.menu('cmd', { x: 8, y: 8, items: ['Fight', { label: 'Magic', note: '12', disabled: true }, 'Item', { label: 'Run', note: 'x3' }], selected: 2, title: 'Rowan' });
+    W.message('The door is locked. Find the key first.', { more: true });
+    W.setCursor({ id: 'slime' });
+    for (var i = 0; i < steps; i++) W.update(1000 / 60);
+    return W;
+  };
+  var A = mk(false), B = mk('pixel16');
+  pair('window-cursor ' + steps + ' steps (module built-in vs module through pixel16)', 200, 120,
+    function (g) { g.fillStyle = '#203018'; g.fillRect(0, 0, 200, 120); A.draw(g); },
+    function (g) { g.fillStyle = '#203018'; g.fillRect(0, 0, 200, 120); B.draw(g); });
+}
+wcCase(3); wcCase(40);
+
+/* ---------------- API checks (v2 contract) ---------------- */
+var api = [];
+function check(name, fn) { var r; try { r = fn(); } catch (e) { r = 'error: ' + e.message; } api.push([name, r === true ? 'ok' : String(r)]); }
+check('glyphOffset items are canonical in pixel16 (main, suffix, label; i/role/k/n/u)', function () {
+  var seen = [], c = document.createElement('canvas').getContext('2d');
+  P16.number(c, '12', 0, 20, { kind: 'mp', suffix: 'MP', label: 'HI', glyphOffset: function (i, it) { seen.push([i, it.ch, it.role, it.k, it.n, it.u]); return {}; } });
+  var want = JSON.stringify(SK.glyphItems('12', { suffix: 'MP', label: 'HI' }).map(function (it) { return [it.i, it.ch, it.role, it.k, it.n, it.u]; }));
+  return JSON.stringify(seen) === want || 'got ' + JSON.stringify(seen);
+});
+check('scaleOf follows setTransform', function () { var c = document.createElement('canvas').getContext('2d'); c.setTransform(3, 0, 0, 3, 5, 5); return SK.scaleOf(c) === 3 || SK.scaleOf(c); });
+check('fadeLayer: outline does not show through the fill', function () {
+  var c = document.createElement('canvas'); c.width = c.height = 40; var g = c.getContext('2d', { willReadFrequently: true }); g.setTransform(2, 0, 0, 2, 0, 0);
+  g.fillStyle = '#000000'; g.fillRect(0, 0, 20, 20);
+  SK.fadeLayer(g, 0.5, { x: 2, y: 2, w: 16, h: 16 }, function (l) { l.lineWidth = 6; l.strokeStyle = '#ff0000'; l.fillStyle = '#00ff00'; l.beginPath(); l.arc(10, 10, 5, 0, 7); l.stroke(); l.fill(); });
+  var d = g.getImageData(20, 20, 1, 1).data; return (d[0] < 4 && Math.abs(d[1] - 128) <= 2) || 'centre ' + [d[0], d[1], d[2]];
+});
+check("frame role 'row' on pixel16 = plain ui.select fill", function () {
+  var a = document.createElement('canvas').getContext('2d', { willReadFrequently: true }), b = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+  a.fillStyle = '#334'; a.fillRect(0, 0, 300, 150); b.fillStyle = '#334'; b.fillRect(0, 0, 300, 150);
+  P16.frame(a, { x: 3, y: 5, w: 40, h: 11 }, { role: 'row' }); b.fillStyle = P16.palette.ui.select; b.fillRect(3, 5, 40, 11); return diff(a, b) === 0 || 'differs';
+});
+check('defaults: layout hand 7x5, motion.squash null, atmosphere no-op, path optional', function () {
+  return (P16.layout.handW === 7 && P16.layout.handH === 5 && P16.motion.squash == null && typeof P16.atmosphere === 'function' && P16.path === undefined) || JSON.stringify(P16.layout);
+});
+check('token(path) still looks up; token(ctx, rect, unit, t) draws', function () { var c = document.createElement('canvas').getContext('2d'); P16.token(c, { x: 0, y: 0, w: 16, h: 16 }, { team: 'b', kind: 'mage' }, 0); return P16.token('overlay.move.fill') === '#3064f0' || P16.token('overlay.move.fill'); });
+
+check('pixel16 plate font: full coverage, A-01 strings unchanged', function () {
+  var a = document.createElement('canvas').getContext('2d', { willReadFrequently: true }); a.fillStyle = '#000'; a.fillRect(0, 0, 300, 150);
+  P16.text(a, 'Turn 3', 2, 2, { font: 'plate', color: '#ffffff' });
+  var d = a.getImageData(2, 2, 40, 8).data, lit = 0; for (var i = 0; i < d.length; i += 4) if (d[i] > 128) lit++;
+  return (P16.measure('Turn 3', { font: 'plate' }) === 33 && P16.measure('ACTIVE x1.0', { font: 'plate' }) === 59 && lit > 60) || [P16.measure('Turn 3', { font: 'plate' }), P16.measure('ACTIVE x1.0', { font: 'plate' }), lit].join();
+});
+check('pixel16 has its own tile and unitToken; standard lights normalise; default phases', function () {
+  var L = SK.normLights([{ x: 1, y: 2, col: [1, 0.5, 0], i: 0.4 }])[0];
+  return (P16.tile.raw !== SK.base.tile && typeof P16._spec.unitToken === 'function' && L.col === '#ff8000' && L.intensity === 0.4 && L.r === 40 && P16.atmospherePhases.join() === 'world,final') || JSON.stringify(L);
+});
+
+check("generic prop = the skin's own tile for the matching terrain", function () {
+  var a = document.createElement('canvas').getContext('2d', { willReadFrequently: true }), b = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+  P16.prop(a, { x: 16, y: 16, w: 16, h: 16 }, 'lamp', 0); P16.tile(b, { x: 16, y: 16, w: 16, h: 16 }, 'mountain', 0);
+  P16.prop(a, { x: 48, y: 16, w: 16, h: 16 }, 'bush', 0); P16.tile(b, { x: 48, y: 16, w: 16, h: 16 }, 'forest', 0);
+  return diff(a, b) === 0 || 'differs';
+});
+
+// scene hooks (tile, unit token, path, number sx/sy/alpha) for any skin, at native 160x64
+function scene(g, sk, t) {
+  var kinds = ['grass', 'forest', 'water', 'bridge', 'hill', 'mountain', 'road', 'fort', 'sand', 'wall'];
+  for (var y = 0; y < 4; y++) for (var x = 0; x < 10; x++) sk.tile(g, { x: x * 16, y: y * 16, w: 16, h: 16 }, y === 0 ? kinds[x] : x === 4 || x === 5 ? 'water' : x === 8 && y === 2 ? 'fort' : (x * 7 + y * 3) % 5 === 0 ? 'forest' : 'grass', t);
+  var pth = [{ x: 24, y: 40 }, { x: 40, y: 40 }, { x: 56, y: 40 }, { x: 56, y: 56 }, { x: 72, y: 56 }, { x: 88, y: 56 }];
+  if (sk.path) sk.path(g, pth, t, { tile: 16 }); else SK.base.path.call(sk, g, pth, t, { tile: 16, alpha: 0.85 });
+  sk.token(g, { x: 16, y: 32, w: 16, h: 16 }, { team: 'a', kind: 'knight', selected: true }, t);
+  sk.token(g, { x: 112, y: 32, w: 16, h: 16 }, { team: 'b', kind: 'mage', facing: -1 }, t);
+  sk.token(g, { x: 128, y: 48, w: 16, h: 16 }, { team: 'b', kind: 'monster', dead: true }, t);
+  sk.number(g, '999', 120, 30, { kind: 'crit', align: 'center', baseline: 'bottom', glyphOffset: function (i) { return { alpha: 0.6, sx: i === 1 ? 1.25 : 1, sy: i === 1 ? 0.8 : 1 }; } });
+  sk.atmosphere(g, { x: 0, y: 0, w: 160, h: 64 }, t, { phase: 'world' });
+}
+
+/* ---------------- 3. token-only skin through the generic implementations ---------------- */
+var demo = SK.define({
+  id: 'demo-tokens', name: 'token-only smoke test', pixel: false,
+  native: { w: 256, h: 224, scale: 'fit', smoothing: true },
+  palette: {
+    ink: '#29304d', paper: '#f4f6fb',
+    ui: { fill: '#ffffff', fillTo: '#eef1f8', edge: '#cdd2de', highlight: '#ffffff', shadow: 'rgba(40,46,90,0.25)', select: 'rgba(91,75,255,0.14)', well: '#eef0f6' },
+    team: { a: '#6f8cff', b: '#ff8574', n: '#aeb5c6', aLight: '#dfe6ff', aDark: '#c4d0ff', aText: '#29304d' },
+    overlay: { move: { fill: '#6f8cff', edge: '#4d68d6', alpha: 0.35 }, attack: { fill: '#ff6f6f', edge: '#d9624f', alpha: 0.35 }, threat: { fill: '#8f86ff', edge: '#5b4bff', alpha: 0.3 }, heal: { fill: '#3fcf8e', edge: '#2f9e63', alpha: 0.35 } },
+    fx: { hot: '#ff8a5c', cold: '#4aa8ff', heal: '#2f9e63', crit: '#ff5a5a', status: '#8f86ff' },
+    text: { main: '#29304d', shadow: 'rgba(0,0,0,0)', outline: '#ffffff', dim: '#aeb5c6', dim2: '#aeb5c6', accent: '#5b4bff', select: '#5b4bff', title: '#29304d', label: '#7b8199', gold: '#7b8199', plate: '#29304d', plateShadow: 'rgba(0,0,0,0)' }
+  },
+  fonts: { ui: { type: 'canvas', family: 'system-ui, sans-serif', size: 7, weight: 700 }, num: { type: 'canvas', family: 'system-ui, sans-serif', size: 11, weight: 800 } },
+  shape: { radius: 4, edgeWidth: 0.5, padding: 4, barRadius: 3 },
+  shadow: { text: null, window: { blur: 4, dy: 1 } },
+  outline: { text: { width: 0 }, number: { width: 1 } },
+  motion: { snap: false }
+});
+var sp = document.getElementById('scene16').getContext('2d'); sp.imageSmoothingEnabled = false; scene(sp, P16, T);
+SK.ready(demo).then(function () {
+  var dctx = document.getElementById('demo').getContext('2d'); dctx.setTransform(3, 0, 0, 3, 0, 0); showcase(dctx, demo, T);
+  var sd = document.getElementById('sceneDemo').getContext('2d'); sd.setTransform(3, 0, 0, 3, 0, 0); scene(sd, demo, T);
+  document.documentElement.dataset.ready = '1';
+  if (q.get('focus') && document.getElementById(q.get('focus'))) document.getElementById(q.get('focus')).scrollIntoView();   // ?focus=<id> for headless shots
+});
+
+/* ---------------- summary ---------------- */
+var tb = document.getElementById('par'), bad = results.filter(function (r) { return r[1] !== 0; });
+results.forEach(function (r) { var tr = document.createElement('tr'); tr.innerHTML = '<td></td><td class="' + (r[1] === 0 ? 'ok' : 'bad') + '"></td>'; tr.children[0].textContent = r[0]; tr.children[1].textContent = String(r[1]); tb.appendChild(tr); });
+var at = document.getElementById('api'), apiBad = api.filter(function (r) { return r[1] !== 'ok'; });
+api.forEach(function (r) { var tr = document.createElement('tr'); tr.innerHTML = '<td></td><td class="' + (r[1] === 'ok' ? 'ok' : 'bad') + '"></td>'; tr.children[0].textContent = r[0]; tr.children[1].textContent = r[1]; at.appendChild(tr); });
+document.documentElement.dataset.api = apiBad.length ? 'fail' : 'pass'; document.documentElement.dataset.apiDetail = JSON.stringify(api);
+var sum = 'skins: ' + SK.list().join(', ') + ' · parity ' + (results.length - bad.length) + '/' + results.length + ' cases pixel-identical · API checks ' + (api.length - apiBad.length) + '/' + api.length;
+document.getElementById('sum').textContent = sum; document.getElementById('sum').className = bad.length || apiBad.length ? 'bad' : 'ok';
+document.documentElement.dataset.parity = bad.length ? 'fail' : 'pass';
+document.documentElement.dataset.parityDetail = JSON.stringify(results);
+</script>
+</body>
+</html>

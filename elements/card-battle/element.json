@@ -1,0 +1,61 @@
+{
+  "id": "card-battle",
+  "code": "A-10",
+  "kind": "system",
+  "name": "Card battle with intents",
+  "family": "Battle flow",
+  "oneLiner": "A turn-based card battle: draw a fanned hand each turn, drag a card onto a foe (a target arrow follows; keys and taps work too) and pay its cost from a small energy pool; draw and discard piles reshuffle when the draw runs out; every foe shows an intent tag with the real numbers of its next move before it acts, then does exactly that; ward absorbs hits until its owner's next turn, statuses (might, barbs, exposed, sapped, burn) change the numbers live on cards and tags; end the turn and the foes act one by one. Content is plain data (cards, foes, statuses), seeded and frame-stepped, with a bot that plays through the same input path.",
+  "fits": [
+    "deck-building roguelites and run-based card games",
+    "RPG battles where actions are cards drawn from a deck",
+    "puzzle-like boss fights where the player reads the foe's next move",
+    "board or tabletop adaptations with an energy budget per turn",
+    "short encounters inside an adventure or map game (one fight per node)"
+  ],
+  "notFor": [
+    "real-time action combat (use A-05)",
+    "menu-driven party battles without a deck (use A-01 or A-02)",
+    "competitive card games against another player with hidden hands (intents show everything the foe will do)",
+    "grid tactics with movement (use B-01)"
+  ],
+  "interfaces": {
+    "time": "turn",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "a deck (list of card ids) and the foes of an encounter (enemy ids), the hero's HP / max HP",
+      "card, foe and status tables (built-ins ship; the game adds its own as plain data)",
+      "a seed per encounter and a fixed 60 Hz update step",
+      "key or pointer input routed to the battle while it runs",
+      "a place to go when the fight ends (win / lose) and, optionally, a reward screen"
+    ],
+    "provides": [
+      "the rules: energy, draw / discard / faded piles with seeded reshuffle, ward, damage formula, statuses, foe intents rolled once and acted unchanged",
+      "the screen: fanned hand with lift, drag and target arrow, painted foes, intent tags, plates, hero panel with Lumen pips, piles, end-turn button, banners, effects, hit numbers",
+      "hit site onHit per HP change on its impact frame (read-only), events intent / act / play / draw / reshuffle / death / end, onTurn, onEnd(result, info)",
+      "a bot (search over this turn's plays) that lifts, aims and plays through the player's own input path",
+      "unit anchors (live), unit rects (sprite + plate with id), UI rects, card rects, card frame drawing for reward screens"
+    ]
+  },
+  "params": [
+    { "key": "energy", "label": "Lumen per turn", "type": "range", "min": 1, "max": 6, "step": 1, "default": 3 },
+    { "key": "draw", "label": "Cards drawn per turn", "type": "range", "min": 3, "max": 8, "step": 1, "default": 5 },
+    { "key": "handMax", "label": "Hand limit", "type": "range", "min": 5, "max": 12, "step": 1, "default": 10 },
+    { "key": "fan", "label": "Hand fan (degrees per card)", "type": "range", "min": 0, "max": 10, "step": 1, "default": 6 },
+    { "key": "speed", "label": "Playback speed", "type": "range", "min": 0.5, "max": 3, "step": 0.25, "default": 1 },
+    { "key": "intents", "label": "Intent tags", "type": "select", "options": ["on", "off"], "default": "on" },
+    { "key": "arrow", "label": "Target arrow", "type": "select", "options": ["on", "off"], "default": "on" },
+    { "key": "numbers", "label": "Built-in hit numbers", "type": "select", "options": ["on", "off"], "default": "on" }
+  ],
+  "variants": [
+    { "name": "Standard (default)", "params": {} },
+    { "name": "Big hands", "params": { "draw": 7, "energy": 4, "fan": 4 } },
+    { "name": "Lean deck, few plays", "params": { "draw": 4, "energy": 2 } },
+    { "name": "Blind foes (no intent tags)", "params": { "intents": "off" } },
+    { "name": "Quick playback", "params": { "speed": 2 } }
+  ],
+  "assets": "module/card-battle.js (global GameDNA_CardBattle, no dependencies; API in module/README.md). Built-in procedural HD foes (toad, wisp, brute, imp, thief, golem, slime, bat), hero portrait, card frames with code-drawn art glyphs, intent and status glyphs, effects. The starter adds procedural road backdrops (src/art.js). Optional: L-07 card-art pack illustrations through drawArt (demo ?art=pack). No external files required.",
+  "status": "v1-module",
+  "module": { "file": "module/card-battle.js", "global": "GameDNA_CardBattle", "version": "1.1.0" },
+  "starter": "starter/index.html"
+}

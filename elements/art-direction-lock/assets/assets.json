@@ -1,0 +1,857 @@
+{
+ "format": "gamedna-assets/1",
+ "pack": "art-direction-lock sample: Lanternwood (lantern-lit forest village)",
+ "element": "L-00 art-direction-lock",
+ "generated": {
+  "tool": "codex image_gen.imagegen (built-in)",
+  "runner": "tools/assets/gen.sh",
+  "model": "image generator",
+  "effort": "high",
+  "date": "2026-11-16",
+  "note": "AI-generated at build time; the game never calls a generator. Usage rights follow OpenAI's terms at generation time (unverified; check before any public release)."
+ },
+ "styleLock": {
+  "text": "prompts/style-lock.txt",
+  "reference": "sheet",
+  "referenceSource": "gen/sheet/sheet.png"
+ },
+ "budgetBytes": 600000,
+ "assets": [
+  {
+   "key": "sheet",
+   "role": "reference",
+   "file": "ref/sheet.webp",
+   "source": {
+    "run": "gen/sheet",
+    "file": "sheet.png",
+    "sha256": "d910612f64f895374bf309019a8141d0df309621cde274e89aef3d32f02e8d84"
+   },
+   "prompt": [
+    "gen/sheet/PROMPT.md",
+    "gen/sheet/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "w": 960
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "note": "the locked style reference: every derived asset passes the full-resolution sheet.png as referenced_image_paths",
+   "w": 960,
+   "h": 428,
+   "bytes": 61638,
+   "sha256": "709b64e98aae7dfca3febc247fead3e4c78af2c6a404a193604d4c4ec35e6112"
+  },
+  {
+   "key": "keeper",
+   "role": "sprite",
+   "file": "sheet-parts/keeper.webp",
+   "source": {
+    "run": "gen/sheet",
+    "file": "sheet.png",
+    "sha256": "d910612f64f895374bf309019a8141d0df309621cde274e89aef3d32f02e8d84"
+   },
+   "prompt": [
+    "gen/sheet/PROMPT.md",
+    "gen/sheet/GEN.md"
+   ],
+   "post": [
+    {
+     "pick": {
+      "index": 0
+     }
+    },
+    "trim",
+    {
+     "resize": {
+      "h": 240
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "alpha": true,
+   "kind": "lantern-keeper",
+   "drawH": 120,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "w": 136,
+   "h": 240,
+   "bytes": 10130,
+   "sha256": "5e0e529b77ee515638327f06af8dcf96c1f92ea0499a5de944222f8f35a7f680",
+   "baseline": 240
+  },
+  {
+   "key": "lamppost",
+   "role": "prop",
+   "file": "sheet-parts/lamppost.webp",
+   "source": {
+    "run": "gen/sheet",
+    "file": "sheet.png",
+    "sha256": "d910612f64f895374bf309019a8141d0df309621cde274e89aef3d32f02e8d84"
+   },
+   "prompt": [
+    "gen/sheet/PROMPT.md",
+    "gen/sheet/GEN.md"
+   ],
+   "post": [
+    {
+     "pick": {
+      "index": 1
+     }
+    },
+    "trim",
+    {
+     "resize": {
+      "h": 300
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "alpha": true,
+   "kind": "lamppost",
+   "drawH": 170,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "skinRole": {
+    "role": "prop",
+    "kind": "lamppost"
+   },
+   "w": 122,
+   "h": 300,
+   "bytes": 9898,
+   "sha256": "fc41d0f8af28810e077821ffc1d8d396c1d8d0328bd8b95106c1bb50bdfa0165",
+   "baseline": 299
+  },
+  {
+   "key": "patch",
+   "role": "decal",
+   "kind": "cobble-patch",
+   "file": "sheet-parts/patch.webp",
+   "source": {
+    "run": "gen/sheet",
+    "file": "sheet.png",
+    "sha256": "d910612f64f895374bf309019a8141d0df309621cde274e89aef3d32f02e8d84"
+   },
+   "prompt": [
+    "gen/sheet/PROMPT.md",
+    "gen/sheet/GEN.md"
+   ],
+   "post": [
+    {
+     "pick": {
+      "index": 2
+     }
+    },
+    "trim",
+    {
+     "resize": {
+      "h": 200
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "alpha": true,
+   "note": "ground decal cut from the reference sheet (irregular edges, drawn flat under props)",
+   "w": 214,
+   "h": 200,
+   "bytes": 9906,
+   "sha256": "f5c61343a9aca94f2025b2b3e1fe90873760666c976a201d9d01a9af1366ddb4"
+  },
+  {
+   "key": "vial",
+   "role": "icon",
+   "file": "sheet-parts/vial.webp",
+   "source": {
+    "run": "gen/sheet",
+    "file": "sheet.png",
+    "sha256": "d910612f64f895374bf309019a8141d0df309621cde274e89aef3d32f02e8d84"
+   },
+   "prompt": [
+    "gen/sheet/PROMPT.md",
+    "gen/sheet/GEN.md"
+   ],
+   "post": [
+    {
+     "pick": {
+      "index": 3
+     }
+    },
+    "trim",
+    {
+     "resize": {
+      "h": 128
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "alpha": true,
+   "kind": "lamp-oil",
+   "skinRole": {
+    "role": "icon",
+    "kind": "lamp-oil"
+   },
+   "w": 80,
+   "h": 128,
+   "bytes": 3998,
+   "sha256": "c231a23bc635b95cea180fc733224ba02a113fa5f1e499a23ad5c2c173623ce2"
+  },
+  {
+   "key": "herbalist",
+   "role": "sprite",
+   "file": "with/herbalist.webp",
+   "source": {
+    "run": "gen/with",
+    "file": "herbalist.png",
+    "sha256": "d96fbbf9170c80eee72f8bae01b8ebebc7cd5ddca7f07854c1015d19da23bc15"
+   },
+   "prompt": [
+    "gen/with/PROMPT.md",
+    "gen/with/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 240
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "alpha": true,
+   "kind": "herbalist",
+   "drawH": 118,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "set": "with",
+   "w": 134,
+   "h": 240,
+   "bytes": 12928,
+   "sha256": "91b509113c440051fe82cb3860a68f897f38929db92f43f3ad35cd8629d43ec6",
+   "baseline": 240
+  },
+  {
+   "key": "well",
+   "role": "prop",
+   "file": "with/well.webp",
+   "source": {
+    "run": "gen/with",
+    "file": "well.png",
+    "sha256": "55169162d54b7a0967b72d86e3d0af3ddff55ba014c7dafd514c5097e6dc363e"
+   },
+   "prompt": [
+    "gen/with/PROMPT.md",
+    "gen/with/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 260
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "alpha": true,
+   "kind": "well",
+   "drawH": 150,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "skinRole": {
+    "role": "prop",
+    "kind": "well"
+   },
+   "set": "with",
+   "w": 183,
+   "h": 260,
+   "bytes": 16500,
+   "sha256": "0399e034ed7ba4c2f46bc9476cbe9213450bbde0e5cf228656b66cdc2ec66292",
+   "baseline": 260,
+   "cellsTall": 2
+  },
+  {
+   "key": "ground",
+   "role": "tile",
+   "kind": "grass",
+   "set": "with",
+   "file": "with/ground.webp",
+   "source": {
+    "run": "gen/with",
+    "file": "ground.png",
+    "sha256": "1c7f6e91cc5275cdd0c6de8885f0273bcc004eafabd6d0b6d25fec9cf472a502"
+   },
+   "prompt": [
+    "gen/with/PROMPT.md",
+    "gen/with/GEN.md"
+   ],
+   "post": [
+    {
+     "seam": {
+      "mode": "tile"
+     }
+    },
+    {
+     "resize": {
+      "size": "256x256",
+      "wrap": "xy"
+     }
+    },
+    {
+     "export": {
+      "quality": 95
+     }
+    }
+   ],
+   "alpha": false,
+   "seam": "tile",
+   "tileW": 128,
+   "tileH": 128,
+   "skinRole": {
+    "role": "tile",
+    "kind": "grass"
+   },
+   "w": 256,
+   "h": 256,
+   "bytes": 25926,
+   "sha256": "45c4ef937d8e11ef7c17b44c52f9c248254bc41f745afbf22310794d4a5e8c5b",
+   "cells": 4
+  },
+  {
+   "key": "key",
+   "role": "icon",
+   "file": "with/key.webp",
+   "source": {
+    "run": "gen/with",
+    "file": "icon-key.png",
+    "sha256": "377b1f60e5492064bc84b48f2374f732cd7e5c976861b82631d149619a601f51"
+   },
+   "prompt": [
+    "gen/with/PROMPT.md",
+    "gen/with/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 128
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "alpha": true,
+   "kind": "key",
+   "skinRole": {
+    "role": "icon",
+    "kind": "key"
+   },
+   "set": "with",
+   "w": 106,
+   "h": 128,
+   "bytes": 4338,
+   "sha256": "b8a5128d2eda695ab96cde353da9ec86593e37134d9c14701669656ff3faf151"
+  },
+  {
+   "key": "herbalist-nr",
+   "role": "sprite",
+   "file": "without/herbalist-nr.webp",
+   "source": {
+    "run": "gen/without",
+    "file": "herbalist.png",
+    "sha256": "22182e20101b759ce349fe92bb540ffefb103be0c5987444870bf6a16ea2ebe7"
+   },
+   "prompt": [
+    "gen/without/PROMPT.md",
+    "gen/without/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 240
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "alpha": true,
+   "kind": "herbalist",
+   "drawH": 118,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "set": "without",
+   "w": 159,
+   "h": 240,
+   "bytes": 13302,
+   "sha256": "74e12ef3ff474966a5f6fac908d5152a4bbaed37f9e8818d05218012417912e2",
+   "baseline": 240
+  },
+  {
+   "key": "well-nr",
+   "role": "prop",
+   "file": "without/well-nr.webp",
+   "source": {
+    "run": "gen/without",
+    "file": "well.png",
+    "sha256": "28f78834ab7bb084f8772503b1816bdf1c634981e1e05267d93eece35328fbc1"
+   },
+   "prompt": [
+    "gen/without/PROMPT.md",
+    "gen/without/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 260
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "alpha": true,
+   "kind": "well",
+   "drawH": 150,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "skinRole": {
+    "role": "prop",
+    "kind": "well"
+   },
+   "set": "without",
+   "w": 214,
+   "h": 260,
+   "bytes": 17664,
+   "sha256": "50447b943e94f4e1804c1cc2d978c8b576368dc45d8b177146cb89cd1b6bf562",
+   "baseline": 260,
+   "cellsTall": 2
+  },
+  {
+   "key": "ground-nr",
+   "role": "tile",
+   "kind": "grass",
+   "set": "without",
+   "file": "without/ground-nr.webp",
+   "source": {
+    "run": "gen/without",
+    "file": "ground.png",
+    "sha256": "a64c113937bcce95dd07746490817dabb7c2bb3761feac46707b71bfb348c393"
+   },
+   "prompt": [
+    "gen/without/PROMPT.md",
+    "gen/without/GEN.md"
+   ],
+   "post": [
+    {
+     "seam": {
+      "mode": "tile"
+     }
+    },
+    {
+     "resize": {
+      "size": "256x256",
+      "wrap": "xy"
+     }
+    },
+    {
+     "export": {
+      "quality": 95
+     }
+    }
+   ],
+   "alpha": false,
+   "seam": "tile",
+   "tileW": 128,
+   "tileH": 128,
+   "skinRole": {
+    "role": "tile",
+    "kind": "grass"
+   },
+   "w": 256,
+   "h": 256,
+   "bytes": 25550,
+   "sha256": "fb9007b7cfd7cc734a875d392753f60b35c6f521c44f7e90b926fc2c7e639ba8",
+   "cells": 4
+  },
+  {
+   "key": "key-nr",
+   "role": "icon",
+   "file": "without/key-nr.webp",
+   "source": {
+    "run": "gen/without",
+    "file": "icon-key.png",
+    "sha256": "62d724fe8cc82c6aa52e5ecfdc78ca3a924ac505813d63f786240927c7cbe71a"
+   },
+   "prompt": [
+    "gen/without/PROMPT.md",
+    "gen/without/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 128
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "alpha": true,
+   "kind": "key",
+   "skinRole": {
+    "role": "icon",
+    "kind": "key"
+   },
+   "set": "without",
+   "w": 113,
+   "h": 128,
+   "bytes": 4332,
+   "sha256": "a737662ba32bc4934e72403c1d8349c5ad0b94014bb18fc44352f2375de8390b"
+  },
+  {
+   "key": "oak",
+   "role": "prop",
+   "file": "with/oak.webp",
+   "source": {
+    "run": "gen/with",
+    "file": "oak.png",
+    "sha256": "6b0e53ff108e6f518e82529f82848a68b9b71f093da833d31274ba50b488729e"
+   },
+   "prompt": [
+    "gen/with/PROMPT.md",
+    "gen/with/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 360
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "alpha": true,
+   "kind": "oak",
+   "drawH": 230,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "skinRole": {
+    "role": "prop",
+    "kind": "tree"
+   },
+   "set": "with",
+   "w": 337,
+   "h": 360,
+   "bytes": 28946,
+   "sha256": "47cfc49a40fee11ae1934930397120750e230873f288ea012e714d467e238794",
+   "baseline": 360,
+   "cellsTall": 3
+  },
+  {
+   "key": "herbalist-wb",
+   "role": "sprite",
+   "file": "repeats/herbalist-wb.webp",
+   "source": {
+    "run": "gen/repeat-with",
+    "file": "herbalist-b.png",
+    "sha256": "b04b6fd8711e9c85d1d59555840db296df4f974c834e9269c7dfb4deef008e81"
+   },
+   "prompt": [
+    "gen/repeat-with/PROMPT.md",
+    "gen/repeat-with/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 200
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 80
+     }
+    }
+   ],
+   "alpha": true,
+   "kind": "herbalist",
+   "drawH": 118,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "set": "with",
+   "repeat": true,
+   "w": 120,
+   "h": 200,
+   "bytes": 8760,
+   "sha256": "5ed59b57a6cffb17856052e056156339b9b1cdae8bfb7ee0f0c644fb48d4c49a",
+   "baseline": 200
+  },
+  {
+   "key": "herbalist-wc",
+   "role": "sprite",
+   "file": "repeats/herbalist-wc.webp",
+   "source": {
+    "run": "gen/repeat-with",
+    "file": "herbalist-c.png",
+    "sha256": "b436b2e576b0cc71a50b396225229962862d7ac3870e334cd2ca2c0cd2320a3a"
+   },
+   "prompt": [
+    "gen/repeat-with/PROMPT.md",
+    "gen/repeat-with/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 200
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 80
+     }
+    }
+   ],
+   "alpha": true,
+   "kind": "herbalist",
+   "drawH": 118,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "set": "with",
+   "repeat": true,
+   "w": 112,
+   "h": 200,
+   "bytes": 7940,
+   "sha256": "9a5828f564146a44b16d8d06747fb67959ea3b69652291cec9531033021099f1",
+   "baseline": 200
+  },
+  {
+   "key": "herbalist-nb",
+   "role": "sprite",
+   "file": "repeats/herbalist-nb.webp",
+   "source": {
+    "run": "gen/repeat-without",
+    "file": "herbalist-b.png",
+    "sha256": "9d9bee571fc676be866ab65826392eab468ae9df46f16cf2a56e65903de7b4e2"
+   },
+   "prompt": [
+    "gen/repeat-without/PROMPT.md",
+    "gen/repeat-without/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 200
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 80
+     }
+    }
+   ],
+   "alpha": true,
+   "kind": "herbalist",
+   "drawH": 118,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "set": "without",
+   "repeat": true,
+   "w": 125,
+   "h": 200,
+   "bytes": 7498,
+   "sha256": "775753ed0cdbc36c27dc2d968b98d0778f7847908409b7d165b1cd3fee09a89c",
+   "baseline": 200
+  },
+  {
+   "key": "herbalist-nc",
+   "role": "sprite",
+   "file": "repeats/herbalist-nc.webp",
+   "source": {
+    "run": "gen/repeat-without",
+    "file": "herbalist-c.png",
+    "sha256": "f7114811b9d89c339a406d6c435d192bffdecaa97f2f0dd922d5455d68ee6b7d"
+   },
+   "prompt": [
+    "gen/repeat-without/PROMPT.md",
+    "gen/repeat-without/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 200
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 80
+     }
+    }
+   ],
+   "alpha": true,
+   "kind": "herbalist",
+   "drawH": 118,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "set": "without",
+   "repeat": true,
+   "w": 130,
+   "h": 200,
+   "bytes": 8624,
+   "sha256": "8667267cdb835a2ef3d4d01357c26fde020794169ef8d504e69c1dc6b9c3650d",
+   "baseline": 200
+  }
+ ],
+ "totalBytes": 277878
+}

@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painted Parallax Layers</title>
+<style>
+:root {
+  --bg: #0b0d16; --panel: #121524; --panel2: #191d31; --line: #2a2f4a; --text: #ece9f6; --dim: #9aa0bf; --accent: #ffb978; --accent2: #9cc7ff; --ok: #8be3b4;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1200px 600px at 30% -18%, #3a2a55 0%, var(--bg) 62%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 16px 20px 10px; max-width: 1360px; margin: 0 auto; }
+.code { white-space: nowrap; font: 700 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #1d1206; background: linear-gradient(#ffd9b0, var(--accent)); padding: 6px 8px; border-radius: 6px; box-shadow: 0 0 0 1px #00000040, 0 4px 14px #ffb97840; }
+h1 { font-size: 18px; margin: 0; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; max-width: 940px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 18px; padding: 0 20px 20px; max-width: 1360px; margin: 0 auto; align-items: start; }
+.frame { position: relative; border-radius: 14px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px #363c5c, 0 24px 60px #00000090; }
+.frame canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; }
+.status { margin-top: 10px; font: 12px ui-monospace, Menlo, monospace; color: var(--dim); display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.status b { color: var(--ok); font-weight: 600; }
+aside { background: linear-gradient(var(--panel2), var(--panel)); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+aside section { border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+aside section:last-of-type { border-bottom: 0; padding-bottom: 0; }
+h2 { margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.row { margin-bottom: 8px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 3px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+.seg { display: flex; background: #0c0e1a; border: 1px solid var(--line); border-radius: 9px; padding: 3px; gap: 3px; }
+.seg button { flex: 1; appearance: none; background: transparent; color: var(--dim); border: 0; border-radius: 6px; padding: 6px 4px; font: 600 12.5px/1 inherit; cursor: pointer; }
+.seg button.on { background: linear-gradient(#ffcf9e, var(--accent)); color: #24140a; }
+.toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.toggles label { display: flex; align-items: center; gap: 7px; font-size: 12.5px; background: #0c0e1a; border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; cursor: pointer; }
+.toggles small { margin-left: auto; color: var(--dim); font: 11px ui-monospace, Menlo, monospace; }
+.wide { max-width: 1360px; margin: 0 auto; padding: 0 20px 28px; }
+.wide h3 { font-size: 15px; margin: 18px 0 4px; }
+.wide p.note { color: var(--dim); font-size: 13px; margin: 0 0 10px; max-width: 980px; }
+.layers { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.card canvas { display: block; width: 100%; height: auto; }
+.card .meta { padding: 8px 10px; font-size: 12px; color: var(--dim); display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.card .meta b { color: var(--text); font-weight: 600; }
+.layers.ingame { grid-template-columns: repeat(auto-fill, minmax(min(100%, 560px), 1fr)); }
+.seams { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--dim); font-weight: 600; }
+td code { font: 11.5px ui-monospace, Menlo, monospace; color: #c9d0ea; }
+.tablewrap { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+blockquote { margin: 8px 0; padding: 10px 12px; border-left: 3px solid var(--accent); background: var(--panel2); border-radius: 0 8px 8px 0; color: #c9d1e4; font-size: 12.5px; }
+@media (max-width: 900px) { main { grid-template-columns: minmax(0, 1fr); } header { align-items: flex-start; } }
+@media (max-width: 480px) { header, main, .wide { padding-left: 12px; padding-right: 12px; } .layers, .seams { grid-template-columns: minmax(0, 1fr); } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">L-01</span>
+  <div>
+    <h1>Painted parallax layers</h1>
+    <p>Five hand-painted background layers generated once at build time (Codex image_gen, one locked style), post-processed to repeat without a seam, scrolled at their own depth with an atmospheric tint per layer. The game only loads the files; when one is missing it keeps its old flat layer.</p>
+  </div>
+</header>
+<main>
+  <div>
+    <div class="frame"><canvas id="game" width="640" height="360"></canvas></div>
+    <div class="status" id="status"></div>
+  </div>
+  <aside>
+    <section>
+      <h2>Backdrop</h2>
+      <div class="seg" id="mode"><button data-v="painted">Painted</button><button data-v="flat">Flat (old)</button><button data-v="split">Split</button></div>
+      <div class="seg" id="set" style="margin-top:8px"><button data-v="dusk">Dusk</button><button data-v="night">Night</button></div>
+    </section>
+    <section>
+      <h2>Motion</h2>
+      <div class="row"><label>Scroll speed <output id="o-speed"></output></label><input type="range" id="speed" min="0" max="480" step="10"></div>
+      <div class="row"><label>Parallax depth <output id="o-depth"></output></label><input type="range" id="depth" min="0" max="1.5" step="0.05"></div>
+      <div class="row"><label>Cloud drift <output id="o-drift"></output></label><input type="range" id="drift" min="0" max="4" step="0.25"></div>
+    </section>
+    <section>
+      <h2>Depth</h2>
+      <div class="row"><label>Depth tint <output id="o-tint"></output></label><input type="range" id="tint" min="0" max="2" step="0.05"></div>
+      <div class="row"><label>Ground line <output id="o-ground"></output></label><input type="range" id="ground" min="0.4" max="1" step="0.01"></div>
+    </section>
+    <section>
+      <h2>Layers</h2>
+      <div class="toggles" id="toggles"></div>
+      <label style="display:flex;gap:7px;align-items:center;font-size:12.5px;margin-top:8px"><input type="checkbox" id="seamsOn"> Mark the repeat joins</label>
+    </section>
+  </aside>
+</main>
+<div class="wide">
+  <h3>The layers</h3>
+  <p class="note">Each file is drawn at the view height and repeated sideways. Far is opaque; clouds, mid and near have real alpha (shown on a checkerboard). Factor = how far the layer moves per pixel the camera moves.</p>
+  <div class="layers" id="cards"></div>
+  <h3>The joins, magnified</h3>
+  <p class="note">Every layer's right edge followed by its own left edge, at 2x, with the join in the middle of each strip (the white tick marks it). Wide layers are two generated panels joined into one strip; the panel join is shown too.</p>
+  <div class="seams" id="joins"></div>
+  <h3>In a game</h3>
+  <p class="note">The shipped dusk pack wired into an unseen HD side-scroller (Hollowpeak, 640×360) by following prompt-pack.md: same frame, same game state, old flat layers on the left, painted layers on the right.</p>
+  <div class="layers ingame"><div class="card"><img src="../checks/pack-hd-sidescroll/original-t20000.png" alt="Hollowpeak with its old flat background" style="display:block;width:100%"><div class="meta"><b>before</b><span>flat sky, sine hills, triangle trees</span></div></div><div class="card"><img src="../checks/pack-hd-sidescroll/host-t20000.png" alt="Hollowpeak with the painted dusk layers" style="display:block;width:100%"><div class="meta"><b>after</b><span>painted far, clouds, mid, under, near; vertical 0.5</span></div></div></div>
+  <h3>Style lock and records</h3>
+  <blockquote id="lock"></blockquote>
+  <div class="tablewrap"><table id="records"><thead><tr><th>key</th><th>size</th><th>bytes</th><th>seam</th><th>generated by</th><th>sha256</th></tr></thead><tbody></tbody></table></div>
+</div>
+<script src="../../art-direction-lock/module/art-direction-lock.js"></script>
+<script src="../module/painted-parallax.js"></script>
+<script src="manifest.js"></script>
+<!-- demo page only: the shared painted cast and ground (not part of the element; a game brings its own) -->
+<script src="../../../demo-kit/kit-art.js"></script>
+<script src="../../cutout-characters/module/cutout-characters.js"></script>
+<script src="../../cutout-characters/assets/pack.js"></script>
+<script src="../../../demo-kit/kit.js"></script>
+<script>
+"use strict";
+(() => {
+  const VW = 640, VH = 360, STEP = 1000 / 60;
+  const qs = new URLSearchParams(location.search);
+  const T0 = qs.has('t') ? Math.max(0, +qs.get('t') || 0) : null, FREEZE = qs.get('freeze') === '1';
+  const S = {
+    mode: ['painted', 'flat', 'split'].includes(qs.get('mode')) ? qs.get('mode') : 'painted',
+    set: qs.get('set') === 'night' ? 'night' : 'dusk',
+    speed: qs.has('speed') ? +qs.get('speed') : 120, depth: qs.has('depth') ? +qs.get('depth') : 1, drift: qs.has('drift') ? +qs.get('drift') : 1,
+    tint: qs.has('tint') ? +qs.get('tint') : 1, ground: qs.has('ground') ? +qs.get('ground') : 0.8,
+    on: new Set((qs.get('layers') || 'far,clouds,mid,under,near').split(',')), seams: qs.get('seams') === '1',
+    t: 0, camX: 0,
+  };
+  const cv = document.getElementById('game'), ctx = cv.getContext('2d');
+  const M = window.PP_MANIFEST;
+  const ROLES = ['far', 'clouds', 'mid', 'under', 'near'];
+
+  // ---------------- the old flat background (what a host had before), also the per-layer fallback
+  const hash = (a, b) => { let h = Math.imul(a * 374761393 + b * 668265263, 3266489917); h ^= h >>> 13; h = Math.imul(h, 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+  const FLAT = {
+    far(c, camX) { const g = c.createLinearGradient(0, 0, 0, VH); g.addColorStop(0, S.set === 'night' ? '#1b2442' : '#6f86c4'); g.addColorStop(1, S.set === 'night' ? '#3a4a6e' : '#e3b7a0'); c.fillStyle = g; c.fillRect(0, 0, VW, VH);
+      c.fillStyle = S.set === 'night' ? '#3d4a70' : '#9a9cc4'; c.beginPath(); c.moveTo(0, VH); for (let x = 0; x <= VW; x += 8) { const w = x + camX * 0.16; c.lineTo(x, 170 - 26 * Math.sin(w / 150) - 12 * Math.sin(w / 53 + 1)); } c.lineTo(VW, VH); c.fill(); },
+    clouds() { }, under() { },
+    mid(c, camX) { c.fillStyle = S.set === 'night' ? '#2a3b4c' : '#5f8578'; c.beginPath(); c.moveTo(0, VH); for (let x = 0; x <= VW; x += 8) { const w = x + camX * 0.48; c.lineTo(x, 236 - 22 * Math.sin(w / 120) - 10 * Math.sin(w / 41)); } c.lineTo(VW, VH); c.fill(); },
+    near(c, camX) { c.fillStyle = S.set === 'night' ? '#16202a' : '#2f4a43'; const P = 90, o = camX * 0.72; for (let k = Math.floor(o / P) - 1; k <= Math.floor((o + VW) / P) + 1; k++) { const G = VH, x = k * P - o + hash(k, 1) * 40, h = 70 + hash(k, 2) * 60; c.beginPath(); c.moveTo(x, G - 40 - h); c.lineTo(x + 24, G); c.lineTo(x - 24, G); c.fill(); } },
+  };
+
+  // ---------------- painted layers (the element)
+  const pp = GameDNA_PaintedParallax.create({
+    view: { x: 0, y: 0, w: VW, h: VH }, set: S.set,
+    params: { depth: S.depth, tint: S.tint, drift: S.drift, ground: S.ground },
+    fallback: FLAT,
+  });
+  window.__pp = pp;
+
+  // ---------------- foreground: painted earth platforms with pits at the game's own ground line, and a traveller
+  // The game's ground is HIGHER than the painted ground (ground slider, default 0.8), the normal case for a platformer:
+  // the pits look down past the near layer into the painted under-strip.
+  // Cast and ground come from the shared demo kit (demo pages only, not part of the element): the rigged mage walks at
+  // the scroll speed (feet planted) and the platforms are cut from the kit's painted meadow ground, graded per set.
+  const Kit = window.GameDNA_DemoKit, KitArt = window.GameDNA_DemoKitArt;
+  const HERO_X = 210, HERO_H = 92, HOP = 50;
+  const hero = Kit.actor('mage', { h: HERO_H });
+  const heroF = () => S.speed < 0 ? -1 : 1;   // the traveller looks where she walks (the one facing draw / update read; __state reports it)
+  const PIT = { period: 520, at: 300, w: 92 };
+  const groundY = () => Math.round(S.ground * VH);
+  function inPit(wx) { const m = ((wx - PIT.at) % PIT.period + PIT.period) % PIT.period; return m < PIT.w; }
+  // hop: a parabola over each pit (from 30 px before to 30 px after it); k = progress 0..1, or -1 on the ground
+  function hopK(camX) { const m = ((camX + HERO_X - PIT.at + 30) % PIT.period + PIT.period) % PIT.period, span = PIT.w + 60; return S.speed > 0 && m < span ? m / span : -1; }
+
+  // the painted ground strip: the weathered flagstones of the kit's ruins scene as the platform face, capped with the grass
+  // edge of its meadow scene; repeated sideways with a mirrored copy (so it tiles) and downwards with mirrored stone
+  // rows, then graded to the layer set's light
+  const GS = { stone: null, grass: null, strips: {}, K: 2, TW: 720, H: 236, CAPH: 15, ST: { y0: 557, y1: 700 }, GR: { y0: 520, y1: 549 } };
+  const GRADE = {
+    dusk: { mul: '#8f8fa6', sat: 0.5, wash: 'rgba(96,84,128,0.2)', gmul: '#7f9a96', gsat: 0.45, rim: 'rgba(255,205,160,', blade: ['#55633a', '#6a7340', '#404d36', '#7a7c44'], edge: 'rgba(14,12,24,' },
+    night: { mul: '#4a6788', sat: 0.6, wash: 'rgba(30,66,104,0.25)', gmul: '#3f6a80', gsat: 0.5, rim: 'rgba(170,210,240,', blade: ['#2a4034', '#35503c', '#1e3030', '#40593f'], edge: 'rgba(3,7,15,' },
+  };
+  // one band of a painting as a canvas that repeats sideways: its right end is cross-faded over its left end
+  function wrapBand(im, y0, y1, w, h, ov) {
+    const P = w - ov, c = document.createElement('canvas'); c.width = P; c.height = h;
+    const g = c.getContext('2d'); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+    const t = document.createElement('canvas'); t.width = ov; t.height = h; const tg = t.getContext('2d');
+    tg.imageSmoothingEnabled = true; tg.imageSmoothingQuality = 'high';
+    tg.drawImage(im, 0, y0, im.width, y1 - y0, -P, 0, w, h);
+    const m = tg.createLinearGradient(0, 0, ov, 0); m.addColorStop(0, '#000'); m.addColorStop(1, 'rgba(0,0,0,0)');
+    tg.globalCompositeOperation = 'destination-in'; tg.fillStyle = m; tg.fillRect(0, 0, ov, h);
+    g.drawImage(im, 0, y0, im.width, y1 - y0, 0, 0, w, h); g.drawImage(t, 0, 0);
+    return c;
+  }
+  function groundStrip(set) {
+    if (GS.strips[set]) return GS.strips[set];
+    if (!GS.stone || !GS.grass) return null;
+    const K = GS.K, G = GRADE[set], OV = 120 * K, W = GS.TW * K - OV, H = GS.H * K;
+    const mk = () => { const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; return [c, g]; };
+    const grade = (g, mul, sat) => {
+      g.globalCompositeOperation = 'saturation'; g.globalAlpha = sat; g.fillStyle = '#808080'; g.fillRect(0, 0, W, H);
+      g.globalAlpha = 1; g.globalCompositeOperation = 'multiply'; g.fillStyle = mul; g.fillRect(0, 0, W, H); g.globalCompositeOperation = 'source-over';
+    };
+    const [c, g] = mk(), rh = Math.round((GS.ST.y1 - GS.ST.y0) * GS.TW * K / GS.stone.width), fade = 9 * K;
+    const row = wrapBand(GS.stone, GS.ST.y0, GS.ST.y1, GS.TW * K, rh, OV);
+    const soft = document.createElement('canvas'); soft.width = W; soft.height = rh; const sg2 = soft.getContext('2d');
+    // stone rows continue downwards, each one shifted sideways and faded over the one above (no mirrored shapes)
+    for (let n = 0, y = (GS.CAPH - 7) * K; y < H; n++, y += rh - fade) {
+      const sh = Math.round(((n * 0.382) % 1) * W);
+      sg2.globalCompositeOperation = 'source-over'; sg2.clearRect(0, 0, W, rh);
+      sg2.drawImage(row, -sh, 0); sg2.drawImage(row, W - sh, 0);
+      if (n) { const m = sg2.createLinearGradient(0, 0, 0, fade); m.addColorStop(0, 'rgba(0,0,0,0)'); m.addColorStop(1, '#000'); sg2.globalCompositeOperation = 'destination-in'; sg2.fillStyle = m; sg2.fillRect(0, 0, W, rh); }
+      g.drawImage(soft, 0, y);
+    }
+    grade(g, G.mul, G.sat);
+    g.fillStyle = G.wash; g.fillRect(0, 0, W, H);
+    const d = g.createLinearGradient(0, 0, 0, H);          // deeper = darker
+    d.addColorStop(0, G.edge + '0)'); d.addColorStop(0.12, G.edge + '0.1)'); d.addColorStop(0.5, G.edge + '0.52)'); d.addColorStop(1, G.edge + '0.88)');
+    g.fillStyle = d; g.fillRect(0, 0, W, H);
+    // the grass cap, its lower edge torn into hanging tufts and a soft shadow under it
+    const [c2, g2] = mk(), gh = GS.CAPH * K;
+    g2.drawImage(wrapBand(GS.grass, GS.GR.y0, GS.GR.y1, GS.TW * K, Math.round(gh * 1.25), OV), 0, 0);
+    grade(g2, G.gmul, G.gsat);
+    g2.globalCompositeOperation = 'destination-in'; g2.beginPath(); g2.moveTo(0, 0);
+    for (let x = 0; x <= W; x += 3) { const u = x / W * Math.PI * 2; g2.lineTo(x, gh * (0.78 + 0.16 * Math.sin(u * 31) + 0.12 * Math.sin(u * 77 + 1) + 0.1 * Math.sin(u * 181 + 2))); }
+    g2.lineTo(W, 0); g2.closePath(); g2.fill(); g2.globalCompositeOperation = 'source-over';
+    g.save(); g.shadowColor = G.edge + '0.75)'; g.shadowBlur = 5 * K; g.shadowOffsetY = 2.5 * K; g.drawImage(c2, 0, 0); g.restore();
+    return (GS.strips[set] = c);
+  }
+  const CAP = 5;                                           // the grass rises this far above the walk line
+  const topAt = (wx, G) => G - CAP + 1.6 * Math.sin(wx / 31) + 1.1 * Math.sin(wx / 11.3 + 2) + 0.6 * Math.sin(wx / 4.7);
+  const sideAt = (y, k) => 2.6 * Math.sin(y / 13 + k * 1.7) + 1.6 * Math.sin(y / 5.3 + k) + (y % 37 < 9 ? 1.5 : 0);
+  function drawGround(camX) {
+    const G = groundY(), strip = groundStrip(S.set), gr = GRADE[S.set], P2 = strip ? strip.width / GS.K : 1;
+    if (!strip) return;
+    const k0 = Math.floor((camX - PIT.at) / PIT.period) - 1, k1 = Math.floor((camX + VW - PIT.at) / PIT.period) + 1;
+    for (let k = k0; k <= k1; k++) {          // platform k spans from the end of pit k to the start of pit k+1
+      const w0 = k * PIT.period + PIT.at + PIT.w, w1 = (k + 1) * PIT.period + PIT.at, x0 = w0 - camX, x1 = w1 - camX;
+      if (x1 < -8 || x0 > VW + 8) continue;
+      const top = new Path2D(); top.moveTo(x0 + 3, topAt(w0 + 3, G) + 3);
+      for (let wx = w0 + 5; wx < w1 - 4; wx += 2) top.lineTo(wx - camX, topAt(wx, G));
+      top.lineTo(x1 - 3, topAt(w1 - 3, G) + 3);
+      const body = new Path2D(top);
+      for (let y = G + 3; y <= VH + 4; y += 3) body.lineTo(x1 - 2.5 + sideAt(y, k + 0.5), y);
+      for (let y = VH + 4; y >= G + 3; y -= 3) body.lineTo(x0 + 2.5 + sideAt(y, k), y);
+      body.closePath();
+      ctx.save(); ctx.clip(body);
+      ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+      for (let n = Math.floor(w0 / P2); n * P2 < w1; n++) ctx.drawImage(strip, n * P2 - camX, G - CAP - 3, P2, GS.H);
+      for (const [xe, dir] of [[x0, 1], [x1, -1]]) {          // the pit walls turn away from the light
+        const sg = ctx.createLinearGradient(xe, 0, xe + dir * 26, 0); sg.addColorStop(0, gr.edge + '0.7)'); sg.addColorStop(0.35, gr.edge + '0.3)'); sg.addColorStop(1, gr.edge + '0)');
+        ctx.fillStyle = sg; ctx.fillRect(dir > 0 ? xe - 10 : xe - 26, G + 4, 36, VH - G);
+      }
+      ctx.lineJoin = 'round';          // last light on the grass edge: a soft band, not a line
+      ctx.lineWidth = 5; ctx.strokeStyle = gr.rim + '0.16)'; ctx.stroke(top); ctx.lineWidth = 2; ctx.strokeStyle = gr.rim + '0.22)'; ctx.stroke(top);
+      ctx.restore();
+      // grass blades along the edge in small clumps, fixed to the world (so they scroll with the ground)
+      ctx.lineCap = 'round';
+      for (let b = Math.ceil((w0 + 6) / 3); b * 3 < w1 - 6; b++) {
+        const clump = hash(Math.floor(b / 6), 7), r1 = hash(b, 8), r2 = hash(b, 9), r3 = hash(b, 10); if (clump < 0.45 || r1 > clump * 0.8) continue;
+        const wx = b * 3 + r2 * 2.5, x = wx - camX, y = topAt(wx, G) + 2.5, hh = 3 + r3 * 3 + clump * 4, lean = (r2 - 0.35) * (2 + hh * 0.7);
+        ctx.strokeStyle = gr.blade[(r1 * 97 | 0) % 4]; ctx.lineWidth = 0.8 + r3 * 0.5;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x + lean * 0.15, y - hh * 0.65, x + lean, y - hh); ctx.stroke();
+      }
+    }
+  }
+  // the hero is drawn through a small device-resolution buffer so she can take the set's ambient light (the rig is lit for day)
+  const HB = { c: document.createElement('canvas'), w: 150, h: 170, fx: 75, fy: 150 };
+  const AMBIENT = { dusk: ['rgba(70,52,110,0.2)', 'rgba(255,170,120,0.1)'], night: ['rgba(18,44,92,0.5)', 'rgba(150,200,255,0.1)'] };
+  function drawHero() {
+    const G = groundY(), k = hopK(S.camX), hop = k >= 0 ? 4 * HOP * k * (1 - k) : 0, sc = cv.width / VW;
+    if (!inPit(S.camX + HERO_X)) Kit.shadow(ctx, HERO_X, G + 1, 20 - hop * 0.12, 4.2 - hop * 0.03, 0.42 - hop * 0.005);
+    const bw = Math.ceil(HB.w * sc), bh = Math.ceil(HB.h * sc);
+    if (HB.c.width !== bw || HB.c.height !== bh) { HB.c.width = bw; HB.c.height = bh; }
+    const h = HB.c.getContext('2d'), amb = AMBIENT[S.set];
+    h.setTransform(1, 0, 0, 1, 0, 0); h.globalCompositeOperation = 'source-over'; h.clearRect(0, 0, bw, bh);
+    h.setTransform(sc, 0, 0, sc, 0, 0);
+    hero.draw(h, HB.fx, HB.fy, { h: HERO_H, facing: heroF(), shadow: false });
+    h.setTransform(1, 0, 0, 1, 0, 0); h.globalCompositeOperation = 'source-atop';
+    h.fillStyle = amb[0]; h.fillRect(0, 0, bw, bh);
+    const lg = h.createLinearGradient(0, 0, bw, 0); lg.addColorStop(0, amb[1]); lg.addColorStop(0.6, 'rgba(0,0,0,0)');          // sky light from the left
+    h.fillStyle = lg; h.fillRect(0, 0, bw, bh);
+    const dx = Math.round((HERO_X - HB.fx) * sc), dy = Math.round((G + 1 - hop - HB.fy) * sc);
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(HB.c, dx, dy); ctx.restore();
+  }
+  /* text state for critics and tools/sprites/statecheck.py (640x360 view px): one traveller, fixed on screen while the world scrolls under her.
+     vx = the scroll speed (her walk speed in the world); sx = the x of the kit draw call inside her light buffer (for the draw trace). */
+  window.__state = () => { const k = hopK(S.camX), hop = k >= 0 ? 4 * HOP * k * (1 - k) : 0;
+    return { t: Math.round(S.t), actors: [{ id: 'traveller', x: HERO_X, sx: HB.fx, y: Math.round(groundY() + 1 - hop), facing: heroF() > 0 ? 'right' : 'left', target: null, vx: S.speed, asset: 'mage' }] }; };
+  function stepHero() {
+    const k = hopK(S.camX);
+    if (k >= 0) hero.pose('jump', k); else hero.pose(null);
+    hero.walk(S.speed);
+    hero.update(STEP, { vx: S.speed, facing: heroF(), h: HERO_H });
+  }
+  function drawSeams(camX) {
+    const info = pp.lastDrawn()[0]; if (!info) return;
+    const cols = { far: '#9cc7ff', clouds: '#ffffff', mid: '#8be3b4', near: '#ffb978' };
+    info.layers.forEach((l, i) => {
+      if (!l.bitmap) return;
+      const off = ((l.x % l.w) + l.w) % l.w;
+      for (let x = -off; x < VW; x += l.w) { if (x <= 0) continue;
+        ctx.fillStyle = cols[l.role]; ctx.globalAlpha = 0.9; ctx.fillRect(Math.round(x), 0, 1, 10 + i * 14); ctx.globalAlpha = 1;
+        ctx.font = '600 10px ui-monospace, Menlo, monospace'; ctx.fillText(l.role + ' join', Math.round(x) + 4, 10 + i * 14); }
+    });
+  }
+
+  // ---------------- frame
+  function fit() {
+    const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+    const w = Math.max(VW, Math.round((r.width || VW) * dpr)), h = Math.round(w * VH / VW);
+    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+  }
+  function backdrop(kind) {
+    if (kind === 'flat') { for (const r of ROLES) if (S.on.has(r)) { ctx.save(); FLAT[r](ctx, S.camX); ctx.restore(); } return; }
+    // drawLayer per role so the toggles work; a game calls pp.draw(ctx, camX, camY) once
+    for (const r of ROLES) if (S.on.has(r)) pp.drawLayer(ctx, r, S.camX, 0);
+  }
+  function render() {
+    fit();
+    ctx.setTransform(cv.width / VW, 0, 0, cv.height / VH, 0, 0);
+    ctx.fillStyle = '#05060a'; ctx.fillRect(0, 0, VW, VH);
+    if (S.mode === 'split') {
+      ctx.save(); ctx.beginPath(); ctx.rect(0, 0, VW / 2, VH); ctx.clip(); backdrop('flat'); ctx.restore();
+      ctx.save(); ctx.beginPath(); ctx.rect(VW / 2, 0, VW / 2, VH); ctx.clip(); backdrop('painted'); ctx.restore();
+    } else backdrop(S.mode);
+    drawGround(S.camX);
+    drawHero();
+    if (S.mode !== 'flat' && S.seams) drawSeams(S.camX);
+    if (S.mode === 'split') {
+      ctx.fillStyle = '#ffffffcc'; ctx.fillRect(VW / 2 - 1, 0, 2, VH);
+      tag('FLAT (OLD)', 10); tag('PAINTED', VW / 2 + 10);
+    }
+  }
+  function tag(s, x) { ctx.font = '700 10px ui-monospace, Menlo, monospace'; const w = ctx.measureText(s).width + 12; ctx.fillStyle = '#000000aa'; ctx.fillRect(x, VH - 26, w, 18); ctx.fillStyle = '#fff'; ctx.fillText(s, x + 6, VH - 13); }
+  function step() { S.t += STEP; S.camX += S.speed * STEP / 1000; pp.update(STEP); stepHero(); }
+
+  const renderAll = render;
+
+  // ---------------- controls
+  const $ = id => document.getElementById(id);
+  function seg(id, key, after) {
+    const el = $(id);
+    const sync = () => el.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === S[key]));
+    el.addEventListener('click', e => { const v = e.target.dataset && e.target.dataset.v; if (!v) return; S[key] = v; sync(); if (after) after(); paintIfFrozen(); });
+    sync();
+  }
+  function slider(id, key, fmt, after) {
+    const el = $(id), o = $('o-' + id); el.value = S[key];
+    const sync = () => { o.textContent = fmt(S[key]); };
+    el.addEventListener('input', () => { S[key] = +el.value; sync(); if (after) after(); paintIfFrozen(); }); sync();
+  }
+  seg('mode', 'mode'); seg('set', 'set', () => pp.setSet(S.set));
+  slider('speed', 'speed', v => v + ' px/s');
+  slider('depth', 'depth', v => v.toFixed(2) + 'x', () => pp.setParams({ depth: S.depth }));
+  slider('drift', 'drift', v => v.toFixed(2) + 'x', () => pp.setParams({ drift: S.drift }));
+  slider('tint', 'tint', v => v.toFixed(2), () => pp.setParams({ tint: S.tint }));
+  slider('ground', 'ground', v => Math.round(v * 100) + '%', () => pp.setParams({ ground: S.ground }));
+  const tg = $('toggles');
+  for (const r of ROLES) {
+    const l = document.createElement('label');
+    l.innerHTML = '<input type="checkbox"' + (S.on.has(r) ? ' checked' : '') + '> ' + r + ' <small>' + GameDNA_PaintedParallax.factors()[r] + '</small>';
+    l.querySelector('input').addEventListener('change', e => { e.target.checked ? S.on.add(r) : S.on.delete(r); paintIfFrozen(); });
+    tg.appendChild(l);
+  }
+  $('seamsOn').checked = S.seams; $('seamsOn').addEventListener('change', e => { S.seams = e.target.checked; paintIfFrozen(); });
+  let halted = false;
+  function paintIfFrozen() { if (halted) renderAll(); }
+  function status() {
+    const st = GameDNA_Assets.status(), L = pp.layers();
+    $('status').innerHTML = 'assets <b>' + st.loaded + '/' + st.total + '</b> · set <b>' + pp.set() + '</b> · ' + L.map(l => l.role + ' ' + (l.loaded ? '<b>' + l.factor + '</b>' : 'fallback')).join(' · ');
+  }
+
+  // ---------------- cards, joins, records (built from the loaded bitmaps; no pixel reads, so it works from file://)
+  function checker(c, w, h) { const s = 10; for (let y = 0; y < h; y += s) for (let x = 0; x < w; x += s) { c.fillStyle = ((x + y) / s) % 2 ? '#2a2e45' : '#1d2033'; c.fillRect(x, y, s, s); } }
+  function buildCards() {
+    const box = $('cards'); box.innerHTML = '';
+    for (const set of ['dusk', 'night']) for (const r of ROLES) {
+      const rec = GameDNA_Assets.get(set + '-' + r); if (!rec) continue;
+      const m = rec.meta, w = 600, h = Math.round(w * rec.h / rec.w), c = document.createElement('canvas'); c.width = w; c.height = h;
+      const g = c.getContext('2d'); checker(g, w, h); g.drawImage(rec.img, 0, 0, w, h);
+      const d = document.createElement('div'); d.className = 'card'; d.appendChild(c);
+      const seam = m.seamScore != null ? m.seamScore : '-';
+      d.insertAdjacentHTML('beforeend', '<div class="meta"><b>' + set + '-' + r + '</b><span>' + rec.w + '×' + rec.h + '</span><span>factor ' + GameDNA_PaintedParallax.factors()[r] + '</span><span>' + Math.round(m.bytes / 1024) + ' KB</span><span>seam ' + seam + '</span>' + (m.panels ? '<span>' + m.panels + ' panels</span>' : '') + '</div>');
+      box.appendChild(d);
+    }
+  }
+  function buildJoins() {
+    const box = $('joins'); box.innerHTML = '';
+    for (const r of ROLES) {
+      const rec = GameDNA_Assets.get(S.set + '-' + r); if (!rec) continue;
+      const joins = [{ at: rec.w, label: 'repeat join' }].concat((rec.meta.joins || []).map(x => ({ at: x, label: 'panel join' })));
+      for (const j of joins) {
+        const half = 110, w = half * 2, h = rec.h, sc = 2, c = document.createElement('canvas'); c.width = w * sc / 2 * 2; c.height = Math.round(h * 0.55);
+        const g = c.getContext('2d'), k = c.width / w; checker(g, c.width, c.height);
+        const hh = Math.min(h, Math.round(c.height / k)), y0 = Math.round(h * ({ far: 0.36, clouds: 0.02, mid: 0.5, under: 0.1, near: 0.72 })[r]);
+        // the strip [at - half, at + half) of the repeating layer, wrapping around
+        const src = ((j.at - half) % rec.w + rec.w) % rec.w;
+        const first = Math.min(w, rec.w - src);
+        g.imageSmoothingEnabled = true;
+        g.drawImage(rec.img, src, y0, first, hh, 0, 0, first * k, hh * k);
+        if (first < w) g.drawImage(rec.img, 0, y0, w - first, hh, first * k, 0, (w - first) * k, hh * k);
+        g.fillStyle = '#ffffff'; g.fillRect(c.width / 2 - 1, 0, 2, 8); g.fillRect(c.width / 2 - 1, c.height - 8, 2, 8);
+        const d = document.createElement('div'); d.className = 'card'; d.appendChild(c);
+        d.insertAdjacentHTML('beforeend', '<div class="meta"><b>' + S.set + '-' + r + '</b><span>' + j.label + (j.label === 'panel join' ? ' at x ' + j.at : '') + '</span><span>2x, rows ' + y0 + '–' + (y0 + hh) + '</span></div>');
+        box.appendChild(d);
+      }
+    }
+  }
+  function buildRecords() {
+    $('lock').textContent = M.styleLock && M.styleLock.textCopy || '';
+    const tb = document.querySelector('#records tbody'); tb.innerHTML = '';
+    for (const e of M.assets) {
+      const runs = [e.source && e.source.run].concat(((e.source && e.source.also) || []).map(a => a.run)).filter(Boolean).map(s => s.replace('gen/', '')).join(' + ');
+      tb.insertAdjacentHTML('beforeend', '<tr><td><code>' + e.key + '</code></td><td>' + e.w + '×' + e.h + '</td><td>' + (e.bytes / 1024).toFixed(1) + ' KB</td><td>' + (e.seamScore != null ? e.seamScore : '-') + '</td><td>' + runs + ' (' + M.generated.model + ', ' + M.generated.effort + ')</td><td><code>' + (e.sha256 || '').slice(0, 12) + '</code></td></tr>');
+    }
+  }
+
+  // ---------------- boot: images first, then the first step (so ?t=&freeze=1 is deterministic)
+  function boot() {
+    buildCards(); buildJoins(); buildRecords(); status();
+    $('set').addEventListener('click', () => { buildJoins(); status(); });
+    if (T0 !== null) {
+      for (let n = Math.floor(T0 / STEP); n > 0; n--) step();
+      renderAll();
+      if (FREEZE) { halted = true; window.__frozen = true; document.documentElement.dataset.ready = '1'; return; }
+    }
+    document.documentElement.dataset.ready = '1';
+    let acc = 0, prev = null;
+    function frame(now) {
+      if (prev === null) prev = now; acc += Math.min(250, now - prev); prev = now;
+      while (acc >= STEP) { step(); acc -= STEP; }
+      renderAll(); requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+  // layers first, then the demo kit (cast + the ground source image), then boot
+  function loadGround(next) {
+    const sc = KitArt && KitArt.scenes || {}, want = [['stone', 'ruins-night'], ['grass', 'meadow-dusk']].filter(w => sc[w[1]]);
+    let left = want.length; if (!left) return next();
+    for (const [k, id] of want) { const im = new Image(); im.onload = () => { GS[k] = im; if (!--left) next(); }; im.onerror = () => { if (!--left) next(); }; im.src = sc[id].src; }
+  }
+  GameDNA_Assets.load(M, { base: '../assets/', onReady: () => Kit.ready(() => loadGround(boot)) });
+  addEventListener('resize', () => { if (halted) renderAll(); });
+})();
+</script>
+</body>
+</html>

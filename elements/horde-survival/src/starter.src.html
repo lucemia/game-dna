@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Long Vigil</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0b0d10; overflow: hidden; }
+  body { display: flex; align-items: center; justify-content: center; }
+  canvas { display: block; max-width: 100%; touch-action: none; background: #10140e; }
+</style>
+</head>
+<body>
+<canvas id="game" width="640" height="360"></canvas>
+<!-- art: the demo-kit painted foes, the keeper walk sheet and the painted icon atlas (original art of this library), as data URIs -->
+<script src="art/cast-art.js"></script>
+<script src="art/kit.js"></script>
+<script src="art/vigil-art.js"></script>
+<!-- GameDNA_HordeSurvival: module/horde-survival.js, verbatim -->
+<script>
+/*@@MODULE@@*/
+</script>
+<!-- The game: defines window.GAME and boots on DOMContentLoaded (after the ADDONS SLOT) -->
+<script>
+/*@@GAME@@*/
+</script>
+<!-- ===================== ADDONS SLOT =====================
+     Paste addon modules and their GAME.addons.push({...}) here (or put <script src> tags right above this block), plus
+     GAME.addWeapon / GAME.addEnemy / GAME.addUpgrade calls. Runs after window.GAME exists and before the game boots. -->
+<script>
+</script>
+<!-- =================== END ADDONS SLOT =================== -->
+</body>
+</html>

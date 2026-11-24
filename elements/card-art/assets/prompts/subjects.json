@@ -1,0 +1,58 @@
+{
+ "fire": [
+  "a wide cracked clay brazier bowl on three short iron legs, holding a tall living flame that curls into a soft spiral at its tip, a few ember sparks rising",
+  "flame orange"
+ ],
+ "frost": [
+  "a cluster of clear blue ice crystals growing out of a frost-covered stone, a fine six-pointed frost pattern spreading on the stone, cold mist curling around it",
+  "icy cyan"
+ ],
+ "storm": [
+  "a tall twisted brass rod with a copper ring at its tip, a small dark storm cloud above it and a forked yellow lightning bolt striking the tip, tiny sparks",
+  "electric yellow"
+ ],
+ "guard": [
+  "a round wooden shield with an iron rim and riveted bands, a plain domed brass boss in the centre and a carved oak-leaf pattern on the wood, standing slightly tilted",
+  "steel blue"
+ ],
+ "heart": [
+  "a glowing heart-shaped red seed pod cradled by twisting pale roots that rise from the ground, soft warm light pulsing inside the pod",
+  "rose red"
+ ],
+ "speed": [
+  "a pair of soft brown leather boots with small white feathered wings at the ankles, mid-stride in the air, pale green motion wisps trailing behind them",
+  "mint green"
+ ],
+ "gold": [
+  "a worn leather coin pouch tied with cord, tipped over and spilling plain gold coins (smooth faces, no symbols) onto a small stone ledge, a warm glint on the coins",
+  "gold yellow"
+ ],
+ "magic": [
+  "an old leather-bound book floating open, its pages blank and softly glowing, a small eight-pointed violet star of light hovering above the pages with thin swirls of light around it",
+  "arcane violet"
+ ],
+ "luck": [
+  "a small brass charm pendant on a short cord, a four-leaf clover pressed under a round glass cabochon in its centre, a soft green shimmer around it",
+  "clover green"
+ ],
+ "poison": [
+  "a round stoppered glass flask of bubbling bright green liquid with a cork and wax seal, one thick green drop sliding down its side, faint green fumes",
+  "venom lime"
+ ],
+ "light": [
+  "a single long golden feather floating upright inside a soft beam of light falling from the upper left, tiny motes of light around it",
+  "pale gold"
+ ],
+ "crit": [
+  "a brass amulet shaped like an open eye with a sharp crimson gem as its pupil, hanging on a short chain, two thin bright glints flashing off the gem",
+  "crimson"
+ ],
+ "arrow": [
+  "a short curved wooden bow with a leather grip and three arrows with white fletching crossed in front of it, slightly tilted",
+  "tan leather"
+ ],
+ "regen": [
+  "a small cracked clay pot with a young green sprout of three leaves growing out of it, dew drops on the leaves, a gentle green glow around the sprout",
+  "spring green"
+ ]
+}

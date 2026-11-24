@@ -1,0 +1,3 @@
+# Prompt fragment: pixel16 (16-bit console pixel)
+
+Art style: 16-bit console pixel art, original look. Native 256×224 canvas, integer-scaled with square pixels and smoothing off. Sprites are hand-placed palette pixel art with 3–5 shade steps per colour and a dark outline; backgrounds use at least three parallax layers. Windows are bevelled gradient boxes (deep blue to navy) with a light top-left edge and a dark bottom-right edge; a small white pointing-hand cursor marks the selected row. Text is a 1-bit bitmap font with a 1 px drop shadow. Numbers bounce in on hits with a one-pixel outline; criticals flash. Range overlays are flat tints with a 1 px lighter rim. Skin id: `pixel16` (the default).

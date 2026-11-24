@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Belt Depth</title>
+<style>
+  :root { --bg: #120d18; --panel: #1c1524; --edge: #382a46; --text: #efe6da; --dim: #a898b0; --gold: #ffd166; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+  main { max-width: 1312px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 20px; margin: 0 0 2px; letter-spacing: 0.02em; }
+  .sub { color: var(--dim); margin: 0 0 12px; font-size: 13px; }
+  #stage { width: 100%; display: flex; justify-content: center; background: #07050a; border-radius: 6px; overflow: hidden; }
+  canvas { display: block; touch-action: none; image-rendering: pixelated; image-rendering: crisp-edges; }
+  #status { color: var(--dim); font-size: 13px; margin-top: 6px; min-height: 19px; }
+  .row { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--edge); border-radius: 8px; padding: 12px 14px; flex: 1 1 280px; min-width: 0; }
+  .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gold); margin: 0 0 8px; }
+  .card p { margin: 4px 0; font-size: 13px; }
+  button, select { font: inherit; color: var(--text); background: #2a2034; border: 1px solid var(--edge); border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+  button.on { border-color: var(--gold); color: var(--gold); }
+  label { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: 13px; }
+  label span { flex: 0 0 120px; color: var(--dim); }
+  input[type=range] { flex: 1; min-width: 60px; -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; background: #3a2c4a; border: 1px solid var(--edge); }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 3px; background: var(--gold); border: 2px solid #1a1024; cursor: pointer; }
+  input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 3px; background: var(--gold); border: 2px solid #1a1024; cursor: pointer; }
+  output { flex: 0 0 40px; text-align: right; font-variant-numeric: tabular-nums; }
+  .k { display: inline-block; min-width: 20px; padding: 0 5px; border-radius: 4px; background: #2a2034; border: 1px solid var(--edge); text-align: center; font-size: 12px; }
+  #pad { display: flex; justify-content: space-between; gap: 12px; margin-top: 8px; user-select: none; -webkit-user-select: none; }
+  #pad .grp { display: flex; gap: 6px; }
+  #pad button { min-width: 44px; height: 44px; font-size: 16px; touch-action: none; }
+  #pad button.act { border-color: var(--gold); color: var(--gold); }
+  #pad button.held { background: #3a2c4a; }
+  .btns { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Belt depth</h1>
+  <p class="sub">Fighters walk left / right and up / down the street. A swing only connects with someone on the same lane (within the depth tolerance); jumps lift the body while the shadow stays on the cobbles; whoever stands nearer the front is drawn in front. The demo plays a recorded brawl; press any key, or use the buttons under the stage, to fight yourself.</p>
+  <div id="stage"><canvas id="cv" width="256" height="144"></canvas></div>
+  <div id="pad" aria-label="touch controls"><span class="grp"><button data-k="left" aria-label="walk left">&#9664;</button><button data-k="up" aria-label="step back">&#9650;</button><button data-k="down" aria-label="step forward">&#9660;</button><button data-k="right" aria-label="walk right">&#9654;</button></span><span class="grp"><button data-k="jump">Jump</button><button data-k="atk" class="act">Strike</button></span></div>
+  <div id="status"></div>
+  <div class="row">
+    <div class="card">
+      <h2>Controls</h2>
+      <div class="btns"><button id="restart">Restart demo</button><button id="cueBtn">Show lane cue</button><button id="depthBtn" class="on">Depth check: on</button></div>
+      <p><span class="k">&larr;</span> <span class="k">&rarr;</span> walk &middot; <span class="k">&uarr;</span> <span class="k">&darr;</span> step into / out of the street &middot; <span class="k">J</span>/<span class="k">Z</span> strike &middot; <span class="k">K</span>/<span class="k">X</span> jump (strike in the air to drop on a foe)</p>
+    </div>
+    <div class="card">
+      <h2>Depth</h2>
+      <label><span>Tolerance (px)</span><input type="range" id="tol" min="2" max="20" step="1" value="7"><output id="tolOut">7</output></label>
+      <p style="color:var(--dim)">The street is 40 px deep. With a tolerance of 7 a strike connects when the two fighters stand at most 7 px apart in depth; turn the lane cue on to see the striker's lane drawn on the cobbles while the blow is live.</p>
+    </div>
+  </div>
+</main>
+<script src="../../../pixel-kit/pixel-scene.js"></script>
+<script src="../module/belt-depth.js"></script>
+<script src="stage.js"></script>
+<script>
+'use strict';
+(function () {
+  const Q = new URLSearchParams(location.search);
+  const HAS_T = Q.has('t'), FREEZE = Q.get('freeze') === '1', START_T = Math.max(0, +Q.get('t') || 0);
+  const MUT = Q.get('mutant') || '';
+  const BS = window.BeltStage, W = BS.W, H = BS.H, STEP_MS = BS.STEP_MS;
+  const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+  let cueOn = Q.get('cue') === 'on', depthOn = MUT !== 'nodepth', tol = Q.has('tolerance') ? +Q.get('tolerance') : 7;
+  let A = null;
+  function build() { A = BS.create({ mutant: depthOn ? MUT : 'nodepth', cue: cueOn ? 'on' : 'off', tolerance: tol }); A.reset(); }
+  build();
+
+  /* sizing: a whole number of device pixels per art pixel */
+  function fit() {
+    const avail = Math.max(200, document.getElementById('stage').clientWidth), dpr = window.devicePixelRatio || 1;
+    const n = Math.max(1, Math.floor(Math.min(avail, 1280) * dpr / W));
+    cv.style.width = (n * W / dpr) + 'px'; cv.style.height = (n * H / dpr) + 'px';
+  }
+  fit(); addEventListener('resize', () => { fit(); render(); });
+  function cssScale() { return (cv.getBoundingClientRect().width || W) / W; }
+  function hudK() { return Math.max(1, Math.ceil(10 / (7 * cssScale()) - 1e-6)); }
+
+  /* input */
+  const KEYS = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down', KeyJ: 'atk', KeyZ: 'atk', KeyK: 'jump', KeyX: 'jump', Space: 'jump' };
+  const held = new Set(), taps = new Set(); let user = false;
+  addEventListener('keydown', e => {
+    if (e.code === 'KeyR') { restart(); return; }
+    const k = KEYS[e.code]; if (!k) return; e.preventDefault(); if (!held.has(k)) taps.add(k); held.add(k); user = true;
+  });
+  addEventListener('keyup', e => { const k = KEYS[e.code]; if (k) held.delete(k); });
+  addEventListener('blur', () => held.clear());
+  function device() {
+    if (!user) return null;
+    const d = { mx: (held.has('right') ? 1 : 0) - (held.has('left') ? 1 : 0), mz: (held.has('down') ? 1 : 0) - (held.has('up') ? 1 : 0), atk: taps.has('atk'), jump: taps.has('jump') };
+    taps.clear(); return d;
+  }
+  document.querySelectorAll('#pad button').forEach(b => {
+    const k = b.dataset.k;
+    const down = e => { e.preventDefault(); if (!held.has(k)) taps.add(k); held.add(k); user = true; b.classList.add('held'); };
+    const up = () => { held.delete(k); b.classList.remove('held'); };
+    b.addEventListener('pointerdown', down); ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => b.addEventListener(t, up));
+  });
+  function restart() { user = false; held.clear(); taps.clear(); build(); render(); }
+
+  /* HUD (pixel font, scaled up on phones so text stays >= 10 CSS px) */
+  function bar(g, x, y, w, h, v, max, col, k) {
+    g.fillStyle = '#120a18'; g.fillRect(x - k, y - k, w + 2 * k, h + 2 * k);
+    g.fillStyle = '#3a2a40'; g.fillRect(x, y, w, h);
+    const f = Math.round(w * Math.max(0, v) / max); g.fillStyle = col; g.fillRect(x, y, f, h); g.fillStyle = 'rgba(255,255,255,0.35)'; g.fillRect(x, y, f, k);
+  }
+  const HUD = [];
+  function drawHud(g) {
+    const S = A.S, k = hudK(), h = S.hero; HUD.length = 0;
+    const th = 7 * k, pad = 3;
+    const plate = (x, y, w, hh) => { g.fillStyle = '#140c1e'; g.fillRect(x, y, w, hh); g.fillStyle = 'rgba(255,230,180,0.18)'; g.fillRect(x, y, w, 1); };
+    plate(pad - k, pad - k, 44 * k + 4 * k, th + 9 * k);
+    // hero plate
+    BS.pText(g, BS.CAST.hero.name, pad + k, pad + k, k, '#ffe6a8', '#1a1024');
+    const bw = 44 * k, by = pad + th + 3 * k; bar(g, pad + k, by, bw, 3 * k, h.hp, h.maxHp, '#5ad07a', k);
+    HUD.push({ x: pad, y: pad, w: bw + 2 * k, h: by + 4 * k - pad });
+    // the foe being fought
+    const up = x => x.st !== 'gone' && x.st !== 'down', fid = S.last.foe || h.target;
+    let f = fid && S.foes.find(x => x.id === fid && up(x)); if (!f) f = S.foes.filter(up).sort((p, q) => Math.abs(p.x - h.x) - Math.abs(q.x - h.x))[0];
+    if (f) {
+      const name = BS.CAST[f.kind].name, nw = BS.textW(name, k), x1 = W - pad - k;
+      { const bw0 = Math.max(nw, 34 * k); plate(x1 - bw0 - 2 * k, pad - k, bw0 + 4 * k, th + 9 * k); }
+      BS.pText(g, name, x1 - nw, pad + k, k, '#ffb4a0', '#1a1024');
+      const bw2 = Math.max(nw, 34 * k); bar(g, x1 - bw2, by, bw2, 3 * k, f.hp, f.maxHp, '#e0503c', k);
+      HUD.push({ x: x1 - bw2 - k, y: pad, w: bw2 + 2 * k, h: by + 4 * k - pad });
+    }
+  }
+  // MISS / damage numbers: attached to the fighter they belong to, rise and fade (never jump)
+  // MISS / damage numbers: above the highest body in their column, nudged up until they cover no fighter, no HUD and no
+  // other label; derived from the world state every frame (nothing stored), one text size on every screen
+  const FLOATS = [];
+  function bodies() {
+    const S = A.S, out = [];
+    [S.hero].concat(S.foes).forEach(a => { if (a.st === 'gone') return; const z = A.belt.z(a), x = Math.round(a.x - S.cam), fy = Math.round(BS.FLOOR + z - a.h);
+      if (a.st === 'down' && a.t >= 16) out.push({ id: a.id, x: x - 18, y: fy - 12, w: 36, h: 12 }); else out.push({ id: a.id, x: x - 13, y: fy - 35, w: 26, h: 35 }); });
+    return out;
+  }
+  function drawFloats(g) {
+    const S = A.S; FLOATS.length = 0;
+    const B = bodies(), hit = (p, q) => p.x < q.x + q.w && q.x < p.x + p.w && p.y < q.y + q.h && q.y < p.y + p.h;
+    S.floats.slice().sort((a, b) => b.t - a.t).forEach(e => {
+      const t = S.foes.concat([S.hero]).find(a => a.id === e.on); if (!t || t.st === 'gone') return;
+      const s = e.text, w = BS.textW(s, 1) + 2, h = 9, cx = Math.round(t.x - S.cam);
+      const r = { x: Math.max(1, Math.min(W - w - 1, cx - (w >> 1))), y: 0, w: w, h: h };
+      const col = B.filter(q => q.x < r.x + r.w + 1 && r.x - 1 < q.x + q.w);
+      r.y = Math.min.apply(null, col.map(q => q.y).concat([Math.round(BS.FLOOR + A.belt.z(t) - t.h - 35)])) - h - 2 - Math.round(Math.min(6, e.t * 0.3));
+      const bad = q => B.some(o => hit(q, o)) || HUD.some(o => hit(q, o)) || FLOATS.some(o => hit(q, o));
+      const inside = q => q.x >= 0 && q.y >= 0 && q.x + q.w <= W && q.y + q.h <= H;
+      if (MUT === 'labels') { for (let i = 0; i < 40 && bad(r); i++) r.y -= 2; }   // mutant: the old placement (pushed up without limit)
+      else {
+        // 1. above the head, nudged up at most 14 px, never into the HUD or off the canvas
+        const y0 = r.y; let ok = false;
+        for (let dy = 0; dy <= 14; dy += 2) { r.y = y0 - dy; if (inside(r) && !bad(r)) { ok = true; break; } }
+        // 2. no room above: beside the head (the side away from the nearest other fighter first), still clear of everyone
+        if (!ok) {
+          const me = B.find(q => q.id === t.id) || { x: cx - 13, y: y0, w: 26, h: 35 }, near = B.filter(q => q.id !== t.id).sort((p, q) => Math.abs(p.x - cx) - Math.abs(q.x - cx))[0];
+          const sides = near && near.x + near.w / 2 > cx ? [-1, 1] : [1, -1];
+          for (const sd of sides) { for (let dy = 0; dy <= 24 && !ok; dy += 2) { r.x = sd > 0 ? me.x + me.w + 1 : me.x - w - 1; r.y = me.y + dy; if (inside(r) && !bad(r)) ok = true; } if (ok) break; }
+        }
+        if (!ok) return;   // nowhere free: skip this label this frame rather than cover someone
+      }
+      const a = e.t > 46 ? Math.max(0, 1 - (e.t - 46) / 18) : 1; g.globalAlpha = a;
+      BS.pText(g, s, r.x + 1, r.y + 1, 1, e.kind === 'miss' ? '#d8e4ff' : '#ffe070', '#1a1024'); g.globalAlpha = 1;
+      FLOATS.push({ on: e.on, text: s, x: r.x, y: r.y, w: r.w, h: r.h, glyph: 7 });
+    });
+  }
+  function render() {
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false;
+    A.render(ctx, A.S.step * STEP_MS);
+    drawHud(ctx); drawFloats(ctx);
+    const e = lastEvent(); document.getElementById('status').textContent = e ? describe(e) : '';
+  }
+  function lastEvent() { const E = A.events(); for (let i = E.length - 1; i >= 0; i--) if (E[i].name !== 'swing' && E[i].name !== 'land') return E[i]; return null; }
+  function describe(e) {
+    const i = e.info || {};
+    if (e.name === 'whiff') return 'Out of lane: ' + i.by + ' swings ' + Math.round(i.dz) + ' px away in depth from the ' + i.on + ', the blow passes behind it.';
+    if (e.name === 'dodge-lane') return 'Sidestep: the ' + i.by + ' swings down a lane ' + Math.round(i.dz) + ' px from ' + i.on + ', no hit.';
+    if (e.name === 'dodge-jump') return 'Jump: the ' + i.by + "'s blow passes under " + i.on + '; the shadow stays on the cobbles.';
+    if (e.name === 'hit') return 'Hit: ' + i.by + ' and ' + i.on + ' share a lane (' + Math.round(i.dz) + ' px apart in depth).';
+    if (e.name === 'ko') return 'Knocked down: ' + i.on + '.';
+    if (e.name === 'jump') return i.by + ' jumps: the body rises, the shadow stays on the street.';
+    if (e.name === 'live') return 'Your turn: arrows walk, up / down change lanes, J strikes, K jumps.';
+    return '';
+  }
+
+  /* text state for checks and critics */
+  window.__belt = () => A.belt;
+  window.__stage = () => A;
+  window.__state = () => {
+    const S = A.S, D = A.drawn();
+    const actors = [S.hero].concat(S.foes).filter(a => a.st !== 'gone').map(a => {
+      const o = { id: a.id, x: Math.round((a.x - S.cam) * 10) / 10, y: Math.round((BS.FLOOR + a.z - a.h) * 10) / 10, z: Math.round(a.z * 10) / 10, h: Math.round(a.h * 10) / 10,
+        facing: D[a.id] || (a.face > 0 ? 'right' : 'left'), target: a.facesMove ? null : (a.target || null), vx: Math.round(a.vx * 100) / 100, st: a.st, pose: A.poseOf(a), hp: a.hp };
+      if (a.st === 'down') o.noFace = 'knocked down';
+      const tg = o.target && [S.hero].concat(S.foes).find(q => q.id === o.target); if (tg && Math.abs(tg.x - a.x) < 3) o.noFace = 'its target is at the same x on another lane (turns when it passes)';
+      return o;
+    });
+    const E = A.events().filter(e => e.step > S.step - 40 && e.step <= S.step && e.name !== 'swing');
+    return { t: Math.round(S.step * STEP_MS), step: S.step, cam: S.cam, live: S.live, event: E.length ? E[E.length - 1].name : (actors[0] && actors[0].st === 'walk' ? 'walk' : 'idle'),
+      recent: E.map(e => ({ step: e.step, name: e.name, info: e.info })), actors: actors, order: S.order.slice(), drawn: A.belt.lastDrawn(), cues: A.belt.lastCues(), hud: HUD.slice(), bodies: bodies(), floats: FLOATS.slice(), stats: A.belt.stats() };
+  };
+  window.__advance = n => { for (let i = 0; i < n; i++) stepOnce(); render(); return window.__state(); };
+  // one character alone, by the same frame code the demo uses (tools/sprites/sheet.py)
+  window.__beltCast = { draw: (g, id, x, footY, want, pose) => { const c = BS.frameFor(id.split('@')[0], pose || 'ready', want === 'left' ? 'left' : 'right'); g.imageSmoothingEnabled = false; g.drawImage(c, Math.round(x) - c.footX, Math.round(footY) + 1 - c.footY); return true; } };
+
+  /* controls */
+  const cueBtn = document.getElementById('cueBtn'), depthBtn = document.getElementById('depthBtn'), tolEl = document.getElementById('tol');
+  function sync() { cueBtn.classList.toggle('on', cueOn); cueBtn.textContent = cueOn ? 'Hide lane cue' : 'Show lane cue'; depthBtn.classList.toggle('on', depthOn); depthBtn.textContent = 'Depth check: ' + (depthOn ? 'on' : 'off (hits land across lanes)'); tolEl.value = tol; document.getElementById('tolOut').textContent = tol; }
+  cueBtn.onclick = () => { cueOn = !cueOn; A.belt.setParams({ cue: cueOn ? 'on' : 'off' }); sync(); };
+  depthBtn.onclick = () => { depthOn = !depthOn; restart(); sync(); };
+  tolEl.oninput = () => { tol = +tolEl.value; A.belt.setParams({ tolerance: tol }); sync(); };
+  document.getElementById('restart').onclick = restart;
+  sync();
+
+  /* loop: fixed 60 Hz steps; the recorded show loops until a key is pressed */
+  function stepOnce() { const d = device(); if (!A.S.live && !d && A.S.step >= A.LOOP) { A.reset(); } A.step(d); }
+  if (HAS_T) {
+    const n = Math.floor(START_T / STEP_MS);
+    for (let i = 0; i < n; i++) stepOnce();
+    render();
+    if (FREEZE) { window.__frozen = true; return; }
+  } else render();
+  let acc = 0, last = null;
+  function loop(ts) { if (last === null) last = ts; acc += Math.min(250, ts - last); last = ts; while (acc >= STEP_MS) { stepOnce(); acc -= STEP_MS; } render(); requestAnimationFrame(loop); }
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

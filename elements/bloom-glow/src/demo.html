@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bloom &amp; Glow</title>
+<style>
+:root {
+  --bg: #080a14; --panel: #11131f; --panel2: #171a2a; --line: #262a42; --text: #e8ebf8; --dim: #8e94b4; --accent: #ffc27a; --accent2: #7fdcff; --ok: #6ee7a8; --off: #ff7a8a;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1000px 520px at 30% -10%, #1c2350 0%, var(--bg) 62%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 16px 20px 10px; max-width: 1320px; margin: 0 auto; }
+.code { white-space: nowrap; font: 700 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #1d1206; background: linear-gradient(#ffe0b0, var(--accent)); padding: 6px 8px; border-radius: 6px; box-shadow: 0 0 0 1px #00000040, 0 0 18px #ffc27a70; }
+h1 { font-size: 18px; margin: 0; letter-spacing: .01em; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; max-width: 900px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; padding: 0 20px 20px; max-width: 1320px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; }
+.frame { position: relative; padding: 0; border-radius: 14px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px #2f3556, 0 24px 60px #00000090; }
+#game { display: block; width: 100%; height: auto; }
+#game.px { image-rendering: pixelated; }
+.split { position: absolute; top: 0; bottom: 0; width: 2px; background: #ffffffd0; box-shadow: 0 0 12px #fff8; pointer-events: none; display: none; z-index: 5; }
+.split span { position: absolute; top: 50%; font: 700 10px/1 ui-monospace, Menlo, monospace; letter-spacing: .1em; background: #000b; padding: 4px 6px; border-radius: 4px; white-space: nowrap; }
+.split .l { right: 8px; } .split .r { left: 8px; }
+.caption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; margin-top: 10px; color: var(--dim); font-size: 12px; }
+.caption b { color: var(--text); font-weight: 600; }
+#mode::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--ok); margin-right: 6px; box-shadow: 0 0 8px var(--ok); vertical-align: 1px; }
+#mode.off::before { background: var(--off); box-shadow: 0 0 8px var(--off); }
+.legend { margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
+.legend div { background: #ffffff08; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font-size: 12px; color: var(--dim); }
+.legend b { color: var(--text); display: block; font-size: 12.5px; margin-bottom: 2px; }
+aside { background: linear-gradient(var(--panel2), var(--panel)); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+section { border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+section:last-of-type { border-bottom: 0; padding-bottom: 0; }
+h2 { display: flex; align-items: center; justify-content: space-between; margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.row { margin-bottom: 8px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 3px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 5px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--fill), #262a44 var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 15px; height: 15px; border-radius: 50%; background: #fff6e8; border: 0; box-shadow: 0 0 0 3px #ffc27a55, 0 2px 6px #000a; cursor: pointer; }
+.sw { position: relative; width: 34px; height: 19px; flex: none; }
+.sw input { opacity: 0; width: 0; height: 0; position: absolute; }
+.sw i { position: absolute; inset: 0; border-radius: 10px; background: #262a44; transition: background .2s; cursor: pointer; }
+.sw i::after { content: ""; position: absolute; left: 3px; top: 3px; width: 13px; height: 13px; border-radius: 50%; background: #c8cce6; transition: transform .22s cubic-bezier(.3, 1.6, .5, 1); }
+.sw input:checked + i { background: linear-gradient(90deg, #ffa95a, var(--accent)); }
+.sw input:checked + i::after { transform: translateX(15px); background: #fff; }
+.inline { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; margin-bottom: 8px; }
+.seg { display: flex; background: #0b0d18; border: 1px solid var(--line); border-radius: 8px; padding: 2px; gap: 2px; }
+.seg button { flex: 1; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 4px; border-radius: 6px; cursor: pointer; }
+.seg button[aria-checked=true] { background: #25294a; color: var(--text); box-shadow: inset 0 0 0 1px #464c78; }
+.swatches { display: flex; gap: 6px; }
+.swatches button { width: 26px; height: 26px; border-radius: 50%; border: 0; cursor: pointer; box-shadow: 0 0 0 2px #0b0d18, 0 0 0 3px #3a3f60; }
+.swatches button[aria-checked=true] { box-shadow: 0 0 0 2px #0b0d18, 0 0 0 4px var(--accent), 0 0 14px currentColor; }
+.big { width: 100%; appearance: none; border: 0; border-radius: 10px; padding: 10px; font: 700 13px/1 inherit; color: #1d1206; cursor: pointer; background: linear-gradient(#ffe0b0, var(--accent)); box-shadow: 0 6px 18px #ffc27a40; transition: transform .08s; }
+.big:active { transform: scale(.98); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.dim { opacity: .38; pointer-events: none; filter: saturate(.4); transition: opacity .2s; }
+.note { color: var(--dim); font-size: 11.5px; margin: 4px 0 0; }
+.stat { font: 11.5px/1.5 ui-monospace, Menlo, monospace; color: var(--dim); }
+.stat b { color: var(--text); font-weight: 600; }
+@media (max-width: 1020px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 680px; width: 100%; margin: 0 auto; } }
+@media (max-width: 560px) { header { padding: 12px 16px 8px; align-items: flex-start; } main { padding: 0 16px 16px; gap: 12px; } .frame { border-radius: 10px; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">J-03</span>
+  <div><h1>Bloom &amp; glow</h1><p>Bright pixels and whatever the game draws into an emissive layer bleed soft light: soft-knee threshold, a dual-filter blur chain at 1/2 to 1/16 resolution, tinted additive or screen composite, and a short flash of bloom on big hits. The HUD stays crisp. Runs on the I-08 WebGL pipeline; without WebGL the game looks exactly as before.</p></div>
+</header>
+<main>
+  <div id="stage">
+    <div class="frame" id="frame">
+      <canvas id="game" width="1280" height="720"></canvas>
+      <div class="split" id="split"><span class="l">NO BLOOM</span><span class="r">BLOOM</span></div>
+    </div>
+    <div class="caption">
+      <span id="mode">WebGL2</span>
+      <span id="cost">frame <b>-</b></span>
+      <span id="size">-</span>
+    </div>
+    <div class="legend">
+      <div><b>Luminance</b>The moon, the two lit stone lanterns and white-hot sparks pass the threshold and bloom by themselves.</div>
+      <div><b>Emissive layer</b>Lamp posts, braziers, fireballs, the golem's crystal and fireflies are also drawn into <code>bloom.emissive()</code>, so they glow even where they are not the brightest pixels.</div>
+      <div><b>HUD protected</b>Panels are passed as <code>uiRects</code>: white text never blooms or gets washed. The selected skill is a <code>glow: true</code> hole, so it does glow.</div>
+    </div>
+  </div>
+  <aside>
+    <section>
+      <h2>Pipeline <span style="display:flex;gap:10px;align-items:center;text-transform:none;letter-spacing:0;font-weight:600">WebGL <label class="sw"><input type="checkbox" id="webgl" checked><i></i></label></span></h2>
+      <div class="inline">Bloom <label class="sw"><input type="checkbox" id="on" checked><i></i></label></div>
+      <p class="note" id="offnote" hidden style="margin:0 0 8px;color:#ffb0b8">WebGL is off: the game shows exactly as without bloom, so the controls below do nothing.</p>
+      <div class="row" id="splitRow"><label>Compare (left without, right with) <output id="o-split">off</output></label><input type="range" id="splitR" min="0" max="1" step="0.01" value="0"></div>
+      <div class="row"><label>Preset</label><div class="seg" id="preset"><button data-v="soft">Soft</button><button data-v="neon">Neon</button><button data-v="dreamy">Dreamy</button><button data-v="crisp">Crisp</button><button data-v="daylight">Daylight</button></div></div>
+      <div class="row"><label>Game canvas</label><div class="seg" id="res"><button data-v="hd" aria-checked="true">HD 1280&times;720</button><button data-v="px" aria-checked="false">Pixel 320&times;180</button></div></div>
+    </section>
+    <section data-gl>
+      <h2>Source</h2>
+      <div class="row"><div class="seg" id="source"><button data-v="both">Both</button><button data-v="luma">Bright pixels</button><button data-v="emissive">Emissive only</button></div></div>
+      <div class="two">
+        <div class="row"><label>Threshold <output></output></label><input type="range" data-k="threshold" min="0" max="1" step="0.01"></div>
+        <div class="row"><label>Soft knee <output></output></label><input type="range" data-k="knee" min="0" max="1" step="0.01"></div>
+      </div>
+      <div class="row"><label>Emissive gain <output></output></label><input type="range" data-k="emissiveGain" min="0" max="3" step="0.05"></div>
+    </section>
+    <section data-gl>
+      <h2>Glow</h2>
+      <div class="two">
+        <div class="row"><label>Intensity <output></output></label><input type="range" data-k="intensity" min="0" max="3" step="0.05"></div>
+        <div class="row"><label>Radius <output></output></label><input type="range" data-k="radius" min="0" max="1" step="0.01"></div>
+      </div>
+      <div class="two">
+        <div class="row"><label>Tint</label><div class="swatches" id="tint"><button data-v="#ffffff" style="background:#ffffff;color:#fff"></button><button data-v="#fff1dc" style="background:#fff1dc;color:#ffe0b0"></button><button data-v="#ffc890" style="background:#ffc890;color:#ffb060"></button><button data-v="#bfe4ff" style="background:#bfe4ff;color:#8fd0ff"></button><button data-v="#ffc0f0" style="background:#ffc0f0;color:#ff90e0"></button></div></div>
+        <div class="row"><label>Blend</label><div class="seg" id="blend"><button data-v="add">Add</button><button data-v="screen">Screen</button></div></div>
+      </div>
+    </section>
+    <section data-gl>
+      <h2>HUD protection <label class="sw"><input type="checkbox" id="ui" checked><i></i></label></h2>
+      <div class="row"><label>Fade before HUD (canvas px) <output></output></label><input type="range" data-k="uiFeather" min="0" max="32" step="1"></div>
+      <p class="note">Switch it off and lower the threshold: the HUD text starts to bloom and its panels get washed. That is what <code>uiRects</code> prevents.</p>
+    </section>
+    <section data-gl>
+      <h2>Flash bloom</h2>
+      <div class="row"><label>Fade ms <output></output></label><input type="range" data-k="flareDecay" min="100" max="1200" step="10"></div>
+      <button class="big" id="flare">Big hit: bloom.flare(1.2)</button>
+      <p class="note">Every third fireball is a nova that calls <code>flare(1.2, {at})</code>; normal impacts call <code>flare(0.5, {at})</code>.</p>
+    </section>
+    <section class="stat" id="stat">-</section>
+  </aside>
+</main>
+<script>
+/*POST*/
+</script>
+<script>
+/*MODULE*/
+</script>
+<script src="../../../demo-kit/kit-art.js"></script>
+<script src="../../cutout-characters/module/cutout-characters.js"></script>
+<script src="../../cutout-characters/assets/pack.js"></script>
+<script src="../../../demo-kit/kit.js"></script>
+<script>
+/*MAIN*/
+</script>
+</body>
+</html>

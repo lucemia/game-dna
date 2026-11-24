@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Farming plots</title>
+<style>
+:root { --bg: #14180f; --ink: #f2ead8; --dim: #b4aa8c; --panel: #221c14; --line: #4a3a26; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font: 13px/1.45 "Trebuchet MS", "Segoe UI", system-ui, sans-serif; }
+main { max-width: 1440px; margin: 0 auto; padding: 14px; display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 14px; }
+h1 { font-size: 18px; margin: 0 0 6px; } p { margin: 0 0 10px; color: var(--dim); }
+#stage { width: 100%; }
+#cv { display: block; border-radius: 6px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); touch-action: none; background: #000; image-rendering: pixelated; }
+#controls { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+.row { display: grid; grid-template-columns: 1fr; gap: 2px; margin: 0 0 10px; } .row span { color: var(--dim); font-size: 12px; } .row b { font-size: 12px; }
+select, input { width: 100%; }
+.keys { color: var(--dim); font-size: 12px; margin-top: 8px; }
+@media (max-width: 820px) { main { grid-template-columns: 1fr; padding: 8px; } }
+</style>
+</head>
+<body>
+<main>
+  <section>
+    <h1>Farming plots</h1>
+    <p>Till, plant, water, and harvest; crops grow one stage per watered night, seasons wither what is out of season, the bin pays at night.</p>
+    <div id="stage"><canvas id="cv"></canvas></div>
+    <div class="keys">Arrows walk (a tap turns first), Z works the faced tile, 1-4 tools, Q next seed. Tap a tile to walk there or work it.</div>
+  </section>
+  <aside id="controls"></aside>
+</main>
+<script src="../../../pixel-kit/pixel-scene.js"></script>
+<script>
+/*@@MODULE@@*/
+</script>
+<script>
+/*@@DEMO@@*/
+</script>
+</body>
+</html>

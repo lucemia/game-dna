@@ -1,0 +1,215 @@
+{
+  "id": "painted-parallax",
+  "code": "L-01",
+  "kind": "addon",
+  "name": "Painted parallax layers",
+  "family": "backdrop",
+  "oneLiner": "The flat background of a side-view HD game becomes 3-5 hand-painted layers (far sky and ridges, drifting clouds, mid hills, near silhouettes, and an opaque under-strip of forest floor that fills pits when the game's ground is higher than the painted one) generated once at build time in one locked style, post-processed so each repeats sideways without a seam (best-cut search + premultiplied cross-fade; mid and near are two panels joined into a strip about 3 screens wide), scrolled at their own depth with an atmospheric tint per layer; the game loads the files once and keeps its old flat layer as the fallback for any missing image.",
+  "fits": [
+    "platformer",
+    "side-scrolling action / adventure",
+    "metroidvania-style exploration",
+    "runner",
+    "side-view RPG battle backdrop",
+    "title and menu screens"
+  ],
+  "notFor": [
+    "pixel-art styles (pixel8, pixel16, handheld4): painted layers look out of place next to pixel tiles (use I-02 parallax-layers)",
+    "top-down, isometric and pseudo-3D games (no side view)",
+    "backgrounds that must change at runtime (no generator is called by the game)",
+    "exact reproduction of a look by prompt alone (there is no seed)"
+  ],
+  "requires": [
+    "art-direction-lock"
+  ],
+  "interfaces": {
+    "time": "realtime",
+    "coords": "side",
+    "layer": "scene",
+    "needs": [
+      "GameDNA_Assets (L-00 loader) loaded first; the game's boot moved into its onReady callback",
+      "camera offset in world px (x, optionally y) from the game's draw pass",
+      "fixed step to advance the cloud-drift clock (the same step ?t= fast-forward runs)",
+      "draw slot before tiles and sprites (where the old background was drawn); the old layer functions as fallbacks"
+    ],
+    "provides": [
+      "painted backdrop for the play field (roles far, clouds, mid, near; optional back) with the I-02 scroll factors",
+      "lastDrawn() / layers(): offsets, factors, panel joins (for tests)",
+      "assets.json manifest: prompt, GEN.md, model, date and sha256 of every shipped layer; style lock + key painting",
+      "postproc.py hrepeat seam / join / roll / hstrip, assetcheck bg-layer rule, seamcheck.py"
+    ]
+  },
+  "params": [
+    {
+      "key": "mode",
+      "label": "Backdrop",
+      "type": "select",
+      "options": [
+        "painted",
+        "flat",
+        "split"
+      ],
+      "default": "painted"
+    },
+    {
+      "key": "set",
+      "label": "Set",
+      "type": "select",
+      "options": [
+        "dusk",
+        "night"
+      ],
+      "default": "dusk"
+    },
+    {
+      "key": "speed",
+      "label": "Scroll speed (px/s)",
+      "type": "range",
+      "min": 0,
+      "max": 480,
+      "step": 10,
+      "default": 120
+    },
+    {
+      "key": "depth",
+      "label": "Parallax depth",
+      "type": "range",
+      "min": 0,
+      "max": 1.5,
+      "step": 0.05,
+      "default": 1
+    },
+    {
+      "key": "drift",
+      "label": "Cloud drift",
+      "type": "range",
+      "min": 0,
+      "max": 4,
+      "step": 0.25,
+      "default": 1
+    },
+    {
+      "key": "tint",
+      "label": "Depth tint",
+      "type": "range",
+      "min": 0,
+      "max": 2,
+      "step": 0.05,
+      "default": 1
+    },
+    {
+      "key": "ground",
+      "label": "Ground line",
+      "type": "range",
+      "min": 0.6,
+      "max": 1,
+      "step": 0.01,
+      "default": 0.8
+    },
+    {
+      "key": "layers",
+      "label": "Layers shown",
+      "type": "select",
+      "options": [
+        "far,clouds,mid,under,near",
+        "far,mid,under,near",
+        "far,mid",
+        "far"
+      ],
+      "default": "far,clouds,mid,under,near"
+    },
+    {
+      "key": "seams",
+      "label": "Mark joins",
+      "type": "select",
+      "options": [
+        "0",
+        "1"
+      ],
+      "default": "0"
+    }
+  ],
+  "promptParams": [
+    {
+      "key": "place",
+      "default": "the game's own setting"
+    },
+    {
+      "key": "time",
+      "default": "dusk"
+    },
+    {
+      "key": "layers",
+      "default": "far, clouds, mid (2 panels), near (2 panels), under (2 panels)"
+    },
+    {
+      "key": "scale",
+      "default": "1.5"
+    },
+    {
+      "key": "set",
+      "default": "dusk"
+    },
+    {
+      "key": "ground",
+      "default": "where the game's ground starts, as a fraction of the view height"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Dusk, four layers",
+      "params": {
+        "set": "dusk",
+        "speed": 120
+      }
+    },
+    {
+      "name": "Night, same shapes",
+      "params": {
+        "set": "night",
+        "speed": 120
+      }
+    },
+    {
+      "name": "Old flat vs painted (split)",
+      "params": {
+        "mode": "split"
+      }
+    },
+    {
+      "name": "Joins marked, fast scroll",
+      "params": {
+        "seams": "1",
+        "speed": 300
+      }
+    }
+  ],
+  "assets": [
+    "module/painted-parallax.js: GameDNA_PaintedParallax (one global, no dependencies; uses GameDNA_Assets from L-00)",
+    "assets/assets.json: 12 generated files (WebP, 576 KB): dusk + night far, clouds, mid, under, near and the two style keys, with prompts, GEN.md, meta and sha256 per Codex run under assets/gen/",
+    "assets/prompts/: style lock, night paragraph, every brief, templates.md",
+    "tools/assets (shared): gen.sh, postproc.py (hrepeat seam, join), assetcheck.py (bg-layer rule)"
+  ],
+  "assetPack": {
+    "manifest": "assets/assets.json",
+    "generated": true,
+    "tool": "codex image_gen.imagegen (built-in)",
+    "date": "2026-11-16",
+    "budgetBytes": 600000,
+    "styles": "hd (non-pixel skins)",
+    "check": "tools/assets/assetcheck.py assets/assets.json; checks/seamcheck.py <page>",
+    "regenerate": "prompt.md + assets/prompts/templates.md + tools/assets"
+  },
+  "status": "draft",
+  "module": {
+    "file": "module/painted-parallax.js",
+    "global": "GameDNA_PaintedParallax",
+    "version": "1.0.1",
+    "docs": "module/README.md"
+  },
+  "skinSpec": "v0.5 bitmap roles: entries carry skinRole {role: bg-layer, kind: <layer>}",
+  "related": [
+    "parallax-layers (I-02): same roles and factors, code-drawn pixel layers",
+    "art-direction-lock (L-00): loader and style-lock method"
+  ]
+}

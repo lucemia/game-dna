@@ -1,0 +1,65 @@
+{
+  "id": "touch-controls",
+  "code": "I-03",
+  "kind": "addon",
+  "name": "Touch controls with edge-latched input",
+  "family": "input",
+  "oneLiner": "A pixel-style D-pad or virtual stick with A/B buttons and a START pill appears on phones, below the game canvas, in its side gutters or over its bottom corners (never on the HUD); every finger is tracked (hold a direction while pressing A, slide from B to A), presses sink and light up, and every input (keyboard, touch, gamepad) is edge-latched so a tap shorter than one game step still counts exactly once. Touches become the game's own key events, so its logic stays as it is.",
+  "fits": [
+    "platformer and side-scroller",
+    "top-down action and adventure",
+    "turn-based RPG (menus, map walking)",
+    "tactics / strategy RPG (cursor games)",
+    "shoot-'em-up",
+    "puzzle and arcade games played with a few keys"
+  ],
+  "notFor": [
+    "games built around pointer aiming or drag (use direct touch on the canvas instead)",
+    "rhythm games that need exact touch timing on the playfield",
+    "games that already ship their own touch layout and want to keep it"
+  ],
+  "interfaces": {
+    "time": "realtime",
+    "coords": "side",
+    "layer": "post",
+    "needs": [
+      "a fixed 60 Hz update step: one step() call as its first line (also in ?t= fast-forward, title and pause)",
+      "the game canvas element and the key codes its keydown handler binds (directions, confirm, cancel, pause)",
+      "optional: rectangles to avoid (HUD, dialogue and menu boxes, in canvas px) for controls drawn over the canvas"
+    ],
+    "provides": [
+      "input: keydown / keyup events with the game's own codes for each touch and gamepad press (events mode)",
+      "input: edge-latched pressed() / held() / released() / repeat() / axis() per role, the same for keyboard, touch and gamepad (poll mode)",
+      "onFirstInput callback (unlock audio), the controls' rects on screen (layout())"
+    ]
+  },
+  "params": [
+    { "key": "pad", "label": "Direction control", "type": "select", "options": ["dpad", "stick"], "default": "dpad" },
+    { "key": "side", "label": "Pad side", "type": "select", "options": ["left", "right"], "default": "left" },
+    { "key": "placement", "label": "Placement", "type": "select", "options": ["auto", "below", "sides", "over"], "default": "auto" },
+    { "key": "size", "label": "Size", "type": "select", "options": ["small", "medium", "large"], "default": "medium" },
+    { "key": "opacity", "label": "Opacity over the game", "type": "range", "min": 0.3, "max": 1, "step": 0.05, "default": 0.6 },
+    { "key": "start", "label": "START button", "type": "select", "options": ["on", "off"], "default": "on" },
+    { "key": "dirs", "label": "Directions", "type": "select", "options": ["8", "4"], "default": "8" },
+    { "key": "buttons", "label": "Action buttons", "type": "select", "options": ["1", "2", "3"], "default": "2" },
+    { "key": "show", "label": "Show", "type": "select", "options": ["auto", "always", "never"], "default": "auto" },
+    { "key": "latch", "label": "Key latch", "type": "select", "options": ["all", "touch"], "default": "all" }
+  ],
+  "variants": [
+    { "name": "Classic pad", "params": { "pad": "dpad", "side": "left", "placement": "auto", "size": "medium", "start": "on", "dirs": "8", "buttons": "2" } },
+    { "name": "Stick, left-handed", "params": { "pad": "stick", "side": "right", "size": "medium" } },
+    { "name": "Big buttons", "params": { "size": "large", "buttons": "3", "start": "on" } },
+    { "name": "Overlay, menu game", "params": { "placement": "over", "opacity": 0.45, "dirs": "4", "start": "off", "size": "small" } }
+  ],
+  "assets": [
+    "module/touch-controls.js: the element as one dependency-free script (global GameDNA_TouchControls): pointer and touch tracking, key-event synthesis, edge latch, gamepad polling, layout (below / sides / over, safe areas, whole-pixel scale), the pixel-art D-pad, stick, buttons and START pill; draws through GameDNA_Skin when skin-api.js is loaded, otherwise with its built-in copy of the pixel16 look",
+    "no image or audio files"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/touch-controls.js",
+    "global": "GameDNA_TouchControls",
+    "version": "1.0.0",
+    "docs": "module/README.md"
+  }
+}

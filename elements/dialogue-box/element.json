@@ -1,0 +1,199 @@
+{
+  "id": "dialogue-box",
+  "code": "H-01",
+  "kind": "addon",
+  "name": "Typewriter dialogue box",
+  "family": "dialogue-box",
+  "oneLiner": "Story text in a framed box at the bottom (or top) of the screen: each line types out letter by letter with small pauses at punctuation, a name tag sits on the speaker's side, a blinking arrow waits for Z / Enter / tap, which first finishes the page and then advances; holding fast-forwards. Long lines wrap and page at native resolution, the box moves to the top when the speaker stands under it and never covers the HUD. Lines are a plain array of {speaker, text} the designer edits; the world pauses while it is open and the game gets onEnd back.",
+  "fits": [
+    "top-down adventure and RPG (talking to people, signs, chests)",
+    "turn-based RPG battle (intro and victory lines, boss taunts)",
+    "tactics RPG (pre-battle and mid-battle conversations)",
+    "side-scrolling platformer or action game (story beats between stages)",
+    "visual-novel style scenes inside a game",
+    "cutscenes (auto-advancing lines)"
+  ],
+  "notFor": [
+    "speech bubbles that float over moving characters while play continues (a different element)",
+    "full visual novels with portraits, backlog and save per line (portraits are family D)",
+    "branching choices and story flags (H-02 builds on this element's line format)",
+    "subtitles for voiced dialogue timed to audio"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "the game's existing function that shows text (talking, signs, item messages), in update logic: open(lines, {onEnd}) there; what ran after the old text closed moves into onEnd",
+      "the confirm input routed to the box while busy() (press() on the key-down edge, optional hold(down), or key(code, down))",
+      "a fixed 60 Hz update step (the box's only clock), also while the world is paused for the box",
+      "the play field size in native px",
+      "optional: the speaker's sprite rect on screen (getAnchor(who, line)) and ui rects to keep clear (HUD, menus)",
+      "optional: the game's autoplay flag"
+    ],
+    "provides": [
+      "busy flag: route the confirm input here and pause the world while the box is open",
+      "conversation end via onEnd({lines, index, skipped, auto, line}) (synchronous, inside update())",
+      "per-line hooks onLine / onLineEnd (return false to hold the box on a line: choices, pop-ups) and next / goto / insert / end",
+      "a per-letter sound hook (onTick) for the game's text blip, and sound cue names (onSfx)",
+      "the box rectangle on screen (incl. the name tag), for other overlays to avoid",
+      "the H-01 dialogue box itself (open / busy / rect, lines with who and expr) that expressive portraits (D-04) and dialogue choices (H-02) attach to"
+    ]
+  },
+  "params": [
+    {
+      "key": "scope",
+      "label": "Which text goes in the box (required; the designer's words)",
+      "type": "text",
+      "default": "everything the game already shows as text in a message box: talking to characters, reading signs, item and chest messages"
+    },
+    {
+      "key": "speed",
+      "label": "Letters per second (0 = whole page at once)",
+      "type": "range",
+      "min": 0,
+      "max": 120,
+      "step": 5,
+      "default": 40
+    },
+    {
+      "key": "pause",
+      "label": "Pause after . ! ? (ms; half after , ; :)",
+      "type": "range",
+      "min": 0,
+      "max": 400,
+      "step": 20,
+      "default": 160
+    },
+    {
+      "key": "rows",
+      "label": "Rows per page",
+      "type": "range",
+      "min": 2,
+      "max": 4,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "key": "place",
+      "label": "Placement",
+      "type": "select",
+      "options": [
+        "auto",
+        "bottom",
+        "top"
+      ],
+      "default": "auto"
+    },
+    {
+      "key": "nameTag",
+      "label": "Name tag",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "autoAdvance",
+      "label": "Auto-advance (ms after a page is complete; 0 = wait for the player)",
+      "type": "range",
+      "min": 0,
+      "max": 3000,
+      "step": 100,
+      "default": 0
+    },
+    {
+      "key": "hold",
+      "label": "Hold confirm to fast-forward",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "tint",
+      "label": "Window colour (a blue, n slate, b red)",
+      "type": "select",
+      "options": [
+        "a",
+        "n",
+        "b"
+      ],
+      "default": "a"
+    },
+    {
+      "key": "dim",
+      "label": "Dim behind",
+      "type": "range",
+      "min": 0,
+      "max": 0.5,
+      "step": 0.05,
+      "default": 0
+    }
+  ],
+  "variants": [
+    {
+      "name": "Classic 16-bit RPG",
+      "params": {
+        "speed": 40,
+        "pause": 160,
+        "rows": 3,
+        "place": "auto",
+        "nameTag": "on",
+        "tint": "a"
+      }
+    },
+    {
+      "name": "Snappy",
+      "params": {
+        "speed": 80,
+        "pause": 80,
+        "rows": 3,
+        "hold": "on"
+      }
+    },
+    {
+      "name": "Storybook (slow, four rows)",
+      "params": {
+        "speed": 24,
+        "pause": 260,
+        "rows": 4,
+        "tint": "n",
+        "dim": 0.2
+      }
+    },
+    {
+      "name": "Cutscene (auto-advance)",
+      "params": {
+        "speed": 32,
+        "autoAdvance": 1500,
+        "hold": "off"
+      }
+    },
+    {
+      "name": "Battle messages",
+      "params": {
+        "speed": 60,
+        "pause": 120,
+        "rows": 2,
+        "place": "top",
+        "tint": "n"
+      }
+    }
+  ],
+  "assets": [
+    "module/dialogue-box.js: the element as one dependency-free script (global GameDNA_DialogueBox): script parsing, word wrap and paging, typewriter with punctuation pauses, name tag, more arrow, input (press / hold / key), placement, autoplay, drawing with the C-03 6x8 font built in",
+    "no image or audio files (the letter tick is a callback; the game plays its own sound)"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/dialogue-box.js",
+    "global": "GameDNA_DialogueBox",
+    "version": "1.0.0",
+    "docs": "module/README.md"
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "id": "springy-ui",
+  "code": "C-10",
+  "kind": "addon",
+  "name": "Springy UI motion",
+  "family": "ui-motion",
+  "oneLiner": "Motion design for the windows and menus a game already draws: panels open with an elastic pop, slide or unfold and close faster than they open, list rows stagger in, the selection highlight glides between rows on a damped spring and the chosen row lifts, numbers roll to their new value and a backdrop dim fades. The game keeps drawing every window at its final rect; the module only wraps those draw calls, never reads or delays input, and runs on its own step clock so frozen screenshots and autoplay stay deterministic.",
+  "fits": [
+    "turn-based RPG battle (command menus, spell lists, target cursors)",
+    "top-down adventure / RPG (dialogue, shop, bag, pause)",
+    "tactics / strategy RPG (unit menus, forecasts)",
+    "monster battler",
+    "roguelike and deck-builder (reward and shop screens)",
+    "any game with windows, menus, toasts or counters"
+  ],
+  "notFor": [
+    "games whose UI is DOM / HTML rather than canvas (use CSS transitions there)",
+    "diegetic in-world UI that must stay locked to a 3D surface",
+    "competitive games where any motion near the HUD is unwanted (use reduced: on, or skip)"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "a fixed update step to advance the module clock (update(dt), also run by ?t= fast-forward)",
+      "each window's existing draw code, with a stable id and its final rect in screen units",
+      "optional: the cursor index of each menu, rects of its rows, numbers worth rolling",
+      "optional: where game logic opens / closes a window (open(id) / close(id)) for exact mid-animation frozen frames"
+    ],
+    "provides": [
+      "open / close animation of any window the game draws (pop, slide, unfold), close played from a copy so game state closes at once",
+      "row stagger and selected-row lift (row(), rowOffset())",
+      "a spring-gliding highlight or pointer rect (glide()) and rolling numbers (count())",
+      "backdrop dim and soft window shadows",
+      "debug() / stats() / state() for tests (open and close timings); never an input gate"
+    ]
+  },
+  "params": [
+    { "key": "open", "label": "Open (ms)", "type": "range", "min": 0, "max": 600, "step": 10, "default": 260 },
+    { "key": "close", "label": "Close (ms)", "type": "range", "min": 0, "max": 400, "step": 10, "default": 140 },
+    { "key": "bounce", "label": "Bounce (overshoot)", "type": "range", "min": 0, "max": 0.4, "step": 0.01, "default": 0.12 },
+    { "key": "style", "label": "Open style", "type": "select", "options": ["auto", "pop", "slide", "unfold"], "default": "auto" },
+    { "key": "stagger", "label": "Row stagger (ms)", "type": "range", "min": 0, "max": 80, "step": 1, "default": 30 },
+    { "key": "glide", "label": "Highlight glide (ms)", "type": "range", "min": 0, "max": 400, "step": 10, "default": 140 },
+    { "key": "lift", "label": "Selected-row lift (px)", "type": "range", "min": 0, "max": 6, "step": 0.5, "default": 2 },
+    { "key": "dim", "label": "Backdrop dim", "type": "range", "min": 0, "max": 0.7, "step": 0.01, "default": 0.35 },
+    { "key": "count", "label": "Number roll (ms)", "type": "range", "min": 0, "max": 1200, "step": 10, "default": 450 },
+    { "key": "reduced", "label": "Reduced motion", "type": "select", "options": ["system", "on", "off"], "default": "system" }
+  ],
+  "variants": [
+    { "name": "Modern indie", "params": { "open": 260, "close": 140, "bounce": 0.12, "style": "auto", "stagger": 30, "glide": 140, "lift": 2 } },
+    { "name": "Bouncy toy box", "params": { "open": 380, "close": 160, "bounce": 0.28, "style": "pop", "stagger": 45, "glide": 200, "lift": 3 } },
+    { "name": "Snappy tactical", "params": { "open": 150, "close": 90, "bounce": 0.04, "style": "slide", "stagger": 15, "glide": 80, "lift": 1 } },
+    { "name": "Pixel console", "params": { "open": 200, "close": 120, "bounce": 0.1, "style": "unfold", "stagger": 30, "glide": 120, "lift": 1 } },
+    { "name": "Reduced motion", "params": { "reduced": "on" } }
+  ],
+  "assets": [
+    "module/springy-ui.js: the element as one dependency-free script (global GameDNA_SpringyUI): analytic spring open curve, exact damped-spring glides and lifts, ease-in close played from a device-pixel copy of the window, row stagger, rolling counters, backdrop dim and soft shadows (colour through GameDNA_Skin palette.ink, built-in pixel16 ink)",
+    "no image or audio files"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/springy-ui.js",
+    "global": "GameDNA_SpringyUI",
+    "version": "1.1.0",
+    "docs": "module/README.md",
+    "skin": "optional: skins/skin-api.js + a skin before it (only the dim / shadow colour)"
+  }
+}

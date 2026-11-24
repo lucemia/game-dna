@@ -1,0 +1,172 @@
+{
+  "id": "normal-lighting",
+  "code": "J-02",
+  "name": "Normal-mapped sprite lighting",
+  "kind": "addon",
+  "family": "sprite-light",
+  "requires": [
+    "webgl-post"
+  ],
+  "oneLiner": "Sprites catch the light: every sprite drawn through the module writes its normals (from an L-05 normal map, or derived from the drawn shape) into a buffer, and one I-08 WebGL pass relights only those pixels from a key light, point lights and short flashes (and J-01's lights when present), with glints on curved edges and a rim light on silhouettes. Energy-neutral: a face turned to the viewer keeps its colour, faces toward the sun or a lamp brighten and warm, faces turned away darken and cool, so a sprite keeps its mean brightness and saturation; a 'daylight' preset gives visible form with no lamps at all. Without WebGL, or without a normal map, the sprite draws exactly as before.",
+  "fits": [
+    "top-down adventure and action RPG (characters, trees, rocks, crates, lamps)",
+    "side-scrolling platformer / action (hero, enemies, coins, blocks)",
+    "painted HD sprites with L-05 normal maps, and canvas-drawn vector sprites (normals derived from the shape)",
+    "night, dusk and dungeon scenes with J-01 lights (it reads their light list)",
+    "any 2D canvas game, HD or pixel, on the I-08 post pipeline"
+  ],
+  "notFor": [
+    "games already drawn with WebGL or a 3D engine (use the engine's own normal-mapped lighting)",
+    "lighting the ground, sky or backgrounds (that is J-01; this element lights sprites only)",
+    "sprites rotated at arbitrary angles (mirrors and 180-degree turns are handled; other rotations keep the unrotated normals)",
+    "tiny 1-bit pixel sprites under ~12 px (there is no room for relief)"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "post",
+    "needs": [
+      "I-08 webgl-post (GameDNA_Post) loaded first; the game's existing instance, or one the module creates",
+      "render() once per drawn frame on every draw path",
+      "the game's step-counted clock in ms (flicker, flashes; deterministic ?t=&freeze=1)",
+      "the sprites' draw calls: drawSprite(img, map, ...) for bitmaps, shape(key, box, fn) around canvas-drawn sprites",
+      "optional: L-05 normal maps (nh2) or any normal map image; without one, 'derive' or plain drawing",
+      "optional: a camera offset for lights in world units; point lights, flashes on hits; J-01 lights on the same post"
+    ],
+    "provides": [
+      "one relighting pass on the I-08 chain (order 250, the scene-light band, after J-01), skipped on frames with no sprite",
+      "normal and albedo buffers (I-08 inputs nlNormal, nlAlbedo) the size of the game canvas",
+      "key light, up to 8 point lights (own + J-01), flashes, specular glints and rim light",
+      "normals derived at runtime from bitmaps ('derive') and from canvas-drawn shapes (shape / begin-end), cached per key",
+      "stats() and drawnBoxes(): sprites, shapes, derive cost, lights used, errors"
+    ]
+  },
+  "params": [
+    {
+      "key": "preset",
+      "label": "Preset",
+      "type": "select",
+      "options": [
+        "daylight",
+        "dusk",
+        "night",
+        "soft"
+      ],
+      "default": "daylight"
+    },
+    {
+      "key": "strength",
+      "label": "Relief",
+      "type": "range",
+      "min": 0,
+      "max": 2,
+      "step": 0.01,
+      "default": 1.4
+    },
+    {
+      "key": "key",
+      "label": "Key light",
+      "type": "range",
+      "min": 0,
+      "max": 1.5,
+      "step": 0.01,
+      "default": 0.6
+    },
+    {
+      "key": "keyAngle",
+      "label": "Key light from (deg)",
+      "type": "range",
+      "min": 0,
+      "max": 360,
+      "step": 1,
+      "default": 225
+    },
+    {
+      "key": "keyHeight",
+      "label": "Key light height",
+      "type": "range",
+      "min": 0.1,
+      "max": 0.95,
+      "step": 0.01,
+      "default": 0.35
+    },
+    {
+      "key": "warmth",
+      "label": "Warm key / cool shadow",
+      "type": "range",
+      "min": 0,
+      "max": 2,
+      "step": 0.01,
+      "default": 0.6
+    },
+    {
+      "key": "rim",
+      "label": "Rim light",
+      "type": "range",
+      "min": 0,
+      "max": 1.5,
+      "step": 0.01,
+      "default": 0.7
+    },
+    {
+      "key": "bevel",
+      "label": "Derived bevel (view px)",
+      "type": "range",
+      "min": 1,
+      "max": 20,
+      "step": 0.5,
+      "default": 8
+    }
+  ],
+  "variants": [
+    {
+      "name": "Daylight (default: no lamps, warm sun from up-left, cool shadows)",
+      "params": {
+        "preset": "daylight"
+      }
+    },
+    {
+      "name": "Dusk lanterns (with lamps or J-01)",
+      "params": {
+        "preset": "dusk"
+      }
+    },
+    {
+      "name": "Torch-lit night",
+      "params": {
+        "preset": "night"
+      }
+    },
+    {
+      "name": "Soft relief",
+      "params": {
+        "preset": "soft"
+      }
+    },
+    {
+      "name": "Strong noon relief",
+      "params": {
+        "preset": "daylight",
+        "strength": 1.8,
+        "keyHeight": 0.3,
+        "warmth": 0.8
+      }
+    }
+  ],
+  "assets": [
+    "module/normal-lighting.js: the element as one dependency-free script (global GameDNA_NormalLight): drawSprite / shape / begin-end, normal + albedo buffers, runtime normal derivation (alpha distance field + luminance, Sobel), L-05 nh2 / gl / dx map conversion with mirror handling, own lights and flashes, J-01 light reading, one I-08 pass",
+    "requires elements/webgl-post/module/webgl-post.js (I-08), shipped next to it in the combo",
+    "the demo uses the L-05 sample pack (elements/normal-maps/assets) and two L-00 images (oak, ground, path patch); the module ships no images"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/normal-lighting.js",
+    "global": "GameDNA_NormalLight",
+    "version": "1.1.0",
+    "docs": "module/README.md",
+    "requires": [
+      "webgl-post"
+    ],
+    "skin": "none: the module draws nothing of its own on the game canvas (it relights the sprites the game draws)"
+  }
+}

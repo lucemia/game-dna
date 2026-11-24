@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Sunshard Isle</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0f1626; overflow: hidden; touch-action: none; }
+  #game { position: fixed; inset: 0; }
+  #game canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; }
+  #ui { cursor: grab; }
+</style>
+</head>
+<body>
+<div id="game"><canvas id="gl"></canvas><canvas id="ui"></canvas></div>
+<!-- three.js 0.149.0 (MIT), classic build: keep three.min.js next to this file -->
+<script src="three.min.js"></script>
+<!-- GameDNA_ThirdPerson3D module (pasted unchanged; API in module/README.md) -->
+<script>
+/*MODULE*/
+</script>
+<!-- The game: defines window.GAME (sections "=== n.", see README.md) -->
+<script>
+/*GAME*/
+</script>
+<!-- ===================================================================== ADDONS SLOT =====================================================================
+     Put addon modules here (<script src> or pasted unchanged) and register them with GAME.addons.push({...}).
+     This runs after window.GAME exists and BEFORE the game boots, so addons see every ?t=&freeze=1 frame. -->
+<script>
+/* ADDONS SLOT */
+</script>
+<!-- ===================================================================== END ADDONS SLOT ================================================================= -->
+<script>GAME.boot();</script>
+</body>
+</html>

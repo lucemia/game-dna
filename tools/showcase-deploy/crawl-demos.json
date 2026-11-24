@@ -1,0 +1,2128 @@
+{
+ "base": "http://127.0.0.1:55807",
+ "visited": [
+  {
+   "url": "/elements/active-time-battle/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/active-time-battle/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/adaptive-music/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/adaptive-music/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/art-direction-lock/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/art-direction-lock/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/bark-bubbles/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/bark-bubbles/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/battle-transition/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/battle-transition/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/beat-judge/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/beat-judge/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/belt-depth/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/belt-depth/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/big-banner/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/big-banner/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/billboard-sprites-3d/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/billboard-sprites-3d/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/bloom-glow/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/bloom-glow/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/bullet-patterns/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/bullet-patterns/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/camera-director/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/camera-director/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/card-art/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/card-art/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/card-battle/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/card-battle/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/chip-music/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/chip-music/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/clash-cutin/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/clash-cutin/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/color-grade-lut/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/color-grade-lut/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/combat-forecast/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/combat-forecast/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/crafting-recipes/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/crafting-recipes/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/cutout-characters/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/cutout-characters/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/damage-numbers/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/damage-numbers/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/damage-pop/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/damage-pop/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/dialogue-box/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/dialogue-box/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/dialogue-choices/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/dialogue-choices/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/dissolve-defeat/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/dissolve-defeat/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/draining-hp-bar/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/draining-hp-bar/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/dungeon-floors/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/dungeon-floors/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/dynamic-lights/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/dynamic-lights/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/expressive-portraits/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/expressive-portraits/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/farming-plots/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/farming-plots/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/fog-of-war/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/fog-of-war/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/four-move-battle/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/four-move-battle/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/grapple-swing/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/grapple-swing/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/grid-range-path/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/grid-range-path/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/hit-sparks/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/hit-sparks/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/hit-stop-shake/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/hit-stop-shake/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/horde-survival/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/horde-survival/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/ik-creatures/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/ik-creatures/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/iso-height-map/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/iso-height-map/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/kart-racer-3d/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/keyword-tooltips/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/kart-racer-3d/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/keyword-tooltips/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/level-select-map/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/level-select-map/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/level-up-growth/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/loot-beams/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/level-up-growth/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/loot-beams/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/match3-battle/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/minimap/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/match3-battle/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/minimap/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/modern-particles/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/motion-inputs/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/modern-particles/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/motion-inputs/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/normal-lighting/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/normal-lighting/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/normal-maps/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/normal-maps/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/painted-parallax/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/painted-parallax/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/painted-portraits/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/painted-portraits/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/painted-ui/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/palette-swap/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/painted-ui/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/palette-swap/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/paper-doll/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/paper-doll/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/parallax-layers/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/parallax-layers/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/physics-debris/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/physics-debris/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/pixel-font/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/pixel-font/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/pixel-scaler/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/pixel-scaler/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/platformer-feel/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/platformer-feel/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/procedural-sfx/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/procedural-sfx/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/pseudo3d-flight/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/pseudo3d-flight/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/quest-log/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/quest-log/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/raycast-dungeon/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/raycast-dungeon/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/ribbon-trails/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/ribbon-trails/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/run-map/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/run-map/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/save-slots/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/save-slots/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/screen-distortion/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/screen-distortion/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/scripted-cutscenes/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/scripted-cutscenes/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/seeded-replay/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/shaped-inventory/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/seeded-replay/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/shaped-inventory/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/shop-inventory/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/shop-inventory/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/springy-ui/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/springy-ui/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/sprite-stacking/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/squad-clash/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/sprite-stacking/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/squad-clash/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/squad-formation/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/squash-stretch/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/squad-formation/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/squash-stretch/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/stamina-rest/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/stamina-rest/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/sword-combat/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/sword-combat/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/tactic-rules/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/tactic-rules/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/tactics-grid-3d/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/tactics-grid-3d/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/talking-portraits/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/talking-portraits/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/third-person-3d/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/third-person-3d/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/threat-range/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/threat-range/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/time-rewind/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/time-rewind/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/timing-bar/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/timing-bar/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/title-menu/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/title-menu/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/toasts/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/toasts/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/toon-outlines-3d/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/toon-outlines-3d/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/touch-controls/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/touch-controls/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/tower-defense/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/tower-defense/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/turn-order-bar/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/turn-order-bar/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/upgrade-draft/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/upgrade-draft/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/verlet-cloth/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/verlet-cloth/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/vision-cones/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/vision-cones/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/water-surface/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/water-surface/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/weather-particles/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/webgl-post/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/weather-particles/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/webgl-post/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/wfc-town-3d/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/wfc-town-3d/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/window-cursor/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/window-cursor/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/world-hud/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/world-hud/demo/index.html",
+   "w": 390,
+   "ok": true
+  }
+ ],
+ "requests": {
+  "/demo-kit/assets/scenes/forge-hall.webp": [
+   "200"
+  ],
+  "/demo-kit/assets/sprites/slime.webp": [
+   "200"
+  ],
+  "/demo-kit/kit-art.js": [
+   "200"
+  ],
+  "/demo-kit/kit.js": [
+   "200"
+  ],
+  "/elements/active-time-battle/demo/index.html": [
+   "200"
+  ],
+  "/elements/adaptive-music/demo/index.html": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/compare/guard-n1.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/compare/guard-n2.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/compare/guard-n3.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/compare/guard-w1.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/compare/guard-w2.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/compare/guard-w3.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/compare/herbalist-nd.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/compare/herbalist-ne.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/compare/herbalist-nf.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/compare/herbalist-wd.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/compare/herbalist-we.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/compare/herbalist-wf.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/compare/w-ground.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/compare/w-herbalist.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/compare/w-keeper.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/compare/w-key.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/compare/w-lamppost.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/compare/w-oak.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/compare/w-vial.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/compare/w-well.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/ref/sheet.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/repeats/herbalist-nb.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/repeats/herbalist-nc.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/repeats/herbalist-wb.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/repeats/herbalist-wc.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/sheet-parts/keeper.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/sheet-parts/lamppost.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/sheet-parts/patch.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/sheet-parts/vial.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/with/ground.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/with/herbalist.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/with/key.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/with/oak.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/with/well.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/without/ground-nr.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/without/herbalist-nr.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/without/key-nr.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/assets/without/well-nr.webp": [
+   "200"
+  ],
+  "/elements/art-direction-lock/demo/compare.js": [
+   "200"
+  ],
+  "/elements/art-direction-lock/demo/index.html": [
+   "200"
+  ],
+  "/elements/art-direction-lock/demo/manifest.js": [
+   "200"
+  ],
+  "/elements/art-direction-lock/demo/metrics.js": [
+   "200"
+  ],
+  "/elements/art-direction-lock/module/art-direction-lock.js": [
+   "200"
+  ],
+  "/elements/bark-bubbles/demo/assets/art/elder.webp": [
+   "200"
+  ],
+  "/elements/bark-bubbles/demo/assets/art/frame-small.webp": [
+   "200"
+  ],
+  "/elements/bark-bubbles/demo/assets/art/frame-window.webp": [
+   "200"
+  ],
+  "/elements/bark-bubbles/demo/assets/art/gate.webp": [
+   "200"
+  ],
+  "/elements/bark-bubbles/demo/assets/art/ground.webp": [
+   "200"
+  ],
+  "/elements/bark-bubbles/demo/assets/art/guard.webp": [
+   "200"
+  ],
+  "/elements/bark-bubbles/demo/assets/art/herbalist.webp": [
+   "200"
+  ],
+  "/elements/bark-bubbles/demo/assets/art/jelly-amber.webp": [
+   "200"
+  ],
+  "/elements/bark-bubbles/demo/assets/art/jelly-teal.webp": [
+   "200"
+  ],
+  "/elements/bark-bubbles/demo/assets/art/lamppost.webp": [
+   "200"
+  ],
+  "/elements/bark-bubbles/demo/assets/art/oak.webp": [
+   "200"
+  ],
+  "/elements/bark-bubbles/demo/assets/art/patch.webp": [
+   "200"
+  ],
+  "/elements/bark-bubbles/demo/assets/art/stall.webp": [
+   "200"
+  ],
+  "/elements/bark-bubbles/demo/assets/art/walk-girl.webp": [
+   "200"
+  ],
+  "/elements/bark-bubbles/demo/assets/art/walk-keeper.webp": [
+   "200"
+  ],
+  "/elements/bark-bubbles/demo/assets/art/well.webp": [
+   "200"
+  ],
+  "/elements/bark-bubbles/demo/assets/pixel/atlas.js": [
+   "200"
+  ],
+  "/elements/bark-bubbles/demo/assets/pixel/atlas.png": [
+   "200"
+  ],
+  "/elements/bark-bubbles/demo/index.html": [
+   "200"
+  ],
+  "/elements/bark-bubbles/module/bark-bubbles.js": [
+   "200"
+  ],
+  "/elements/battle-transition/demo/index.html": [
+   "200"
+  ],
+  "/elements/beat-judge/demo/index.html": [
+   "200"
+  ],
+  "/elements/belt-depth/demo/index.html": [
+   "200"
+  ],
+  "/elements/belt-depth/demo/stage.js": [
+   "200"
+  ],
+  "/elements/belt-depth/module/belt-depth.js": [
+   "200"
+  ],
+  "/elements/big-banner/demo/index.html": [
+   "200"
+  ],
+  "/elements/big-banner/module/big-banner.js": [
+   "200"
+  ],
+  "/elements/billboard-sprites-3d/demo/index.html": [
+   "200"
+  ],
+  "/elements/billboard-sprites-3d/demo/three.min.js": [
+   "200"
+  ],
+  "/elements/billboard-sprites-3d/module/billboard-sprites-3d.js": [
+   "200"
+  ],
+  "/elements/bloom-glow/demo/index.html": [
+   "200"
+  ],
+  "/elements/bullet-patterns/demo/index.html": [
+   "200"
+  ],
+  "/elements/bullet-patterns/module/bullet-patterns.js": [
+   "200"
+  ],
+  "/elements/camera-director/demo/index.html": [
+   "200"
+  ],
+  "/elements/camera-director/module/camera-director.js": [
+   "200"
+  ],
+  "/elements/card-art/assets/cards/arrow.webp": [
+   "200"
+  ],
+  "/elements/card-art/assets/cards/blade.webp": [
+   "200"
+  ],
+  "/elements/card-art/assets/cards/crit.webp": [
+   "200"
+  ],
+  "/elements/card-art/assets/cards/fire.webp": [
+   "200"
+  ],
+  "/elements/card-art/assets/cards/frost.webp": [
+   "200"
+  ],
+  "/elements/card-art/assets/cards/gold.webp": [
+   "200"
+  ],
+  "/elements/card-art/assets/cards/guard.webp": [
+   "200"
+  ],
+  "/elements/card-art/assets/cards/heart.webp": [
+   "200"
+  ],
+  "/elements/card-art/assets/cards/light.webp": [
+   "200"
+  ],
+  "/elements/card-art/assets/cards/luck.webp": [
+   "200"
+  ],
+  "/elements/card-art/assets/cards/magic.webp": [
+   "200"
+  ],
+  "/elements/card-art/assets/cards/poison.webp": [
+   "200"
+  ],
+  "/elements/card-art/assets/cards/regen.webp": [
+   "200"
+  ],
+  "/elements/card-art/assets/cards/speed.webp": [
+   "200"
+  ],
+  "/elements/card-art/assets/cards/storm.webp": [
+   "200"
+  ],
+  "/elements/card-art/demo/index.html": [
+   "200"
+  ],
+  "/elements/card-art/module/card-art.js": [
+   "200"
+  ],
+  "/elements/card-battle/demo/index.html": [
+   "200"
+  ],
+  "/elements/chip-music/demo/index.html": [
+   "200"
+  ],
+  "/elements/clash-cutin/demo/index.html": [
+   "200"
+  ],
+  "/elements/color-grade-lut/demo/index.html": [
+   "200"
+  ],
+  "/elements/combat-forecast/demo/index.html": [
+   "200"
+  ],
+  "/elements/crafting-recipes/demo/index.html": [
+   "200"
+  ],
+  "/elements/crafting-recipes/module/crafting-recipes.js": [
+   "200"
+  ],
+  "/elements/cutout-characters/assets/chars/mage.webp": [
+   "200"
+  ],
+  "/elements/cutout-characters/assets/chars/spear.webp": [
+   "200"
+  ],
+  "/elements/cutout-characters/assets/chars/sword.webp": [
+   "200"
+  ],
+  "/elements/cutout-characters/assets/pack.js": [
+   "200"
+  ],
+  "/elements/cutout-characters/demo/index.html": [
+   "200"
+  ],
+  "/elements/cutout-characters/module/cutout-characters.js": [
+   "200"
+  ],
+  "/elements/damage-numbers/demo/index.html": [
+   "200"
+  ],
+  "/elements/damage-pop/demo/index.html": [
+   "200"
+  ],
+  "/elements/dialogue-box/demo/index.html": [
+   "200"
+  ],
+  "/elements/dialogue-box/module/dialogue-box.js": [
+   "200"
+  ],
+  "/elements/dialogue-choices/demo/index.html": [
+   "200"
+  ],
+  "/elements/dialogue-choices/module/dialogue-choices.js": [
+   "200"
+  ],
+  "/elements/dissolve-defeat/demo/index.html": [
+   "200"
+  ],
+  "/elements/draining-hp-bar/demo/index.html": [
+   "200"
+  ],
+  "/elements/draining-hp-bar/module/draining-hp-bar.js": [
+   "200"
+  ],
+  "/elements/dungeon-floors/demo/index.html": [
+   "200"
+  ],
+  "/elements/dynamic-lights/demo/index.html": [
+   "200"
+  ],
+  "/elements/expressive-portraits/demo/index.html": [
+   "200"
+  ],
+  "/elements/expressive-portraits/module/expressive-portraits.js": [
+   "200"
+  ],
+  "/elements/farming-plots/demo/index.html": [
+   "200"
+  ],
+  "/elements/fog-of-war/demo/index.html": [
+   "200"
+  ],
+  "/elements/four-move-battle/demo/index.html": [
+   "200"
+  ],
+  "/elements/four-move-battle/module/four-move-battle.js": [
+   "200"
+  ],
+  "/elements/grapple-swing/demo/index.html": [
+   "200"
+  ],
+  "/elements/grapple-swing/demo/world.js": [
+   "200"
+  ],
+  "/elements/grapple-swing/module/grapple-swing.js": [
+   "200"
+  ],
+  "/elements/grid-range-path/demo/index.html": [
+   "200"
+  ],
+  "/elements/hit-sparks/demo/index.html": [
+   "200"
+  ],
+  "/elements/hit-stop-shake/demo/index.html": [
+   "200"
+  ],
+  "/elements/horde-survival/demo/index.html": [
+   "200"
+  ],
+  "/elements/horde-survival/starter/art/vigil-art.js": [
+   "200"
+  ],
+  "/elements/ik-creatures/demo/index.html": [
+   "200"
+  ],
+  "/elements/ik-creatures/demo/scene.js": [
+   "200"
+  ],
+  "/elements/ik-creatures/module/ik-creatures.js": [
+   "200"
+  ],
+  "/elements/iso-height-map/demo/index.html": [
+   "200"
+  ],
+  "/elements/kart-racer-3d/demo/index.html": [
+   "200"
+  ],
+  "/elements/kart-racer-3d/demo/three.min.js": [
+   "200"
+  ],
+  "/elements/keyword-tooltips/demo/index.html": [
+   "200"
+  ],
+  "/elements/keyword-tooltips/module/keyword-tooltips.js": [
+   "200"
+  ],
+  "/elements/level-select-map/demo/index.html": [
+   "200"
+  ],
+  "/elements/level-up-growth/demo/index.html": [
+   "200"
+  ],
+  "/elements/level-up-growth/module/level-up-growth.js": [
+   "200"
+  ],
+  "/elements/loot-beams/demo/index.html": [
+   "200"
+  ],
+  "/elements/loot-beams/module/loot-beams.js": [
+   "200"
+  ],
+  "/elements/match3-battle/demo/index.html": [
+   "200"
+  ],
+  "/elements/match3-battle/starter/art/cast-art.js": [
+   "200"
+  ],
+  "/elements/match3-battle/starter/art/kit.js": [
+   "200"
+  ],
+  "/elements/minimap/demo/index.html": [
+   "200"
+  ],
+  "/elements/minimap/module/minimap.js": [
+   "200"
+  ],
+  "/elements/modern-particles/demo/index.html": [
+   "200"
+  ],
+  "/elements/motion-inputs/demo/arena.js": [
+   "200"
+  ],
+  "/elements/motion-inputs/demo/index.html": [
+   "200"
+  ],
+  "/elements/motion-inputs/module/motion-inputs.js": [
+   "200"
+  ],
+  "/elements/normal-lighting/demo/index.html": [
+   "200"
+  ],
+  "/elements/normal-lighting/demo/slime.nh.webp": [
+   "200"
+  ],
+  "/elements/normal-maps/assets/albedo/herbalist.webp": [
+   "200"
+  ],
+  "/elements/normal-maps/assets/albedo/keeper.webp": [
+   "200"
+  ],
+  "/elements/normal-maps/assets/albedo/key.webp": [
+   "200"
+  ],
+  "/elements/normal-maps/assets/albedo/lamppost-off.webp": [
+   "200"
+  ],
+  "/elements/normal-maps/assets/albedo/lamppost.webp": [
+   "200"
+  ],
+  "/elements/normal-maps/assets/albedo/maren.webp": [
+   "200"
+  ],
+  "/elements/normal-maps/assets/albedo/slot.webp": [
+   "200"
+  ],
+  "/elements/normal-maps/assets/albedo/vial.webp": [
+   "200"
+  ],
+  "/elements/normal-maps/assets/albedo/well.webp": [
+   "200"
+  ],
+  "/elements/normal-maps/assets/maps/herbalist.nh.webp": [
+   "200"
+  ],
+  "/elements/normal-maps/assets/maps/keeper.nh.webp": [
+   "200"
+  ],
+  "/elements/normal-maps/assets/maps/key.nh.webp": [
+   "200"
+  ],
+  "/elements/normal-maps/assets/maps/lamppost-off.nh.webp": [
+   "200"
+  ],
+  "/elements/normal-maps/assets/maps/lamppost.nh.webp": [
+   "200"
+  ],
+  "/elements/normal-maps/assets/maps/maren.nh.webp": [
+   "200"
+  ],
+  "/elements/normal-maps/assets/maps/slot.nh.webp": [
+   "200"
+  ],
+  "/elements/normal-maps/assets/maps/vial.nh.webp": [
+   "200"
+  ],
+  "/elements/normal-maps/assets/maps/well.nh.webp": [
+   "200"
+  ],
+  "/elements/normal-maps/demo/extra/crates.nh.webp": [
+   "200"
+  ],
+  "/elements/normal-maps/demo/extra/crates.webp": [
+   "200"
+  ],
+  "/elements/normal-maps/demo/extra/oak.nh.webp": [
+   "200"
+  ],
+  "/elements/normal-maps/demo/extra/road.webp": [
+   "200"
+  ],
+  "/elements/normal-maps/demo/index.html": [
+   "200"
+  ],
+  "/elements/normal-maps/demo/manifest.js": [
+   "200"
+  ],
+  "/elements/normal-maps/module/normal-maps.js": [
+   "200"
+  ],
+  "/elements/painted-parallax/assets/dusk/clouds.webp": [
+   "200"
+  ],
+  "/elements/painted-parallax/assets/dusk/far.webp": [
+   "200"
+  ],
+  "/elements/painted-parallax/assets/dusk/key.webp": [
+   "200"
+  ],
+  "/elements/painted-parallax/assets/dusk/mid.webp": [
+   "200"
+  ],
+  "/elements/painted-parallax/assets/dusk/near.webp": [
+   "200"
+  ],
+  "/elements/painted-parallax/assets/dusk/under.webp": [
+   "200"
+  ],
+  "/elements/painted-parallax/assets/night/clouds.webp": [
+   "200"
+  ],
+  "/elements/painted-parallax/assets/night/far.webp": [
+   "200"
+  ],
+  "/elements/painted-parallax/assets/night/key.webp": [
+   "200"
+  ],
+  "/elements/painted-parallax/assets/night/mid.webp": [
+   "200"
+  ],
+  "/elements/painted-parallax/assets/night/near.webp": [
+   "200"
+  ],
+  "/elements/painted-parallax/assets/night/under.webp": [
+   "200"
+  ],
+  "/elements/painted-parallax/checks/pack-hd-sidescroll/host-t20000.png": [
+   "200"
+  ],
+  "/elements/painted-parallax/checks/pack-hd-sidescroll/original-t20000.png": [
+   "200"
+  ],
+  "/elements/painted-parallax/demo/index.html": [
+   "200"
+  ],
+  "/elements/painted-parallax/demo/manifest.js": [
+   "200"
+  ],
+  "/elements/painted-parallax/module/painted-parallax.js": [
+   "200"
+  ],
+  "/elements/painted-portraits/assets/cast/hesper-angry.webp": [
+   "200"
+  ],
+  "/elements/painted-portraits/assets/cast/hesper-blink.webp": [
+   "200"
+  ],
+  "/elements/painted-portraits/assets/cast/hesper-determined.webp": [
+   "200"
+  ],
+  "/elements/painted-portraits/assets/cast/hesper-happy.webp": [
+   "200"
+  ],
+  "/elements/painted-portraits/assets/cast/hesper-neutral.webp": [
+   "200"
+  ],
+  "/elements/painted-portraits/assets/cast/hesper-sad.webp": [
+   "200"
+  ],
+  "/elements/painted-portraits/assets/cast/hesper-surprised.webp": [
+   "200"
+  ],
+  "/elements/painted-portraits/assets/cast/maren-angry.webp": [
+   "200"
+  ],
+  "/elements/painted-portraits/assets/cast/maren-blink.webp": [
+   "200"
+  ],
+  "/elements/painted-portraits/assets/cast/maren-determined.webp": [
+   "200"
+  ],
+  "/elements/painted-portraits/assets/cast/maren-happy.webp": [
+   "200"
+  ],
+  "/elements/painted-portraits/assets/cast/maren-neutral.webp": [
+   "200"
+  ],
+  "/elements/painted-portraits/assets/cast/maren-sad.webp": [
+   "200"
+  ],
+  "/elements/painted-portraits/assets/cast/maren-surprised.webp": [
+   "200"
+  ],
+  "/elements/painted-portraits/assets/cast/oswin-angry.webp": [
+   "200"
+  ],
+  "/elements/painted-portraits/assets/cast/oswin-blink.webp": [
+   "200"
+  ],
+  "/elements/painted-portraits/assets/cast/oswin-determined.webp": [
+   "200"
+  ],
+  "/elements/painted-portraits/assets/cast/oswin-happy.webp": [
+   "200"
+  ],
+  "/elements/painted-portraits/assets/cast/oswin-neutral.webp": [
+   "200"
+  ],
+  "/elements/painted-portraits/assets/cast/oswin-sad.webp": [
+   "200"
+  ],
+  "/elements/painted-portraits/assets/cast/oswin-surprised.webp": [
+   "200"
+  ],
+  "/elements/painted-portraits/assets/cast/tobin-angry.webp": [
+   "200"
+  ],
+  "/elements/painted-portraits/assets/cast/tobin-blink.webp": [
+   "200"
+  ],
+  "/elements/painted-portraits/assets/cast/tobin-determined.webp": [
+   "200"
+  ],
+  "/elements/painted-portraits/assets/cast/tobin-happy.webp": [
+   "200"
+  ],
+  "/elements/painted-portraits/assets/cast/tobin-neutral.webp": [
+   "200"
+  ],
+  "/elements/painted-portraits/assets/cast/tobin-sad.webp": [
+   "200"
+  ],
+  "/elements/painted-portraits/assets/cast/tobin-surprised.webp": [
+   "200"
+  ],
+  "/elements/painted-portraits/demo/index.html": [
+   "200"
+  ],
+  "/elements/painted-portraits/demo/manifest.js": [
+   "200"
+  ],
+  "/elements/painted-portraits/module/painted-portraits.js": [
+   "200"
+  ],
+  "/elements/painted-ui/assets/kit/cursor.webp": [
+   "200"
+  ],
+  "/elements/painted-ui/assets/kit/frame-small.webp": [
+   "200"
+  ],
+  "/elements/painted-ui/assets/kit/frame-window.webp": [
+   "200"
+  ],
+  "/elements/painted-ui/assets/kit/icons.webp": [
+   "200"
+  ],
+  "/elements/painted-ui/assets/kit/select.webp": [
+   "200"
+  ],
+  "/elements/painted-ui/assets/kit/slot.webp": [
+   "200"
+  ],
+  "/elements/painted-ui/demo/index.html": [
+   "200"
+  ],
+  "/elements/painted-ui/demo/kit-manifest.js": [
+   "200"
+  ],
+  "/elements/painted-ui/module/painted-ui.js": [
+   "200"
+  ],
+  "/elements/palette-swap/demo/index.html": [
+   "200"
+  ],
+  "/elements/palette-swap/module/palette-swap.js": [
+   "200"
+  ],
+  "/elements/paper-doll/demo/index.html": [
+   "200"
+  ],
+  "/elements/paper-doll/demo/scene.js": [
+   "200"
+  ],
+  "/elements/paper-doll/module/paper-doll.js": [
+   "200"
+  ],
+  "/elements/parallax-layers/demo/index.html": [
+   "200"
+  ],
+  "/elements/parallax-layers/module/parallax-layers.js": [
+   "200"
+  ],
+  "/elements/physics-debris/demo/index.html": [
+   "200"
+  ],
+  "/elements/physics-debris/module/physics-debris.js": [
+   "200"
+  ],
+  "/elements/pixel-font/demo/index.html": [
+   "200"
+  ],
+  "/elements/pixel-font/module/pixel-font.js": [
+   "200"
+  ],
+  "/elements/pixel-scaler/demo/index.html": [
+   "200"
+  ],
+  "/elements/pixel-scaler/module/pixel-scaler.js": [
+   "200"
+  ],
+  "/elements/pixel-terrain/module/pixel-terrain.js": [
+   "200"
+  ],
+  "/elements/platformer-feel/demo/index.html": [
+   "200"
+  ],
+  "/elements/platformer-feel/module/platformer-feel.js": [
+   "200"
+  ],
+  "/elements/procedural-sfx/demo/index.html": [
+   "200"
+  ],
+  "/elements/procedural-sfx/module/procedural-sfx.js": [
+   "200"
+  ],
+  "/elements/pseudo3d-flight/demo/index.html": [
+   "200"
+  ],
+  "/elements/pseudo3d-flight/module/pseudo3d-flight.js": [
+   "200"
+  ],
+  "/elements/quest-log/demo/index.html": [
+   "200"
+  ],
+  "/elements/quest-log/module/quest-log.js": [
+   "200"
+  ],
+  "/elements/raycast-dungeon/demo/index.html": [
+   "200"
+  ],
+  "/elements/ribbon-trails/demo/index.html": [
+   "200"
+  ],
+  "/elements/ribbon-trails/module/ribbon-trails.js": [
+   "200"
+  ],
+  "/elements/run-map/demo/index.html": [
+   "200"
+  ],
+  "/elements/run-map/module/run-map.js": [
+   "200"
+  ],
+  "/elements/save-slots/demo/index.html": [
+   "200"
+  ],
+  "/elements/save-slots/module/save-slots.js": [
+   "200"
+  ],
+  "/elements/screen-distortion/demo/index.html": [
+   "200"
+  ],
+  "/elements/scripted-cutscenes/demo/cast.js": [
+   "200"
+  ],
+  "/elements/scripted-cutscenes/demo/index.html": [
+   "200"
+  ],
+  "/elements/scripted-cutscenes/demo/scene.js": [
+   "200"
+  ],
+  "/elements/scripted-cutscenes/module/scripted-cutscenes.js": [
+   "200"
+  ],
+  "/elements/seeded-replay/demo/index.html": [
+   "200"
+  ],
+  "/elements/seeded-replay/module/seeded-replay.js": [
+   "200"
+  ],
+  "/elements/shaped-inventory/demo/index.html": [
+   "200"
+  ],
+  "/elements/shaped-inventory/module/shaped-inventory.js": [
+   "200"
+  ],
+  "/elements/shop-inventory/demo/index.html": [
+   "200"
+  ],
+  "/elements/shop-inventory/module/shop-inventory.js": [
+   "200"
+  ],
+  "/elements/springy-ui/demo/index.html": [
+   "200"
+  ],
+  "/elements/sprite-stacking/demo/index.html": [
+   "200"
+  ],
+  "/elements/sprite-stacking/module/sprite-stacking.js": [
+   "200"
+  ],
+  "/elements/squad-clash/demo/index.html": [
+   "200"
+  ],
+  "/elements/squad-clash/starter/art/archer.webp": [
+   "200"
+  ],
+  "/elements/squad-clash/starter/art/brigand-left.webp": [
+   "200"
+  ],
+  "/elements/squad-clash/starter/art/brigand.webp": [
+   "200"
+  ],
+  "/elements/squad-clash/starter/art/cleric.webp": [
+   "200"
+  ],
+  "/elements/squad-clash/starter/art/field-dawn.webp": [
+   "200"
+  ],
+  "/elements/squad-clash/starter/art/field-day.webp": [
+   "200"
+  ],
+  "/elements/squad-clash/starter/art/field-dusk.webp": [
+   "200"
+  ],
+  "/elements/squad-clash/starter/art/field-night.webp": [
+   "200"
+  ],
+  "/elements/squad-clash/starter/art/hexer-left.webp": [
+   "200"
+  ],
+  "/elements/squad-clash/starter/art/hexer.webp": [
+   "200"
+  ],
+  "/elements/squad-clash/starter/art/hound-left.webp": [
+   "200"
+  ],
+  "/elements/squad-clash/starter/art/hound.webp": [
+   "200"
+  ],
+  "/elements/squad-clash/starter/art/ironclad-left.webp": [
+   "200"
+  ],
+  "/elements/squad-clash/starter/art/ironclad.webp": [
+   "200"
+  ],
+  "/elements/squad-clash/starter/art/knight.webp": [
+   "200"
+  ],
+  "/elements/squad-clash/starter/art/lancer.webp": [
+   "200"
+  ],
+  "/elements/squad-clash/starter/art/mage.webp": [
+   "200"
+  ],
+  "/elements/squad-clash/starter/art/mender-left.webp": [
+   "200"
+  ],
+  "/elements/squad-clash/starter/art/mender.webp": [
+   "200"
+  ],
+  "/elements/squad-clash/starter/art/raptor-left.webp": [
+   "200"
+  ],
+  "/elements/squad-clash/starter/art/raptor.webp": [
+   "200"
+  ],
+  "/elements/squad-clash/starter/art/slinger-left.webp": [
+   "200"
+  ],
+  "/elements/squad-clash/starter/art/slinger.webp": [
+   "200"
+  ],
+  "/elements/squad-clash/starter/art/warlord-left.webp": [
+   "200"
+  ],
+  "/elements/squad-clash/starter/art/warlord.webp": [
+   "200"
+  ],
+  "/elements/squad-formation/demo/index.html": [
+   "200"
+  ],
+  "/elements/squash-stretch/demo/index.html": [
+   "200"
+  ],
+  "/elements/squash-stretch/module/squash-stretch.js": [
+   "200"
+  ],
+  "/elements/stamina-rest/demo/index.html": [
+   "200"
+  ],
+  "/elements/sword-combat/demo/index.html": [
+   "200"
+  ],
+  "/elements/tactic-rules/demo/index.html": [
+   "200"
+  ],
+  "/elements/tactics-grid-3d/demo/index.html": [
+   "200"
+  ],
+  "/elements/tactics-grid-3d/demo/three.min.js": [
+   "200"
+  ],
+  "/elements/tactics-grid-3d/module/tactics-grid-3d.js": [
+   "200"
+  ],
+  "/elements/talking-portraits/demo/index.html": [
+   "200"
+  ],
+  "/elements/talking-portraits/module/talking-portraits.js": [
+   "200"
+  ],
+  "/elements/third-person-3d/demo/index.html": [
+   "200"
+  ],
+  "/elements/third-person-3d/demo/three.min.js": [
+   "200"
+  ],
+  "/elements/third-person-3d/module/third-person-3d.js": [
+   "200"
+  ],
+  "/elements/threat-range/demo/index.html": [
+   "200"
+  ],
+  "/elements/time-rewind/demo/index.html": [
+   "200"
+  ],
+  "/elements/time-rewind/module/time-rewind.js": [
+   "200"
+  ],
+  "/elements/timing-bar/demo/index.html": [
+   "200"
+  ],
+  "/elements/timing-bar/module/timing-bar.js": [
+   "200"
+  ],
+  "/elements/title-menu/demo/index.html": [
+   "200"
+  ],
+  "/elements/title-menu/module/title-menu.js": [
+   "200"
+  ],
+  "/elements/toasts/demo/index.html": [
+   "200"
+  ],
+  "/elements/toasts/module/toasts.js": [
+   "200"
+  ],
+  "/elements/toon-outlines-3d/demo/index.html": [
+   "200"
+  ],
+  "/elements/toon-outlines-3d/demo/three.min.js": [
+   "200"
+  ],
+  "/elements/toon-outlines-3d/module/toon-outlines-3d.js": [
+   "200"
+  ],
+  "/elements/touch-controls/demo/index.html": [
+   "200"
+  ],
+  "/elements/tower-defense/demo/index.html": [
+   "200"
+  ],
+  "/elements/turn-order-bar/demo/index.html": [
+   "200"
+  ],
+  "/elements/upgrade-draft/demo/index.html": [
+   "200"
+  ],
+  "/elements/upgrade-draft/module/upgrade-draft.js": [
+   "200"
+  ],
+  "/elements/verlet-cloth/demo/index.html": [
+   "200"
+  ],
+  "/elements/verlet-cloth/module/verlet-cloth.js": [
+   "200"
+  ],
+  "/elements/vision-cones/demo/index.html": [
+   "200"
+  ],
+  "/elements/vision-cones/module/vision-cones.js": [
+   "200"
+  ],
+  "/elements/water-surface/demo/index.html": [
+   "200"
+  ],
+  "/elements/water-surface/module/water-surface.js": [
+   "200"
+  ],
+  "/elements/weather-particles/demo/index.html": [
+   "200"
+  ],
+  "/elements/webgl-post/demo/index.html": [
+   "200"
+  ],
+  "/elements/wfc-town-3d/demo/index.html": [
+   "200"
+  ],
+  "/elements/wfc-town-3d/demo/three.min.js": [
+   "200"
+  ],
+  "/elements/wfc-town-3d/module/wfc-town-3d.js": [
+   "200"
+  ],
+  "/elements/window-cursor/demo/index.html": [
+   "200"
+  ],
+  "/elements/window-cursor/module/window-cursor.js": [
+   "200"
+  ],
+  "/elements/world-hud/demo/index.html": [
+   "200"
+  ],
+  "/elements/world-hud/module/world-hud.js": [
+   "200"
+  ],
+  "/pixel-kit/pixel-scene.js": [
+   "200"
+  ],
+  "/skins/flat/flat.js": [
+   "200"
+  ],
+  "/skins/gothic/gothic.js": [
+   "200"
+  ],
+  "/skins/painted-impasto/assets/pack/prop-bush.webp": [
+   "200"
+  ],
+  "/skins/painted-impasto/assets/pack/prop-crystal.webp": [
+   "200"
+  ],
+  "/skins/painted-impasto/assets/pack/prop-stone.webp": [
+   "200"
+  ],
+  "/skins/pixel16.js": [
+   "200"
+  ],
+  "/skins/skin-api.js": [
+   "200"
+  ],
+  "/skins/watercolor/watercolor.js": [
+   "200"
+  ]
+ },
+ "external": [],
+ "failed": [],
+ "console": [],
+ "pageerror": []
+}

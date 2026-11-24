@@ -1,0 +1,492 @@
+{
+  "id": "platformer-feel",
+  "code": "B-08",
+  "name": "Platformer movement feel",
+  "kind": "system",
+  "family": "B: map & movement",
+  "oneLiner": "Side-view hero movement and tile collision that feels good: acceleration curves on the ground and in the air, variable jump height, coyote time, jump buffering, apex hang, terminal fall speed, an 8- or 4-way dash that refills on landing, wall slide and wall jump, one-way platforms, ceiling-corner and ledge-lip correction, and sub-pixel positions drawn on whole pixels; every number is a parameter with presets, and a live overlay shows the jump arc, the forgiveness windows and the velocity.",
+  "fits": [
+    "side-view platformers",
+    "action platformers with a dash",
+    "metroidvania-style exploration",
+    "precision / speedrun platformers",
+    "side-scrolling action games with jumping"
+  ],
+  "notFor": [
+    "top-down games (no gravity axis)",
+    "slopes and curved ground (the tile map is square tiles and one-way tiles only)",
+    "physics-driven bodies (ragdolls, rolling balls, ropes)",
+    "vehicles and swimming"
+  ],
+  "interfaces": {
+    "time": "realtime",
+    "coords": "side",
+    "layer": "actor",
+    "needs": [
+      "a tile map query tileAt(tx, ty) -> solid | oneway | empty, in world px tiles (hazards stay the game's)",
+      "a fixed 60 Hz update step (also used by ?t= fast-forward and autoplay) where the hero used to move",
+      "the game's input per step: left, right, up, down, jump held, jump pressed since last step, dash held / pressed (latched: a 0 ms tap counts)",
+      "the hero's hitbox size and start position; places that move the hero directly (respawn, knockback, enemy bounce) routed to reset / knock / bounce",
+      "optional: a free dash key"
+    ],
+    "provides": [
+      "hero position (whole px) with sub-pixel remainder, velocity, onGround, facing, pose (idle run jump apex fall land dash wallslide hurt)",
+      "events: jump (ground / coyote / buffered / wall), cut, apex, land, dash, dashEnd, refill, wallSlide, wallJump, corner, ledge, drop, bonk",
+      "data: windows() coyote / buffer / dash state, squash() for squash and stretch, predict() jump arcs, anchor(camX, camY) for effects",
+      "drawing: dust and dash after-images (drawFx), a stand-in hero (drawBody), the feel overlay (drawOverlay) and its UI rect",
+      "stats: jumps by kind, dashes, wall jumps, corner and ledge nudges, embedded steps (0 = no tunnelling)"
+    ]
+  },
+  "params": [
+    {
+      "key": "preset",
+      "label": "Preset (loaded first; the numbers below override it)",
+      "type": "select",
+      "options": [
+        "tight",
+        "floaty",
+        "heavy",
+        "raw"
+      ],
+      "default": "tight"
+    },
+    {
+      "key": "runSpeed",
+      "label": "Run speed (px/s)",
+      "type": "int",
+      "min": 20,
+      "max": 400,
+      "step": 2,
+      "default": 96
+    },
+    {
+      "key": "groundAccel",
+      "label": "Ground acceleration (px/s²)",
+      "type": "int",
+      "min": 50,
+      "max": 8000,
+      "step": 50,
+      "default": 1100
+    },
+    {
+      "key": "groundDecel",
+      "label": "Ground deceleration (px/s²)",
+      "type": "int",
+      "min": 50,
+      "max": 8000,
+      "step": 50,
+      "default": 1500
+    },
+    {
+      "key": "turnAccel",
+      "label": "Turn-around acceleration (px/s²)",
+      "type": "int",
+      "min": 50,
+      "max": 10000,
+      "step": 50,
+      "default": 2200
+    },
+    {
+      "key": "airAccel",
+      "label": "Air acceleration (px/s²)",
+      "type": "int",
+      "min": 0,
+      "max": 8000,
+      "step": 20,
+      "default": 760
+    },
+    {
+      "key": "airDecel",
+      "label": "Air deceleration, no input (px/s²)",
+      "type": "int",
+      "min": 0,
+      "max": 8000,
+      "step": 10,
+      "default": 260
+    },
+    {
+      "key": "jumpHeight",
+      "label": "Full jump height (px)",
+      "type": "int",
+      "min": 4,
+      "max": 160,
+      "step": 1,
+      "default": 44
+    },
+    {
+      "key": "jumpApexMs",
+      "label": "Time to apex (ms)",
+      "type": "int",
+      "min": 120,
+      "max": 1000,
+      "step": 10,
+      "default": 330
+    },
+    {
+      "key": "jumpCut",
+      "label": "Release cut (speed x)",
+      "type": "float",
+      "min": 0.05,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.45
+    },
+    {
+      "key": "minJumpMs",
+      "label": "Minimum jump before a cut (ms)",
+      "type": "int",
+      "min": 0,
+      "max": 300,
+      "step": 5,
+      "default": 50
+    },
+    {
+      "key": "apexBand",
+      "label": "Apex hang band (|vy| px/s)",
+      "type": "int",
+      "min": 0,
+      "max": 200,
+      "step": 2,
+      "default": 36
+    },
+    {
+      "key": "apexGravity",
+      "label": "Apex hang gravity (x)",
+      "type": "float",
+      "min": 0.1,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.5
+    },
+    {
+      "key": "fallMult",
+      "label": "Fall gravity (x)",
+      "type": "float",
+      "min": 0.5,
+      "max": 4,
+      "step": 0.05,
+      "default": 1.7
+    },
+    {
+      "key": "maxFall",
+      "label": "Terminal fall speed (px/s)",
+      "type": "int",
+      "min": 40,
+      "max": 1200,
+      "step": 10,
+      "default": 300
+    },
+    {
+      "key": "coyoteMs",
+      "label": "Coyote time (ms)",
+      "type": "int",
+      "min": 0,
+      "max": 400,
+      "step": 5,
+      "default": 100
+    },
+    {
+      "key": "bufferMs",
+      "label": "Jump buffer (ms)",
+      "type": "int",
+      "min": 0,
+      "max": 400,
+      "step": 5,
+      "default": 120
+    },
+    {
+      "key": "dash",
+      "label": "Dash",
+      "type": "select",
+      "options": [
+        "eight",
+        "four",
+        "off"
+      ],
+      "default": "eight"
+    },
+    {
+      "key": "dashSpeed",
+      "label": "Dash speed (px/s)",
+      "type": "int",
+      "min": 60,
+      "max": 800,
+      "step": 10,
+      "default": 270
+    },
+    {
+      "key": "dashMs",
+      "label": "Dash time (ms)",
+      "type": "int",
+      "min": 30,
+      "max": 500,
+      "step": 10,
+      "default": 150
+    },
+    {
+      "key": "dashCooldownMs",
+      "label": "Dash cooldown (ms)",
+      "type": "int",
+      "min": 0,
+      "max": 2000,
+      "step": 10,
+      "default": 250
+    },
+    {
+      "key": "dashCount",
+      "label": "Dashes per landing",
+      "type": "int",
+      "min": 0,
+      "max": 3,
+      "step": 1,
+      "default": 1
+    },
+    {
+      "key": "wall",
+      "label": "Wall slide and wall jump",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "wallSlide",
+      "label": "Wall slide speed (px/s)",
+      "type": "int",
+      "min": 10,
+      "max": 400,
+      "step": 2,
+      "default": 60
+    },
+    {
+      "key": "wallJumpX",
+      "label": "Wall jump push (px/s)",
+      "type": "int",
+      "min": 20,
+      "max": 400,
+      "step": 5,
+      "default": 120
+    },
+    {
+      "key": "wallJumpLockMs",
+      "label": "Wall jump input lock (ms)",
+      "type": "int",
+      "min": 0,
+      "max": 600,
+      "step": 10,
+      "default": 140
+    },
+    {
+      "key": "corner",
+      "label": "Ceiling corner correction (px)",
+      "type": "int",
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "default": 4
+    },
+    {
+      "key": "ledge",
+      "label": "Ledge lip correction (px)",
+      "type": "int",
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "default": 4
+    },
+    {
+      "key": "drop",
+      "label": "Drop through one-way platforms",
+      "type": "select",
+      "options": [
+        "downjump",
+        "down"
+      ],
+      "default": "downjump"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Tight (default)",
+      "params": {
+        "preset": "tight",
+        "runSpeed": 96,
+        "groundAccel": 1100,
+        "groundDecel": 1500,
+        "turnAccel": 2200,
+        "airAccel": 760,
+        "airDecel": 260,
+        "jumpHeight": 44,
+        "jumpApexMs": 330,
+        "jumpCut": 0.45,
+        "minJumpMs": 50,
+        "apexBand": 36,
+        "apexGravity": 0.5,
+        "fallMult": 1.7,
+        "maxFall": 300,
+        "coyoteMs": 100,
+        "bufferMs": 120,
+        "dash": "eight",
+        "dashSpeed": 270,
+        "dashMs": 150,
+        "dashCooldownMs": 250,
+        "dashCount": 1,
+        "wall": "on",
+        "wallSlide": 60,
+        "wallJumpX": 120,
+        "wallJumpLockMs": 140,
+        "corner": 4,
+        "ledge": 4,
+        "drop": "downjump"
+      }
+    },
+    {
+      "name": "Floaty",
+      "params": {
+        "preset": "floaty",
+        "runSpeed": 84,
+        "groundAccel": 560,
+        "groundDecel": 480,
+        "turnAccel": 900,
+        "airAccel": 420,
+        "airDecel": 110,
+        "jumpHeight": 52,
+        "jumpApexMs": 470,
+        "jumpCut": 0.6,
+        "minJumpMs": 70,
+        "apexBand": 50,
+        "apexGravity": 0.4,
+        "fallMult": 1.15,
+        "maxFall": 170,
+        "coyoteMs": 140,
+        "bufferMs": 140,
+        "dash": "eight",
+        "dashSpeed": 220,
+        "dashMs": 190,
+        "dashCooldownMs": 300,
+        "dashCount": 1,
+        "wall": "on",
+        "wallSlide": 38,
+        "wallJumpX": 100,
+        "wallJumpLockMs": 180,
+        "corner": 5,
+        "ledge": 5,
+        "drop": "downjump"
+      }
+    },
+    {
+      "name": "Heavy",
+      "params": {
+        "preset": "heavy",
+        "runSpeed": 80,
+        "groundAccel": 640,
+        "groundDecel": 2200,
+        "turnAccel": 1300,
+        "airAccel": 300,
+        "airDecel": 80,
+        "jumpHeight": 38,
+        "jumpApexMs": 300,
+        "jumpCut": 0.5,
+        "minJumpMs": 40,
+        "apexBand": 18,
+        "apexGravity": 0.85,
+        "fallMult": 2.3,
+        "maxFall": 420,
+        "coyoteMs": 70,
+        "bufferMs": 90,
+        "dash": "eight",
+        "dashSpeed": 300,
+        "dashMs": 120,
+        "dashCooldownMs": 400,
+        "dashCount": 1,
+        "wall": "on",
+        "wallSlide": 95,
+        "wallJumpX": 130,
+        "wallJumpLockMs": 120,
+        "corner": 3,
+        "ledge": 3,
+        "drop": "downjump"
+      }
+    },
+    {
+      "name": "Raw (no assists)",
+      "params": {
+        "preset": "raw",
+        "runSpeed": 90,
+        "groundAccel": 900,
+        "groundDecel": 900,
+        "turnAccel": 900,
+        "airAccel": 600,
+        "airDecel": 0,
+        "jumpHeight": 44,
+        "jumpApexMs": 360,
+        "jumpCut": 1,
+        "minJumpMs": 0,
+        "apexBand": 0,
+        "apexGravity": 1,
+        "fallMult": 1,
+        "maxFall": 360,
+        "coyoteMs": 0,
+        "bufferMs": 0,
+        "dash": "eight",
+        "dashSpeed": 270,
+        "dashMs": 150,
+        "dashCooldownMs": 250,
+        "dashCount": 1,
+        "wall": "on",
+        "wallSlide": 60,
+        "wallJumpX": 120,
+        "wallJumpLockMs": 140,
+        "corner": 0,
+        "ledge": 0,
+        "drop": "downjump"
+      }
+    },
+    {
+      "name": "Twin four-way dash",
+      "params": {
+        "preset": "tight",
+        "runSpeed": 96,
+        "groundAccel": 1100,
+        "groundDecel": 1500,
+        "turnAccel": 2200,
+        "airAccel": 760,
+        "airDecel": 260,
+        "jumpHeight": 44,
+        "jumpApexMs": 330,
+        "jumpCut": 0.45,
+        "minJumpMs": 50,
+        "apexBand": 36,
+        "apexGravity": 0.5,
+        "fallMult": 1.7,
+        "maxFall": 300,
+        "coyoteMs": 100,
+        "bufferMs": 120,
+        "dash": "four",
+        "dashSpeed": 270,
+        "dashMs": 150,
+        "dashCooldownMs": 250,
+        "dashCount": 2,
+        "wall": "on",
+        "wallSlide": 60,
+        "wallJumpX": 120,
+        "wallJumpLockMs": 140,
+        "corner": 4,
+        "ledge": 4,
+        "drop": "downjump"
+      }
+    }
+  ],
+  "assets": "none: the module draws only dust, after-images, a 12x16 stand-in hero and the overlay panels (skin-aware); the starter's hero, beetle, gems, crystals, beacon, tiles and planks are original procedural pixel art; backdrops come from the I-02 parallax module",
+  "status": "draft",
+  "delivery": {
+    "version": "v1",
+    "module": "module/platformer-feel.js",
+    "global": "GameDNA_Platformer",
+    "readme": "module/README.md"
+  },
+  "starter": "starter/index.html",
+  "starterReadme": "starter/README.md"
+}

@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gothic skin preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&display=block" rel="stylesheet">
+<style>
+  :root { --bg: #0a0708; --panel: #140e0f; --fg: #e6dcc4; --muted: #8c8070; --gold: #c9a04a; --blood: #8e1c1f; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); }
+  body { padding: 16px; font: 14px/1.5 Georgia, 'Times New Roman', serif;
+    background: radial-gradient(ellipse at 50% 0%, #1e1416 0%, #0a0708 60%) fixed; }
+  .wrap { max-width: 800px; margin: 0 auto; }
+  h1 { font-family: Cinzel, Georgia, serif; font-weight: 700; letter-spacing: .12em; font-size: 22px; margin: 0 0 2px; color: var(--gold); text-transform: uppercase; }
+  .sub { color: var(--muted); margin: 0 0 14px; font-style: italic; }
+  .stage { position: relative; width: 100%; max-width: 768px; padding: 6px; background: linear-gradient(#2a1f19, #0c0909); border: 1px solid #3b3029; box-shadow: 0 10px 40px rgba(0,0,0,.8), inset 0 0 0 1px rgba(201,160,74,.25); }
+  canvas { display: block; width: 100%; height: auto; background: #050304; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 12px 0 0; padding: 0; list-style: none; color: var(--muted); font-size: 13px; }
+  .legend b { color: var(--fg); font-weight: normal; font-family: Cinzel, Georgia, serif; letter-spacing: .06em; }
+  .legend code { color: var(--gold); }
+  footer { margin-top: 14px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Dark gothic painterly</h1>
+  <p class="sub">Skin <code>gothic</code> · grid range &amp; path arrow, damage numbers, window &amp; pointer on the shared tactics scene</p>
+  <div class="stage"><canvas id="cv" width="768" height="672" aria-label="Tactics map in the gothic skin: a smoky move range with a gold path arrow, bouncing engraved damage numbers, and an open command menu with a spearhead pointer"></canvas></div>
+  <ul class="legend">
+    <li><b>Range</b> pale-blue smoke wash · blood-red strike fringe · glowing edge</li>
+    <li><b>Path</b> gold line with a spearhead (<code>skin.path</code>)</li>
+    <li><b>Numbers</b> engraved gold / blood numerals with a smoke puff</li>
+    <li><b>Window</b> iron &amp; leather plate, gold filigree corners</li>
+  </ul>
+  <footer><code>?t=ms&amp;freeze=1</code> renders one deterministic moment (default 1400 ms). Seed 7.</footer>
+</div>
+
+<script src="../skin-api.js"></script>
+<script src="../pixel16.js"></script>
+<script src="gothic.js"></script>
+<script src="../../elements/grid-range-path/module/grid-range-path.js"></script>
+<script src="../../elements/damage-numbers/module/damage-numbers.js"></script>
+<script src="../../elements/window-cursor/module/window-cursor.js"></script>
+<script>
+'use strict';
+/* Shared neutral scene (same for every style): 16x14 tactics map at 256x224 native, seed 7.
+   Hero Rowan at (4,8), move 4, range 1-2; foes at (9,6) and (11,9); ally Ilsa at (1,10).
+   Path cursor to (8,7). Numbers: MISS on Rowan at 1150 ms, 128 on foe A at 1200, crit 57 on foe B at 1240, +30 on Ilsa at 1300.
+   Menu 'Rowan' (Attack, Spells 12, Items, Wait disabled) opened at 300 ms, selected row moves 0 -> 1 at 900 ms; pointer on foe A. */
+var Q = new URLSearchParams(location.search), FREEZE = Q.get('freeze') === '1', T0 = Q.has('t') ? +Q.get('t') : 1400;
+var SKIN = GameDNA_Skin.resolve(Q.get('skin') || 'gothic'), SP = SKIN.palette;
+var W = 256, H = 224, TS = 16, COLS = 16, ROWS = 14, FRAME = 1000 / 60;
+var cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+
+function rng(seed) { var s = seed >>> 0; return function () { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; }; }
+var WATER = {}, PILLAR = {}, RUBBLE = {};
+(function () {
+  for (var y = 0; y < ROWS; y++) { WATER[13 + ',' + y] = 1; if (y > 8) WATER[12 + ',' + y] = 1; }
+  ['6,4', '6,10', '10,3', '2,5'].forEach(function (k) { PILLAR[k] = 1; });
+  ['7,9', '8,9', '5,6'].forEach(function (k) { RUBBLE[k] = 1; });
+})();
+var UNITS = [
+  { id: 'rowan', name: 'Rowan', side: 'player', x: 4, y: 8, hp: 34, max: 40, move: 4, range: '1-2' },
+  { id: 'ilsa', name: 'Ilsa', side: 'player', x: 1, y: 10, hp: 12, max: 26, move: 3 },
+  { id: 'foeA', name: 'Ghoul', side: 'enemy', x: 9, y: 6, hp: 18, max: 30 },
+  { id: 'foeB', name: 'Wraith', side: 'enemy', x: 11, y: 9, hp: 22, max: 28 }
+];
+function occ(x, y) { for (var i = 0; i < UNITS.length; i++) if (UNITS[i].x === x && UNITS[i].y === y) return UNITS[i]; return null; }
+function sprRect(u) { return { x: u.x * TS, y: u.y * TS - 8, w: TS, h: TS + 8, id: u.id }; }
+
+/* ---------- the ground (style-specific art: worn flagstones, black canal, pillars, braziers) ---------- */
+var groundCache = {};
+function ground(g, k) {
+  var key = k; if (!groundCache[key]) {
+    var c = document.createElement('canvas'); c.width = W * k; c.height = H * k; var q = c.getContext('2d'); q.scale(k, k);
+    var r = rng(7);
+    q.fillStyle = '#16100f'; q.fillRect(0, 0, W, H);
+    for (var y = 0; y < ROWS; y++) for (var x = 0; x < COLS; x++) {
+      var X = x * TS, Y = y * TS, key2 = x + ',' + y;
+      if (WATER[key2]) continue;
+      var v = r(), base = ['#2a2224', '#262022', '#2e2626', '#231d1f'][(x * 7 + y * 3 + (v * 4 | 0)) % 4];
+      q.fillStyle = base; q.fillRect(X + 0.5, Y + 0.5, TS - 1, TS - 1);
+      var gr = q.createLinearGradient(X, Y, X + TS, Y + TS); gr.addColorStop(0, 'rgba(255,220,180,0.05)'); gr.addColorStop(1, 'rgba(0,0,0,0.25)'); q.fillStyle = gr; q.fillRect(X + 0.5, Y + 0.5, TS - 1, TS - 1);
+      q.strokeStyle = 'rgba(0,0,0,0.55)'; q.lineWidth = 0.8; q.strokeRect(X + 0.4, Y + 0.4, TS - 0.8, TS - 0.8);
+      if (r() < 0.35) { q.strokeStyle = 'rgba(0,0,0,0.45)'; q.lineWidth = 0.4; q.beginPath(); var cx = X + 3 + r() * 10, cy = Y + 2 + r() * 4; q.moveTo(cx, cy); q.lineTo(cx + (r() - 0.5) * 6, cy + 4 + r() * 4); q.lineTo(cx + (r() - 0.5) * 8, cy + 8 + r() * 4); q.stroke(); }
+      if (r() < 0.25) { q.fillStyle = 'rgba(60,72,46,0.35)'; q.beginPath(); q.ellipse(X + (r() < 0.5 ? 1 : TS - 1), Y + r() * TS, 2 + r() * 3, 1.5 + r() * 2, 0, 0, 7); q.fill(); }   // moss in the joints
+      if (RUBBLE[key2]) { for (var i = 0; i < 6; i++) { q.fillStyle = ['#3a3030', '#4a3e3a', '#1a1414'][i % 3]; q.beginPath(); q.ellipse(X + 3 + r() * 10, Y + 4 + r() * 9, 1.2 + r() * 2, 1 + r() * 1.4, r() * 3, 0, 7); q.fill(); } }
+    }
+    // black canal
+    var wg = q.createLinearGradient(12 * TS, 0, 14 * TS, 0); wg.addColorStop(0, '#07090c'); wg.addColorStop(1, '#0c1016');
+    q.fillStyle = wg; for (var y2 = 0; y2 < ROWS; y2++) { q.fillRect(13 * TS, y2 * TS, TS, TS); if (y2 > 8) q.fillRect(12 * TS, y2 * TS, TS, TS); }
+    for (var j = 0; j < 40; j++) { q.strokeStyle = 'rgba(150,170,200,' + (0.05 + r() * 0.08) + ')'; q.lineWidth = 0.4; var wx = 13 * TS + r() * TS, wy = r() * H; if (wy > 9 * TS && r() < 0.5) wx -= TS; q.beginPath(); q.moveTo(wx, wy); q.lineTo(wx + 2 + r() * 4, wy); q.stroke(); }
+    q.fillStyle = '#3a302c'; q.fillRect(13 * TS - 1, 0, 1.2, 9 * TS); q.fillRect(12 * TS - 1, 9 * TS, 1.2, H - 9 * TS); q.fillRect(12 * TS, 9 * TS - 1, TS, 1.2);
+    // far wall (top band) with arches, very dark
+    q.fillStyle = '#0d0909'; q.fillRect(0, 0, W, 6);
+    if (SKIN.brush) SKIN.brush(q, { x: 0, y: 0, w: W, h: H }, 0.9, 11);
+    groundCache[key] = c;
+  }
+  g.drawImage(groundCache[key], 0, 0, W, H);
+}
+function pillar(g, x, y) {
+  var X = x * TS, Y = y * TS;
+  g.fillStyle = 'rgba(0,0,0,0.5)'; g.beginPath(); g.ellipse(X + 9, Y + 14, 8, 3, 0, 0, 7); g.fill();
+  var gr = g.createLinearGradient(X + 2, 0, X + 14, 0); gr.addColorStop(0, '#5a4c44'); gr.addColorStop(0.35, '#3a302c'); gr.addColorStop(1, '#130e0d');
+  g.fillStyle = gr; g.fillRect(X + 3, Y - 14, 10, 28);
+  g.fillStyle = '#4a3e38'; g.fillRect(X + 1.5, Y - 16, 13, 3); g.fillRect(X + 1.5, Y + 11, 13, 3);
+  g.fillStyle = 'rgba(0,0,0,0.35)'; for (var i = 0; i < 3; i++) g.fillRect(X + 5 + i * 3, Y - 13, 0.6, 24);
+}
+function brazier(g, x, y, t) {
+  var X = x, Y = y, fl = 0.85 + 0.15 * Math.sin(t * 7.3) * Math.sin(t * 3.1 + 1);
+  g.fillStyle = '#1a1210'; g.fillRect(X - 1, Y, 2, 9); g.fillRect(X - 4, Y + 9, 8, 1.5);
+  g.fillStyle = '#3a2c22'; g.beginPath(); g.moveTo(X - 5, Y - 1); g.lineTo(X + 5, Y - 1); g.lineTo(X + 3, Y + 2); g.lineTo(X - 3, Y + 2); g.closePath(); g.fill();
+  var f = g.createRadialGradient(X, Y - 3, 0, X, Y - 3, 5 * fl); f.addColorStop(0, '#fff2c0'); f.addColorStop(0.4, '#ff9a48'); f.addColorStop(1, 'rgba(200,40,20,0)');
+  g.fillStyle = f; g.beginPath(); g.ellipse(X, Y - 3, 3.2 * fl, 5 * fl, 0, 0, 7); g.fill();
+}
+function lightPools(g, t, lights) {
+  g.save(); g.globalCompositeOperation = 'lighter';
+  lights.forEach(function (L) {
+    var fl = 0.9 + 0.1 * Math.sin(t * 5 + L.x), gr = g.createRadialGradient(L.x, L.y, 0, L.x, L.y, L.r * fl);
+    gr.addColorStop(0, 'rgba(255,150,70,' + 0.26 * L.a + ')'); gr.addColorStop(0.45, 'rgba(200,90,40,' + 0.09 * L.a + ')'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = gr; g.fillRect(L.x - L.r, L.y - L.r, 2 * L.r, 2 * L.r);
+  });
+  g.restore();
+}
+function darkness(g, lights) {   // chiaroscuro: everything outside the candle pools sinks to near-black
+  var c = document.createElement('canvas'); c.width = g.canvas.width; c.height = g.canvas.height; var q = c.getContext('2d'); q.setTransform(g.getTransform());
+  q.fillStyle = 'rgba(4,2,3,0.7)'; q.fillRect(0, 0, W, H);
+  q.globalCompositeOperation = 'destination-out';
+  lights.forEach(function (L) { var gr = q.createRadialGradient(L.x, L.y, 0, L.x, L.y, L.r * 1.6); gr.addColorStop(0, 'rgba(0,0,0,0.95)'); gr.addColorStop(0.55, 'rgba(0,0,0,0.5)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); q.fillStyle = gr; q.fillRect(L.x - L.r * 1.6, L.y - L.r * 1.6, L.r * 3.2, L.r * 3.2); });
+  g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.drawImage(c, 0, 0); g.restore();
+  var v = g.createRadialGradient(W / 2, H * 0.5, H * 0.3, W / 2, H * 0.5, H * 0.85); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.7)'); g.fillStyle = v; g.fillRect(0, 0, W, H);
+}
+
+/* ---------- units (painted stand-ins; the style owns the look, the scene owns the place) ---------- */
+function shadowBlob(g, cx, by, w) { g.fillStyle = 'rgba(0,0,0,0.6)'; g.beginPath(); g.ellipse(cx + 2, by, w, w * 0.35, 0, 0, 7); g.fill(); }
+function rim(g, col) { g.strokeStyle = col; g.lineWidth = 0.5; g.stroke(); }
+function drawUnit(g, u, t) {
+  var X = u.x * TS, Y = u.y * TS, cx = X + 8, by = Y + 14, bob = Math.sin(t * 1.4 + u.x) * 0.4;
+  shadowBlob(g, cx, by, 6);
+  if (u.id === 'rowan' || u.id === 'ilsa') {
+    var cloak = u.id === 'rowan' ? '#2c3442' : '#3a2e3c', hood = u.id === 'rowan' ? '#3e4a5e' : '#4a3a4e';
+    g.fillStyle = cloak; g.beginPath(); g.moveTo(cx - 5.5, by); g.quadraticCurveTo(cx - 5, by - 10, cx - 3, by - 13 + bob); g.lineTo(cx + 3, by - 13 + bob); g.quadraticCurveTo(cx + 5, by - 10, cx + 5.5, by); g.closePath(); g.fill(); rim(g, 'rgba(188,216,244,0.55)');
+    g.fillStyle = hood; g.beginPath(); g.arc(cx, by - 15 + bob, 3.6, 0, 7); g.fill(); rim(g, 'rgba(188,216,244,0.6)');
+    g.fillStyle = '#0a0708'; g.beginPath(); g.arc(cx + 0.6, by - 14.6 + bob, 2.2, 0, 7); g.fill();
+    g.fillStyle = '#d8ccae'; g.fillRect(cx + 0.4, by - 15 + bob, 0.7, 0.6); g.fillRect(cx + 1.8, by - 15 + bob, 0.7, 0.6);
+    if (u.id === 'rowan') { g.strokeStyle = '#c8ccd4'; g.lineWidth = 0.8; g.beginPath(); g.moveTo(cx + 4, by - 3); g.lineTo(cx + 7.5, by - 14); g.stroke(); g.fillStyle = '#c9a04a'; g.fillRect(cx + 2.8, by - 4.6, 2.8, 0.9); }
+    else { g.strokeStyle = '#5a4630'; g.lineWidth = 0.7; g.beginPath(); g.moveTo(cx - 5, by); g.lineTo(cx - 5, by - 16); g.stroke(); var lg = g.createRadialGradient(cx - 5, by - 16, 0, cx - 5, by - 16, 3); lg.addColorStop(0, '#fff2c0'); lg.addColorStop(1, 'rgba(255,154,72,0)'); g.fillStyle = lg; g.fillRect(cx - 8, by - 19, 6, 6); }
+  } else {
+    var body = u.id === 'foeA' ? '#3a2a26' : '#2a2430';
+    g.fillStyle = body; g.beginPath(); g.moveTo(cx - 6, by); g.quadraticCurveTo(cx - 7, by - 9, cx - 2, by - 14 + bob); g.quadraticCurveTo(cx + 4, by - 16 + bob, cx + 6, by - 9); g.quadraticCurveTo(cx + 7, by - 3, cx + 5, by); g.closePath(); g.fill(); rim(g, 'rgba(255,122,60,0.55)');
+    g.fillStyle = '#ff3a2a'; g.shadowColor = '#ff3a2a'; g.shadowBlur = 4; g.fillRect(cx - 1.6, by - 11 + bob, 1, 0.8); g.fillRect(cx + 1.2, by - 11 + bob, 1, 0.8); g.shadowBlur = 0; g.shadowColor = 'transparent';
+    g.strokeStyle = body; g.lineWidth = 1; g.beginPath(); g.moveTo(cx - 5, by - 6); g.lineTo(cx - 8, by - 2); g.moveTo(cx + 5, by - 6); g.lineTo(cx + 8.5, by - 3); g.stroke();
+    if (u.id === 'foeB') { g.globalAlpha *= 0.6; g.fillStyle = '#4a4058'; g.beginPath(); g.ellipse(cx, by - 1, 7, 2, 0, 0, 7); g.fill(); g.globalAlpha /= 0.6; }
+  }
+}
+
+/* ---------- one deterministic frame at time T (ms) ---------- */
+function render(T) {
+  var dpr = window.devicePixelRatio || 1, cssW = cv.clientWidth || 768, bw = Math.round(cssW * dpr), bh = Math.round(bw * H / W);
+  if (cv.width !== bw || cv.height !== bh) { cv.width = bw; cv.height = bh; groundCache = {}; }
+  var s = bw / W, k = Math.max(1, Math.min(4, Math.round(s)));
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, bw, bh); ctx.setTransform(s, 0, 0, s, 0, 0);
+  GameDNA_Skin.setup(SKIN, ctx);
+  var t = T / 1000;
+
+  // B-01: real module state (reach, fringe, path); the overlay cells and the arrow are drawn through the skin
+  var GR = GameDNA_GridRange.create({ cols: COLS, rows: ROWS, tile: TS, occupant: occ,
+    cost: function (x, y) { var k2 = x + ',' + y; return WATER[k2] || PILLAR[k2] ? 99 : RUBBLE[k2] ? 2 : 1; },
+    terrain: function () { return { name: 'Flagstone', def: 0, avo: 5 }; }, setUnitPos: function (u, x, y) { u.x = x; u.y = y; }, onWait: function () {},
+    params: { overlay: 'pulsing' }, cursor: { x: 4, y: 8 } });
+  GR.confirm();
+  var steps = [[150, 5, 8], [300, 6, 8], [450, 7, 8], [600, 8, 8], [750, 8, 7]], N = Math.floor(T / FRAME);
+  for (var i = 0; i < N; i++) { var ms = i * FRAME; steps.forEach(function (st) { if (ms <= st[0] && st[0] < ms + FRAME) GR.setCursor(st[1], st[2]); }); GR.update(); }
+  var lights = [{ x: 3 * TS, y: 3 * TS + 4, r: 60, a: 1 }, { x: 11 * TS + 8, y: 12 * TS, r: 54, a: 0.9 }, { x: 8 * TS, y: 7 * TS, r: 40, a: 0.5 }];
+
+  ground(ctx, k);
+  if (SKIN.fog) SKIN.fog(ctx, { x: 0, y: 0, w: W, h: H }, t, { alpha: 0.18 });
+  lightPools(ctx, t, lights);
+  darkness(ctx, lights);
+  var age = N, has = function (S, x, y) { return S && x >= 0 && y >= 0 && x < COLS && y < ROWS && S.has(y * COLS + x); };
+  [[GR.reach, 'move'], [GR.fringe, 'attack']].forEach(function (pr) {
+    if (!pr[0]) return;
+    Array.from(pr[0].keys()).forEach(function (kk) {
+      var tx = kk % COLS, ty = (kk / COLS) | 0, d = pr[1] === 'move' ? GR.reach.get(kk).cost : 5, gr = Math.max(0, Math.min(1, (age * 0.55 - d) / 2)), S = pr[0];
+      SKIN.overlay(ctx, { x: tx * TS, y: ty * TS, w: TS, h: TS }, pr[1], t, { grow: gr, tile: { x: tx, y: ty }, pattern: 'pulsing',
+        seams: { right: has(S, tx + 1, ty), bottom: has(S, tx, ty + 1) }, edges: { top: !has(S, tx, ty - 1), bottom: !has(S, tx, ty + 1), left: !has(S, tx - 1, ty), right: !has(S, tx + 1, ty) } });
+    });
+  });
+  // threat zone of foe B (radius 1) for the 'threat' wash
+  var thr = new Set(); for (var dy = -2; dy <= 2; dy++) for (var dx = -2; dx <= 2; dx++) { var X2 = 11 + dx, Y2 = 9 + dy; if (Math.abs(dx) + Math.abs(dy) <= 2 && X2 < 12 && X2 >= 0) thr.add(Y2 * COLS + X2); }
+  thr.forEach(function (kk) { if (GR.reach && GR.reach.has(kk)) return; var tx = kk % COLS, ty = (kk / COLS) | 0; SKIN.overlay(ctx, { x: tx * TS, y: ty * TS, w: TS, h: TS }, 'threat', t, { tile: { x: tx, y: ty }, edges: { top: !thr.has(kk - COLS), bottom: !thr.has(kk + COLS), left: !thr.has(kk - 1) || tx === 0, right: !thr.has(kk + 1) } }); });
+  var path = GR.path || [];
+  if (path.length > 1 && age > 4) {
+    var pts = path.map(function (p) { return { x: p.x * TS + 8, y: p.y * TS + 8 }; });
+    if (SKIN.path) SKIN.path(ctx, pts, t, { tile: TS }); else GR.drawUnder(ctx, { x: 0, y: 0 });
+  }
+  Object.keys(PILLAR).forEach(function (kk) { var p = kk.split(','); pillar(ctx, +p[0], +p[1]); });
+  UNITS.slice().sort(function (a, b) { return a.y - b.y; }).forEach(function (u) { drawUnit(ctx, u, t); });
+  brazier(ctx, 3 * TS, 3 * TS, t); brazier(ctx, 11 * TS + 8, 12 * TS - 4, t);
+  lightPools(ctx, t, lights.slice(0, 2).map(function (L) { return { x: L.x, y: L.y - 4, r: 14, a: 1.4 }; }));
+  if (SKIN.fog) SKIN.fog(ctx, { x: 0, y: 0, w: W, h: H }, t * 1.3, { alpha: 0.14, color: '#9aa8c0' });
+  var cur = GR.cursor; SKIN.cursor(ctx, { x: cur.px, y: cur.py, w: TS, h: TS }, 'bracket', t);
+
+  // C-01: real window-cursor module with the skin (pointer drawn by the skin's 'hand')
+  var obstacles = function () { return UNITS.map(sprRect); };
+  var WC = GameDNA_WindowCursor.create({ view: { x: 0, y: 0, w: W, h: H }, skin: SKIN, getObstacles: obstacles, params: { pointer: 'skin', rowH: 13 } });
+  var menuAt = 300, items = ['Attack', { label: 'Spells', note: '12' }, 'Items', { label: 'Wait', disabled: true }];
+  for (var j = 0; j * FRAME < T; j++) {
+    var tm = j * FRAME;
+    if (tm >= menuAt) { WC.menu('cmd', { x: 168, y: 8, title: 'Rowan', items: items, selected: tm >= 900 ? 1 : 0 }); WC.setCursor({ id: 'foeA' }); }
+    WC.update(FRAME);
+  }
+  var menuRect = WC.rect('cmd');
+
+  // E-01: real damage-numbers module places and animates; the skin draws each glyph (two runs: live and flat for the rest line)
+  var spawns = [[1200, 'foeA', 128, 'damage'], [1240, 'foeB', 57, 'crit'], [1300, 'ilsa', 30, 'heal'], [1150, 'rowan', 0, 'miss']];
+  var hud = [{ x: 4, y: 176, w: 96, h: 44 }].concat(menuRect ? [menuRect] : []);
+  function runDN(params) {
+    var info = {}, place = {};
+    var DN = GameDNA_DamageNumbers.create({ bounds: { x: 0, y: 0, w: W, h: 172 }, params: params,
+      getAnchor: function (id) { var u = UNITS.filter(function (q) { return q.id === id; })[0]; return u && { x: u.x * TS + 8, top: u.y * TS - 6, w: 16, h: 22 }; },
+      getObstacles: function () { return UNITS.map(sprRect).concat(hud); },
+      debug: function (e) { if (e && e.target != null && e.anchor) place[e.target] = { x: e.anchor.x + e.ox, base: e.anchor.top + e.oy }; } });
+    for (var m = 0; m <= T; m += 10) { spawns.forEach(function (sp) { if (sp[0] === m) DN.spawn(sp[1], sp[2], sp[3]); }); if (m < T) DN.update(10); }
+    var off = document.createElement('canvas'); off.width = W; off.height = H; DN.draw(off.getContext('2d'));
+    DN.lastDrawn().forEach(function (d) { (info[d.target] = info[d.target] || []).push(d); });
+    return { g: info, place: place, params: DN.params };
+  }
+  // which module glyphs are on screen at age `age` (same rule as E-01: digits stagger 40 ms, label letters start at
+  // (n-1)*40 + 25 % of the life and sweep 3 ms per px); used to pair the module's drawn glyphs with the skin's glyph indices
+  var LBL_X = [0, 6, 12, 16, 22, 26, 32, 38];   // module x of C,R,I,T,I,C,A,L in its 5x7 letter font
+  function fadeOf(a, D) { var q = a / D; return q < 0.78 ? 1 : q < 0.85 ? 0.75 : q < 0.92 ? 0.5 : 0.25; }
+  var live = runDN({}), flat = runDN({ bounce: 0 });
+  spawns.forEach(function (sp) {
+    var id = sp[1], kind = sp[3], age = T - sp[0], Lg = live.g[id] || [], Fg = flat.g[id] || [], pl = live.place[id];
+    if (age < 0 || !pl) return;
+    var txt = kind === 'miss' ? 'MISS' : kind === 'heal' ? '+' + sp[2] : String(sp[2]), sfx = kind === 'mp' ? 'MP' : null, crit = kind === 'crit';
+    var D = crit ? 1150 : 1000, n = txt.length + (sfx ? sfx.length : 0), vis = [], i;
+    for (i = 0; i < n; i++) { var a = age - i * 40; vis.push(a >= 0 && a < D ? a : null); }
+    if (crit) for (i = 0; i < LBL_X.length; i++) { var a2 = age - ((n - 1) * 40 + D * 0.25) - LBL_X[i] * 3; vis.push(a2 >= 0 && a2 < D ? a2 : null); }
+    var map = [], c = 0; vis.forEach(function (a) { map.push(a == null ? -1 : c++); });
+    if (!c) return;
+    SKIN.number(ctx, txt, pl.x, pl.base, { kind: kind, align: 'center', baseline: 'bottom', suffix: sfx, label: crit ? 'CRITICAL' : null, labelGap: 5,
+      glyphOffset: function (gi) {
+        var j = map[gi]; if (j == null || j < 0) return { skip: true };
+        var A = Lg[j], B = Fg[j]; if (!A || !B) return { skip: true };
+        return { dx: A.x - B.x, dy: A.y - B.y + (gi >= n ? 3 : 0), alpha: fadeOf(vis[gi], D) };
+      } });
+  });
+
+  // unit panel (frame + text + meter) and turn plate, drawn straight through the skin
+  var px = 4, py = 176; SKIN.frame(ctx, { x: px, y: py, w: 96, h: 44 }, { role: 'window', team: 'a' });
+  SKIN.text(ctx, 'Rowan', px + 9, py + 7, { color: SP.text.main, color2: SP.team.aText });
+  SKIN.text(ctx, 'HP', px + 9, py + 18, { color: SP.text.gold, color2: SP.text.gold2 }); SKIN.text(ctx, '34/40', px + 87, py + 18, { align: 'right' });
+  SKIN.bar(ctx, { x: px + 9, y: py + 29, w: 78, h: 4 }, 34 / 40, 'hp', { style: 'meter' });
+  var pl = SKIN.measure('Turn 3', { font: 'plate' }); SKIN.frame(ctx, { x: 4, y: 4, w: pl + 14, h: 13 }, { role: 'plate' });
+  SKIN.text(ctx, 'Turn 3', 11, 7, { font: 'plate', color: SP.text.plate, shadow: SP.text.plateShadow });
+
+  WC.draw(ctx);
+  document.documentElement.dataset.t = String(T);
+}
+
+var ready = (document.fonts && document.fonts.load) ? Promise.all([document.fonts.load('700 12px Cinzel'), document.fonts.load('500 12px Cinzel')]).catch(function () {}) : Promise.resolve();
+ready.then(function () {
+  if (FREEZE) { render(T0); document.documentElement.dataset.ready = '1'; return; }
+  var start = performance.now() - T0;
+  (function loop(now) { render((now - start) % 4000); requestAnimationFrame(loop); })(performance.now());
+  document.documentElement.dataset.ready = '1';
+});
+window.addEventListener('resize', function () { if (FREEZE) render(T0); });
+</script>
+</body>
+</html>

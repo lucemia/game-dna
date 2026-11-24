@@ -1,0 +1,185 @@
+{
+  "id": "save-slots",
+  "code": "I-04",
+  "kind": "addon",
+  "name": "Save & load slots",
+  "family": "save-and-progress",
+  "oneLiner": "A save/load screen with three slots (plus an autosave slot): each shows a tiny thumbnail point-sampled from the game's own screen at native resolution, the place, level and play time the game supplies. Save, load and delete with confirm; a version number with a migrate hook; a checksum, so a corrupted slot reads \"Damaged data\" instead of crashing; save codes to copy and paste. The game supplies serialize()/deserialize(); storage is a namespaced localStorage key with an in-memory fallback. Autoplay and ?t=&freeze=1 are untouched, and a load continues to the same end as an uninterrupted run.",
+  "fits": [
+    "top-down adventure / RPG",
+    "tactics and strategy (save between turns)",
+    "platformer (checkpoint autosave)",
+    "roguelite (suspend save)",
+    "puzzle and level-based games",
+    "life sim"
+  ],
+  "notFor": [
+    "games with no persistent progress (arcade score attack)",
+    "online or server-authoritative state",
+    "saving in the middle of an animation or cutscene that holds callbacks (the game must say canSave() false there)",
+    "cloud sync across devices (codes are a manual copy, not sync)"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "serialize(): every variable the fixed step reads or writes (incl. RNG state and frame counter) as plain JSON data",
+      "deserialize(data): writes it back, rebuilding references from ids",
+      "where the screen opens (the `opens` parameter, named by the designer), in update logic",
+      "keys routed to the screen while busy() (key(code, down), press(), tap())",
+      "a fixed update step (update(stepMs)), also while busy, with the world paused",
+      "boot() once after setup, before the first step and any ?t= fast-forward",
+      "optional: summary() {place, level, time, note}, canSave(), migrate(), the canvas and thumbRect for thumbnails, the autoplay flag, autosave checkpoints"
+    ],
+    "provides": [
+      "busy flag: route keys here and pause the world while the slot screen is open",
+      "save/load/delete/export/import results via onAction and onDone (synchronous)",
+      "direct save(n) / load(n) / autosave() / selfTest() calls",
+      "URL hooks: ?loadSlot=n (load at boot), ?saveAt=ms&saveSlot=n (scripted save), ?openSlots=, ?saveStore=memory",
+      "panel rectangle, for other overlays to avoid"
+    ]
+  },
+  "params": [
+    {
+      "key": "opens",
+      "label": "Where the slot screen opens (required; the designer's words)",
+      "type": "text",
+      "default": "the S key while exploring opens save / load; the L key on the title screen opens load"
+    },
+    {
+      "key": "slots",
+      "label": "Manual slots",
+      "type": "range",
+      "min": 1,
+      "max": 6,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "key": "autosave",
+      "label": "Autosave slot",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "thumb",
+      "label": "Thumbnails",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "thumbW",
+      "label": "Thumbnail width (px)",
+      "type": "range",
+      "min": 24,
+      "max": 64,
+      "step": 4,
+      "default": 40
+    },
+    {
+      "key": "confirm",
+      "label": "Confirm overwrite / delete / load",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "codes",
+      "label": "Save codes (copy / paste)",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "closeAfterSave",
+      "label": "Close after saving",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "dim",
+      "label": "Dim behind",
+      "type": "range",
+      "min": 0,
+      "max": 0.8,
+      "step": 0.05,
+      "default": 0.45
+    }
+  ],
+  "variants": [
+    {
+      "name": "Classic three slots",
+      "params": {
+        "slots": 3,
+        "autosave": "on",
+        "thumb": "on",
+        "confirm": "on",
+        "codes": "on"
+      }
+    },
+    {
+      "name": "Single suspend slot",
+      "params": {
+        "opens": "the Escape key opens save / load; the title loads",
+        "slots": 1,
+        "autosave": "on",
+        "codes": "off",
+        "closeAfterSave": "on"
+      }
+    },
+    {
+      "name": "Save points only",
+      "params": {
+        "opens": "touching a save crystal (save / load); the L key on the title (load)",
+        "slots": 3,
+        "autosave": "off"
+      }
+    },
+    {
+      "name": "Many slots, no pictures",
+      "params": {
+        "slots": 6,
+        "thumb": "off",
+        "codes": "on"
+      }
+    },
+    {
+      "name": "Quick (no confirm)",
+      "params": {
+        "confirm": "off",
+        "closeAfterSave": "on",
+        "dim": 0.3
+      }
+    }
+  ],
+  "assets": [
+    "module/save-slots.js: the element as one dependency-free script (global GameDNA_SaveSlots): storage with fallback, envelope (version, checksum, summary, thumbnail), migration, the slot screen and its confirm dialogs, save codes, autoplay path, URL hooks, self-test",
+    "no image or audio files (thumbnails are taken from the game's own canvas)"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/save-slots.js",
+    "global": "GameDNA_SaveSlots",
+    "version": "1.0.1",
+    "docs": "module/README.md"
+  }
+}

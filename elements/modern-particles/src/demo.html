@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modern Particle System</title>
+<style>
+:root { --bg: #090a14; --panel: #131425; --line: #272a46; --text: #ecebf7; --dim: #9696b8; --accent: #ffb54a; --accent2: #8fd0ff; --arc: #b98cff; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1000px 520px at 20% -12%, #2a1f48 0%, var(--bg) 62%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 16px 20px 10px; max-width: 1280px; margin: 0 auto; }
+.code { white-space: nowrap; font: 800 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #1a1206; background: linear-gradient(#ffd98a, var(--accent)); padding: 6px 8px; border-radius: 5px; box-shadow: 0 2px 12px #ffb54a50; }
+h1 { font-size: 19px; margin: 0; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; max-width: 900px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; padding: 0 20px 24px; max-width: 1280px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.frame { padding: 6px; background: linear-gradient(#272a48, #12131f); border-radius: 12px; box-shadow: 0 0 0 1px #34375a, 0 24px 60px #000b; }
+#game { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; background: #000; cursor: crosshair; touch-action: none; }
+.caption { display: flex; justify-content: space-between; gap: 12px; color: var(--dim); font-size: 12px; padding: 0 4px; }
+.caption b { color: var(--text); font-weight: 600; }
+.stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.stats div { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; min-width: 0; }
+.stats span { display: block; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+.stats b { font: 700 17px/1.2 ui-monospace, Menlo, monospace; color: var(--text); }
+.stats b.ok { color: #7ff0b0; }
+.cmp { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px 14px; }
+.cmp p { margin: 0 0 10px; color: var(--dim); font-size: 12.5px; }
+#native { display: block; width: 100%; aspect-ratio: 16 / 9; image-rendering: pixelated; image-rendering: crisp-edges; border-radius: 6px; box-shadow: 0 0 0 1px #34375a; background: #000; }
+aside { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+h2 { margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.presets button { --c: var(--accent); appearance: none; border: 1px solid #00000060; border-radius: 8px; padding: 8px 4px 7px; cursor: pointer; color: var(--text); font: 600 12px/1.1 inherit;
+  background: linear-gradient(#262844, #1a1b2e); box-shadow: inset 0 1px 0 #ffffff14, inset 0 -2px 0 var(--c); transition: transform .06s, background .15s; }
+.presets button i { display: block; width: 10px; height: 10px; margin: 0 auto 5px; border-radius: 50%; background: var(--c); box-shadow: 0 0 10px var(--c), 0 0 3px #fff; }
+.presets button:hover { background: linear-gradient(#30335a, #20223a); }
+.presets button[aria-pressed=true] { background: linear-gradient(#3a3566, #24223e); box-shadow: inset 0 0 0 1px var(--c), inset 0 -2px 0 var(--c), 0 0 14px #0006; }
+.presets button:active { transform: translateY(1px) scale(.98); }
+.row { margin-bottom: 10px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 5px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--fill), #2c2e4a var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #fff3d6; border: 2px solid #1a1206; box-shadow: 0 1px 6px #000a; cursor: pointer; }
+input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: #fff3d6; border: 2px solid #1a1206; }
+.seg { display: flex; background: #0d0e1a; border: 1px solid var(--line); border-radius: 7px; padding: 2px; gap: 2px; margin-bottom: 10px; }
+.seg button { flex: 1; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 4px; border-radius: 5px; cursor: pointer; text-transform: capitalize; }
+.seg button[aria-checked=true] { background: #2c2a4a; color: var(--text); box-shadow: inset 0 0 0 1px #48447a, inset 0 -2px 0 var(--accent); }
+.tog { display: flex; gap: 6px; }
+.tog button { flex: 1; appearance: none; background: #0d0e1a; border: 1px solid var(--line); color: var(--text); border-radius: 7px; padding: 8px 8px; font: 600 12px inherit; cursor: pointer; }
+.tog button[aria-pressed=true] { box-shadow: inset 0 -2px 0 #7ff0b0, inset 0 0 0 1px #3d6a58; }
+.foot { color: var(--dim); font-size: 11.5px; border-top: 1px solid var(--line); padding-top: 10px; }
+.foot code { color: var(--text); }
+@media (max-width: 1000px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 680px; width: 100%; margin: 0 auto; } }
+@media (max-width: 560px) { header { padding: 12px 16px 8px; } main { padding: 0 16px 16px; gap: 12px; } .frame { padding: 3px; } .caption { flex-direction: column; gap: 2px; }
+  .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } .stats div:nth-child(n+4) { display: none; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">E-11</span>
+  <div><h1>Modern particle system</h1><p>One pooled, seeded engine for thousands of smooth particles: emitter shapes (point, line, circle, rect, sprite outline), size, alpha and colour curves over each particle's life, additive glow, gravity, drag, wind and ground bounce. Presets for bursts, fountains, smoke, magic swirls and bouncing sparks; deterministic from a seed and game time.</p></div>
+</header>
+<main>
+  <section id="stage">
+    <div class="frame"><canvas id="game" width="640" height="360" aria-label="Forge hall at night with a hearth, a brazier, a mage, a magic swirl, an anvil and a fountain, all emitting particles"></canvas></div>
+    <div class="caption"><span><b>Click or tap</b> the hall to fire the selected preset there. Sparks bounce off the anvil and the floor; the fountain lands in its basin; the mage's aura follows the outline of the sprite.</span><span>Keys 1–9 pick a preset</span></div>
+    <div class="stats">
+      <div><span>Live</span><b id="sLive">0</b></div>
+      <div><span>Budget</span><b id="sBudget">2000</b></div>
+      <div><span>Emitters</span><b id="sEm">0</b></div>
+      <div><span>Update</span><b id="sUp">–</b></div>
+      <div><span>Draw</span><b id="sDraw">–</b></div>
+    </div>
+    <div class="cmp">
+      <h2>Same engine on a native pixel canvas</h2>
+      <p>320 × 180 native pixels, scaled up nearest-neighbour. On a 1:1 canvas this small the module switches to its crisp mode by itself: whole-pixel particles, four alpha steps, pixel trails behind sparks. Same seed, same calls, half the coordinates.</p>
+      <canvas id="native" width="320" height="180"></canvas>
+    </div>
+  </section>
+  <aside>
+    <div><h2>Preset</h2><div class="presets" id="presets"></div></div>
+    <div>
+      <h2>Engine</h2>
+      <div class="row"><label for="budget">Budget (pool size) <output id="budgetO"></output></label><input id="budget" type="range" min="200" max="8000" step="100"></div>
+      <div class="row"><label for="density">Density <output id="densityO"></output></label><input id="density" type="range" min="0.25" max="2" step="0.05"></div>
+      <div class="row"><label for="scale">Scale (0 = auto) <output id="scaleO"></output></label><input id="scale" type="range" min="0" max="4" step="0.25"></div>
+      <div class="row"><label for="gravity">Gravity <output id="gravityO"></output></label><input id="gravity" type="range" min="0" max="2" step="0.05"></div>
+      <div class="row"><label for="wind">Wind (px/s) <output id="windO"></output></label><input id="wind" type="range" min="-120" max="120" step="5"></div>
+      <div class="row"><label for="bounce">Bounce <output id="bounceO"></output></label><input id="bounce" type="range" min="0" max="1.5" step="0.05"></div>
+      <h2>Render</h2>
+      <div class="seg" role="radiogroup" data-key="render"><button data-v="auto">auto</button><button data-v="smooth">smooth</button><button data-v="crisp">crisp</button></div>
+      <div class="seg" role="radiogroup" data-key="glow"><button data-v="auto">glow auto</button><button data-v="on">on</button><button data-v="off">off</button></div>
+    </div>
+    <div>
+      <h2>Scene</h2>
+      <div class="tog"><button id="showcase" aria-pressed="true">Showcase</button><button id="stress" aria-pressed="false">Stress 2000</button><button id="clearBtn">Clear</button></div>
+    </div>
+    <div class="foot">One script, <code>GameDNA_Particles</code>. <code>?t=ms&amp;freeze=1</code> renders a deterministic still; <code>?stress=1</code>, <code>?preset=</code> and every parameter (<code>?budget=</code>, <code>?render=</code> …) can be set in the URL.</div>
+  </aside>
+</main>
+<script>/*MODULE*/</script>
+<script src="../../../demo-kit/kit-art.js"></script>
+<script src="../../cutout-characters/module/cutout-characters.js"></script>
+<script src="../../cutout-characters/assets/pack.js"></script>
+<script src="../../../demo-kit/kit.js"></script>
+<script>/*MAIN*/</script>
+</body>
+</html>

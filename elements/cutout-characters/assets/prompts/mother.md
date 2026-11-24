@@ -1,0 +1,15 @@
+# One image: style mother line-up (save as `lineup.png`)
+
+Call image_gen once with `transparent_background: true` and the reference images listed above. The reference images are private style references: learn ONLY their rendering (thin line art, soft hand-painted colouring, material treatment, warm light, body proportion, how a sprite is split into clean shapes). The characters, costumes, emblems, weapon shapes, palettes and composition must be fully original; do not reproduce any character, costume, pose or composition from the reference images.
+
+Prompt to send:
+
+```
+Character line-up for an original fantasy tactics game: three different original adventurers standing side by side in one row on a wide landscape canvas, evenly spaced with clear transparent space between them, all at the same scale, feet on the same baseline, each full body from head to boots, nothing cropped.
+1. LEFT: a young swordswoman, auburn hair in one low braid, a short slate-teal shoulder cloak with an ochre lining, one brass-edged dark leather pauldron on her near shoulder, a quilted cream under-tunic to mid-thigh, an oxblood leather belt with a small pouch, fitted grey breeches, tall dark-brown riding boots; a straight single-edged sword with a bronze disc pommel in her near hand held low and forward, a small round wooden buckler with a riveted iron rim and a plain ochre band on her far forearm.
+2. CENTRE: a tall spear fighter, a young man with dark brown skin and short black curly hair, a moss-green hooded half-cape thrown back, a bronze scale chest piece over a sand-coloured tunic, a rust-orange waist sash, charcoal trousers, tall cloth-wrapped boots with leather shin guards; a long ash-wood spear with a leaf-shaped steel head and a short side crossbar, held in both hands, point forward and low.
+3. RIGHT: a mage, a woman in her forties with silver-grey chin-length hair, a long deep-plum coat open at the front with embroidered gold cuffs and a high collar, a mustard under-tunic, a brown belt with two small scroll cases, dark leggings and tall soft brown boots; a twisted driftwood staff with a small amber crystal caged in wire at its top, held in her far hand, her near hand raised with open fingers.
+All three in a three-quarter view turned toward the viewer's right, in a low, ready combat stance: knees slightly bent, feet apart, weight low, looking to the right.
+Slender figures about 6.5 to 7 heads tall. Thin dark warm-brown line art (never black), soft hand-painted gradients with only 2 to 3 value steps per material, clearly distinct materials (cloth, leather, brass, steel, wood). Strong warm key light from the upper LEFT like a low sun or a torch, cool soft shade on the right side of every form, a bright thin rim of light on metal edges, a soft dark contact shadow ellipse under the feet. Fully transparent background (real alpha), no ground, no backdrop, no frame. No labels, no captions, no colour swatches.
+Original, no resemblance to any existing game, film or franchise character, no text, no logo, no watermark.
+```

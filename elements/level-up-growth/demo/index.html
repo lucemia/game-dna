@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Level-up Growth</title>
+<style>
+:root {
+  --bg: #0b0d16; --panel: #141826; --line: #283048; --text: #e9ecf8; --dim: #959cb8; --accent: #ffe070; --accent2: #7aa8ff; --good: #6ae08a;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1200px 600px at 30% -10%, #1c2444 0%, var(--bg) 60%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 14px 20px 10px; max-width: 1240px; margin: 0 auto; }
+.code { white-space: nowrap; font: 700 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #0e1428; background: var(--accent); padding: 6px 8px; border-radius: 4px; box-shadow: 0 0 0 1px #00000040, 0 2px 0 #b08a18; }
+h1 { font-size: 18px; margin: 0; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; padding: 0 20px 20px; max-width: 1240px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.frame { padding: 6px; background: linear-gradient(#222a44, #121626); border-radius: 8px; box-shadow: 0 0 0 1px #343e60, 0 18px 50px #00000080; max-width: 100%; }
+canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; border-radius: 3px; touch-action: manipulation; max-width: 100%; }
+.caption { display: flex; justify-content: space-between; gap: 12px; width: 100%; max-width: 780px; color: var(--dim); font-size: 12px; }
+.caption b { color: var(--text); font-weight: 600; }
+#lamp { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: #5ad86a; box-shadow: 0 0 8px #5ad86a; }
+#lamp.on { background: #ffe070; box-shadow: 0 0 8px #ffe070; }
+table.party { width: 100%; max-width: 780px; border-collapse: separate; border-spacing: 0; font: 600 12px ui-monospace, Menlo, monospace; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+table.party th { text-align: right; color: var(--dim); font-weight: 700; font-size: 10.5px; letter-spacing: .08em; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+table.party td { text-align: right; padding: 5px 8px; transition: background .6s, color .6s; }
+table.party th:first-child, table.party td:first-child { text-align: left; }
+table.party td.up { background: #2a4a2a; color: var(--good); transition: none; }
+table.party td small { color: var(--dim); font-weight: 500; }
+aside { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+h2 { margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.triggers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.triggers button { --c: var(--accent2); appearance: none; border: 1px solid #00000060; border-radius: 6px; padding: 8px 4px 6px; cursor: pointer; color: var(--text); font: 600 11.5px/1.1 inherit;
+  background: linear-gradient(#232a44, #1a2034); box-shadow: inset 0 1px 0 #ffffff14, inset 0 -2px 0 color-mix(in srgb, var(--c) 70%, black); }
+.triggers button:hover { background: linear-gradient(#2c3554, #20283e); }
+.triggers button i { display: block; font-style: normal; font: 800 12px/1 ui-monospace, Menlo, monospace; color: var(--c); margin-bottom: 4px; letter-spacing: .04em; }
+.triggers kbd { display: block; font: 10px/1 ui-monospace, Menlo, monospace; color: var(--dim); margin-top: 4px; }
+.row { margin-bottom: 10px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 5px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--accent2) var(--fill), #283048 var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 4px; background: #e8f0ff; border: 2px solid #0e1428; box-shadow: 0 1px 4px #000a; cursor: pointer; }
+.seg { display: flex; background: #0e1120; border: 1px solid var(--line); border-radius: 6px; padding: 2px; gap: 2px; }
+.seg button { flex: 1; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 3px; border-radius: 4px; cursor: pointer; }
+.seg button[aria-checked=true] { background: #273050; color: var(--text); box-shadow: inset 0 0 0 1px #3c4870, inset 0 -2px 0 var(--accent2); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+select { width: 100%; appearance: none; background: #0e1120; color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; font: 600 12px inherit; }
+.foot { display: flex; justify-content: space-between; align-items: center; color: var(--dim); font-size: 11.5px; border-top: 1px solid var(--line); padding-top: 10px; gap: 8px; }
+.foot button { appearance: none; background: none; border: 1px solid var(--line); color: var(--text); border-radius: 5px; padding: 5px 9px; font: 600 11.5px inherit; cursor: pointer; }
+pre#save { margin: 0; max-height: 84px; overflow: auto; background: #0e1120; border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font: 10.5px/1.35 ui-monospace, Menlo, monospace; color: var(--dim); white-space: pre-wrap; word-break: break-all; }
+@media (max-width: 980px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 640px; width: 100%; margin: 0 auto; } }
+@media (max-width: 560px) { header { padding: 12px 16px 8px; } main { padding: 0 16px 16px; gap: 12px; } .frame { padding: 3px; } .caption { flex-direction: column; gap: 2px; } .triggers { grid-template-columns: repeat(2, 1fr); } .two { grid-template-columns: 1fr; } table.party { font-size: 11px; } table.party td, table.party th { padding: 4px 5px; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">G-02</span>
+  <div><h1>Level-up stat growth</h1><p>EXP and gold count up after a fight, each hero's gauge fills and wraps at every level, then a panel lists the stat gains row by row. Growth is a percent chance per stat from a plain table, seeded, with a guaranteed minimum. Stats change only through the game's setter.</p></div>
+</header>
+<main>
+  <section id="stage">
+    <div class="frame"><canvas id="cv" width="256" height="224" aria-label="A party resting after a fight, with the results window"></canvas></div>
+    <div class="caption"><span><span id="lamp"></span><b id="state">Fighting</b> · <span id="now">wave 1</span></span><span style="white-space:nowrap"><span id="scaleinfo">256×224 native</span> · <b>Z</b>/<b>Enter</b>/tap · keys <b>1–4</b></span></div>
+    <table class="party" id="party"><thead><tr><th>Hero</th><th>LV</th><th>EXP</th><th>NEXT</th><th>HP</th><th>STR</th><th>MAG</th><th>DEF</th><th>SPD</th></tr></thead><tbody></tbody></table>
+  </section>
+  <aside>
+    <div>
+      <h2>Award (manual)</h2>
+      <div class="triggers">
+        <button data-act="small" style="--c:#ffe070"><i>+40 EXP</i>small fight<kbd>1</kbd></button>
+        <button data-act="big" style="--c:#6ae08a"><i>+300 EXP</i>multi-level<kbd>2</kbd></button>
+        <button data-act="bank" style="--c:#8ae4ff"><i>BANK</i>+25 to Brenna<kbd>3</kbd></button>
+        <button data-act="solo" style="--c:#b8a0ff"><i>SOLO</i>Brenna's tally<kbd>4</kbd></button>
+        <button data-act="save" style="--c:#c8b088"><i>SAVE</i>serialize<kbd>S</kbd></button>
+        <button data-act="load" style="--c:#c8b088"><i>LOAD</i>restore<kbd>L</kbd></button>
+      </div>
+    </div>
+    <pre id="save">(no save yet)</pre>
+    <div>
+      <div class="row"><label>EXP curve base (to reach LV 2) <output data-out="base"></output></label><input type="range" data-key="base" min="5" max="100" step="5"></div>
+      <div class="row"><label>Curve power <output data-out="power"></output></label><input type="range" data-key="power" min="1" max="2.5" step="0.1"></div>
+      <div class="row"><label>Max level <output data-out="maxLevel"></output></label><input type="range" data-key="maxLevel" min="5" max="99" step="1"></div>
+      <div class="row"><label>Guaranteed gains per level <output data-out="minGain"></output></label><input type="range" data-key="minGain" min="0" max="3" step="1"></div>
+      <div class="row"><label>Seed <output data-out="seed"></output></label><input type="range" data-key="seed" min="1" max="20" step="1"></div>
+      <div class="row"><label>Count-up (ms) <output data-out="countMs"></output></label><input type="range" data-key="countMs" min="0" max="3000" step="100"></div>
+      <div class="row"><label>Autoplay pace (ms per window) <output data-out="autoMs"></output></label><input type="range" data-key="autoMs" min="300" max="2000" step="100"></div>
+      <div class="row"><label>Dim behind <output data-out="dim"></output></label><input type="range" data-key="dim" min="0" max="0.6" step="0.05"></div>
+    </div>
+    <div class="two">
+      <div><h2>Level-up panel</h2><div class="seg" data-key="panel"><button>on</button><button>off</button></div></div>
+      <div><h2>EXP share</h2><div class="seg" data-key="share"><button>each</button><button>split</button></div></div>
+      <div><h2>Growth in autoplay</h2><div class="seg" data-key="autoGrowth"><button>apply</button><button>hold</button></div></div>
+      <div><h2>Tint</h2><div class="seg" data-key="tint"><button>a</button><button>n</button><button>b</button></div></div>
+      <div><h2>Skin</h2><select id="skin"><option value="pixel16">pixel16</option><option value="flat-demo">flat (non-pixel)</option></select></div>
+      <div><h2>Loop</h2><div class="seg" id="loop"><button data-v="1" aria-checked="true">auto</button><button data-v="0">manual</button></div></div>
+    </div>
+    <div class="foot"><span>Same module as <b>module/level-up-growth.js</b> · URL: <code>?t=ms&amp;freeze=1</code>, <code>?seed=3</code></span><button id="reset">Reset</button></div>
+  </aside>
+</main>
+<script src="../../../skins/skin-api.js"></script>
+<script src="../../../skins/pixel16.js"></script>
+<script src="../../../pixel-kit/pixel-scene.js"></script>
+<script src="../module/level-up-growth.js"></script>
+<script>
+'use strict';
+(function () {
+  var W = 256, H = 224, HUD_Y = 190, STEP = 1000 / 60;
+  var Q = new URLSearchParams(location.search), num = function (k, d) { var v = Q.get(k); return v == null || v === '' || isNaN(+v) ? d : +v; };
+  var FREEZE = Q.get('freeze') === '1', T_AT = num('t', 0), LOOP = Q.get('loop') !== '0';
+  var cv = document.getElementById('cv'), SKAPI = window.GameDNA_Skin, LV = window.GameDNA_LevelUpGrowth;
+
+  // a token-only, non-pixel skin: proves the windows, the gauges and the text draw through the skin
+  if (SKAPI) SKAPI.register({
+    id: 'flat-demo', name: 'Flat demo', pixel: false, native: { w: 256, h: 224, scale: 'fit', smoothing: true },
+    palette: { ink: '#29304d', paper: '#f4f6fb',
+      ui: { fill: '#ffffff', fillTo: '#eef1f8', edge: '#cdd2de', highlight: '#ffffff', shadow: 'rgba(40,46,90,0.25)', select: 'rgba(91,108,255,0.14)', well: 'rgba(41,48,77,0.06)' },
+      team: { a: '#5b6cff', b: '#ff6a5a', n: '#7b8199' },
+      overlay: { move: { fill: '#6f8cff', edge: '#4d68d6' }, attack: { fill: '#ff6f6f', edge: '#d9624f' }, threat: { fill: '#8f86ff', edge: '#5b4bff' }, heal: { fill: '#3fcf8e', edge: '#2f9e63' } },
+      fx: { hot: '#ff8a3c', cold: '#4aa8ff', heal: '#22a060', crit: '#f5b520', status: '#8f86ff' },
+      bars: { queued: '#5b6cff', ready: '#22a060', charge: '#f5b520' },
+      text: { main: '#29304d', shadow: 'rgba(0,0,0,0)', outline: '#29304d', dim: '#8a90a8', gold: '#b07a10', accent: '#e0590a', label: '#5b6cff', title: '#29304d', select: '#29304d' } },
+    fonts: { ui: { type: 'canvas', family: 'system-ui, -apple-system, sans-serif', size: 7.5, weight: 600 }, num: { type: 'canvas', family: 'system-ui, sans-serif', size: 11, weight: 800 } },
+    shape: { radius: 4, padding: 4 }, shadow: { text: null, window: { blur: 4, dy: 1 } }, outline: { text: { width: 0 } }, motion: { snap: false }
+  });
+
+  /* ---------------- parameters (element.json defaults, URL overrides) ---------------- */
+  var params = {}; function resetParams() { params = {}; Object.keys(LV.DEFAULTS).forEach(function (k) { params[k] = LV.DEFAULTS[k]; }); }
+  resetParams();
+  Object.keys(params).forEach(function (k) { if (Q.has(k)) params[k] = typeof params[k] === 'number' ? num(k, params[k]) : Q.get(k); });
+  var skinId = Q.get('skin') || 'pixel16';
+
+  /* ---------------- data the designer edits: growth tables per class ---------------- */
+  var CLASSES = {
+    knight: { rates: { hp: { rate: 85, amount: 3 }, str: 55, mag: 5, def: 50, spd: 20 } },
+    mage:   { rates: { hp: { rate: 50, amount: 2 }, str: 10, mag: 75, def: 15, spd: 40 } },
+    ranger: { rates: { hp: { rate: 65, amount: 2 }, str: 40, mag: 15, def: 25, spd: 65 }, caps: { spd: 30 } }
+  };
+  var STATS = [{ key: 'hp', label: 'HP' }, { key: 'str', label: 'STR' }, { key: 'mag', label: 'MAG' }, { key: 'def', label: 'DEF' }, { key: 'spd', label: 'SPD' }];
+  var BASE = [
+    { id: 'brenna', name: 'Brenna', cls: 'knight', kind: 'knight', level: 1, hp: 30, str: 9, mag: 1, def: 8, spd: 4 },
+    { id: 'tamsin', name: 'Tamsin', cls: 'mage', kind: 'mage', level: 1, hp: 20, str: 3, mag: 10, def: 3, spd: 6 },
+    { id: 'corin', name: 'Corin', cls: 'ranger', kind: 'archer', level: 2, hp: 24, str: 7, mag: 3, def: 4, spd: 9 }
+  ];
+
+  /* ---------------- the "game": a party, waves of slimes, a HUD ---------------- */
+  var party, sim, lv, flashCell = {};
+  function newParty() { party = BASE.map(function (b) { var c = {}; for (var k in b) c[k] = b[k]; return c; }); }
+  function newSim() { sim = { t: 0, wave: 0, phase: 'fight', pt: 0, foes: [], gold: 0, awards: 0 }; spawnFoes(); }
+  var WAVE_EXP = [45, 80, 140, 60, 250, 90], WAVE_GOLD = [12, 20, 35, 15, 60, 25];
+  function spawnFoes() { sim.foes = [0, 1, 2].map(function (i) { return { x: 168 + (i % 2) * 26 + i * 6, y: 92 + i * 30, dead: -1, kind: i === 1 ? 'monster' : 'monster' }; }); }
+  function makeLv() {
+    lv = LV.create({
+      bounds: { x: 0, y: 0, w: W, h: HUD_Y }, skin: skinId, params: params, classes: CLASSES, stats: STATS,
+      units: function () { return party.map(function (p) { return { id: p.id, name: p.name, cls: p.cls, level: p.level, alive: true,
+        get: function (k) { return p[k]; }, set: function (k, v, gain) { p[k] = v; } }; }); },
+      getObstacles: function () { return party.map(function (p, i) { return { id: p.id, x: SPOTS[i][0] - 9, y: SPOTS[i][1] - 24, w: 18, h: 24 }; }); },   // the heroes: kept visible when there is room
+      autoplay: function () { return LOOP; },
+      uiRects: function () { return [{ x: 0, y: HUD_Y, w: W, h: H - HUD_Y }]; },
+      onDone: function (r) { sim.lastResult = r; sim.gold += r.gold; }
+    });
+    party.forEach(function (p) { lv.track(p); });
+  }
+  newParty(); newSim(); makeLv();
+
+  function fightStep() {
+    sim.pt += STEP;
+    // three blows over 1.8 s, one slime down per blow
+    [500, 1000, 1500].forEach(function (at, i) { if (sim.pt >= at && sim.foes[i].dead < 0) sim.foes[i].dead = sim.t; });
+    if (sim.pt >= 2000) {
+      var w = sim.wave % WAVE_EXP.length;
+      sim.phase = 'results'; sim.awards++;
+      lv.award(WAVE_EXP[w], WAVE_GOLD[w], { title: 'VICTORY', onDone: function () { sim.phase = 'rest'; sim.pt = 0; } });
+    }
+  }
+  var LOG = Q.get('log') === '1' ? [] : null, lastStage = null;
+  function stepSim() {
+    sim.t += STEP;
+    if (LOG) { var s0 = lv.state(), key = s0 ? s0.stage + (s0.unit ? ':' + s0.unit.id + ' ' + s0.unit.from + '>' + s0.unit.to : '') : sim.phase; if (key !== lastStage) { LOG.push(Math.round(sim.t) + ' w' + sim.wave + ' ' + key); lastStage = key; } }
+    if (lv.busy()) { lv.update(STEP); return; }                       // the world waits for the results window
+    if (LOOP) {
+      if (sim.phase === 'fight') fightStep();
+      else if (sim.phase === 'rest') { sim.pt += STEP; if (sim.pt >= 700) { sim.wave++; sim.phase = 'fight'; sim.pt = 0; spawnFoes(); if (sim.wave >= WAVE_EXP.length) { sim.wave = 0; newParty(); lv.reset(); party.forEach(function (p) { lv.track(p); }); flashCell = {}; } } }
+    }
+    lv.update(STEP);
+  }
+
+  /* text state for critics and tools/sprites/statecheck.py. drawWorld() passes the literals facing: 1 (party) and facing: -1 (foes)
+     to unitToken; the same literals are reported here. A foe is listed while it is still drawn (700 ms after its blow). */
+  window.__state = function () {
+    var foes = sim.foes.filter(function (f) { return f.dead < 0 || sim.t - f.dead <= 700; }), fx = foes.length ? Math.round(foes.reduce(function (s, f) { return s + f.x; }, 0) / foes.length) : null;
+    var px = Math.round(SPOTS.reduce(function (s, q) { return s + q[0]; }, 0) / SPOTS.length);
+    return { t: Math.round(sim.t), actors: party.map(function (p, i) {
+      var lunge = sim.phase === 'fight' && Math.floor(sim.pt / 500) % 3 === i && sim.pt % 500 < 160 ? 4 : 0;
+      return { id: p.id, x: SPOTS[i][0] + lunge, y: SPOTS[i][1], facing: 'right', target: fx };
+    }).concat(foes.map(function (f, i) {
+      var a = { id: 'foe' + sim.foes.indexOf(f), x: f.x, y: f.y, facing: 'left', target: px };
+      if (f.dead >= 0 && sim.t - f.dead >= 300) a.noFace = 'dead';
+      return a;
+    })) };
+  };
+
+  /* ---------------- drawing ---------------- */
+  var SKN = function () { return SKAPI ? SKAPI.resolve(skinId) : null; };
+  var low = document.createElement('canvas'); low.width = W; low.height = H; var lg = low.getContext('2d'); lg.imageSmoothingEnabled = false;
+  // the field: a forest-edge road, drawn by the shared pixel scene kit (pixel-kit/pixel-scene.js); 16 x 12 cells, the HUD covers the last row
+  var PXS = window.GameDNA_PixelScene;
+  var SCENE = PXS.scene({ seed: 31, pines: true, map: [
+    'TTTTTTTTTTTTTTTT', 'TTT,TTTT,TTTT,TT', 'T,..t...,..,.t.T', '..........F.....', '.r..............', 'pppppppppppppppp',
+    'ppp.............', '.............,,T', '.F..........,,TT', '..............,T', '.......www.....R', 't......wwww....T'],
+    props: [{ k: 'sign', x: 236, y: 78 }, { k: 'log', x: 226, y: 150 }, { k: 'stump', x: 14, y: 122 }, { k: 'campfire', x: 106, y: 150 }, { k: 'tent', x: 140, y: 154, o: { color: 'blue' } }] });
+  var SPOTS = [[42, 150], [70, 166], [32, 182]];      // low on the field, so the results window sits above the party
+  function drawWorld(g) {
+    var S = SKN(), ts = sim.t / 1000;
+    SCENE.drawGround(g, sim.t);
+    // the party (left) and the slimes (right), back to front
+    var list = SCENE.sorted(sim.t).map(function (o) { return { y: o.y, d: function () { o.draw(g); } }; });
+    party.forEach(function (p, i) { list.push({ y: SPOTS[i][1], d: function () {
+      var lunge = sim.phase === 'fight' && Math.floor(sim.pt / 500) % 3 === i && sim.pt % 500 < 160 ? 4 : 0;
+      var up = levelledNow(p.id), hop = up && Math.floor(sim.t / 160) % 2 ? 2 : 0;          // a levelled hero hops while the window shows it
+      if (S && S.unitToken) S.unitToken(g, { x: SPOTS[i][0] - 9 + lunge, y: SPOTS[i][1] - 22 - hop, w: 18, h: 22 }, { team: 'a', kind: p.kind, facing: 1, noShadow: !!hop }, ts);
+      if (up) { var sx = SPOTS[i][0], sy = SPOTS[i][1] - 28, ph = Math.floor(sim.t / 120) % 4; g.fillStyle = ph % 2 ? '#fff4b0' : '#ffe070'; g.fillRect(sx - 8 + ph * 4, sy - (ph % 2) * 2, 1, 3); g.fillRect(sx - 9 + ph * 4, sy + 1 - (ph % 2) * 2, 3, 1); }
+    } }); });
+    sim.foes.forEach(function (f, i) {
+      var age = f.dead < 0 ? -1 : sim.t - f.dead; if (age > 700) return;
+      list.push({ y: f.y, d: function () {
+        if (age >= 0 && age < 220) { g.fillStyle = '#ffffff'; for (var s = 0; s < 6; s++) { var a = s * 1.05 + age / 90, r = 4 + age / 18; g.fillRect(Math.round(f.x + Math.cos(a) * r), Math.round(f.y - 10 + Math.sin(a) * r), 2, 2); } }
+        if (age >= 0 && Math.floor(age / 70) % 2) return;
+        if (S && S.unitToken) S.unitToken(g, { x: f.x - 9, y: f.y - 22, w: 18, h: 22 }, { team: 'b', kind: f.kind, facing: -1, dead: age >= 300 }, ts);
+      } });
+    });
+    list.sort(function (a, b) { return a.y - b.y; }).forEach(function (o) { o.d(); });
+  }
+  function drawHud(g) {
+    var S = SKN();
+    if (S) S.frame(g, { x: 0, y: HUD_Y, w: W, h: H - HUD_Y }, { role: 'window', team: 'n' });
+    party.forEach(function (p, i) {
+      var x = 8 + i * 82, y = HUD_Y + 7, L = lv.shownLevel(p.id) || p.level;      // THE HUD hook: shown values, not the raw stats
+      if (!S) return;
+      S.text(g, p.name.toUpperCase(), x, y, { font: 'ui', color: S.token('text.gold') });
+      S.text(g, 'LV ' + L, x + 76, y, { font: 'ui', align: 'right', color: S.token('text.main') });
+      S.text(g, 'HP ' + lv.shown(p.id, 'hp'), x, y + 12, { font: 'ui', color: S.token('text.label') });
+      S.text(g, 'STR ' + lv.shown(p.id, 'str'), x + 76, y + 12, { font: 'ui', align: 'right', color: S.token('text.label') });
+    });
+  }
+
+  function levelledNow(id) { var st = lv.state(); if (st && st.stage !== 'open' && st.stage !== 'close') for (var i = 0; i < st.units.length; i++) if (st.units[i].id === id && st.units[i].level > st.units[i].from) return true; return false; }
+  var prevShown = {};
+  var ctx = cv.getContext('2d');
+  function render() {
+    var S = SKN(), pixel = !S || S.pixel !== false, k = pixel ? 1 : 3;
+    if (cv.width !== W * k) { cv.width = W * k; cv.height = H * k; fit(); }
+    if (pixel) {
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false;
+      drawWorld(ctx); drawHud(ctx); lv.draw(ctx);
+    } else {
+      drawWorld(lg);
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false; ctx.drawImage(low, 0, 0, W * k, H * k);
+      ctx.setTransform(k, 0, 0, k, 0, 0); ctx.imageSmoothingEnabled = true; drawHud(ctx); lv.draw(ctx);
+    }
+    var st = lv.state();
+    document.getElementById('lamp').className = lv.busy() ? 'on' : '';
+    document.getElementById('state').textContent = lv.busy() ? 'Results (world paused)' : !LOOP ? 'Manual' : sim.phase === 'fight' ? 'Fighting' : 'Resting';
+    document.getElementById('now').textContent = st ? st.stage + (st.unit ? ', ' + st.unit.id + ' LV ' + st.unit.from + '→' + st.unit.to : '') + ', EXP ' + st.exp + '/' + st.expTotal
+      : !LOOP ? 'press 1–4 or the award buttons · gold ' + sim.gold : 'wave ' + (sim.wave + 1) + ' · gold ' + sim.gold;
+    var rows = party.map(function (p) {
+      var cell = function (k) {      // the table shows what the window has revealed (lv.shown), and lights up when a value changes
+        var v = lv.shown(p.id, k), key = p.id + ':' + k; if (prevShown[key] != null && prevShown[key] !== v) flashCell[key] = sim.t; prevShown[key] = v;
+        var up = flashCell[key] != null && sim.t - flashCell[key] < 900; return '<td' + (up ? ' class="up"' : '') + '>' + v + '</td>'; };
+      return '<tr><td>' + p.name + ' <small>' + p.cls + '</small></td><td>' + (lv.shownLevel(p.id) || p.level) + '</td><td>' + (lv.exp(p.id) || 0) + '</td><td>' + (lv.toNext(p.id) || 0) + '</td>' + STATS.map(function (s) { return cell(s.key); }).join('') + '</tr>';
+    }).join('');
+    var tb = document.querySelector('#party tbody'); if (tb.innerHTML !== rows) tb.innerHTML = rows;
+    document.documentElement.dataset.state = JSON.stringify({ log: LOG, t: Math.round(sim.t), phase: sim.phase, wave: sim.wave, lv: st, busy: lv.busy(), rect: lv.rect(), drawn: lv.lastDrawn(),
+      party: party.map(function (p) { return { id: p.id, level: lv.level(p.id), exp: lv.exp(p.id), hp: p.hp, str: p.str, mag: p.mag, def: p.def, spd: p.spd }; }) });
+  }
+  function fit() {
+    // integer scale in DEVICE pixels (a 390 px phone at dpr 3 gets 4 device px per native px), never a blurry fraction
+    var dpr = window.devicePixelRatio || 1, avail = Math.min(document.getElementById('stage').clientWidth - 12, 780), n = Math.max(1, Math.floor(avail * dpr / W));
+    var cw = W * n / dpr;
+    cv.style.width = cw + 'px'; cv.style.height = (H * n / dpr) + 'px';
+    document.getElementById('scaleinfo').textContent = '256×224 native · ' + n + '× device px';
+  }
+  addEventListener('resize', fit); fit();
+
+  /* ---------------- controls ---------------- */
+  function manual() { if (LOOP) setLoop(false); }
+  var saved = null;
+  var ACT = {
+    small: function () { lv.award(40, 15, { title: 'VICTORY' }); },
+    big: function () { lv.award(300, 80, { title: 'BOSS DEFEATED' }); },
+    bank: function () { lv.addExp('brenna', 25); document.getElementById('save').textContent = 'Banked for Brenna: ' + lv.banked('brenna') + ' EXP (shown at the next tally that includes her)'; },
+    solo: function () { lv.award(0, 0, { units: ['brenna'], title: 'BRENNA' }); },
+    save: function () { saved = { growth: lv.serialize(), party: JSON.parse(JSON.stringify(party)) }; document.getElementById('save').textContent = JSON.stringify(saved.growth); },
+    load: function () { if (!saved) return; lv.clear(); lv.restore(saved.growth); party = JSON.parse(JSON.stringify(saved.party)); document.getElementById('save').textContent = 'Restored: ' + JSON.stringify(saved.growth); }
+  };
+  document.querySelectorAll('.triggers button').forEach(function (btn) { btn.addEventListener('click', function () { manual(); ACT[btn.dataset.act](); }); });
+  addEventListener('keydown', function (e) {
+    if (lv.key(e.code, true)) { manual(); e.preventDefault(); return; }      // the window takes only Z / Space / Enter while open
+    var m = { Digit1: 'small', Digit2: 'big', Digit3: 'bank', Digit4: 'solo', KeyS: 'save', KeyL: 'load' }[e.code];
+    if (m) { manual(); ACT[m](); }
+  });
+  addEventListener('keyup', function (e) { lv.key(e.code, false); });
+  cv.addEventListener('pointerdown', function (e) { if (lv.busy()) { manual(); lv.tap(); e.preventDefault(); } });
+  function syncControls() {
+    document.querySelectorAll('input[type=range][data-key]').forEach(function (inp) {
+      var k = inp.dataset.key; inp.value = params[k];
+      inp.style.setProperty('--fill', (params[k] - inp.min) / (inp.max - inp.min) * 100 + '%');
+      document.querySelector('[data-out="' + k + '"]').textContent = params[k];
+    });
+    document.querySelectorAll('.seg[data-key]').forEach(function (seg) { seg.querySelectorAll('button').forEach(function (bt) { bt.setAttribute('aria-checked', String(bt.textContent === String(params[seg.dataset.key]))); }); });
+    document.getElementById('skin').value = skinId;
+  }
+  var RESETTING = { base: 1, power: 1, maxLevel: 1, seed: 1 };     // a new curve or seed starts the party over
+  document.querySelectorAll('input[type=range][data-key]').forEach(function (inp) { inp.addEventListener('input', function () {
+    params[inp.dataset.key] = +inp.value; if (RESETTING[inp.dataset.key]) restart(); else lv.setParams(params); syncControls(); }); });
+  document.querySelectorAll('.seg[data-key]').forEach(function (seg) { seg.querySelectorAll('button').forEach(function (bt) { bt.addEventListener('click', function () {
+    var k = seg.dataset.key; params[k] = typeof LV.DEFAULTS[k] === 'number' ? +bt.textContent : bt.textContent; lv.setParams(params); if (k === 'autoGrowth' && params.autoGrowth === 'apply') lv.applyPending(); syncControls(); }); }); });
+  document.getElementById('skin').addEventListener('change', function (e) { skinId = e.target.value; var s = lv.serialize(); lv.clear(); makeLv(); lv.restore(s); });
+  function restart() { lv.clear(); newParty(); newSim(); makeLv(); flashCell = {}; }
+  function seg(id, fn) { var el = document.getElementById(id); el.querySelectorAll('button').forEach(function (bt) { bt.addEventListener('click', function () { fn(+bt.dataset.v); }); }); }
+  function setLoop(on) { LOOP = on; document.querySelectorAll('#loop button').forEach(function (x) { x.setAttribute('aria-checked', String(+x.dataset.v === (on ? 1 : 0))); }); if (on) { lv.clear(); sim.phase = 'fight'; sim.pt = 0; spawnFoes(); } else lv.auto(false); }
+  seg('loop', function (v) { setLoop(!!v); });
+  if (!LOOP) setLoop(false);
+  document.getElementById('reset').addEventListener('click', function () { resetParams(); skinId = 'pixel16'; restart(); syncControls(); setLoop(true); });
+  syncControls();
+
+  /* ---------------- run ---------------- */
+  if (FREEZE) {
+    var n = Math.floor(T_AT / STEP); for (var i = 0; i < n; i++) stepSim(); render();
+  } else {
+    var last = performance.now(), acc = 0;
+    (function loop(now) { acc += Math.min(250, now - last); last = now; while (acc >= STEP) { stepSim(); acc -= STEP; } render(); requestAnimationFrame(loop); })(performance.now());
+  }
+})();
+</script>
+</body>
+</html>

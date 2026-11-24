@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Physics Debris</title>
+<style>
+  :root { --bg: #120e18; --panel: #1d1726; --line: #3a3048; --ink: #efe6f6; --dim: #a99cb8; --acc: #f2b25c; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; overflow-x: hidden; }
+  main { max-width: 980px; margin: 0 auto; padding: 14px 16px 28px; }
+  h1 { font-size: 19px; margin: 0 0 2px; letter-spacing: 0.2px; }
+  .sub { color: var(--dim); margin: 0 0 12px; }
+  #stage { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #000; box-shadow: 0 10px 40px rgba(0,0,0,0.45); }
+  #game { display: block; width: 100%; height: 100%; cursor: crosshair; touch-action: manipulation; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0 6px; }
+  button { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px; font: inherit; cursor: pointer; }
+  button.on { background: var(--acc); color: #26170a; border-color: var(--acc); font-weight: 600; }
+  .hint { color: var(--dim); font-size: 13px; margin-left: auto; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  label { display: flex; flex-direction: column; font-size: 12.5px; color: var(--dim); }
+  label b { color: var(--ink); font-weight: 600; }
+  input[type=range] { width: 100%; accent-color: var(--acc); }
+  select { background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 4px; font: inherit; }
+  #stats { margin-top: 8px; color: var(--dim); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+  @media (max-width: 560px) { .hint { margin-left: 0; width: 100%; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Physics debris &amp; breakables</h1>
+  <p class="sub">Painted crates, boulders and crystals break into pieces cut from their own art: planks along the grain, chunky rock and glass. The pieces tumble, bounce off walls, settle flat, get kicked aside by passing feet and fade. Foes knocked into a wall bounce off it in a burst of dust.</p>
+  <div id="stage"><canvas id="game" width="1280" height="720"></canvas></div>
+  <div class="bar">
+    <button id="vSide">Side view</button><button id="vTop">Top-down</button>
+    <button id="replay">Replay</button><button id="all">Break everything</button>
+    <span class="hint">Click or tap the scene to strike it.</span>
+  </div>
+  <div class="grid" id="ctl"></div>
+</main>
+<script src="../../../demo-kit/kit-art.js"></script>
+<script src="../../../demo-kit/kit.js"></script>
+<script src="../module/physics-debris.js"></script>
+<script>
+'use strict';
+(function () {
+  var Kit = GameDNA_DemoKit, qs = new URLSearchParams(location.search);
+  var VW = 640, VH = 360, STEP = 1000 / 60, LOOP = 10500;
+  var T0 = qs.has('t') ? Math.max(0, +qs.get('t') || 0) : null, FREEZE = qs.get('freeze') === '1';
+  var VIEW = qs.get('view') === 'top' ? 'top' : 'side';
+  var cv = document.getElementById('game'), ctx = cv.getContext('2d');
+  var PARAMS = [
+    ['amount', 'Pieces', 0.5, 2, 0.1, 1], ['gravity', 'Gravity', 0.3, 2, 0.1, 1], ['bounce', 'Bounce', 0, 0.9, 0.05, 0.35],
+    ['friction', 'Friction', 0.1, 1.5, 0.05, 0.6], ['rest', 'Rest before fade (ms)', 400, 8000, 100, 2600], ['dust', 'Dust', 0, 2, 0.1, 1],
+    ['shake', 'Screen shake', 0, 6, 0.5, 3], ['hitstop', 'Hit-stop (ms)', 0, 120, 10, 40], ['spin', 'Spin', 0, 2, 0.1, 1]
+  ];
+  var params = {};
+  PARAMS.forEach(function (p) { params[p[0]] = qs.has(p[0]) ? +qs.get(p[0]) : p[5]; });
+  if (qs.has('render')) params.render = qs.get('render');
+
+  /* ---------- the two staged scenes ---------- */
+  var SIDE = { GY: 300, ANVIL: { x: 470, h: 58 }, WALL: { x0: 449, x1: 491, top: 258 } };   // the painted anvil on its stump is the wall
+  var TOPV = { TILE: 32, COLS: 20, ROWS: 12, PILLAR: [15, 16, 3, 4] };
+  function anvilWall() { var h = SIDE.ANVIL.h, x0 = SIDE.ANVIL.x + extentX('anvil', 'right', h, -1), x1 = SIDE.ANVIL.x + extentX('anvil', 'right', h, 1); SIDE.WALL = { x0: x0, x1: x1, top: SIDE.GY - h * 0.92 }; }
+  function sideSolid(x, y) {
+    return y >= SIDE.GY || x < 0 || x >= VW;   // the anvil is a fixed module prop: pieces bounce off its sides and slide off its top
+  }
+  function topSolidTile(c, r) {
+    if (c <= 0 || c >= TOPV.COLS - 1 || r <= 1 || r >= TOPV.ROWS - 1) return true;
+    var P = TOPV.PILLAR; return c >= P[0] && c <= P[1] && r >= P[2] && r <= P[3];
+  }
+  function topSolid(x, y) { return topSolidTile(Math.floor(x / 32), Math.floor(y / 32)); }
+
+  var W = null;   // world state
+  var hitstop = 0, simT = 0;
+  function makeDebris() {
+    var d = GameDNA_Debris.create({
+      view: VIEW, seed: 7, scale: VIEW === 'top' ? 0.85 : 1, tile: VIEW === 'top' ? 32 : 0, sweep: 2,
+      params: Object.assign({ depth: VIEW === 'side' ? 12 : 0, dustTint: VIEW === 'side' ? '#9a6648' : '#8a7860' }, params), solid: VIEW === 'top' ? topSolid : sideSolid, bounds: { x: 0, y: 0, w: VW, h: VH },
+      onHitstop: function (ms) { hitstop = Math.max(hitstop, ms); },
+      keepOut: function () { return footRects(); },
+      onBreak: function (b) { if (W) W.log.push({ t: Math.round(simT), ev: 'break', id: b.id }); },
+      onSound: function (n, i) { if (W && n === 'thud') W.log.push({ t: Math.round(simT), ev: 'wallBump', id: i.key }); }
+    });
+    return d;
+  }
+  function actor(id, kit, x, y, h, facing, extra) {
+    var a = { id: id, kit: kit, x: x, y: y, h: h, facing: facing, vx: 0, vy: 0, z: 0, vz: 0, mode: 'idle', target: null, a: Kit.actor(kit, { h: h }), flash: 0, rot: 0, t: 0 };
+    for (var k in extra || {}) a[k] = extra[k];
+    return a;
+  }
+  /* painted props broken by the module: the demo kit's crate stacks and the painted-impasto pack's boulder and crystal.
+     art(g, h) draws the painted sprite h px tall on its base; the hull is traced from its alpha once (box when the image is not readable) */
+  var IMG = {}, IMGSRC = { stone: '../../../skins/painted-impasto/assets/pack/prop-stone.webp', crystal: '../../../skins/painted-impasto/assets/pack/prop-crystal.webp',
+    bush: '../../../skins/painted-impasto/assets/pack/prop-bush.webp', ground: '../../bark-bubbles/demo/assets/art/ground.webp' };
+  function loadImages(done) {
+    var keys = Object.keys(IMGSRC), n = keys.length;
+    keys.forEach(function (k) { var im = new Image(); im.onload = im.onerror = function () { if (--n === 0) done(); }; im.src = IMGSRC[k]; IMG[k] = im; });
+  }
+  function imgDraw(k, facing) { return function (g, hh) { var im = IMG[k]; if (!im || !im.naturalWidth) return; var w = im.naturalWidth * hh / im.naturalHeight; g.save(); if (facing === 'left') g.scale(-1, 1); g.drawImage(im, -w / 2, -hh, w, hh); g.restore(); }; }
+  function kitDraw(id, facing) { return function (g, hh) { Kit.sprite(g, id, 0, 0, { h: hh, shadow: false, facing: facing }); }; }
+  var SPECS = { crates: { mat: 'wood', draw: function (f) { return kitDraw('crates', f); } }, stone: { mat: 'rock', draw: function (f) { return imgDraw('stone', f); } },
+    crystal: { mat: 'crystal', keepBase: 0.3, draw: function (f) { return imgDraw('crystal', f); } }, knight: { draw: function (f) { return kitDraw('knight', f); } }, golem: { draw: function (f) { return kitDraw('golem', f); } }, imp: { draw: function (f) { return kitDraw('imp', f); } },
+    slime: { draw: function (f) { return kitDraw('slime', f); } }, anvil: { draw: function (f) { return kitDraw('anvil', f); } } };
+  var HULLS = {};
+  function hullOf(id, facing) {
+    var key = id + facing; if (HULLS[key]) return HULLS[key];
+    var H = 200, c = document.createElement('canvas'); c.width = 600; c.height = 260; var g = c.getContext('2d'), pts = [], x, y, D;
+    g.save(); g.translate(300, 230); SPECS[id].draw(facing)(g, H); g.restore();
+    try { D = g.getImageData(0, 0, 600, 260).data; } catch (e) { D = null; }
+    if (!D) return (HULLS[key] = [[-0.4, 0], [0.4, 0], [0.4, -1], [-0.4, -1]]);
+    for (y = 0; y < 260; y += 3) for (x = 0; x < 600; x += 3) if (D[(y * 600 + x) * 4 + 3] > 140) pts.push([(x - 300) / H, (y - 230) / H]);
+    pts.sort(function (a, b) { return a[0] - b[0] || a[1] - b[1]; });
+    var cr = function (o, a, b) { return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]); }, lo = [], up = [], i;
+    for (i = 0; i < pts.length; i++) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], pts[i]) <= 0) lo.pop(); lo.push(pts[i]); }
+    for (i = pts.length - 1; i >= 0; i--) { while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], pts[i]) <= 0) up.pop(); up.push(pts[i]); }
+    up.pop(); lo.pop(); var hull = lo.concat(up).map(function (p) { return [Math.round(p[0] * 1000) / 1000, Math.min(0, Math.round(p[1] * 1000) / 1000)]; });
+    return (HULLS[key] = hull);
+  }
+  function extentX(id, facing, h, side) { var hl = hullOf(id, facing), m = side > 0 ? -9 : 9; hl.forEach(function (p) { m = side > 0 ? Math.max(m, p[0]) : Math.min(m, p[0]); }); return m * h; }
+  var PROF = {};
+  function profileOf(id, facing) {   // per height band (40 bands, base to top): [min x, max x] of the painted pixels, in sprite heights
+    var key = id + facing; if (PROF[key]) return PROF[key];
+    var H = 200, c = document.createElement('canvas'); c.width = 600; c.height = 260; var g = c.getContext('2d'), D, out = [];
+    g.save(); g.translate(300, 230); SPECS[id].draw(facing)(g, H); g.restore();
+    try { D = g.getImageData(0, 0, 600, 260).data; } catch (e) { D = null; }
+    for (var b = 0; b < 40; b++) {
+      var lo = 9, hi = -9;
+      if (D) for (var y = Math.round(230 - (b + 1) * H / 40); y < 230 - b * H / 40; y++) for (var x = 0; x < 600; x += 2) if (D[(y * 600 + x) * 4 + 3] > 120) { lo = Math.min(lo, (x - 300) / H); hi = Math.max(hi, (x - 300) / H); }
+      out.push(lo <= hi ? [lo, hi] : null);
+    }
+    return (PROF[key] = out);
+  }
+  function spanAt(hull, yu) {   // [min x, max x] of a convex hull at height yu (prop heights, y up negative), or null
+    var lo = 9, hi = -9, n = hull.length;
+    for (var i = 0; i < n; i++) { var a = hull[i], b = hull[(i + 1) % n]; if ((a[1] - yu) * (b[1] - yu) > 0 || a[1] === b[1]) continue; var x = a[0] + (b[0] - a[0]) * (yu - a[1]) / (b[1] - a[1]); lo = Math.min(lo, x); hi = Math.max(hi, x); }
+    return lo <= hi ? [lo, hi] : null;
+  }
+  /* horizontal gap between a body's sprite (feet at fx, fy) and the anvil's painted silhouette, over the heights they share */
+  function anvilGap(e, fx) {
+    var pb = profileOf(e.kit, e.facing > 0 ? 'right' : 'left'), pa = profileOf('anvil', 'right'), A = SIDE.ANVIL, best = 1e9;
+    for (var k = 0; k < 40; k++) {
+      var wy = SIDE.GY - A.h * (k + 0.5) / 40, bi = Math.floor((e.y - wy) / e.h * 40), sb = pb[bi], sa = pa[k];
+      if (sb && sa) best = Math.min(best, (A.x + sa[0] * A.h) - (fx + sb[1] * e.h));
+    }
+    return best;
+  }
+  /* where each character's feet are: the painted pixels of the lowest 15 % of its sprite, as drawn this frame (attack lunge included) */
+  function footRects() {
+    var out = []; if (!W) return out;
+    for (var id in W.actors) {
+      var e = W.actors[id]; if (e.mode === 'down' || (e.z || 0) > 4) continue;
+      var pr = profileOf(e.kit, e.facing > 0 ? 'right' : 'left'), lo = 9, hi = -9;
+      for (var b = 0; b < (e.kit === 'slime' ? 16 : 6); b++) if (pr[b]) { lo = Math.min(lo, pr[b][0]); hi = Math.max(hi, pr[b][1]); }   // a slime is all body: its whole lower half
+      if (lo > hi) continue;
+      var dx = e.a && e.a._xf ? e.a._xf().dx * e.h * e.facing : 0;
+      out.push({ x: e.x + dx + lo * e.h - 4, y: e.y - 10, w: (hi - lo) * e.h + 8, h: 16 });
+    }
+    return out;
+  }
+  /* where the crystal meets its rock base, per column: the lowest crystal-coloured pixel (blue over red), in prop heights */
+  var BASELINES = {};
+  function baseLineOf(id, facing) {
+    var key = id + facing; if (BASELINES[key] !== undefined) return BASELINES[key];
+    var H = 200, c = document.createElement('canvas'); c.width = 600; c.height = 260; var g = c.getContext('2d'), D, out = [];
+    g.save(); g.translate(300, 230); SPECS[id].draw(facing)(g, H); g.restore();
+    try { D = g.getImageData(0, 0, 600, 260).data; } catch (e) { return (BASELINES[key] = null); }
+    for (var x = 0; x < 600; x += 8) {
+      var low = -1;
+      for (var y = 229; y > 20; y--) { var i = (y * 600 + x) * 4; if (D[i + 3] > 140 && D[i + 2] > D[i] + 30 && D[i + 1] > D[i] + 10) { low = y; break; } }
+      if (low >= 0) out.push([(x - 300) / H, (low - 230) / H + 0.015]);   // a hair below the lowest crystal pixel: short stumps stay on the rock
+    }
+    return (BASELINES[key] = out.length >= 2 ? out : null);
+  }
+  function paintedProp(d, id, spec, x, y, h, o) {
+    o = o || {}; var facing = o.facing || 'right';
+    return d.addProp({ id: id, artKey: spec + '@' + facing, material: SPECS[spec].mat, keepBase: SPECS[spec].keepBase || 0, baseLine: SPECS[spec].keepBase ? baseLineOf(spec, facing) : null, chips: SPECS[spec].mat === 'wood' ? undefined : 0, x: x, y: y, h: h, hp: o.hp || 1, hull: hullOf(spec, facing), art: SPECS[spec].draw(facing), data: { art: spec } });
+  }
+  function reset() {
+    simT = 0; hitstop = 0;
+    var d = W && W.debris; if (!d || d.view !== VIEW) { d = makeDebris(); d.view = VIEW; } else { d.clear({ props: true }); d.setParams(params); }
+    W = { debris: d, waves: [], slashes: [], actors: {}, fired: {}, log: [] };
+    if (VIEW === 'side') {
+      var G = SIDE.GY;
+      d.addProp({ id: 'anvil', artKey: 'anvil@right', material: 'iron', x: SIDE.ANVIL.x, y: G, h: SIDE.ANVIL.h, hull: hullOf('anvil', 'right'), art: SPECS.anvil.draw('right'), fixed: true, hidden: true });
+      paintedProp(d, 'crates-a', 'crates', 268, G, 56);
+      paintedProp(d, 'crates-b', 'crates', 112, G, 50, { facing: 'left' });
+      paintedProp(d, 'crates-c', 'crates', 350, G, 46, { facing: 'left' });
+      paintedProp(d, 'boulder', 'stone', 524, G, 50, { hp: 2 });
+      paintedProp(d, 'crystal', 'crystal', 44, G, 58, { hp: 2 });
+      W.actors.knight = actor('knight', 'knight', 190, G, 96, 1, { target: 'crates-a' });
+      W.actors.imp = actor('imp', 'imp', 410, G, 62, -1, { target: 'knight' });
+      W.actors.golem = actor('golem', 'golem', 604, G, 124, -1, { target: 'boulder' });
+    } else {
+      paintedProp(d, 'crates-r', 'crates', 364, 276, 40);
+      paintedProp(d, 'boulder', 'stone', 360, 222, 40, { hp: 2 });
+      paintedProp(d, 'crystal-w', 'crystal', 240, 226, 44);
+      paintedProp(d, 'crates-l', 'crates', 234, 270, 40, { facing: 'left' });
+      paintedProp(d, 'crates-e', 'crates', 506, 246, 40);
+      paintedProp(d, 'crates-n', 'crates', 560, 96, 38, { facing: 'left' });
+      paintedProp(d, 'crystal', 'crystal', 456, 206, 46, { hp: 2 });
+      paintedProp(d, 'boulder-w', 'stone', 140, 212, 42, { hp: 2 });
+      W.actors.knight = actor('knight', 'knight', 300, 238, 72, 1, { target: 'crates-r' });
+      W.actors.slimeA = actor('slimeA', 'slime', 560, 312, 40, -1, { target: 'knight' });
+      W.actors.slimeB = actor('slimeB', 'slime', 92, 316, 40, 1, { target: 'knight' });
+    }
+  }
+
+  /* ---------- timeline (game time in ms, wraps every LOOP) ---------- */
+  function at(ms) { var k = Math.round(ms / STEP); return Math.round(simT / STEP) === k; }
+  function strike(a, dir, targetId, o) {
+    o = o || {};
+    a.facing = dir; a.target = targetId; var tp = W.debris.prop(targetId); a.tx = tp ? Math.round(tp.x) : null;
+    a.a.play('attack', { onHit: function () {
+      var tip = a.a.point('tip', a.x, a.y, { facing: a.facing }), d = W.debris;
+      var hy = VIEW === 'top' ? a.y - 6 : tip.y + a.h * 0.12, hx = tip.x;
+      d.hit(hx, hy, o.r || a.h * 0.34, { dx: dir, dy: 0, force: o.force || 380, damage: o.damage || 1 });
+      if (o.wave) W.waves.push({ x: tip.x, y: VIEW === 'top' ? a.y - 22 : a.y - a.h * 0.42, gy: VIEW === 'top' ? a.y - 16 : null, dir: dir, t: 0, done: false, dmg: o.wave });
+      if (o.knock) knock(W.actors[o.knock], dir, o.kvx, o.kvy);
+    } });
+  }
+  function knock(e, dir, vx, vy) {
+    if (!e) return;
+    e.mode = 'fly'; e.vx = dir * vx; e.vy = vy || 0; e.flash = 40; e.hitWall = false; e.wallDir = 0;
+    if (VIEW === 'side') { e.vy = vy; }
+    else { e.vz = 170; e.z = 0; }
+    hitstop = Math.max(hitstop, 50);
+  }
+  function leap(e, x, y, ms) { e.mode = 'leap'; e.from = [e.x, e.y]; e.to = [x, y]; e.lt = 0; e.ld = ms; }
+  function script() {
+    var A = W.actors, K = A.knight;
+    if (VIEW === 'side') {
+      if (at(500)) strike(K, 1, 'crates-a');
+      if (at(1200)) strike(K, -1, 'crates-b');
+      if (at(1700)) { leap(A.imp, 272, SIDE.GY, 520); K.facing = 1; K.target = 'imp'; }
+      if (at(2500)) strike(K, 1, 'imp', { knock: 'imp', kvx: 620, kvy: 0, r: 1 });
+      if (at(3600)) strike(A.golem, -1, 'boulder', { r: 30, force: 300 });
+      if (at(4400)) strike(A.golem, -1, 'boulder', { r: 30, force: 420 });
+      if (at(6200)) strike(K, -1, 'crystal', { wave: 2, r: 1 });
+      if (at(8200) && A.imp.mode === 'down') { A.imp.x = 410; A.imp.mode = 'rise'; A.imp.downT = 0; }
+    } else {
+      if (at(500)) strike(K, 1, 'crates-r', { r: 30 });
+      if (at(1200)) strike(K, -1, 'crystal-w', { r: 30 });
+      if (at(1900)) strike(K, 1, 'boulder', { r: 30 });
+      if (at(2300)) { leap(A.slimeA, 376, 244, 560); K.target = 'slimeA'; }
+      if (at(3200)) strike(K, 1, 'slimeA', { knock: 'slimeA', kvx: 780, kvy: 18, r: 1 });
+      if (at(3900)) { leap(A.slimeB, 228, 246, 560); }
+      if (at(4500)) { K.facing = -1; K.target = 'slimeB'; }
+      if (at(4700)) strike(K, -1, 'slimeB', { knock: 'slimeB', kvx: 760, kvy: -90, r: 1 });
+      if (at(6000)) strike(K, 1, 'crystal', { wave: 2, r: 1 });
+      if (at(6900)) strike(K, -1, 'boulder-w', { wave: 2, r: 1 });
+      if (at(8200)) { K.facing = 1; K.target = 'slimeA'; }
+    }
+    if (VIEW === 'side' && A.imp.mode === 'idle' && (simT < 1700 || simT > 8900)) { A.imp.facing = -1; }
+  }
+
+  /* ---------- actors ---------- */
+  function stepActor(e) {
+    var d = W.debris;
+    e.t += STEP; if (e.flash > 0) e.flash -= STEP;
+    if (e.mode === 'down' || e.mode === 'rise') { e.downT += STEP; if (e.mode === 'rise' && e.downT >= 260) e.mode = 'idle'; if (e.mode === 'down' && Math.abs(e.downT - 700) < STEP / 2) d.dust(e.x, e.y - 4, { count: 5, size: 13, spread: 26, color: 'soot' }); }
+    if (e.mode === 'leap') {
+      e.lt += STEP; var k = Math.min(1, e.lt / e.ld);
+      e.x = e.from[0] + (e.to[0] - e.from[0]) * k; e.y = e.from[1] + (e.to[1] - e.from[1]) * k; e.z = Math.sin(k * Math.PI) * e.h * 0.9;
+      e.facing = W.actors.knight.x < e.x ? -1 : 1;
+      if (k >= 1) { e.mode = 'idle'; e.z = 0; d.dust(e.x, e.y, { count: 4, size: e.h * 0.3, spread: 30 }); }
+    } else if (e.mode === 'fly') {
+      var sc = VIEW === 'top' ? 0.85 : 1, half = e.h * (e.kit === 'slime' ? 0.48 : 0.36), nx = e.x + e.vx * STEP / 1000, ny;
+      if (VIEW === 'side') {
+        e.vy += 1500 * STEP / 1000; ny = e.y + e.vy * STEP / 1000;
+        var bodyY = ny - e.h * 0.3, gap = !e.hitWall && e.vx > 0 ? anvilGap(e, nx) : 1e9, ext = extentX(e.kit, e.facing > 0 ? 'right' : 'left', e.h, 1);
+        if (gap <= 0) {   // contact where the painted silhouettes meet, not at the centre
+          nx += gap; var v = d.wallHit(e.id, nx + ext * 0.6, bodyY, -1, 0, Math.abs(e.vx), { vx: e.vx, vy: 0, bounce: 0.45, material: 'iron', amp: 10, dustColor: '#8a6a52' });
+          e.vx = v.vx; e.hitWall = true; e.ext = ext; e.wallDir = 1; hitstop = Math.max(hitstop, 80);
+        }
+        if (ny >= SIDE.GY) { ny = SIDE.GY; e.vy = 0; e.vx *= Math.exp(-2.4 * STEP / 1000); }   // sliding on the foot line
+        e.rot = 0;
+        d.touch(nx, ny - e.h * 0.45, half, Math.hypot(e.vx, e.vy), { dx: 0.35 * Math.sign(e.vx), dy: -1, damage: 2, force: 240 });   // pieces pop up where the stack stood, not along with the body
+        e.x = nx; e.y = ny;
+        if (e.hitWall && Math.abs(e.vx) < 40 && e.vy === 0) { e.mode = 'down'; e.vx = 0; e.downT = 0; }
+      } else {
+        e.vz -= 900 * STEP / 1000; e.z = Math.max(0, e.z + e.vz * STEP / 1000); if (e.z === 0 && e.vz < 0) e.vz = e.vz < -150 ? -e.vz * 0.3 : 0;
+        ny = e.y + e.vy * STEP / 1000;
+        var fr = Math.exp(-1.6 * STEP / 1000); e.vx *= fr; e.vy *= fr;
+        var sx2 = Math.sign(e.vx) || 1, ext2 = Math.abs(extentX(e.kit, e.facing > 0 ? 'right' : 'left', e.h, sx2));
+        if (topSolid(nx + sx2 * ext2, e.y) && !topSolid(e.x, e.y)) {   // contact at the sprite's edge
+          var wx = sx2 > 0 ? Math.floor((nx + ext2) / 32) * 32 : (Math.floor((nx - ext2) / 32) + 1) * 32;
+          var vv = d.wallHit(e.id, wx, e.y - 10 - e.z, -sx2, 0, Math.abs(e.vx), { vx: e.vx, vy: e.vy, bounce: 0.45, z: 10, material: 'rock', amp: 9 });
+          e.vx = vv.vx; e.vy = vv.vy; nx = wx - sx2 * (ext2 + 0.5); e.ext = ext2; e.wallDir = sx2; hitstop = Math.max(hitstop, 80);
+        }
+        if (topSolid(e.x, ny + Math.sign(e.vy) * 10)) { e.vy = -e.vy * 0.45; ny = e.y; }
+        e.x = nx; e.y = ny;
+        d.touch(e.x, e.y - 6, half, Math.hypot(e.vx, e.vy), { dx: 0.3 * Math.sign(e.vx), dy: 0, damage: 1, force: 240 });
+        if (Math.hypot(e.vx, e.vy) < 25 && e.z === 0) { e.mode = 'idle'; e.vx = e.vy = 0; }
+        void sc;
+      }
+    }
+    if (e.mode !== 'fly' && e.mode !== 'leap' && e.mode !== 'down' && e.mode !== 'rise' && e.id !== 'knight' && e.id !== 'golem') {
+      var K = W.actors.knight; e.target = 'knight'; e.facing = K.x < e.x ? -1 : 1;
+    }
+    e.a.update(STEP, { facing: e.facing });
+  }
+  function stepWaves() {
+    for (var i = W.waves.length - 1; i >= 0; i--) {
+      var w = W.waves[i]; w.t += STEP;
+      if (!w.done) {
+        w.x += w.dir * 560 * STEP / 1000;
+        var hy = w.gy != null ? w.gy : w.y;
+        if (W.debris.hit(w.x, hy, 22, { dx: w.dir, force: 460, damage: w.dmg }) > 0 || w.x < -40 || w.x > VW + 40 || (VIEW === 'side' ? sideSolid(w.x, w.y) : topSolid(w.x, hy))) { w.done = true; w.end = w.t; }
+      }
+      if (w.done && w.t - w.end > 200) W.waves.splice(i, 1);
+    }
+    for (i = W.slashes.length - 1; i >= 0; i--) { W.slashes[i].t += STEP; if (W.slashes[i].t > 170) W.slashes.splice(i, 1); }
+  }
+  function step() {   // one clock: ?t= and the script both count every step, hit-stop only freezes the world
+    script();
+    if (hitstop > 0) { hitstop -= STEP; W.debris.update(0); }
+    else {
+      for (var id in W.actors) stepActor(W.actors[id]);
+      stepWaves();
+      W.debris.update(STEP);
+    }
+    simT += STEP;
+    if (simT >= LOOP) reset();
+  }
+
+  /* ---------- drawing ---------- */
+  var BG = {};
+  function devCanvas(key, draw) {
+    var dpr = cv.width / VW, k = key + '@' + cv.width;
+    if (BG[k]) return BG[k];
+    var c = document.createElement('canvas'); c.width = cv.width; c.height = cv.height;
+    var g = c.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); draw(g); BG = {}; BG[k] = c; return c;
+  }
+  function h1(x, y, k) { var h = Math.imul(x * 374761393 + y * 668265263 + k * 2246822519, 3266489917); h ^= h >>> 13; h = Math.imul(h, 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; }
+  function drawSideBg(g) {
+    Kit.backdrop(g, 'forge-hall', { x: 0, y: 0, w: VW, h: VH, groundY: SIDE.GY, scroll: -60 });
+  }
+  /* top-down: a painted meadow clearing (painted ground tile) ringed by painted boulders and bushes where the wall tiles are */
+  function stoneAt(g, x, footY, h, k) {
+    var im = h1(k, 3, 50) < 0.72 ? IMG.stone : IMG.bush; if (!im || !im.naturalWidth) return;
+    var hh = im === IMG.bush ? h * 0.7 : h, w = im.naturalWidth * hh / im.naturalHeight, flip = h1(k, 4, 50) < 0.5;
+    g.save(); g.translate(x, footY); if (flip) g.scale(-1, 1);
+    var sg = g.createRadialGradient(0, -2, 1, 0, -2, w * 0.55); sg.addColorStop(0, 'rgba(20,12,8,0.4)'); sg.addColorStop(1, 'rgba(20,12,8,0)');
+    g.fillStyle = sg; g.save(); g.scale(1, 0.3); g.beginPath(); g.arc(0, -6, w * 0.55, 0, Math.PI * 2); g.fill(); g.restore();
+    g.drawImage(im, -w / 2, -hh, w, hh); g.restore();
+  }
+  function drawTopBg(g) {
+    var T = 32, x, y, k = 0, im = IMG.ground;
+    if (im && im.naturalWidth) { var ts = 160; for (y = 0; y < VH; y += ts) for (x = 0; x < VW; x += ts) g.drawImage(im, x, y, ts, ts); }
+    else { g.fillStyle = '#6b6a3e'; g.fillRect(0, 0, VW, VH); }
+    var lg = g.createRadialGradient(VW * 0.48, VH * 0.58, 60, VW * 0.48, VH * 0.58, 420);
+    lg.addColorStop(0, 'rgba(255,214,150,0.12)'); lg.addColorStop(0.7, 'rgba(30,18,30,0.1)'); lg.addColorStop(1, 'rgba(20,10,24,0.55)'); g.fillStyle = lg; g.fillRect(0, 0, VW, VH);
+    // the ring of boulders: back rows first (north), then the sides from top to bottom, then the south edge
+    for (x = -8; x < VW + 20; x += 24) stoneAt(g, x + h1(k, 1, 51) * 8, 34 + h1(k, 2, 51) * 6, 40 + h1(k, 0, 51) * 14, k++);
+    for (x = 4; x < VW; x += 26) stoneAt(g, x + h1(k, 1, 51) * 8, 62 + h1(k, 2, 51) * 4, 34 + h1(k, 0, 51) * 12, k++);
+    for (y = 70; y < VH + 20; y += 22) { stoneAt(g, 18 + h1(k, 1, 52) * 4, y, 34 + h1(k, 0, 52) * 12, k++); stoneAt(g, VW - 20 + h1(k, 1, 52) * 4, y, 34 + h1(k, 0, 52) * 12, k++); }
+    for (x = 20; x < VW - 10; x += 26) stoneAt(g, x + h1(k, 1, 53) * 8, VH + 18, 34 + h1(k, 0, 53) * 10, k++);
+  }
+  function drawPillarTop(g) {   // the boulder cluster on the pillar tiles, drawn in y order with the actors
+    var P = TOPV.PILLAR, x = P[0] * 32, y = P[2] * 32, w = (P[1] - P[0] + 1) * 32, h = (P[3] - P[2] + 1) * 32;
+    stoneAt(g, x + 18, y + 26, 52, 901); stoneAt(g, x + w - 16, y + 30, 48, 905); stoneAt(g, x + 20, y + h + 2, 50, 903); stoneAt(g, x + w - 18, y + h + 4, 54, 907);
+  }
+  function drawActor(g, e, d) {
+    var off = d.offset(e.id), lift = e.z || 0, sq = Math.max(0, 1 - off.sx);
+    if (e.mode === 'fly' || e.mode === 'leap') {
+      if (sq > 0.005 && e.wallDir) {   // squashed against the wall: scale about the contact point, flatter across, only a little taller
+        var cx = e.x + e.wallDir * (e.ext || 0), fy = e.y - lift;
+        g.save(); g.translate(cx, fy); g.scale(1 - Math.min(0.24, sq * 0.6), 1 + Math.min(0.08, sq * 0.2)); g.translate(-cx, -fy);
+        Kit.sprite(g, e.kit, e.x + off.x, e.y + off.y, { h: e.h, facing: e.facing, rot: e.rot || 0, lift: lift });
+        g.restore();
+      } else Kit.sprite(g, e.kit, e.x + off.x, e.y + off.y, { h: e.h, facing: e.facing, flash: e.flash > 0 ? 0.25 : 0, rot: e.rot || 0, lift: lift });
+    } else if (e.mode === 'down' || e.mode === 'rise') {   // defeated: a short hurt flash, then it fades away; later it fades back in
+      var al = e.mode === 'down' ? Math.max(0, 1 - Math.max(0, e.downT - 300) / 450) : Math.min(1, e.downT / 260);
+      if (al > 0) Kit.sprite(g, e.kit, e.x + off.x, e.y + off.y, { h: e.h, facing: e.facing, alpha: al, flash: e.mode === 'down' && e.downT < 300 ? 0.35 : 0, squash: e.mode === 'down' ? -0.06 : 0 });
+    } else e.a.draw(g, e.x + off.x, e.y + off.y, { facing: e.facing, flash: e.flash > 0 ? 0.7 : 0 });
+  }
+  function drawWave(g, w) {   // a gold blade of light with a short hot trail
+    var k = w.done ? Math.max(0, 1 - (w.t - w.end) / 110) : Math.min(1, w.t / 60), x = w.x, y = w.y;
+    g.save(); g.translate(x, y); g.scale(w.dir, 1); g.globalAlpha = k; g.globalCompositeOperation = 'lighter';
+    var gr = g.createRadialGradient(0, 0, 2, 0, 0, 30); gr.addColorStop(0, 'rgba(255,214,120,0.55)'); gr.addColorStop(1, 'rgba(255,140,40,0)');
+    g.fillStyle = gr; g.beginPath(); g.arc(0, 0, 30, 0, Math.PI * 2); g.fill();
+    g.globalCompositeOperation = 'source-over';
+    for (var i = 3; i >= 0; i--) {
+      g.globalAlpha = k * (i ? 0.22 * (4 - i) : 1);
+      g.beginPath(); g.moveTo(-2 - i * 8, -20 + i * 2); g.quadraticCurveTo(16 - i * 8, 0, -2 - i * 8, 20 - i * 2); g.quadraticCurveTo(7 - i * 8, 0, -2 - i * 8, -20 + i * 2); g.closePath();
+      var cg = g.createLinearGradient(-6 - i * 8, 0, 14 - i * 8, 0); cg.addColorStop(0, '#e2741c'); cg.addColorStop(0.6, '#ffc14a'); cg.addColorStop(1, '#fff6d0');
+      g.fillStyle = cg; g.fill();
+    }
+    g.globalAlpha = k; g.strokeStyle = '#7a3a10'; g.lineWidth = 1.2; g.beginPath(); g.moveTo(-2, -20); g.quadraticCurveTo(16, 0, -2, 20); g.stroke();
+    g.restore();
+  }
+
+  function drawSlash(g, s) {
+    var k = s.t / 170, a0 = -1.2, a1 = a0 + 2.0 * Math.min(1, k * 2.2);
+    g.save(); g.translate(s.x, s.y); g.scale(s.dir, 1); g.globalAlpha = (1 - k) * 0.9;
+    g.beginPath(); g.arc(0, 0, s.r, a0, a1); g.arc(0, 0, s.r * 0.72, a1, a0, true); g.closePath();
+    var gr = g.createLinearGradient(0, -s.r, s.r, s.r); gr.addColorStop(0, 'rgba(255,255,255,0.0)'); gr.addColorStop(0.5, 'rgba(255,250,235,0.9)'); gr.addColorStop(1, 'rgba(255,220,160,0.2)');
+    g.fillStyle = gr; g.fill(); g.restore();
+  }
+  function render() {
+    var r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1, w = Math.max(VW, Math.round(r.width * dpr)), hh = Math.round(w * VH / VW);
+    if (cv.width !== w || cv.height !== hh) { cv.width = w; cv.height = hh; }
+    var s = cv.width / VW, d = W.debris, sh = d.shake();
+    ctx.setTransform(s, 0, 0, s, 0, 0); ctx.imageSmoothingEnabled = true;
+    ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
+    ctx.save(); ctx.translate(sh.x, sh.y);
+    ctx.drawImage(devCanvas(VIEW, VIEW === 'side' ? drawSideBg : drawTopBg), -4, -4 * VH / VW, VW + 8, VH + 8 * VH / VW);
+    window.__spriteTrace = [];
+    var A = W.actors, id;
+    if (VIEW === 'side') {
+      Kit.sprite(ctx, 'anvil', SIDE.ANVIL.x, SIDE.GY, { h: SIDE.ANVIL.h });   // painted anvil on its stump: the wall
+      d.drawProps(ctx, 0, 0);
+      var br = d.prop('statue'); if (br) Kit.flame(ctx, br.x, br.y - br.h * 0.78, 40, simT);
+      d.drawGround(ctx, 0, 0);
+      ['golem', 'imp', 'knight'].forEach(function (k) { drawActor(ctx, A[k], d); });
+      W.slashes.forEach(function (s2) { drawSlash(ctx, s2); });
+      d.draw(ctx, 0, 0);
+      W.waves.forEach(function (w2) { drawWave(ctx, w2); });
+    } else {
+      d.drawGround(ctx, 0, 0);
+      var list = [];
+      d.props().forEach(function (p) { list.push({ y: p.y, f: function () { d.drawProp(ctx, p, 0, 0); } }); });
+      for (id in A) (function (e) { list.push({ y: e.y, f: function () { drawActor(ctx, e, d); } }); })(A[id]);
+      list.push({ y: (TOPV.PILLAR[3] + 1) * 32, f: function () { drawPillarTop(ctx); } });
+      list.sort(function (a, b) { return a.y - b.y; }).forEach(function (o) { o.f(); });
+      W.slashes.forEach(function (s2) { drawSlash(ctx, s2); });
+      d.draw(ctx, 0, 0);
+      W.waves.forEach(function (w2) { drawWave(ctx, w2); });
+    }
+    ctx.restore();
+    // soft vignette
+    var vg = ctx.createRadialGradient(VW / 2, VH / 2, VH * 0.45, VW / 2, VH / 2, VW * 0.62); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(10,4,16,0.35)');
+    ctx.fillStyle = vg; ctx.fillRect(0, 0, VW, VH);
+  }
+
+  /* ---------- page ---------- */
+  function stateNow() {
+    var A = W.actors, out = [], d = W.debris;
+    for (var id in A) {
+      var e = A[id], tgt = e.target, tx = null;
+      if (tgt && A[tgt]) tx = tgt; else if (tgt && d.prop(tgt)) tx = Math.round(d.prop(tgt).x); else if (tgt && e.tx != null) tx = e.tx;   // a prop it just broke: where it was
+      var o = { id: e.id, x: Math.round(e.x), y: Math.round(e.y), facing: e.facing > 0 ? 'right' : 'left', target: tx, vx: Math.round(e.vx || 0), asset: e.kit, mode: e.mode };
+      if (e.mode === 'down') o.noFace = 'defeated, fading out';
+      if (tx == null && e.mode === 'idle' && e.id === 'knight') o.target = null;
+      out.push(o);
+    }
+    var st = d.stats();
+    return { t: Math.round(simT), view: VIEW, actors: out, events: W.log.slice(), debris: { pieces: st.pieces, sleeping: st.sleeping, props: st.props, breaks: st.breaks, wallHits: st.wallHits, inWalls: d.audit(), peak: st.peak } };
+  }
+  window.__state = stateNow;
+  window.__debris = function () { return W.debris; };
+
+  function buildControls() {
+    var box = document.getElementById('ctl'); box.innerHTML = '';
+    PARAMS.forEach(function (p) {
+      var l = document.createElement('label'), b = document.createElement('b'), i = document.createElement('input');
+      i.type = 'range'; i.min = p[2]; i.max = p[3]; i.step = p[4]; i.value = params[p[0]];
+      b.textContent = p[1] + ': ' + params[p[0]];
+      i.oninput = function () { params[p[0]] = +i.value; b.textContent = p[1] + ': ' + i.value; W.debris.setParams(params); };
+      l.appendChild(b); l.appendChild(i); box.appendChild(l);
+    });
+    document.getElementById('vSide').className = VIEW === 'side' ? 'on' : '';
+    document.getElementById('vTop').className = VIEW === 'top' ? 'on' : '';
+  }
+  function setView(v) { VIEW = v; W = null; reset(); buildControls(); }
+  document.getElementById('vSide').onclick = function () { setView('side'); };
+  document.getElementById('vTop').onclick = function () { setView('top'); };
+  document.getElementById('replay').onclick = function () { reset(); };
+  document.getElementById('all').onclick = function () { W.debris.props().slice().forEach(function (p) { W.debris.breakProp(p.id, { dx: p.x < VW / 2 ? -1 : 1, force: 420 }); }); };
+  cv.addEventListener('pointerdown', function (ev) {
+    var r = cv.getBoundingClientRect(), x = (ev.clientX - r.left) / r.width * VW, y = (ev.clientY - r.top) / r.height * VH, K = W.actors.knight, d = W.debris;
+    var n = d.hit(x, VIEW === 'top' ? y + 10 : y, 22, { dx: x - K.x, dy: 0, force: 420, damage: 9, x: x, y: y });   // the anvil (fixed) only gives a spark of dust
+    if (!n) d.dust(x, VIEW === 'side' ? Math.min(y, SIDE.GY) : y, { count: 4, size: 9, spread: 26 });   // empty ground: a small puff, no pieces
+  });
+  var lastStats = 0;
+  function showStats() {   // the live counters go to the page title tooltip only (no debug readout on the page)
+    var s = W.debris.stats(); document.getElementById('stage').title =
+    'pieces ' + s.pieces + ' (resting ' + s.sleeping + ') · peak ' + s.peak + ' of ' + s.cap + ' · props ' + s.props + ' · breaks ' + s.breaks + ' · wall bumps ' + s.wallHits;
+  }
+
+  Kit.ready(function () { loadImages(boot); });
+  function boot() {
+    anvilWall(); reset(); buildControls();
+    if (T0 !== null) {
+      for (var n = Math.floor(T0 / STEP); n > 0; n--) step();
+      render(); showStats();
+      if (FREEZE) { window.__frozen = true; document.documentElement.dataset.frozen = '1'; return; }
+    }
+    var acc = 0, prev = null;
+    (function frame(now) {
+      if (prev === null) prev = now;
+      acc += Math.min(250, now - prev); prev = now;
+      while (acc >= STEP) { step(); acc -= STEP; }
+      render();
+      if (now - lastStats > 250) { lastStats = now; showStats(); }
+      requestAnimationFrame(frame);
+    })(performance.now());
+  }
+  addEventListener('resize', function () { if (FREEZE && W) render(); });
+})();
+</script>
+</body>
+</html>

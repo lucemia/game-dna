@@ -1,0 +1,182 @@
+{
+ "id": "raycast-dungeon",
+ "code": "K-03",
+ "kind": "system",
+ "name": "Raycast dungeon",
+ "family": "First-person crawl",
+ "oneLiner": "A first-person grid dungeon crawler drawn by raycasting: one DDA ray per screen column with the perpendicular distance (no fisheye, no gaps), 64 x 64 code-drawn wall textures per theme (brick cellars, mossy halls, a basalt vault with glowing seams), torch walls with animated flames that light the cells around them, banners, doors that slide open in the middle of their cell, a stair arch, cast floors and ceilings, distance fog and a lantern; monsters and items are billboards drawn column by column against the wall depth, with idle, wind-up, strike and hurt frames, a solid white hit flash and a sidestep on a miss. The hero steps one cell and turns 90 degrees with smooth tweens, strikes what stands in front with a first-person sword, opens doors, drinks tonics, takes the stairs; every step, strike or wait is a turn after which every awake monster moves or attacks. Seeded floors (rooms, maze corridors, loops, doors, torches) or floors from data, a minimap and a full map, a HUD, a message log, combat labels that never cover a character or the HUD, and a bot that plays through the same rules.",
+ "fits": [
+  "first-person dungeon crawlers and blobbers",
+  "a dungeon mode inside an RPG or an adventure game",
+  "short daily-seed delves",
+  "retro 2.5D games that want a pseudo-3D view without WebGL"
+ ],
+ "notFor": [
+  "free-moving first-person action (the hero steps on a grid)",
+  "games that need height, stairs inside the view or sloped floors (one floor height)",
+  "side-view or top-down games (use B-12 dungeon floors for a top-down crawl)"
+ ],
+ "interfaces": {
+  "time": "turn",
+  "coords": "pseudo3d",
+  "layer": "scene",
+  "needs": [
+   "a seed per run and a fixed 60 Hz update step (turns are input-driven; tweens and animations run on the step)",
+   "key or tap input routed to the dungeon while it runs (forward, back, turn, step aside, strike, wait, tonic, map) and held keys",
+   "a canvas 2D context and a logical view rect, ideally an integer number of device px per art px",
+   "optional: monsters, items and hand-made floors as data",
+   "a place to go when the run is won or lost"
+  ],
+  "provides": [
+   "the floors: rooms, maze corridors, loops, doors, torch and banner walls, a stair arch, monsters and items by budget, a boss on the last floor; or floors from rows of characters",
+   "the rules: grid steps and 90 degree turns, bump to strike or open, hits with evade / crit / defence, monster wake, chase and erratic steps, speed, XP and levels, tonics",
+   "the view: DDA raycaster (perpendicular distance, one ray per column), textured walls, sliding doors, cast floors and ceilings, torch light map, lantern, fog, billboards with per-column depth, the first-person sword with idle, wind-up, strike and hurt poses",
+   "the screen: HUD (HP, tonics, gold, level, floor, compass), minimap, full map, message log, floor banner, combat labels beside their owner, hurt vignette and hit-direction marks",
+   "hit site onHit on the impact frame (read-only), onEvent (floorStart, turn, move, attack, wake, door, death, pickup, potion, heal, levelUp, descend, end), onEnd(result, info)",
+   "a bot that explores, fights, loots and descends through the same rules",
+   "anchors (monster billboard boxes, the hero's sword), unit rects, UI rects, field rect, labels, actors() text state, pure castColumns / renderView for tools"
+  ]
+ },
+ "params": [
+  {
+   "key": "floors",
+   "label": "Floors per run",
+   "type": "range",
+   "min": 1,
+   "max": 6,
+   "step": 1,
+   "default": 3
+  },
+  {
+   "key": "size",
+   "label": "Floor size (cells)",
+   "type": "range",
+   "min": 11,
+   "max": 25,
+   "step": 2,
+   "default": 15
+  },
+  {
+   "key": "rooms",
+   "label": "Rooms per floor",
+   "type": "range",
+   "min": 1,
+   "max": 8,
+   "step": 1,
+   "default": 4
+  },
+  {
+   "key": "doors",
+   "label": "Share of room openings with a door",
+   "type": "range",
+   "min": 0,
+   "max": 1,
+   "step": 0.05,
+   "default": 0.5
+  },
+  {
+   "key": "density",
+   "label": "Monster budget",
+   "type": "range",
+   "min": 0,
+   "max": 2.5,
+   "step": 0.1,
+   "default": 1
+  },
+  {
+   "key": "fov",
+   "label": "Field of view (degrees)",
+   "type": "range",
+   "min": 50,
+   "max": 100,
+   "step": 1,
+   "default": 76
+  },
+  {
+   "key": "fog",
+   "label": "Fog density",
+   "type": "range",
+   "min": 0,
+   "max": 0.6,
+   "step": 0.02,
+   "default": 0.24
+  },
+  {
+   "key": "lantern",
+   "label": "Lantern reach (cells)",
+   "type": "range",
+   "min": 2,
+   "max": 9,
+   "step": 0.5,
+   "default": 4.5
+  },
+  {
+   "key": "minimap",
+   "label": "Minimap",
+   "type": "select",
+   "options": [
+    "on",
+    "off"
+   ],
+   "default": "on"
+  },
+  {
+   "key": "numbers",
+   "label": "Combat labels (off when an addon draws its own)",
+   "type": "select",
+   "options": [
+    "on",
+    "off"
+   ],
+   "default": "on"
+  }
+ ],
+ "variants": [
+  {
+   "name": "Standard (default)",
+   "params": {}
+  },
+  {
+   "name": "Labyrinth: big floors, few rooms",
+   "params": {
+    "size": 23,
+    "rooms": 2,
+    "doors": 0.8
+   }
+  },
+  {
+   "name": "Dark: thick fog, short lantern",
+   "params": {
+    "fog": 0.42,
+    "lantern": 3
+   }
+  },
+  {
+   "name": "Wide angle",
+   "params": {
+    "fov": 90
+   }
+  },
+  {
+   "name": "Crowded",
+   "params": {
+    "density": 2
+   }
+  },
+  {
+   "name": "One deep floor",
+   "params": {
+    "floors": 1,
+    "size": 21
+   }
+  }
+ ],
+ "assets": "module/raycast-dungeon.js (global GameDNA_RaycastDungeon, no dependencies; API in module/README.md). Everything is made in code at load time: 64 x 64 textures for brick, mossy stone and basalt walls, torch walls (3 flame frames), banners, the door, the stair arch, flagstone, mossy and cinder floors, beam and rock ceilings; billboards for the Gloom Slime, Cave Bat, Grave Knight and the Mire King (idle, wind-up, strike, hurt) and three item looks; the first-person sword in six poses; the 7 px pixel font (shared design with B-12 / C-03). No image files, no new generated art.",
+ "status": "v1-module",
+ "module": {
+  "file": "module/raycast-dungeon.js",
+  "global": "GameDNA_RaycastDungeon",
+  "version": "1.3.1"
+ },
+ "starter": "starter/index.html"
+}

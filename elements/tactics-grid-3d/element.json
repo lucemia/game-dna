@@ -1,0 +1,56 @@
+{
+  "id": "tactics-grid-3d",
+  "code": "N-03",
+  "name": "3D tactics battlefield on a heightmap grid",
+  "family": "B: map & movement",
+  "kind": "system",
+  "oneLiner": "A small three.js battlefield of terraced tiles (grass, stone, sand, water) with trees, rocks and ruins: select a unit to see its move range (height cost, jump limit, water), a path arrow over the terraces, attack and enemy threat ranges; turn the camera in 90-degree steps and zoom; low-poly units walk tile by tile, hop up terraces, lunge, cast, flinch and fall, always facing where they go or whom they hit.",
+  "fits": ["grid tactics", "tactical RPG in 3D", "turn-based skirmish", "board-game adaptations with height"],
+  "notFor": ["real-time action", "free (non-grid) movement", "hex grids", "pixel-art 2D games (use B-01 / B-04)", "devices without WebGL as the main target (a 2D fallback map is shown)"],
+  "interfaces": {
+    "time": "turn",
+    "coords": "grid",
+    "layer": "scene",
+    "needs": [
+      "three.js 0.149.0 (window.THREE, three.min.js next to the page)",
+      "a WebGL canvas and a 2D overlay canvas stacked on it",
+      "map rows: height level per tile, terrain per tile (grass / stone / sand / water), props (tree, pine, rock, ruin)",
+      "unit list {id, side, cls, x, z, hp, mv, jump, rng}",
+      "a fixed-step update (60 Hz) and a draw pass"
+    ],
+    "provides": [
+      "rules: reachOf (move points, height cost, jump / fall limits, water and props block, enemies block), pathTo, attackTiles, canHit, threatOf",
+      "overlays: move, attack, threat, target tiles, path arrow, cursor",
+      "animation: walk tile by tile with hops, melee lunge, cast / arrow projectiles, hurt, defeat, with onStep / onImpact / onDone callbacks",
+      "camera: 90-degree turns, zoom, follow, shake; screen-direction to grid-direction mapping",
+      "data: anchorOf(id) world->screen box, pickTile(x, y), tileToScreen, state() with facesMove / facesTarget / feetOk"
+    ]
+  },
+  "params": [
+    { "key": "zoom", "label": "Zoom", "type": "float", "min": 0.7, "max": 2.2, "step": 0.05, "default": 2 },
+    { "key": "camStep", "label": "Camera turn (x 90 deg)", "type": "int", "min": 0, "max": 3, "step": 1, "default": 0 },
+    { "key": "pitch", "label": "Camera pitch (deg)", "type": "int", "min": 24, "max": 55, "step": 1, "default": 33 },
+    { "key": "light", "label": "Light", "type": "select", "options": ["day", "dusk"], "default": "day" },
+    { "key": "overlay", "label": "Range overlay", "type": "select", "options": ["pulse", "solid", "outline"], "default": "pulse" },
+    { "key": "grid", "label": "Grid line opacity", "type": "float", "min": 0, "max": 0.5, "step": 0.02, "default": 0.22 },
+    { "key": "shadows", "label": "Shadows", "type": "select", "options": ["soft", "off"], "default": "soft" },
+    { "key": "unitHeight", "label": "Unit height (tiles)", "type": "float", "min": 0.7, "max": 1.2, "step": 0.02, "default": 0.95 },
+    { "key": "jump", "label": "Default jump (levels)", "type": "int", "min": 1, "max": 4, "step": 1, "default": 2 },
+    { "key": "climbCost", "label": "Extra move cost per level climbed", "type": "int", "min": 0, "max": 2, "step": 1, "default": 1 },
+    { "key": "walkMs", "label": "Walk time per tile (ms)", "type": "int", "min": 150, "max": 450, "step": 10, "default": 250 }
+  ],
+  "variants": [
+    { "name": "Terrace skirmish (default)", "params": { "zoom": 2, "camStep": 0, "pitch": 33, "light": "day", "overlay": "pulse", "grid": 0.22, "shadows": "soft", "unitHeight": 0.95, "jump": 2, "climbCost": 1, "walkMs": 250 } },
+    { "name": "Dusk, steep camera", "params": { "zoom": 1.4, "camStep": 1, "pitch": 45, "light": "dusk", "overlay": "solid", "grid": 0.15, "shadows": "soft", "unitHeight": 0.95, "jump": 2, "climbCost": 1, "walkMs": 250 } },
+    { "name": "Flat-cost board", "params": { "zoom": 1.3, "camStep": 0, "pitch": 33, "light": "day", "overlay": "outline", "grid": 0.3, "shadows": "soft", "unitHeight": 0.9, "jump": 4, "climbCost": 0, "walkMs": 200 } },
+    { "name": "Low-end device", "params": { "zoom": 2, "camStep": 0, "pitch": 33, "light": "day", "overlay": "solid", "grid": 0.22, "shadows": "off", "unitHeight": 0.95, "jump": 2, "climbCost": 1, "walkMs": 250 } }
+  ],
+  "assets": "none: terrain textures, props, units, sky, overlays and UI are drawn by code; three.js 0.149.0 (MIT) is the only dependency (vendor/three@0.149.0/three.min.js, copied next to the page as three.min.js)",
+  "status": "draft",
+  "delivery": { "version": "v1", "module": "module/tactics-grid-3d.js", "global": "GameDNA_TacticsGrid3D", "readme": "module/README.md", "three": "0.149.0" },
+  "starter": "starter/index.html",
+  "starterReadme": "starter/README.md",
+  "starterFiles": ["three.min.js"],
+  "facing": { "facingOffset": "-PI/2 (built-in figures are modelled nose on +X)", "check": "checks/facing-3d.py", "sheet": "checks/facing-3d/sheet.png" },
+  "basketFiles": [{"from": "vendor/three@0.149.0/three.min.js", "to": "three.min.js"}]
+}

@@ -1,0 +1,1180 @@
+{
+ "format": "gamedna-assets/1",
+ "pack": "demo-kit: shared HD demo cast, props and backdrops (demo pages only)",
+ "generated": {
+  "tool": "codex image_gen.imagegen (built-in)",
+  "model": "image generator",
+  "effort": "high",
+  "date": "2026-11-17",
+  "calls": 12
+ },
+ "styleLock": {
+  "text": "prompts/style-lock.txt",
+  "referenceNote": "elements/cutout-characters/assets/gen/mother/lineup.png (our own L-10 line-up)"
+ },
+ "riggedAtlases": [
+  {
+   "file": "elements/cutout-characters/assets/chars/mage.webp",
+   "sha256": "94f7cfcda39bf328d85a29c4a4cdbae75443c5ea83db4b025542972972056638",
+   "bytes": 54594
+  },
+  {
+   "file": "elements/cutout-characters/assets/chars/spear.webp",
+   "sha256": "38ad054ab24abb85019187e2bffabbd027fad16c69b91dd6fd9063971da5c4f3",
+   "bytes": 63320
+  },
+  {
+   "file": "elements/cutout-characters/assets/chars/sword.webp",
+   "sha256": "64c34036aa646c932dfd1eebf9fa46d61577960f8a107ea514ca489c92d1b218",
+   "bytes": 61968
+  }
+ ],
+ "assets": [
+  {
+   "key": "golem",
+   "role": "sprite",
+   "file": "sprites/golem.webp",
+   "w": 485,
+   "h": 471,
+   "bytes": 65040,
+   "sha256": "a68e5881d9005a9d869d3bc87c17c290c45071624888cea8136f65c65d3a4eb8",
+   "alpha": true,
+   "source": {
+    "run": "gen/monsters-a",
+    "file": "monsters-a.png",
+    "sha256": "c1d6e6734bc73707da6d416b918083e60073c248e591f76bcfb04722d3c43e89"
+   },
+   "prompt": [
+    "gen/monsters-a/PROMPT.md",
+    "gen/monsters-a/GEN.md"
+   ],
+   "post": [
+    "alpha lo 48 hi 200",
+    "split by transparent columns",
+    "drop painted contact shadow",
+    "defringe 3",
+    "resize body to 470 px",
+    "alpha hi 200 lo 16 + defringe 3 again",
+    "webp q90 exact"
+   ],
+   "baseline": 471,
+   "bodyTop": 1,
+   "cx": 239.0,
+   "bodyW": 485,
+   "bodyH": 470
+  },
+  {
+   "key": "slime",
+   "role": "sprite",
+   "file": "sprites/slime.webp",
+   "w": 336,
+   "h": 211,
+   "bytes": 16848,
+   "sha256": "8a115a80410831da5205d64a469d1ed09e30f1bb8347617d3debace0ad8e8c5c",
+   "alpha": true,
+   "source": {
+    "run": "gen/monsters-a",
+    "file": "monsters-a.png",
+    "sha256": "c1d6e6734bc73707da6d416b918083e60073c248e591f76bcfb04722d3c43e89"
+   },
+   "prompt": [
+    "gen/monsters-a/PROMPT.md",
+    "gen/monsters-a/GEN.md"
+   ],
+   "post": [
+    "alpha lo 48 hi 200",
+    "split by transparent columns",
+    "drop painted contact shadow",
+    "defringe 3",
+    "resize body to 210 px",
+    "alpha hi 200 lo 16 + defringe 3 again",
+    "webp q90 exact"
+   ],
+   "baseline": 211,
+   "bodyTop": 0,
+   "cx": 167.5,
+   "bodyW": 336,
+   "bodyH": 211
+  },
+  {
+   "key": "imp",
+   "role": "sprite",
+   "file": "sprites/imp.webp",
+   "w": 277,
+   "h": 270,
+   "bytes": 26164,
+   "sha256": "453d504275a1be60e05fa43b69c3e5587c24849afda24e8762b2090099e943a8",
+   "alpha": true,
+   "source": {
+    "run": "gen/monsters-a",
+    "file": "monsters-a.png",
+    "sha256": "c1d6e6734bc73707da6d416b918083e60073c248e591f76bcfb04722d3c43e89"
+   },
+   "prompt": [
+    "gen/monsters-a/PROMPT.md",
+    "gen/monsters-a/GEN.md"
+   ],
+   "post": [
+    "alpha lo 48 hi 200",
+    "split by transparent columns",
+    "drop painted contact shadow",
+    "defringe 3",
+    "resize body to 270 px",
+    "alpha hi 200 lo 16 + defringe 3 again",
+    "webp q90 exact"
+   ],
+   "baseline": 270,
+   "bodyTop": 0,
+   "cx": 140.0,
+   "bodyW": 276,
+   "bodyH": 270
+  },
+  {
+   "key": "wisp",
+   "role": "sprite",
+   "file": "sprites/wisp.webp",
+   "w": 132,
+   "h": 231,
+   "bytes": 8802,
+   "sha256": "c14801cc24d768045cee52ac33fb691cf647e4f7850d4c5d67050480a149d246",
+   "alpha": true,
+   "source": {
+    "run": "gen/monsters-a",
+    "file": "monsters-a.png",
+    "sha256": "c1d6e6734bc73707da6d416b918083e60073c248e591f76bcfb04722d3c43e89"
+   },
+   "prompt": [
+    "gen/monsters-a/PROMPT.md",
+    "gen/monsters-a/GEN.md"
+   ],
+   "post": [
+    "alpha lo 48 hi 200",
+    "split by transparent columns",
+    "drop painted contact shadow",
+    "defringe 3",
+    "resize body to 230 px",
+    "alpha hi 200 lo 16 + defringe 3 again",
+    "webp q90 exact"
+   ],
+   "baseline": 231,
+   "bodyTop": 0,
+   "cx": 65.0,
+   "bodyW": 131,
+   "bodyH": 231
+  },
+  {
+   "key": "skeleton",
+   "role": "sprite",
+   "file": "sprites/skeleton.webp",
+   "w": 283,
+   "h": 370,
+   "bytes": 36500,
+   "sha256": "dcab01318c9064abe3f140ebaf1ce6e70fc027623964d98e46e3cdb48a71316a",
+   "alpha": true,
+   "source": {
+    "run": "gen/monsters-b",
+    "file": "monsters-b.png",
+    "sha256": "2bec7ec5b6a36e9392319039a532d63776af2e40f7a41d216537ec19fb4984fe"
+   },
+   "prompt": [
+    "gen/monsters-b/PROMPT.md",
+    "gen/monsters-b/GEN.md"
+   ],
+   "post": [
+    "alpha lo 48 hi 200",
+    "split by transparent columns",
+    "drop painted contact shadow",
+    "defringe 3",
+    "resize body to 370 px",
+    "alpha hi 200 lo 16 + defringe 3 again",
+    "webp q90 exact"
+   ],
+   "baseline": 370,
+   "bodyTop": 0,
+   "cx": 131.0,
+   "bodyW": 281,
+   "bodyH": 370
+  },
+  {
+   "key": "harpy",
+   "role": "sprite",
+   "file": "sprites/harpy.webp",
+   "w": 513,
+   "h": 400,
+   "bytes": 57270,
+   "sha256": "5f88a4b1a0f2a3e98e725f93898fad052e47051b3cc5ad36d9783dc24501ae70",
+   "alpha": true,
+   "source": {
+    "run": "gen/monsters-b",
+    "file": "monsters-b.png",
+    "sha256": "2bec7ec5b6a36e9392319039a532d63776af2e40f7a41d216537ec19fb4984fe"
+   },
+   "prompt": [
+    "gen/monsters-b/PROMPT.md",
+    "gen/monsters-b/GEN.md"
+   ],
+   "post": [
+    "alpha lo 48 hi 200",
+    "split by transparent columns",
+    "drop painted contact shadow",
+    "defringe 3",
+    "resize body to 400 px",
+    "alpha hi 200 lo 16 + defringe 3 again",
+    "webp q90 exact"
+   ],
+   "baseline": 400,
+   "bodyTop": 0,
+   "cx": 256.0,
+   "bodyW": 513,
+   "bodyH": 400
+  },
+  {
+   "key": "cultist",
+   "role": "sprite",
+   "file": "sprites/cultist.webp",
+   "w": 330,
+   "h": 371,
+   "bytes": 35390,
+   "sha256": "03dc20cd37ca077117a6350715b742206592cb6359e4ed0741e297df8b205318",
+   "alpha": true,
+   "source": {
+    "run": "gen/monsters-b",
+    "file": "monsters-b.png",
+    "sha256": "2bec7ec5b6a36e9392319039a532d63776af2e40f7a41d216537ec19fb4984fe"
+   },
+   "prompt": [
+    "gen/monsters-b/PROMPT.md",
+    "gen/monsters-b/GEN.md"
+   ],
+   "post": [
+    "alpha lo 48 hi 200",
+    "split by transparent columns",
+    "drop painted contact shadow",
+    "defringe 3",
+    "resize body to 370 px",
+    "alpha hi 200 lo 16 + defringe 3 again",
+    "webp q90 exact"
+   ],
+   "baseline": 371,
+   "bodyTop": 0,
+   "cx": 131.5,
+   "bodyW": 330,
+   "bodyH": 371
+  },
+  {
+   "key": "wolf",
+   "role": "sprite",
+   "file": "sprites/wolf.webp",
+   "w": 376,
+   "h": 261,
+   "bytes": 33552,
+   "sha256": "9dbd5adb1669c9657c3c31c0fe7af92302744d26afe446466f17b7c4a391048b",
+   "alpha": true,
+   "source": {
+    "run": "gen/monsters-b",
+    "file": "monsters-b.png",
+    "sha256": "2bec7ec5b6a36e9392319039a532d63776af2e40f7a41d216537ec19fb4984fe"
+   },
+   "prompt": [
+    "gen/monsters-b/PROMPT.md",
+    "gen/monsters-b/GEN.md"
+   ],
+   "post": [
+    "alpha lo 48 hi 200",
+    "split by transparent columns",
+    "drop painted contact shadow",
+    "defringe 3",
+    "resize body to 260 px",
+    "alpha hi 200 lo 16 + defringe 3 again",
+    "webp q90 exact"
+   ],
+   "baseline": 261,
+   "bodyTop": 1,
+   "cx": 202.5,
+   "bodyW": 375,
+   "bodyH": 260
+  },
+  {
+   "key": "keeper",
+   "role": "sprite",
+   "file": "sprites/keeper.webp",
+   "w": 203,
+   "h": 360,
+   "bytes": 25250,
+   "sha256": "8377f98f09424cd4aae31b6f8f637eebc6c0159f2684b165071e60390076db7d",
+   "alpha": true,
+   "source": {
+    "run": "gen/folk",
+    "file": "folk.png",
+    "sha256": "b8a3f248b00f1364ae75cfdbc20cd4957358d1df37a37c5db45134573d0ba04d"
+   },
+   "prompt": [
+    "gen/folk/PROMPT.md",
+    "gen/folk/GEN.md"
+   ],
+   "post": [
+    "alpha lo 48 hi 200",
+    "split by transparent columns",
+    "drop painted contact shadow",
+    "defringe 3",
+    "resize body to 360 px",
+    "alpha hi 200 lo 16 + defringe 3 again",
+    "webp q90 exact"
+   ],
+   "baseline": 360,
+   "bodyTop": 0,
+   "cx": 105.5,
+   "bodyW": 203,
+   "bodyH": 360
+  },
+  {
+   "key": "archer",
+   "role": "sprite",
+   "file": "sprites/archer.webp",
+   "w": 199,
+   "h": 381,
+   "bytes": 31514,
+   "sha256": "f05db2e0ac00eae2e71a2f0c8b39d8f98706df3f30e2ed74a2721c6f7ed3dbac",
+   "alpha": true,
+   "source": {
+    "run": "gen/folk",
+    "file": "folk.png",
+    "sha256": "b8a3f248b00f1364ae75cfdbc20cd4957358d1df37a37c5db45134573d0ba04d"
+   },
+   "prompt": [
+    "gen/folk/PROMPT.md",
+    "gen/folk/GEN.md"
+   ],
+   "post": [
+    "alpha lo 48 hi 200",
+    "split by transparent columns",
+    "drop painted contact shadow",
+    "defringe 3",
+    "resize body to 380 px",
+    "alpha hi 200 lo 16 + defringe 3 again",
+    "webp q90 exact"
+   ],
+   "baseline": 381,
+   "bodyTop": 0,
+   "cx": 97.0,
+   "bodyW": 199,
+   "bodyH": 381
+  },
+  {
+   "key": "knight",
+   "role": "sprite",
+   "file": "sprites/knight.webp",
+   "w": 259,
+   "h": 380,
+   "bytes": 33400,
+   "sha256": "47583abf4d6f50bdea9f2e2b6fbb53da2a3119525f37c63fa6cb3cfbae2f35e1",
+   "alpha": true,
+   "source": {
+    "run": "gen/folk",
+    "file": "folk.png",
+    "sha256": "b8a3f248b00f1364ae75cfdbc20cd4957358d1df37a37c5db45134573d0ba04d"
+   },
+   "prompt": [
+    "gen/folk/PROMPT.md",
+    "gen/folk/GEN.md"
+   ],
+   "post": [
+    "alpha lo 48 hi 200",
+    "split by transparent columns",
+    "drop painted contact shadow",
+    "defringe 3",
+    "resize body to 380 px",
+    "alpha hi 200 lo 16 + defringe 3 again",
+    "webp q90 exact"
+   ],
+   "baseline": 380,
+   "bodyTop": 0,
+   "cx": 129.5,
+   "bodyW": 259,
+   "bodyH": 380
+  },
+  {
+   "key": "herbalist",
+   "role": "sprite",
+   "file": "sprites/herbalist.webp",
+   "w": 201,
+   "h": 340,
+   "bytes": 25900,
+   "sha256": "0b7f95fa5c4c2715b91be56f3a0ded84bb506f22801e1200e3076769e9037e7d",
+   "alpha": true,
+   "source": {
+    "run": "gen/folk",
+    "file": "folk.png",
+    "sha256": "b8a3f248b00f1364ae75cfdbc20cd4957358d1df37a37c5db45134573d0ba04d"
+   },
+   "prompt": [
+    "gen/folk/PROMPT.md",
+    "gen/folk/GEN.md"
+   ],
+   "post": [
+    "alpha lo 48 hi 200",
+    "split by transparent columns",
+    "drop painted contact shadow",
+    "defringe 3",
+    "resize body to 340 px",
+    "alpha hi 200 lo 16 + defringe 3 again",
+    "webp q90 exact"
+   ],
+   "baseline": 340,
+   "bodyTop": 0,
+   "cx": 99.5,
+   "bodyW": 201,
+   "bodyH": 340
+  },
+  {
+   "key": "golem@left",
+   "role": "sprite",
+   "file": "sprites/golem-left.webp",
+   "w": 441,
+   "h": 470,
+   "bytes": 68224,
+   "sha256": "be273f512b2069a8a183903f3255ee1ca12015c0a19a6442a98a7e74edc47029",
+   "alpha": true,
+   "source": {
+    "run": "gen/monsters-a-left",
+    "file": "monsters-a-left.png",
+    "sha256": "4cb44eff6a83b2d5f8070e54648b8f5a36d0a0a3ed79c51f0d1de103eea7192a"
+   },
+   "prompt": [
+    "gen/monsters-a-left/PROMPT.md",
+    "gen/monsters-a-left/GEN.md"
+   ],
+   "variantOf": "golem",
+   "facing": "left",
+   "reference": "gen/monsters-a-left/refs/",
+   "post": [
+    "alpha lo 48 hi 200",
+    "split by transparent columns",
+    "drop painted contact shadow",
+    "defringe 3",
+    "resize body to 470 px",
+    "alpha hi 200 lo 16 + defringe 3 again",
+    "webp q90 exact"
+   ],
+   "baseline": 470,
+   "bodyTop": 0,
+   "cx": 221.5,
+   "bodyW": 441,
+   "bodyH": 470
+  },
+  {
+   "key": "slime@left",
+   "role": "sprite",
+   "file": "sprites/slime-left.webp",
+   "w": 315,
+   "h": 211,
+   "bytes": 16234,
+   "sha256": "939023124be00ce424e537e99c4f9c3f272fb6d7ec294111468bc052ff15feed",
+   "alpha": true,
+   "source": {
+    "run": "gen/monsters-a-left",
+    "file": "monsters-a-left.png",
+    "sha256": "4cb44eff6a83b2d5f8070e54648b8f5a36d0a0a3ed79c51f0d1de103eea7192a"
+   },
+   "prompt": [
+    "gen/monsters-a-left/PROMPT.md",
+    "gen/monsters-a-left/GEN.md"
+   ],
+   "variantOf": "slime",
+   "facing": "left",
+   "reference": "gen/monsters-a-left/refs/",
+   "post": [
+    "alpha lo 48 hi 200",
+    "split by transparent columns",
+    "drop painted contact shadow",
+    "defringe 3",
+    "resize body to 210 px",
+    "alpha hi 200 lo 16 + defringe 3 again",
+    "webp q90 exact"
+   ],
+   "baseline": 211,
+   "bodyTop": 0,
+   "cx": 157.5,
+   "bodyW": 314,
+   "bodyH": 211
+  },
+  {
+   "key": "imp@left",
+   "role": "sprite",
+   "file": "sprites/imp-left.webp",
+   "w": 260,
+   "h": 271,
+   "bytes": 26448,
+   "sha256": "5c16580cb9f9df7e96c16eafe910c73e5bfa65d38b741d48d4086303e85d4cb1",
+   "alpha": true,
+   "source": {
+    "run": "gen/monsters-a-left",
+    "file": "monsters-a-left.png",
+    "sha256": "4cb44eff6a83b2d5f8070e54648b8f5a36d0a0a3ed79c51f0d1de103eea7192a"
+   },
+   "prompt": [
+    "gen/monsters-a-left/PROMPT.md",
+    "gen/monsters-a-left/GEN.md"
+   ],
+   "variantOf": "imp",
+   "facing": "left",
+   "reference": "gen/monsters-a-left/refs/",
+   "post": [
+    "alpha lo 48 hi 200",
+    "split by transparent columns",
+    "drop painted contact shadow",
+    "defringe 3",
+    "resize body to 270 px",
+    "alpha hi 200 lo 16 + defringe 3 again",
+    "webp q90 exact"
+   ],
+   "baseline": 271,
+   "bodyTop": 0,
+   "cx": 129.5,
+   "bodyW": 259,
+   "bodyH": 271
+  },
+  {
+   "key": "wisp@right",
+   "role": "sprite",
+   "file": "sprites/wisp-right.webp",
+   "w": 134,
+   "h": 231,
+   "bytes": 9466,
+   "sha256": "abd97efa887698a42d5dc6f263517aa7fb231f3fb06e55eb134ed3c857658d01",
+   "alpha": true,
+   "source": {
+    "run": "gen/monsters-a-left",
+    "file": "monsters-a-left.png",
+    "sha256": "4cb44eff6a83b2d5f8070e54648b8f5a36d0a0a3ed79c51f0d1de103eea7192a"
+   },
+   "prompt": [
+    "gen/monsters-a-left/PROMPT.md",
+    "gen/monsters-a-left/GEN.md"
+   ],
+   "variantOf": "wisp",
+   "facing": "right",
+   "reference": "gen/monsters-a-left/refs/",
+   "post": [
+    "alpha lo 48 hi 200",
+    "split by transparent columns",
+    "drop painted contact shadow",
+    "defringe 3",
+    "resize body to 230 px",
+    "alpha hi 200 lo 16 + defringe 3 again",
+    "webp q90 exact"
+   ],
+   "baseline": 231,
+   "bodyTop": 0,
+   "cx": 66.0,
+   "bodyW": 133,
+   "bodyH": 231
+  },
+  {
+   "key": "skeleton@left",
+   "role": "sprite",
+   "file": "sprites/skeleton-left.webp",
+   "w": 287,
+   "h": 370,
+   "bytes": 35484,
+   "sha256": "85fe3b2e1d9551311357816a3048abda201bf31606b39ea9c880e9b27776e1c5",
+   "alpha": true,
+   "source": {
+    "run": "gen/monsters-b-left",
+    "file": "monsters-b-left.png",
+    "sha256": "103f7d7ed7432feb73bda7030f6795fbdfe60ab6e9f16c6e03e6be51ab371c45"
+   },
+   "prompt": [
+    "gen/monsters-b-left/PROMPT.md",
+    "gen/monsters-b-left/GEN.md"
+   ],
+   "variantOf": "skeleton",
+   "facing": "left",
+   "reference": "gen/monsters-b-left/refs/",
+   "post": [
+    "alpha lo 48 hi 200",
+    "split by transparent columns",
+    "drop painted contact shadow",
+    "defringe 3",
+    "resize body to 370 px",
+    "alpha hi 200 lo 16 + defringe 3 again",
+    "webp q90 exact"
+   ],
+   "baseline": 370,
+   "bodyTop": 0,
+   "cx": 152.5,
+   "bodyW": 286,
+   "bodyH": 370
+  },
+  {
+   "key": "harpy@left",
+   "role": "sprite",
+   "file": "sprites/harpy-left.webp",
+   "w": 470,
+   "h": 400,
+   "bytes": 51472,
+   "sha256": "4f7a28a492b3e5a821427eb8bf29bcb22bd735f7e9352eab10007cd2c27278be",
+   "alpha": true,
+   "source": {
+    "run": "gen/monsters-b-left",
+    "file": "monsters-b-left.png",
+    "sha256": "103f7d7ed7432feb73bda7030f6795fbdfe60ab6e9f16c6e03e6be51ab371c45"
+   },
+   "prompt": [
+    "gen/monsters-b-left/PROMPT.md",
+    "gen/monsters-b-left/GEN.md"
+   ],
+   "variantOf": "harpy",
+   "facing": "left",
+   "reference": "gen/monsters-b-left/refs/",
+   "post": [
+    "alpha lo 48 hi 200",
+    "split by transparent columns",
+    "drop painted contact shadow",
+    "defringe 3",
+    "resize body to 400 px",
+    "alpha hi 200 lo 16 + defringe 3 again",
+    "webp q90 exact"
+   ],
+   "baseline": 400,
+   "bodyTop": 0,
+   "cx": 234.0,
+   "bodyW": 469,
+   "bodyH": 400
+  },
+  {
+   "key": "cultist@left",
+   "role": "sprite",
+   "file": "sprites/cultist-left.webp",
+   "w": 310,
+   "h": 371,
+   "bytes": 34426,
+   "sha256": "89e03f86810cb3a1480e1388ada835990f542bab184bde98a59154389254fe3c",
+   "alpha": true,
+   "source": {
+    "run": "gen/monsters-b-left",
+    "file": "monsters-b-left.png",
+    "sha256": "103f7d7ed7432feb73bda7030f6795fbdfe60ab6e9f16c6e03e6be51ab371c45"
+   },
+   "prompt": [
+    "gen/monsters-b-left/PROMPT.md",
+    "gen/monsters-b-left/GEN.md"
+   ],
+   "variantOf": "cultist",
+   "facing": "left",
+   "reference": "gen/monsters-b-left/refs/",
+   "post": [
+    "alpha lo 48 hi 200",
+    "split by transparent columns",
+    "drop painted contact shadow",
+    "defringe 3",
+    "resize body to 370 px",
+    "alpha hi 200 lo 16 + defringe 3 again",
+    "webp q90 exact"
+   ],
+   "baseline": 371,
+   "bodyTop": 1,
+   "cx": 174.5,
+   "bodyW": 310,
+   "bodyH": 370
+  },
+  {
+   "key": "wolf@left",
+   "role": "sprite",
+   "file": "sprites/wolf-left.webp",
+   "w": 363,
+   "h": 260,
+   "bytes": 32478,
+   "sha256": "827f1b8136cf858e657d804d751e4f7b1e66ecb09f80cfd4a4557c1ddb42f930",
+   "alpha": true,
+   "source": {
+    "run": "gen/monsters-b-left",
+    "file": "monsters-b-left.png",
+    "sha256": "103f7d7ed7432feb73bda7030f6795fbdfe60ab6e9f16c6e03e6be51ab371c45"
+   },
+   "prompt": [
+    "gen/monsters-b-left/PROMPT.md",
+    "gen/monsters-b-left/GEN.md"
+   ],
+   "variantOf": "wolf",
+   "facing": "left",
+   "reference": "gen/monsters-b-left/refs/",
+   "post": [
+    "alpha lo 48 hi 200",
+    "split by transparent columns",
+    "drop painted contact shadow",
+    "defringe 3",
+    "resize body to 260 px",
+    "alpha hi 200 lo 16 + defringe 3 again",
+    "webp q90 exact"
+   ],
+   "baseline": 260,
+   "bodyTop": 0,
+   "cx": 172.0,
+   "bodyW": 362,
+   "bodyH": 260
+  },
+  {
+   "key": "keeper@left",
+   "role": "sprite",
+   "file": "sprites/keeper-left.webp",
+   "w": 191,
+   "h": 361,
+   "bytes": 25270,
+   "sha256": "64963ac9c7066823acb6f772514c39ebe65f04313f7091851a138324dd020b56",
+   "alpha": true,
+   "source": {
+    "run": "gen/folk-left",
+    "file": "folk-left.png",
+    "sha256": "8739470d0e8e934ed4f637972e036446ed5296779e95dbff5c5f49e6752dec92"
+   },
+   "prompt": [
+    "gen/folk-left/PROMPT.md",
+    "gen/folk-left/GEN.md"
+   ],
+   "variantOf": "keeper",
+   "facing": "left",
+   "reference": "gen/folk-left/refs/",
+   "post": [
+    "alpha lo 48 hi 200",
+    "split by transparent columns",
+    "drop painted contact shadow",
+    "defringe 3",
+    "resize body to 360 px",
+    "alpha hi 200 lo 16 + defringe 3 again",
+    "webp q90 exact"
+   ],
+   "baseline": 361,
+   "bodyTop": 0,
+   "cx": 86.0,
+   "bodyW": 191,
+   "bodyH": 361
+  },
+  {
+   "key": "archer@left",
+   "role": "sprite",
+   "file": "sprites/archer-left.webp",
+   "w": 193,
+   "h": 381,
+   "bytes": 31142,
+   "sha256": "ac43d47c3c82b77a06443ca5a2673073f5cb350f82d3abe1d0dd0e7aaf50d362",
+   "alpha": true,
+   "source": {
+    "run": "gen/folk-left",
+    "file": "folk-left.png",
+    "sha256": "8739470d0e8e934ed4f637972e036446ed5296779e95dbff5c5f49e6752dec92"
+   },
+   "prompt": [
+    "gen/folk-left/PROMPT.md",
+    "gen/folk-left/GEN.md"
+   ],
+   "variantOf": "archer",
+   "facing": "left",
+   "reference": "gen/folk-left/refs/",
+   "post": [
+    "alpha lo 48 hi 200",
+    "split by transparent columns",
+    "drop painted contact shadow",
+    "defringe 3",
+    "resize body to 380 px",
+    "alpha hi 200 lo 16 + defringe 3 again",
+    "webp q90 exact"
+   ],
+   "baseline": 381,
+   "bodyTop": 0,
+   "cx": 96.0,
+   "bodyW": 193,
+   "bodyH": 381
+  },
+  {
+   "key": "knight@left",
+   "role": "sprite",
+   "file": "sprites/knight-left.webp",
+   "w": 253,
+   "h": 381,
+   "bytes": 32320,
+   "sha256": "71c8631c2847ec1da30161b59d8a4f8806acfe8f5bb67885b2da7150738793c8",
+   "alpha": true,
+   "source": {
+    "run": "gen/folk-left",
+    "file": "folk-left.png",
+    "sha256": "8739470d0e8e934ed4f637972e036446ed5296779e95dbff5c5f49e6752dec92"
+   },
+   "prompt": [
+    "gen/folk-left/PROMPT.md",
+    "gen/folk-left/GEN.md"
+   ],
+   "variantOf": "knight",
+   "facing": "left",
+   "reference": "gen/folk-left/refs/",
+   "post": [
+    "alpha lo 48 hi 200",
+    "split by transparent columns",
+    "drop painted contact shadow",
+    "defringe 3",
+    "resize body to 380 px",
+    "alpha hi 200 lo 16 + defringe 3 again",
+    "webp q90 exact"
+   ],
+   "baseline": 381,
+   "bodyTop": 0,
+   "cx": 126.0,
+   "bodyW": 253,
+   "bodyH": 381
+  },
+  {
+   "key": "herbalist@left",
+   "role": "sprite",
+   "file": "sprites/herbalist-left.webp",
+   "w": 200,
+   "h": 340,
+   "bytes": 26990,
+   "sha256": "ec58a6fcd0a17773a4026cbdd4479aa46846f5bcd12625b4125f2402e458ab7a",
+   "alpha": true,
+   "source": {
+    "run": "gen/folk-left",
+    "file": "folk-left.png",
+    "sha256": "8739470d0e8e934ed4f637972e036446ed5296779e95dbff5c5f49e6752dec92"
+   },
+   "prompt": [
+    "gen/folk-left/PROMPT.md",
+    "gen/folk-left/GEN.md"
+   ],
+   "variantOf": "herbalist",
+   "facing": "left",
+   "reference": "gen/folk-left/refs/",
+   "post": [
+    "alpha lo 48 hi 200",
+    "split by transparent columns",
+    "drop painted contact shadow",
+    "defringe 3",
+    "resize body to 340 px",
+    "alpha hi 200 lo 16 + defringe 3 again",
+    "webp q90 exact"
+   ],
+   "baseline": 340,
+   "bodyTop": 0,
+   "cx": 99.5,
+   "bodyW": 199,
+   "bodyH": 340
+  },
+  {
+   "key": "brazier",
+   "role": "prop",
+   "file": "sprites/brazier.webp",
+   "w": 140,
+   "h": 251,
+   "bytes": 14802,
+   "sha256": "f9f2cb5a886570053ee39c54bcfa8a55ed7a580579dd043969476acf07363f0e",
+   "alpha": true,
+   "source": {
+    "run": "gen/props",
+    "file": "props.png",
+    "sha256": "876b2e0a36e219d8eb6b0cb7aaedc3cbd476d587730c17d3d07df23a76869294"
+   },
+   "prompt": [
+    "gen/props/PROMPT.md",
+    "gen/props/GEN.md"
+   ],
+   "post": [
+    "alpha lo 48 hi 200",
+    "split by transparent columns",
+    "drop painted contact shadow",
+    "defringe 3",
+    "resize body to 250 px",
+    "alpha hi 200 lo 16 + defringe 3 again",
+    "webp q90 exact"
+   ],
+   "baseline": 251,
+   "bodyTop": 1,
+   "cx": 71.0,
+   "bodyW": 140,
+   "bodyH": 250
+  },
+  {
+   "key": "campfire",
+   "role": "prop",
+   "file": "sprites/campfire.webp",
+   "w": 211,
+   "h": 250,
+   "bytes": 19866,
+   "sha256": "b99b63e9f96b28150c00e7c69389f0af3cc168a97a53c07598fbe0c96a62e118",
+   "alpha": true,
+   "source": {
+    "run": "gen/props",
+    "file": "props.png",
+    "sha256": "876b2e0a36e219d8eb6b0cb7aaedc3cbd476d587730c17d3d07df23a76869294"
+   },
+   "prompt": [
+    "gen/props/PROMPT.md",
+    "gen/props/GEN.md"
+   ],
+   "post": [
+    "alpha lo 48 hi 200",
+    "split by transparent columns",
+    "drop painted contact shadow",
+    "defringe 3",
+    "resize body to 250 px",
+    "alpha hi 200 lo 16 + defringe 3 again",
+    "webp q90 exact"
+   ],
+   "baseline": 250,
+   "bodyTop": 0,
+   "cx": 105.5,
+   "bodyW": 210,
+   "bodyH": 250
+  },
+  {
+   "key": "crates",
+   "role": "prop",
+   "file": "sprites/crates.webp",
+   "w": 341,
+   "h": 290,
+   "bytes": 33116,
+   "sha256": "26b872f599e71af7223cfd5fb9039855a3dd5f9c64fefb8d921a54e998b49149",
+   "alpha": true,
+   "source": {
+    "run": "gen/props",
+    "file": "props.png",
+    "sha256": "876b2e0a36e219d8eb6b0cb7aaedc3cbd476d587730c17d3d07df23a76869294"
+   },
+   "prompt": [
+    "gen/props/PROMPT.md",
+    "gen/props/GEN.md"
+   ],
+   "post": [
+    "alpha lo 48 hi 200",
+    "split by transparent columns",
+    "drop painted contact shadow",
+    "defringe 3",
+    "resize body to 290 px",
+    "alpha hi 200 lo 16 + defringe 3 again",
+    "webp q90 exact"
+   ],
+   "baseline": 290,
+   "bodyTop": 0,
+   "cx": 167.0,
+   "bodyW": 340,
+   "bodyH": 290
+  },
+  {
+   "key": "anvil",
+   "role": "prop",
+   "file": "sprites/anvil.webp",
+   "w": 200,
+   "h": 220,
+   "bytes": 15014,
+   "sha256": "cea9bebe7f918329b9f9c930b00800980236f18e4fbb12a9fc91f80fff9c27e5",
+   "alpha": true,
+   "source": {
+    "run": "gen/props",
+    "file": "props.png",
+    "sha256": "876b2e0a36e219d8eb6b0cb7aaedc3cbd476d587730c17d3d07df23a76869294"
+   },
+   "prompt": [
+    "gen/props/PROMPT.md",
+    "gen/props/GEN.md"
+   ],
+   "post": [
+    "alpha lo 48 hi 200",
+    "split by transparent columns",
+    "drop painted contact shadow",
+    "defringe 3",
+    "resize body to 220 px",
+    "alpha hi 200 lo 16 + defringe 3 again",
+    "webp q90 exact"
+   ],
+   "baseline": 220,
+   "bodyTop": 0,
+   "cx": 101.5,
+   "bodyW": 200,
+   "bodyH": 220
+  },
+  {
+   "key": "dummy",
+   "role": "prop",
+   "file": "sprites/dummy.webp",
+   "w": 247,
+   "h": 361,
+   "bytes": 22464,
+   "sha256": "2b4b5a721b9520aabe7433ea4b03ca00b85b5e6a55536d4c7a2f1d92135e65d8",
+   "alpha": true,
+   "source": {
+    "run": "gen/props",
+    "file": "props.png",
+    "sha256": "876b2e0a36e219d8eb6b0cb7aaedc3cbd476d587730c17d3d07df23a76869294"
+   },
+   "prompt": [
+    "gen/props/PROMPT.md",
+    "gen/props/GEN.md"
+   ],
+   "post": [
+    "alpha lo 48 hi 200",
+    "split by transparent columns",
+    "drop painted contact shadow",
+    "defringe 3",
+    "resize body to 360 px",
+    "alpha hi 200 lo 16 + defringe 3 again",
+    "webp q90 exact"
+   ],
+   "baseline": 361,
+   "bodyTop": 0,
+   "cx": 118.5,
+   "bodyW": 246,
+   "bodyH": 361
+  },
+  {
+   "key": "lamp",
+   "role": "prop",
+   "file": "sprites/lamp.webp",
+   "w": 188,
+   "h": 540,
+   "bytes": 20178,
+   "sha256": "40b84d40de95d4e17cce0e4428c4977c416a25df91f885a78badfded421226d3",
+   "alpha": true,
+   "source": {
+    "run": "gen/props",
+    "file": "props.png",
+    "sha256": "876b2e0a36e219d8eb6b0cb7aaedc3cbd476d587730c17d3d07df23a76869294"
+   },
+   "prompt": [
+    "gen/props/PROMPT.md",
+    "gen/props/GEN.md"
+   ],
+   "post": [
+    "alpha lo 48 hi 200",
+    "split by transparent columns",
+    "drop painted contact shadow",
+    "defringe 3",
+    "resize body to 540 px",
+    "alpha hi 200 lo 16 + defringe 3 again",
+    "webp q90 exact"
+   ],
+   "baseline": 540,
+   "bodyTop": 0,
+   "cx": 68.5,
+   "bodyW": 188,
+   "bodyH": 540
+  },
+  {
+   "key": "scene-ruins-night",
+   "role": "bg-layer",
+   "file": "scenes/ruins-night.webp",
+   "w": 1440,
+   "h": 810,
+   "bytes": 149548,
+   "sha256": "0c4555826b5cec1a5e6dfcd589980ca145b3efbeac34591f98c4bdebfbbf8065",
+   "alpha": false,
+   "ground": 0.8,
+   "source": {
+    "run": "gen/scene-ruins-night",
+    "file": "scene-ruins-night.png",
+    "sha256": "cdc33200553ef7a0ff34af2a41848cc8120d398ad68e60f6c17c9edb799d8d62"
+   },
+   "prompt": [
+    "gen/scene-ruins-night/PROMPT.md",
+    "gen/scene-ruins-night/GEN.md"
+   ],
+   "post": [
+    "resize w 1440",
+    "webp q84"
+   ]
+  },
+  {
+   "key": "scene-meadow-dusk",
+   "role": "bg-layer",
+   "file": "scenes/meadow-dusk.webp",
+   "w": 1440,
+   "h": 810,
+   "bytes": 195366,
+   "sha256": "af6e7e874d172f2506c6c55519c58e70d0ef21c7e1b5474f9659f498a06a833c",
+   "alpha": false,
+   "ground": 0.775,
+   "source": {
+    "run": "gen/scene-meadow-dusk",
+    "file": "scene-meadow-dusk.png",
+    "sha256": "a47da743bbad67a6eb84954574af2bb92e9d8fe9aab5c03a514b6d5db8cfab7d"
+   },
+   "prompt": [
+    "gen/scene-meadow-dusk/PROMPT.md",
+    "gen/scene-meadow-dusk/GEN.md"
+   ],
+   "post": [
+    "resize w 1440",
+    "webp q84"
+   ]
+  },
+  {
+   "key": "scene-market-night",
+   "role": "bg-layer",
+   "file": "scenes/market-night.webp",
+   "w": 1440,
+   "h": 810,
+   "bytes": 210330,
+   "sha256": "1901b15c874426e11827afe3f79d67995fbb4f230d0ecf8ea6232179fe768e89",
+   "alpha": false,
+   "ground": 0.815,
+   "source": {
+    "run": "gen/scene-market-night",
+    "file": "scene-market-night.png",
+    "sha256": "671dde36fe1f6de3d643584b916df511d9a2ddc60a01b4c17abc0dcadc457f8a"
+   },
+   "prompt": [
+    "gen/scene-market-night/PROMPT.md",
+    "gen/scene-market-night/GEN.md"
+   ],
+   "post": [
+    "resize w 1440",
+    "webp q84"
+   ]
+  },
+  {
+   "key": "scene-forge-hall",
+   "role": "bg-layer",
+   "file": "scenes/forge-hall.webp",
+   "w": 1440,
+   "h": 810,
+   "bytes": 173322,
+   "sha256": "f76996bc7731fdecfa708d2bdecb22813d15071ec7ed0a1143b8b08bef4062de",
+   "alpha": false,
+   "ground": 0.83,
+   "source": {
+    "run": "gen/scene-forge-hall",
+    "file": "scene-forge-hall.png",
+    "sha256": "978eb9fa0b6944d33f58354487305bc1195932ab6a6269011a29199cd3c3d347"
+   },
+   "prompt": [
+    "gen/scene-forge-hall/PROMPT.md",
+    "gen/scene-forge-hall/GEN.md"
+   ],
+   "post": [
+    "resize w 1440",
+    "webp q84"
+   ]
+  },
+  {
+   "key": "scene-lakeside-day",
+   "role": "bg-layer",
+   "file": "scenes/lakeside-day.webp",
+   "w": 1440,
+   "h": 810,
+   "bytes": 181786,
+   "sha256": "8ba38ad1001c91df31ab54b6aff97ccb5f22e6a954bd1d1889f1f60004eb9707",
+   "alpha": false,
+   "ground": 0.815,
+   "source": {
+    "run": "gen/scene-lakeside-day",
+    "file": "scene-lakeside-day.png",
+    "sha256": "cfa52a933d4b36ff0761dc01f97f026ce56c7992d744c1bc7a0a3c8cf83fea34"
+   },
+   "prompt": [
+    "gen/scene-lakeside-day/PROMPT.md",
+    "gen/scene-lakeside-day/GEN.md"
+   ],
+   "post": [
+    "resize w 1440",
+    "webp q84"
+   ]
+  }
+ ]
+}

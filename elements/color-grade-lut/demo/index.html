@@ -1,0 +1,1860 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Colour Grading LUT</title>
+<style>
+:root {
+  --bg: #0b0a12; --panel: #14121d; --panel2: #1b1827; --line: #2a2640; --text: #ece8f6; --dim: #958fb0; --accent: #ffb86b; --accent2: #7fd4ff; --ok: #6ee7a8; --off: #ff7a8a;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1100px 560px at 28% -12%, #2a1f45 0%, var(--bg) 62%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 16px 20px 10px; max-width: 1340px; margin: 0 auto; }
+.code { white-space: nowrap; font: 700 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #1d1206; background: linear-gradient(#ffd29a, var(--accent)); padding: 6px 8px; border-radius: 6px; box-shadow: 0 0 0 1px #00000040, 0 4px 14px #ffb86b40; }
+h1 { font-size: 18px; margin: 0; letter-spacing: .01em; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; max-width: 920px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 350px; gap: 18px; padding: 0 20px 20px; max-width: 1340px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; }
+.frame { position: relative; border-radius: 14px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px #3a3352, 0 24px 60px #00000090; touch-action: none; }
+#game { display: block; width: 100%; height: auto; }
+.tag { position: absolute; top: 10px; font: 700 10px/1 ui-monospace, Menlo, monospace; letter-spacing: .12em; background: #000b; color: #fff; padding: 5px 7px; border-radius: 5px; pointer-events: none; display: none; z-index: 5; }
+.tag.on { display: block; }
+.caption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; margin-top: 10px; color: var(--dim); font-size: 12px; }
+.caption b { color: var(--text); font-weight: 600; }
+#mode::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--ok); margin-right: 6px; box-shadow: 0 0 8px var(--ok); vertical-align: 1px; }
+#mode.off::before { background: var(--off); box-shadow: 0 0 8px var(--off); }
+.beats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-top: 12px; }
+.beat { appearance: none; border: 1px solid var(--line); border-radius: 10px; background: #12101b; color: var(--dim); padding: 0 0 7px; cursor: pointer; font: 600 11.5px/1.2 inherit; overflow: hidden; transition: border-color .2s, color .2s, transform .1s; }
+.beat canvas { display: block; width: 100%; height: 22px; margin-bottom: 6px; image-rendering: auto; }
+.beat[aria-pressed=true] { border-color: var(--accent); color: var(--text); box-shadow: 0 0 0 1px var(--accent), 0 6px 18px #ffb86b30; }
+.beat:active { transform: scale(.97); }
+aside { background: linear-gradient(var(--panel2), var(--panel)); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+section { border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+section:last-of-type { border-bottom: 0; padding-bottom: 0; }
+h2 { display: flex; align-items: center; justify-content: space-between; margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.row { margin-bottom: 8px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 3px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 5px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--fill), #2c2742 var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 15px; height: 15px; border-radius: 50%; background: #fff4e2; border: 0; box-shadow: 0 0 0 3px #ffb86b55, 0 2px 6px #000a; cursor: pointer; }
+.sw { position: relative; width: 34px; height: 19px; flex: none; }
+.sw input { opacity: 0; width: 0; height: 0; position: absolute; }
+.sw i { position: absolute; inset: 0; border-radius: 10px; background: #2c2742; transition: background .2s; cursor: pointer; }
+.sw i::after { content: ""; position: absolute; left: 3px; top: 3px; width: 13px; height: 13px; border-radius: 50%; background: #cfc8e6; transition: transform .22s cubic-bezier(.3, 1.6, .5, 1); }
+.sw input:checked + i { background: linear-gradient(90deg, #ff9b52, var(--accent)); }
+.sw input:checked + i::after { transform: translateX(15px); background: #fff; }
+.line { display: flex; align-items: center; justify-content: space-between; font-size: 12.5px; margin-bottom: 8px; }
+.seg { display: flex; background: #0e0c16; border: 1px solid var(--line); border-radius: 8px; padding: 2px; gap: 2px; }
+.seg button { flex: 1; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 4px; border-radius: 6px; cursor: pointer; }
+.seg button[aria-checked=true] { background: #2c2546; color: var(--text); box-shadow: inset 0 0 0 1px #4a4068; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.note { color: var(--dim); font-size: 11.5px; margin: 4px 0 0; }
+.note code { color: #d8cff5; }
+.lutbox { background: #0e0c16; border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+.lutbox canvas { display: block; width: 100%; height: 16px; border-radius: 3px; image-rendering: pixelated; }
+.lutbox .lbl { display: flex; justify-content: space-between; font: 11px ui-monospace, Menlo, monospace; color: var(--dim); margin: 6px 0 3px; }
+.lutbox .lbl:first-child { margin-top: 0; }
+.mixbar { height: 4px; border-radius: 2px; background: #2c2742; overflow: hidden; margin-top: 6px; }
+.mixbar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--accent2), var(--accent)); }
+.btns { display: flex; gap: 6px; margin-top: 8px; }
+.btn { flex: 1; appearance: none; border: 1px solid var(--line); background: #1f1b2e; color: var(--text); border-radius: 8px; padding: 8px 6px; font: 600 12px/1 inherit; cursor: pointer; text-align: center; }
+.btn:hover { border-color: #4a4068; }
+section.dim, .beats.dim { opacity: .45; pointer-events: none; }
+#offnote { display: none; color: var(--off); font-size: 11.5px; margin: 6px 0 0; }
+#offnote.on { display: block; }
+.sw input:disabled + i { opacity: .5; cursor: not-allowed; }
+.stat { font: 11.5px/1.5 ui-monospace, Menlo, monospace; color: var(--dim); }
+.stat b { color: var(--text); font-weight: 600; }
+@media (max-width: 1040px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 680px; width: 100%; margin: 0 auto; } }
+@media (max-width: 560px) { header { padding: 12px 16px 8px; flex-direction: column; align-items: flex-start; gap: 8px; } main { padding: 0 16px 16px; gap: 12px; } .frame { border-radius: 10px; } .beats { grid-template-columns: repeat(3, 1fr); } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">J-06</span>
+  <div><h1>Colour grading LUT</h1><p>One 32&sup3; lookup table per mood, generated in code and stored as a strip texture. Zones and story beats blend between tables over game time; a lens pass adds vignette and film grain. The HUD stays exactly as drawn. Built on the I-08 WebGL post pipeline: without WebGL the game shows as plain 2D.</p></div>
+</header>
+<main>
+  <div id="stage">
+    <div class="frame" id="frame">
+      <canvas id="game" width="640" height="360"></canvas>
+      <span class="tag" id="tagL" style="left:10px">BEFORE</span>
+      <span class="tag" id="tagR" style="right:10px">AFTER</span>
+    </div>
+    <div class="caption">
+      <span id="mode">WebGL2</span>
+      <span id="now">look <b>-</b></span>
+      <span id="cost">frame <b>-</b></span>
+    </div>
+    <div class="beats" id="beats"></div>
+  </div>
+  <aside>
+    <section>
+      <h2>Pipeline <label class="sw" title="WebGL on / off"><input type="checkbox" id="webgl" checked><i></i></label></h2>
+      <div class="line"><span>Before / after split (drag on the picture)</span><label class="sw"><input type="checkbox" id="cmp"><i></i></label></div>
+      <div class="row"><label>Split position <output id="o-split"></output></label><input type="range" id="split" min="0.05" max="0.95" step="0.01" value="0.5"></div>
+      <div class="line"><span>Story tour (zones blend in game time)</span><label class="sw"><input type="checkbox" id="tour" checked><i></i></label></div>
+      <p id="offnote">Pipeline off: the game shows as plain 2D, so the LUT and lens controls have no effect.</p>
+    </section>
+    <section id="sec-lut">
+      <h2>LUT</h2>
+      <div class="two">
+        <div class="row"><label>Strength <output></output></label><input type="range" data-k="strength" min="0" max="1" step="0.01"></div>
+        <div class="row"><label>Blend ms <output></output></label><input type="range" data-k="blend" min="0" max="3000" step="50"></div>
+      </div>
+      <div class="lutbox">
+        <div class="lbl"><span>from</span><span id="fromN">-</span></div><canvas id="stripA" width="1024" height="32"></canvas>
+        <div class="lbl"><span>to</span><span id="toN">-</span></div><canvas id="stripB" width="1024" height="32"></canvas>
+        <div class="mixbar"><i id="mix"></i></div>
+      </div>
+      <div class="btns"><label class="btn" for="file">Load .cube / PNG strip</label><a class="btn" id="save" download="lut-strip.png" href="#">Save strip PNG</a></div>
+      <input type="file" id="file" accept=".cube,.png,image/png" hidden>
+      <p class="note">Strip: 32 tiles of 32&times;32 (blue = tile, red = x, green = y). Edit a saved <code>neutral</code> strip in any paint program and load it back.</p>
+    </section>
+    <section id="sec-lens">
+      <h2>Lens (vignette &amp; grain)</h2>
+      <div class="two">
+        <div class="row"><label>Vignette <output></output></label><input type="range" data-k="vignette" min="0" max="1" step="0.01"></div>
+        <div class="row"><label>Grain <output></output></label><input type="range" data-k="grain" min="0" max="0.2" step="0.005"></div>
+      </div>
+      <div class="row"><label>Grain size (CSS px) <output></output></label><input type="range" data-k="grainSize" min="0.5" max="4" step="0.1"></div>
+    </section>
+    <section id="sec-hud">
+      <h2>HUD and the I-08 grade</h2>
+      <div class="line"><span>Protect HUD (uiMask)</span><label class="sw"><input type="checkbox" id="hud" checked><i></i></label></div>
+      <div class="row"><label>I-08 built-in grade</label><div class="seg" id="builtin"><button data-v="replace" aria-checked="true">replace (default)</button><button data-v="keep" aria-checked="false">keep after LUT</button></div></div>
+      <p class="note">Replace: the LUT is the only grade and the lens pass the only vignette. Keep: the built-in filmic grade runs after the LUT with its vignette at 0.</p>
+    </section>
+    <section class="stat" id="stat">-</section>
+  </aside>
+</main>
+<script>
+/* GameDNA I-08 · WebGL post-process pipeline · module v1 (plain script, no dependencies, one global)
+ *
+ *   const post = GameDNA_Post.create({
+ *     canvas: myCanvas,                        // the game's existing 2D canvas (any size, any CSS scaling)
+ *     clock: () => frameCount * 1000 / 60,     // game time in ms (optional; keeps ?t=&freeze=1 deterministic)
+ *     params: { passes: 'grade+pulse', look: 'filmic', vignette: 0.35, chroma: 5, decay: 260, sample: 'auto' }
+ *   });
+ *   post.render();                            // once per drawn frame, after (or before) the game draws: safe anywhere
+ *   post.pulse(0.8, { at: { x, y } });         // on a hit: chromatic punch at a canvas point, decays in game time
+ *   post.addPass({ name, frag, uniforms: (s, p) => ({...}), scale: 1 | 0.5, inputs: { uMask: 'lights' } });   // J-family passes
+ *
+ * A WebGL canvas is laid exactly over the game canvas (same CSS box, pointer-events: none, device resolution). Each frame the
+ * game canvas is uploaded as a texture and run through a chain of fragment-shader passes. Without WebGL (or with ?webgl=0,
+ * or after a lost context) every method is a safe no-op and the 2D canvas shows exactly as before. Never throws.
+ */
+(function (root) {
+  'use strict';
+  var VERSION = '1.1.1', FRAME = 1000 / 60;
+  var SCRATCH = 7;
+  var UI_INPUT = 'uiMask';   // shared HUD mask input (white / red channel = HUD pixels every pass leaves unchanged)   // texture unit used only to create and upload textures, never to sample
+
+  var LOOKS = {
+    filmic:  { exposure: 1.00, contrast: 0.20, saturation: 1.08, warmth: 0.25, lift: 0.03, filmic: 0.70 },
+    warm:    { exposure: 1.04, contrast: 0.18, saturation: 1.14, warmth: 0.60, lift: 0.02, filmic: 0.60 },
+    cold:    { exposure: 0.96, contrast: 0.22, saturation: 0.86, warmth: -0.55, lift: 0.04, filmic: 0.60 },
+    punchy:  { exposure: 1.04, contrast: 0.36, saturation: 1.28, warmth: 0.12, lift: 0.00, filmic: 0.80 },
+    neutral: { exposure: 1.00, contrast: 0.00, saturation: 1.00, warmth: 0.00, lift: 0.00, filmic: 0.00 }
+  };
+  var DEFAULTS = {
+    passes: 'grade+pulse',   // built-ins enabled at start: 'grade+pulse' | 'grade' | 'pulse' | 'none'
+    look: 'filmic',          // grade preset (sets exposure, contrast, saturation, warmth, lift, filmic)
+    exposure: 1, contrast: 0.2, saturation: 1.08, warmth: 0.25, lift: 0.03, filmic: 0.7,
+    vignette: 0.35,          // 0..1 darkening toward the corners
+    chroma: 5,               // pulse: colour split at full strength, CSS px
+    punch: 0.012,            // pulse: zoom toward the hit point at full strength (fraction)
+    decay: 260,              // pulse: ms of game time to fade out
+    sample: 'auto',          // how the game canvas is magnified: 'auto' | 'sharp' | 'nearest' | 'linear'
+    dpr: 2,                  // most device px per CSS px rendered
+    maxPixels: 2400000,      // cap on the overlay's backing store (w x h)
+    webgl: 'auto'            // 'auto' | 'off' (?webgl=0 in the page URL also turns it off)
+  };
+
+  // ------------------------------------------------------------------ GLSL
+  var VERT = 'attribute vec2 aPos; varying vec2 vUv; void main() { vUv = aPos * 0.5 + 0.5; gl_Position = vec4(aPos, 0.0, 1.0); }';
+  var PRELUDE = [
+    '#ifdef GL_FRAGMENT_PRECISION_HIGH', 'precision highp float;', '#else', 'precision mediump float;', '#endif',
+    'varying vec2 vUv;',
+    'uniform sampler2D uPrev;   // the chain so far (device resolution)',
+    'uniform sampler2D uFrame;  // the game frame, magnified to device resolution',
+    'uniform vec2 uRes;         // this pass output size, px',
+    'uniform vec2 uPrevRes;',
+    'uniform vec2 uSrcRes;      // game canvas size, px',
+    'uniform float uTime;       // game time, seconds',
+    'uniform float uPulse;      // current pulse 0..1.5',
+    'uniform vec2 uPulseAt;     // pulse point, uv',
+    'uniform float uDpr;        // device px per CSS px',
+    'uniform float uScale;      // output px per game px',
+    'vec2 uvOfGame(vec2 px) { return vec2(px.x / uSrcRes.x, 1.0 - px.y / uSrcRes.y); }',
+    'vec2 gameOfUv(vec2 uv) { return vec2(uv.x, 1.0 - uv.y) * uSrcRes; }',
+    'float luma(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }',
+    'float hash12(vec2 p) { vec3 q = fract(vec3(p.xyx) * 0.1031); q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }'
+  ].join('\n');
+
+  var INPUT_FRAG = [
+    'uniform sampler2D uRaw; uniform float uMode;   // 0 linear/nearest (filter), 1 sharp bilinear',
+    'void main() {',
+    '  vec2 uv = vUv;',
+    '  if (uMode > 0.5) {',
+    '    vec2 texel = vUv * uSrcRes; vec2 sc = max(uRes / uSrcRes, vec2(1.0));',
+    '    vec2 fl = floor(texel); vec2 cd = fract(texel) - 0.5; vec2 rr = 0.5 - 0.5 / sc;',
+    '    vec2 f = (cd - clamp(cd, -rr, rr)) * sc + 0.5; uv = (fl + f) / uSrcRes;',
+    '  }',
+    '  gl_FragColor = vec4(texture2D(uRaw, uv).rgb, 1.0);',
+    '}'
+  ].join('\n');
+  var COPY_FRAG = 'void main() { gl_FragColor = vec4(texture2D(uPrev, vUv).rgb, 1.0); }';
+
+  var GRADE_FRAG = [
+    'uniform float uExposure, uContrast, uSaturation, uWarmth, uLift, uFilmic, uVignette; uniform vec3 uInk;',
+    'vec3 aces(vec3 x) { return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0); }',
+    'void main() {',
+    '  vec3 c = texture2D(uPrev, vUv).rgb;',
+    '  vec3 c0 = c;',
+    '  float ui = clamp(texture2D(uUi, vUv).r, 0.0, 1.0) * uUiOn;   // shared uiMask: white = HUD, left unchanged',
+    '  vec3 lin = pow(c, vec3(2.2)) * uExposure;',
+    '  vec3 film = aces(lin * 0.6) / 0.6732;          // white stays white, mid-grey 0.18 -> 0.21, toe darkens',
+    '  lin = mix(lin, film, uFilmic);',
+    '  c = pow(clamp(lin, 0.0, 1.0), vec3(1.0 / 2.2));',
+    '  c = mix(c, c * c * (3.0 - 2.0 * c), uContrast);',
+    '  c = c * (1.0 - uLift) + uLift * vec3(0.80, 0.90, 1.15);',
+    '  float l = luma(c);',
+    '  c = mix(vec3(l), c, uSaturation);',
+    '  vec3 tone = mix(vec3(0.90, 0.99, 1.10), vec3(1.08, 1.00, 0.88), smoothstep(0.15, 0.85, l));',
+    '  c *= mix(vec3(1.0), uWarmth >= 0.0 ? tone : vec3(2.0) - tone, abs(uWarmth));',
+    '  vec2 q = (vUv - 0.5) * vec2(uRes.x / uRes.y, 1.0);',
+    '  float d = length(q) / length(vec2(uRes.x / uRes.y, 1.0) * 0.5);',
+    '  c = mix(c, uInk, uVignette * smoothstep(0.38, 1.08, d));',
+    '  c += (hash12(gl_FragCoord.xy) - 0.5) / 255.0;',
+    '  gl_FragColor = vec4(mix(clamp(c, 0.0, 1.0), c0, ui), 1.0);',
+    '}'
+  ].join('\n');
+
+  var PULSE_FRAG = [
+    'uniform float uChroma, uPunch;',
+    'void main() {',
+    '  float p = uPulse;',
+    '  vec2 d = vUv - uPulseAt;',
+    '  vec2 dpx = d * uRes; float len = length(dpx) + 0.001;',
+    '  vec2 uv = vUv - d * uPunch * p;',
+    '  float k = uChroma * uDpr * p * smoothstep(0.0, 0.45 * max(uRes.x, uRes.y), len);',
+    '  vec2 off = (dpx / len) * k / uRes;',
+    '  vec3 c = vec3(texture2D(uPrev, uv + off).r, texture2D(uPrev, uv).g, texture2D(uPrev, uv - off).b);',
+    '  c += vec3(1.0, 0.92, 0.8) * (0.07 * p * exp(-len / (0.22 * uRes.y)));',
+    '  float ui = clamp(texture2D(uUi, vUv).r, 0.0, 1.0) * uUiOn;   // shared uiMask: HUD pixels pass through',
+    '  gl_FragColor = vec4(mix(clamp(c, 0.0, 1.0), texture2D(uPrev, vUv).rgb, ui), 1.0);',
+    '}'
+  ].join('\n');
+
+  function builtinPasses() {
+    return [
+      { name: 'grade', order: 800, frag: GRADE_FRAG, builtin: true, inputs: { uUi: UI_INPUT },
+        uniforms: function (s, p) {
+          return { uExposure: p.exposure, uContrast: p.contrast, uSaturation: p.saturation, uWarmth: p.warmth, uLift: p.lift,
+            uFilmic: p.filmic, uVignette: p.vignette, uInk: p.ink };
+        } },
+      { name: 'pulse', order: 900, frag: PULSE_FRAG, builtin: true, inputs: { uUi: UI_INPUT },
+        skip: function (s) { return s.pulse < 0.002; },
+        uniforms: function (s, p) { var w = s.res[0] / (s.dpr || 1); return { uChroma: p.chroma * clamp(w / 800, 0.4, 1.25), uPunch: p.punch }; } }   // chroma in CSS px at an 800 px wide canvas
+    ];
+  }
+
+  // ------------------------------------------------------------------ helpers
+  function num(v, d) { v = Number(v); return isFinite(v) ? v : d; }
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function urlOff() {
+    try { var q = new URLSearchParams(root.location ? root.location.search : ''); var w = q.get('webgl'); return w === '0' || w === 'off' || w === 'false'; } catch (e) { return false; }
+  }
+  function hexRgb(h, d) {
+    if (Array.isArray(h) && h.length >= 3) return [num(h[0], 0), num(h[1], 0), num(h[2], 0)];
+    var m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(String(h || '').trim());
+    if (!m) return d;
+    var s = m[1]; if (s.length === 3) s = s[0] + s[0] + s[1] + s[1] + s[2] + s[2];
+    return [parseInt(s.slice(0, 2), 16) / 255, parseInt(s.slice(2, 4), 16) / 255, parseInt(s.slice(4, 6), 16) / 255];
+  }
+  var LIVE = [];   // live WebGL instances, for tests and judges: GameDNA_Post.instances()
+  var supportCache = null;
+  function supported() {
+    if (supportCache) return supportCache;
+    try {
+      var c = document.createElement('canvas');
+      supportCache = c.getContext('webgl2') ? 'webgl2' : (c.getContext('webgl') || c.getContext('experimental-webgl')) ? 'webgl' : 'none';
+    } catch (e) { supportCache = 'none'; }
+    return supportCache;
+  }
+  function warn(msg) { try { if (root.console && console.warn) console.warn('[GameDNA_Post] ' + msg); } catch (e) { } }
+
+  // ------------------------------------------------------------------ the no-op instance
+  function offInstance(reason, P) {
+    var noop = function () { return api; };
+    var api = {
+      version: VERSION, active: false, mode: 'off', reason: reason, canvas: null,
+      render: noop, renderNow: noop, pulse: noop, clear: noop, resize: noop, destroy: noop, setEnabled: noop,
+      addPass: function (def) { return def && def.name ? String(def.name) : null; }, removePass: noop, enable: noop, set: noop,
+      get: function () { return null; }, passes: function () { return []; }, setInput: noop, removeInput: noop,
+      setParams: noop, params: function () { var o = {}; for (var k in P) o[k] = P[k]; return o; },
+      pulseValue: function () { return 0; },
+      stats: function () { return { mode: 'off', reason: reason, frames: 0, requests: 0, watchdog: 0, errors: 0, lost: 0, passes: [] }; }
+    };
+    return api;
+  }
+
+  // ------------------------------------------------------------------ create
+  function create(o) {
+    o = o || {};
+    var P = {}; var k;
+    for (k in DEFAULTS) P[k] = DEFAULTS[k];
+    applyParams(P, o.params || {});
+    var src = o.canvas || null;
+    if (typeof src === 'string') { try { src = document.querySelector(src); } catch (e) { src = null; } }
+    if (src && src.canvas && src.canvas.getContext) src = src.canvas;   // a 2D context was passed
+    if (!src || !src.getBoundingClientRect) { warn('no canvas given; post-processing off'); return offInstance('no-canvas', P); }
+    if (P.webgl === 'off' || P.webgl === false || o.webgl === false) return offInstance('option', P);
+    if (urlOff()) return offInstance('url', P);
+
+    // vignette ink colour from the skin when there is one
+    var ink = [0.02, 0.016, 0.05];
+    try { var SK = root.GameDNA_Skin && o.skin ? root.GameDNA_Skin.resolve(o.skin) : null; if (SK && SK.palette && SK.palette.ink) ink = hexRgb(SK.palette.ink, ink); } catch (e) { }
+    if (o.ink) ink = hexRgb(o.ink, ink);
+    P.ink = ink;
+
+    var ov = document.createElement('canvas');
+    ov.setAttribute('aria-hidden', 'true');
+    ov.className = 'gamedna-post';
+    var st = ov.style;
+    st.position = 'absolute'; st.pointerEvents = 'none'; st.margin = '0'; st.padding = '0'; st.border = '0';
+    st.left = '0px'; st.top = '0px'; st.width = '0px'; st.height = '0px'; st.visibility = 'hidden'; st.display = 'block';
+    var attrs = { alpha: false, antialias: false, depth: false, stencil: false, premultipliedAlpha: false, preserveDrawingBuffer: true, powerPreference: 'high-performance' };
+    var gl = null, mode = 'none';
+    try { gl = ov.getContext('webgl2', attrs); if (gl) mode = 'webgl2'; } catch (e) { gl = null; }
+    if (!gl) { try { gl = ov.getContext('webgl', attrs) || ov.getContext('experimental-webgl', attrs); if (gl) mode = 'webgl'; } catch (e) { gl = null; } }
+    if (!gl) return offInstance('no-webgl', P);
+    try { src.parentNode.insertBefore(ov, src.nextSibling); } catch (e) { return offInstance('no-parent', P); }
+
+    var clock = typeof o.clock === 'function' ? o.clock : null;
+    var uiRects = o.uiRects || (o.params && o.params.uiRects) || null;   // [{x, y, w, h, r?, soft?}] in game canvas px, or a function returning them
+    var uiCv = null, uiSig = '';
+    var S = {
+      alive: true, enabled: true, lost: false, dead: false, shown: false, requested: false, queued: false,
+      ms: 0, flushes: 0, lastHost: null, idle: 0, idleRun: 0,
+      pulse: { amp: 0, t0: 0, decay: P.decay, at: [0.5, 0.5] },
+      box: { l: NaN, t: NaN, w: NaN, h: NaN, W: 0, H: 0, dpr: 1 }, srcW: 0, srcH: 0
+    };
+    var ST = { frames: 0, requests: 0, watchdog: 0, skipped: 0, errors: 0, consecutiveErrors: 0, lost: 0, restored: 0, lastError: '',
+      lastMs: 0, avgMs: 0, maxMs: 0, pulses: 0, resizes: 0, hidden: 0, uploads: 0 };
+
+    // ---- GL resources
+    var R = null;    // {buf, frameTex, programs: {}, targets: {}, white, black}
+    var defs = [];   // pass definitions in insertion order
+    var inputs = {}; // name -> {source, filter, live, tex, w, h, dirty}
+    try { setup(); } catch (e) { try { ov.parentNode.removeChild(ov); } catch (x) { } return offInstance('setup: ' + String(e && e.message || e), P); }
+
+    function compile(type, srcText) {
+      var sh = gl.createShader(type); gl.shaderSource(sh, srcText); gl.compileShader(sh);
+      if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS) && !gl.isContextLost()) { var log = gl.getShaderInfoLog(sh); gl.deleteShader(sh); throw new Error(log || 'compile failed'); }
+      return sh;
+    }
+    function declFor(name, v) {
+      var t = typeof v === 'number' || typeof v === 'boolean' ? 'float' : Array.isArray(v) ? (v.length === 2 ? 'vec2' : v.length === 3 ? 'vec3' : v.length === 4 ? 'vec4' : v.length === 9 ? 'mat3' : v.length === 16 ? 'mat4' : null) : null;
+      return t ? 'uniform ' + t + ' ' + name + ';' : '';
+    }
+    var STD = ['uPrev', 'uFrame', 'uRes', 'uPrevRes', 'uSrcRes', 'uTime', 'uPulse', 'uPulseAt', 'uDpr', 'uScale'];
+    function declared(text, name) { return new RegExp('uniform\\s+\\w+\\s+(\\w+\\s*,\\s*)*' + name + '\\b').test(text); }
+    function fragSource(def) {
+      var body = String(def.frag || '');
+      // a builder who re-declares a standard uniform gets it removed instead of a compile error
+      for (var i = 0; i < STD.length; i++) body = body.replace(new RegExp('^[ \\t]*uniform\\s+\\w+\\s+' + STD[i] + '\\s*;', 'm'), '');
+      if (/^\s*precision\s+\w+\s+float\s*;/m.test(body)) body = body.replace(/^\s*precision\s+\w+\s+float\s*;/m, '');
+      var head = PRELUDE + '\n' + body, extra = [];
+      var ins = def.inputs || {};
+      for (var key in ins) {
+        if (!declared(head, key)) extra.push('uniform sampler2D ' + key + ';');
+        if (!declared(head, key + 'On')) extra.push('uniform float ' + key + 'On;');
+        if (!declared(head, key + 'Res')) extra.push('uniform vec2 ' + key + 'Res;');
+      }
+      var u = {};
+      try { u = def.uniforms ? (def.uniforms(stateFor(def), def.params) || {}) : {}; } catch (e) { u = {}; }
+      for (var name in u) if (!declared(head, name)) { var d = declFor(name, u[name]); if (d) extra.push(d); }
+      return PRELUDE + '\n' + extra.join('\n') + '\n#line 1\n' + body;
+    }
+    function program(fragText) {
+      var vs = compile(gl.VERTEX_SHADER, VERT), fs = compile(gl.FRAGMENT_SHADER, fragText);
+      var pr = gl.createProgram(); gl.attachShader(pr, vs); gl.attachShader(pr, fs); gl.bindAttribLocation(pr, 0, 'aPos'); gl.linkProgram(pr);
+      gl.deleteShader(vs); gl.deleteShader(fs);
+      if (!gl.getProgramParameter(pr, gl.LINK_STATUS) && !gl.isContextLost()) { var log = gl.getProgramInfoLog(pr); gl.deleteProgram(pr); throw new Error(log || 'link failed'); }
+      return { pr: pr, loc: {}, units: {} };
+    }
+    function loc(p, name) { if (!(name in p.loc)) p.loc[name] = gl.getUniformLocation(p.pr, name); return p.loc[name]; }
+    function texture(filter) {
+      var t = gl.createTexture(); gl.activeTexture(gl.TEXTURE0 + SCRATCH); gl.bindTexture(gl.TEXTURE_2D, t);
+      var f = filter === 'nearest' ? gl.NEAREST : gl.LINEAR;
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, f); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, f);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      return t;
+    }
+    function solid(rgba) { var t = texture('nearest'); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(rgba)); return t; }
+    function setup() {
+      R = { programs: {}, targets: {}, frameFilter: null };
+      R.buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, R.buf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+      gl.disable(gl.BLEND); gl.disable(gl.DEPTH_TEST);
+      R.black = solid([0, 0, 0, 255]); R.white = solid([255, 255, 255, 255]);
+      R.frameTex = texture('linear'); R.frameFilter = 'linear';
+      R.inputProg = program(PRELUDE + '\n' + INPUT_FRAG);
+      R.copyProg = program(PRELUDE + '\n' + COPY_FRAG);
+      for (var i = 0; i < defs.length; i++) { defs[i].prog = null; defs[i].broken = ''; }
+      for (var n in inputs) inputs[n].tex = null;
+    }
+    function target(key, w, h) {
+      var T = R.targets[key];
+      if (T && T.w === w && T.h === h) return T;
+      if (!T) { T = R.targets[key] = { tex: texture('linear'), fb: gl.createFramebuffer(), w: 0, h: 0 }; }
+      gl.activeTexture(gl.TEXTURE0 + SCRATCH); gl.bindTexture(gl.TEXTURE_2D, T.tex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, T.fb);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, T.tex, 0);
+      gl.bindTexture(gl.TEXTURE_2D, null);
+      T.w = w; T.h = h; return T;
+    }
+
+    // ---- passes
+    function normDef(def) {
+      var d = { name: String(def.name), frag: String(def.frag || ''), uniforms: typeof def.uniforms === 'function' ? def.uniforms : null,
+        skip: typeof def.skip === 'function' ? def.skip : null,
+        scale: clamp(num(def.scale, 1), 0.0625, 1), inputs: def.inputs && typeof def.inputs === 'object' ? def.inputs : {},
+        order: num(def.order, 500), branch: !!def.branch, keep: !!def.keep, enabled: def.enabled !== false, builtin: !!def.builtin,
+        defaults: def.defaults && typeof def.defaults === 'object' ? def.defaults : {}, params: {}, prog: null, broken: '', seq: 0 };
+      if (def.params) for (var key in def.params) d.params[key] = def.params[key];
+      if (d.builtin) d.params = P;
+      return d;
+    }
+    function find(name) { for (var i = 0; i < defs.length; i++) if (defs[i].name === name) return defs[i]; return null; }
+    var seq = 0;
+    function addPass(def) {
+      try {
+        if (!def || !def.name || !def.frag) { warn('addPass needs {name, frag}'); return null; }
+        var d = normDef(def); d.seq = seq++;
+        var old = find(d.name); if (old) defs.splice(defs.indexOf(old), 1);
+        defs.push(d);
+        if (R && !S.lost) build(d);
+        request();
+        return d.name;
+      } catch (e) { warn('addPass ' + (def && def.name) + ': ' + e.message); return null; }
+    }
+    function build(d) {
+      if (d.prog || d.broken) return;
+      try { d.prog = program(fragSource(d)); }
+      catch (e) { d.broken = String(e.message || e).slice(0, 400); warn('pass "' + d.name + '" disabled, shader error:\n' + d.broken); }
+    }
+    function ordered() { return defs.slice().sort(function (a, b) { return a.order - b.order || a.seq - b.seq; }); }
+
+    // ---- state passed to uniforms()
+    var renderMs = null;   // game ms passed to render(ms) when there is no clock()
+    function nowMs() {
+      if (clock) { try { var v = Number(clock()); if (isFinite(v)) return v; } catch (e) { } }
+      if (renderMs !== null) return renderMs;
+      return S.flushes * FRAME;
+    }
+    function pulseValue(ms) {
+      var pu = S.pulse; if (pu.amp <= 0) return 0;
+      var dt = ms - pu.t0;
+      if (dt < 0) { pu.amp = 0; return 0; }        // the game clock went back (restart): drop the pulse
+      if (dt >= pu.decay) return 0;
+      var x = 1 - dt / pu.decay; return pu.amp * x * x;
+    }
+    function stateFor(def) {
+      var b = S.box, ms = S.ms;
+      return { ms: ms, time: ms / 1000, frame: ST.frames, pulse: pulseValue(ms), pulseAt: S.pulse.at,
+        res: [Math.max(1, Math.round(b.W * (def ? def.scale : 1))), Math.max(1, Math.round(b.H * (def ? def.scale : 1)))],
+        src: [S.srcW, S.srcH], scale: S.srcW ? b.W / S.srcW : 1, dpr: b.dpr, host: S.lastHost, mode: mode };
+    }
+
+    // ---- layout: keep the overlay exactly on the canvas's content box
+    var csCache = null;
+    function contentRect() {
+      var r = src.getBoundingClientRect();
+      csCache = null;
+      if (!csCache) {
+        try {
+          var cs = root.getComputedStyle(src);
+          csCache = { l: parseFloat(cs.borderLeftWidth) + parseFloat(cs.paddingLeft) || 0, t: parseFloat(cs.borderTopWidth) + parseFloat(cs.paddingTop) || 0,
+            r: parseFloat(cs.borderRightWidth) + parseFloat(cs.paddingRight) || 0, b: parseFloat(cs.borderBottomWidth) + parseFloat(cs.paddingBottom) || 0,
+            display: cs.display, z: cs.position !== 'static' ? cs.zIndex : 'auto' };
+        } catch (e) { csCache = { l: 0, t: 0, r: 0, b: 0, display: 'block', z: 'auto' }; }
+      }
+      var c = csCache;
+      return { left: r.left + c.l, top: r.top + c.t, w: Math.max(0, r.width - c.l - c.r), h: Math.max(0, r.height - c.t - c.b), display: c.display, z: c.z };
+    }
+    function layout() {
+      var cr = contentRect();
+      if (src.isConnected === false || cr.display === 'none' || cr.w < 1 || cr.h < 1 || !src.width || !src.height) return false;
+      var op = ov.offsetParent, ox, oy;
+      var docRoot = !op || op === document.body || op === document.documentElement;
+      var opStatic = true;
+      if (op) { try { opStatic = root.getComputedStyle(op).position === 'static'; } catch (e) { } }
+      if (docRoot && opStatic) { ox = root.pageXOffset || 0; oy = root.pageYOffset || 0; }
+      else { var pr = op.getBoundingClientRect(); ox = -pr.left - op.clientLeft + op.scrollLeft; oy = -pr.top - op.clientTop + op.scrollTop; }
+      var l = cr.left + ox, t = cr.top + oy;
+      var dpr = clamp(num(root.devicePixelRatio, 1), 0.5, Math.max(0.5, num(P.dpr, 2)));
+      var W = Math.max(1, Math.round(cr.w * dpr)), H = Math.max(1, Math.round(cr.h * dpr));
+      var cap = Math.max(65536, num(P.maxPixels, 2400000));
+      if (W * H > cap) { var f = Math.sqrt(cap / (W * H)); W = Math.max(1, Math.floor(W * f)); H = Math.max(1, Math.floor(H * f)); dpr = W / cr.w; }
+      var b = S.box;
+      if (b.l !== l || b.t !== t || b.w !== cr.w || b.h !== cr.h) {
+        st.left = l + 'px'; st.top = t + 'px'; st.width = cr.w + 'px'; st.height = cr.h + 'px';
+        b.l = l; b.t = t; b.w = cr.w; b.h = cr.h; ST.resizes++;
+      }
+      if (st.zIndex !== (cr.z === 'auto' ? '' : String(cr.z))) st.zIndex = cr.z === 'auto' ? '' : String(cr.z);
+      if (ov.width !== W || ov.height !== H) { ov.width = W; ov.height = H; }
+      b.W = W; b.H = H; b.dpr = dpr;
+      return true;
+    }
+    function sampleMode() {
+      var m = P.sample;
+      if (m === 'auto') {
+        var ir = '';
+        try { ir = root.getComputedStyle(src).imageRendering || ''; } catch (e) { }
+        m = /pixelated|crisp|optimize-contrast/.test(ir) ? 'sharp' : 'linear';
+      }
+      return m === 'sharp' || m === 'nearest' || m === 'linear' ? m : 'linear';
+    }
+
+    // ---- draw one pass
+    function bindTex(unit, tex) { gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, tex); }
+    function setU(p, name, v) {
+      var l = loc(p, name); if (l === null || l === undefined) return;
+      if (typeof v === 'boolean') v = v ? 1 : 0;
+      if (typeof v === 'number') gl.uniform1f(l, v);
+      else if (Array.isArray(v) || (v && v.length !== undefined)) {
+        if (v.length === 2) gl.uniform2f(l, v[0], v[1]); else if (v.length === 3) gl.uniform3f(l, v[0], v[1], v[2]);
+        else if (v.length === 4) gl.uniform4f(l, v[0], v[1], v[2], v[3]); else if (v.length === 9) gl.uniformMatrix3fv(l, false, v);
+        else if (v.length === 16) gl.uniformMatrix4fv(l, false, v); else if (v.length === 1) gl.uniform1f(l, v[0]);
+      }
+    }
+    function common(p, st0, w, h, prevW, prevH) {
+      setU(p, 'uRes', [w, h]); setU(p, 'uPrevRes', [prevW, prevH]); setU(p, 'uSrcRes', [S.srcW, S.srcH]);
+      setU(p, 'uTime', st0.time); setU(p, 'uPulse', st0.pulse); setU(p, 'uPulseAt', st0.pulseAt);
+      setU(p, 'uDpr', S.box.dpr); setU(p, 'uScale', S.srcW ? w / S.srcW : 1);
+    }
+    function sampler(p, name, unit, tex) { var l = loc(p, name); if (l !== null && l !== undefined) { bindTex(unit, tex); gl.uniform1i(l, unit); } }
+    function drawTo(T, w, h) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, T ? T.fb : null); gl.viewport(0, 0, w, h);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
+
+    // ---- the frame
+    function upload() {
+      var mode2 = sampleMode(), filt = mode2 === 'nearest' ? 'nearest' : 'linear';
+      bindTex(SCRATCH, R.frameTex);
+      if (R.frameFilter !== filt) {
+        var f = filt === 'nearest' ? gl.NEAREST : gl.LINEAR;
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, f); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, f); R.frameFilter = filt;
+      }
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src);
+      S.srcW = src.width; S.srcH = src.height; ST.uploads++;
+      return mode2;
+    }
+    function uploadInput(name) {
+      var I = inputs[name]; if (!I || !I.source) return null;
+      if (!I.tex) { I.tex = texture(I.filter); I.dirty = true; }
+      if (I.live || I.dirty) {
+        try {
+          bindTex(SCRATCH, I.tex); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, I.source);
+          I.w = I.source.width || I.source.videoWidth || 1; I.h = I.source.height || I.source.videoHeight || 1; I.dirty = false; I.ok = true;
+        } catch (e) { I.ok = false; I.error = String(e.message || e); }
+      }
+      return I.ok ? I : null;
+    }
+
+    function roundRect(c, x, y, w, h, r) {
+      r = Math.min(r, w / 2, h / 2);
+      if (r <= 0) { c.fillRect(x, y, w, h); return; }
+      c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
+      c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); c.fill();
+    }
+    // HUD mask from uiRects. Another element (a J pass) that already put its own canvas in the 'uiMask' slot wins: I-08 then only reads it.
+    function updateUiMask() {
+      if (!uiRects) return;
+      var cur = inputs[UI_INPUT];
+      if (cur && cur.source && cur.source !== uiCv) return;
+      var list = uiRects;
+      if (typeof list === 'function') { try { list = list(); } catch (e) { list = null; } }
+      var w = Math.max(1, src.width | 0), h = Math.max(1, src.height | 0), sig = w + 'x' + h + ':';
+      var R = [];
+      if (Array.isArray(list)) for (var i = 0; i < list.length && i < 64; i++) {
+        var q = list[i]; if (!q) continue;
+        var x = num(q.x, NaN), y = num(q.y, NaN), rw = num(q.w, 0), rh = num(q.h, 0);
+        if (!isFinite(x) || !isFinite(y) || rw <= 0 || rh <= 0) continue;
+        var sf = Math.round(Math.max(0, Math.min(32, num(q.soft, 0)))), rd = Math.max(0, Math.min(Math.min(rw, rh) / 2, num(q.r, 0)));
+        R.push([Math.floor(x), Math.floor(y), Math.ceil(rw), Math.ceil(rh), sf, rd]); sig += R[R.length - 1].join(',') + ';';
+      }
+      if (sig === uiSig && cur) return;
+      uiSig = sig;
+      if (!uiCv) uiCv = document.createElement('canvas');
+      if (uiCv.width !== w || uiCv.height !== h) { uiCv.width = w; uiCv.height = h; }
+      var g2 = uiCv.getContext('2d'); g2.setTransform(1, 0, 0, 1, 0, 0); g2.fillStyle = '#000'; g2.fillRect(0, 0, w, h); g2.fillStyle = '#fff';
+      for (var j = 0; j < R.length; j++) {
+        var a = R[j];
+        if (!a[4] && !a[5]) { g2.fillStyle = '#fff'; g2.fillRect(a[0], a[1], a[2], a[3]); continue; }
+        // soft: the rect stays fully masked; the mask fades to 0 over `soft` px outside it (rounded corners)
+        for (var k = a[4]; k >= 0; k--) {
+          var v = Math.round(255 * (1 - k / (a[4] + 1)));
+          g2.fillStyle = 'rgb(' + v + ',' + v + ',' + v + ')';
+          roundRect(g2, a[0] - k, a[1] - k, a[2] + 2 * k, a[3] + 2 * k, a[5] + k);
+        }
+      }
+      setInput(UI_INPUT, uiCv, { filter: 'nearest', live: false });
+    }
+
+    function flush() {
+      S.queued = false;
+      if (!S.alive || S.dead || S.lost || !S.enabled) return;
+      var t0 = (root.performance && performance.now) ? performance.now() : 0;
+      try {
+        if (gl.isContextLost()) { onLost(); return; }
+        if (!layout()) { if (S.shown) { st.visibility = 'hidden'; S.shown = false; } ST.hidden++; return; }
+        S.ms = nowMs();
+        try { updateUiMask(); } catch (e) { }
+        var smode = upload();
+        var W = S.box.W, H = S.box.H;
+        var list = ordered().filter(function (d) { return d.enabled && !d.broken; });
+        for (var i = 0; i < list.length; i++) build(list[i]);
+        list = list.filter(function (d) { return d.prog; });
+        // skip passes that say so this frame (e.g. pulse at 0)
+        var stBase = stateFor(null);
+        list = list.filter(function (d) { if (!d.skip) return true; try { return !d.skip(stBase, d.params); } catch (e) { return true; } });
+        // which outputs are read later by name
+        var kept = {};
+        for (i = 0; i < list.length; i++) { var ins = list[i].inputs; for (var key in ins) kept[ins[key]] = true; if (list[i].keep) kept[list[i].name] = true; }
+        list = list.filter(function (d) { return !d.branch || kept[d.name]; });
+        var lastChain = -1;
+        for (i = 0; i < list.length; i++) if (!list[i].branch) lastChain = i;
+        list = list.slice(0, lastChain + 1);
+
+        // 1) magnify the game frame to device resolution
+        var p = R.inputProg; gl.useProgram(p.pr);
+        common(p, stBase, W, H, S.srcW, S.srcH);
+        sampler(p, 'uRaw', 0, R.frameTex); setU(p, 'uMode', smode === 'sharp' ? 1 : 0);
+        var frameT = null;
+        if (!list.length) { drawTo(null, W, H); }
+        else { frameT = target('@frame', W, H); drawTo(frameT, W, H); }
+        var named = { frame: frameT, '@frame': frameT };
+        var chain = frameT, chainW = W, chainH = H;
+        // 2) the chain
+        for (i = 0; i < list.length; i++) {
+          var d = list[i], w = Math.max(1, Math.round(W * d.scale)), h = Math.max(1, Math.round(H * d.scale));
+          var toScreen = i === lastChain && !kept[d.name] && w === W && h === H;
+          var T = null;
+          if (!toScreen) {
+            if (kept[d.name]) T = target('#' + d.name, w, h);
+            else {
+              var sk = w + 'x' + h;
+              var a = target('@pp-' + sk + '-0', w, h), b = target('@pp-' + sk + '-1', w, h);
+              T = (chain === a) ? b : a;
+            }
+          }
+          var sd = stateFor(d); sd.pulse = stBase.pulse;
+          var pr2 = d.prog; gl.useProgram(pr2.pr);
+          common(pr2, sd, w, h, chainW, chainH);
+          sampler(pr2, 'uPrev', 0, chain.tex); sampler(pr2, 'uFrame', 1, frameT.tex);
+          var unit = 2;
+          for (key in d.inputs) {
+            if (unit >= SCRATCH) break;   // at most 5 extra inputs per pass
+            var ref = d.inputs[key], tex = null, iw = 1, ih = 1, on = 0;
+            var nt = named[ref] || null;
+            if (nt) { tex = nt.tex; iw = nt.w; ih = nt.h; on = 1; }
+            else if (inputs[ref]) { var I = uploadInput(ref); if (I) { tex = I.tex; iw = I.w; ih = I.h; on = 1; } }
+            if (!tex) tex = d.defaults[key] === 'white' ? R.white : R.black;
+            sampler(pr2, key, unit++, tex); setU(pr2, key + 'On', on); setU(pr2, key + 'Res', [iw, ih]);
+          }
+          var U = null;
+          try { U = d.uniforms ? d.uniforms(sd, d.params) : null; } catch (e) { U = null; ST.errors++; ST.lastError = 'uniforms(' + d.name + '): ' + e.message; }
+          if (U) for (var un in U) setU(pr2, un, U[un]);
+          drawTo(T, w, h);
+          if (T) named[d.name] = T;
+          if (!d.branch) { chain = T; chainW = w; chainH = h; }
+        }
+        // 3) the last chain output went to a texture (it is read by name, or scaled): copy it to the screen
+        if (list.length && chain) {
+          p = R.copyProg; gl.useProgram(p.pr); common(p, stBase, W, H, chainW, chainH); sampler(p, 'uPrev', 0, chain.tex); drawTo(null, W, H);
+        }
+        ST.frames++; S.flushes++; ST.consecutiveErrors = 0;
+        if (!S.shown) { st.visibility = 'visible'; S.shown = true; }
+      } catch (e) {
+        ST.errors++; ST.consecutiveErrors++; ST.lastError = String(e && e.message || e).slice(0, 300);
+        if (/SecurityError|tainted|cross-origin/i.test(ST.lastError)) { kill('tainted canvas: ' + ST.lastError); }
+        else if (ST.consecutiveErrors >= 3) kill('render error: ' + ST.lastError);
+      }
+      if (t0) { var dt = performance.now() - t0; ST.lastMs = dt; ST.maxMs = Math.max(ST.maxMs, dt); ST.avgMs = ST.frames <= 1 ? dt : ST.avgMs * 0.95 + dt * 0.05; }
+    }
+
+    function kill(reason) {
+      S.dead = true; api.active = false; api.reason = reason; api.mode = 'off';
+      st.visibility = 'hidden'; st.display = 'none'; S.shown = false; warn('post-processing off: ' + reason);
+    }
+
+    // ---- requests: render after the current task, so call order around the game's draw does not matter
+    var mq = typeof root.queueMicrotask === 'function' ? function (f) { root.queueMicrotask(f); } : function (f) { Promise.resolve().then(f); };
+    function request() {
+      if (S.queued || !S.alive) return;
+      S.queued = true; mq(flush);
+    }
+    function render(arg) {
+      try {
+        ST.requests++; S.requested = true;
+        if (typeof arg === 'number' && isFinite(arg)) renderMs = arg;
+        else if (arg && typeof arg === 'object') { S.lastHost = arg; if (arg.ms !== undefined && isFinite(Number(arg.ms))) renderMs = Number(arg.ms); }
+        request();
+      } catch (e) { }
+      return api;
+    }
+    function renderNow(arg) { render(arg); if (S.queued) flush(); return api; }
+
+    // watchdog: if the game stops calling render() (a title screen it did not wire), repaint from the canvas ourselves
+    var rafId = 0;
+    function tick() {
+      rafId = 0;
+      if (!S.alive) return;
+      try {
+        if (S.requested) { S.requested = false; S.idle = 0; S.idleRun = 0; }
+        else if (!S.dead && !S.lost && S.enabled) {
+          S.idle++;
+          if (S.idle >= 2 && (S.idleRun < 120 || S.idle % 15 === 0)) { S.idleRun++; ST.watchdog++; request(); }
+        }
+      } catch (e) { }
+      rafId = root.requestAnimationFrame ? root.requestAnimationFrame(tick) : 0;
+    }
+    if (root.requestAnimationFrame) rafId = root.requestAnimationFrame(tick);
+
+    // ---- pulse
+    function pulse(strength, opts) {
+      try {
+        opts = opts || {};
+        if (strength && typeof strength === 'object') { opts = strength; strength = opts.strength; }
+        var s = clamp(num(strength, 1), 0, 1.5);
+        var ms = nowMs();
+        var cur = pulseValue(ms);
+        var pu = S.pulse;
+        pu.amp = Math.max(cur, s); pu.t0 = ms; pu.decay = Math.max(16, num(opts.decay, P.decay));
+        var at = opts.at;
+        if (at && isFinite(Number(at.x)) && isFinite(Number(at.y)) && src.width && src.height) pu.at = [clamp(at.x / src.width, 0, 1), clamp(1 - at.y / src.height, 0, 1)];
+        else pu.at = [0.5, 0.5];
+        ST.pulses++;
+      } catch (e) { }
+      return api;
+    }
+
+    // ---- inputs (host canvases: depth, light mask...)
+    function setInput(name, source, opts) {
+      try {
+        opts = opts || {}; name = String(name);
+        if (!source) { delete inputs[name]; return api; }
+        var I = inputs[name] || (inputs[name] = {});
+        if (I.tex && I.filter !== (opts.filter || 'linear') && R && !S.lost) { gl.deleteTexture(I.tex); I.tex = null; }
+        I.source = source; I.filter = opts.filter === 'nearest' ? 'nearest' : 'linear'; I.live = opts.live !== false; I.dirty = true;
+        request();
+      } catch (e) { }
+      return api;
+    }
+
+    // ---- context loss
+    function onLost(e) {
+      try { if (e && e.preventDefault) e.preventDefault(); } catch (x) { }
+      if (S.lost) return;
+      S.lost = true; ST.lost++; api.active = false; api.reason = 'lost'; st.visibility = 'hidden'; S.shown = false;
+    }
+    function onRestored() {
+      try {
+        if (!S.alive || S.dead) return;
+        S.lost = false; setup(); ST.restored++; api.active = true; api.reason = ''; request();
+      } catch (e) { kill('restore failed: ' + e.message); }
+    }
+    ov.addEventListener('webglcontextlost', onLost, false);
+    ov.addEventListener('webglcontextrestored', onRestored, false);
+    var onResize = function () { csCache = null; request(); };
+    try { root.addEventListener('resize', onResize); } catch (e) { }
+    var ro = null;
+    try { if (root.ResizeObserver) { ro = new root.ResizeObserver(onResize); ro.observe(src); } } catch (e) { ro = null; }
+
+    function setParams(p) {
+      try {
+        var before = P.passes; applyParams(P, p || {});
+        if (p && p.passes !== undefined && p.passes !== before) applyPassesParam();
+        if (p && p.ink) P.ink = hexRgb(p.ink, P.ink);
+        if (p && p.uiRects !== undefined) {
+          var had = inputs[UI_INPUT] && inputs[UI_INPUT].source === uiCv;
+          uiRects = p.uiRects || null; uiSig = '';
+          if (!uiRects && had) delete inputs[UI_INPUT];
+        }
+        if (p && p.decay !== undefined) S.pulse.decay = Math.max(16, num(P.decay, 260));
+        request();
+      } catch (e) { }
+      return api;
+    }
+    function applyPassesParam() {
+      var v = String(P.passes || '');
+      var g = find('grade'), pu = find('pulse');
+      if (g) g.enabled = /grade/.test(v); if (pu) pu.enabled = /pulse/.test(v);
+    }
+
+    var api = {
+      version: VERSION, active: true, mode: mode, reason: '', canvas: ov, source: src,
+      render: render, renderNow: renderNow, pulse: pulse,
+      pulseValue: function () { return pulseValue(nowMs()); },
+      clear: function () { S.pulse.amp = 0; request(); return api; },
+      resize: function () { csCache = null; request(); return api; },
+      setEnabled: function (on) {
+        S.enabled = on !== false;
+        if (!S.enabled) { st.visibility = 'hidden'; S.shown = false; } else request();
+        api.active = S.enabled && !S.dead && !S.lost; return api;
+      },
+      addPass: addPass,
+      removePass: function (name) { var d = find(name); if (d && !d.builtin) { defs.splice(defs.indexOf(d), 1); try { if (d.prog) gl.deleteProgram(d.prog.pr); } catch (e) { } request(); } return api; },
+      enable: function (name, on) { var d = find(name); if (d) { d.enabled = on !== false; request(); } return api; },
+      set: function (name, params) {
+        var d = find(name); if (!d) return api;
+        if (d.builtin) return setParams(params);
+        for (var key in params || {}) d.params[key] = params[key];
+        request(); return api;
+      },
+      get: function (name) {
+        var d = find(name); if (!d) return null;
+        var pp = {}; for (var key in d.params) pp[key] = d.params[key];
+        return { name: d.name, enabled: d.enabled, order: d.order, scale: d.scale, branch: d.branch, inputs: d.inputs, params: pp, error: d.broken || '' };
+      },
+      passes: function () { return ordered().map(function (d) { return d.name; }); },
+      setInput: setInput,
+      removeInput: function (name) { delete inputs[String(name)]; request(); return api; },
+      setParams: setParams,
+      params: function () { var oo = {}; for (var key in P) oo[key] = P[key]; return oo; },
+      stats: function () {
+        var oo = {}; for (var key in ST) oo[key] = ST[key];
+        oo.mode = api.mode; oo.reason = api.reason; oo.active = api.active;
+        oo.passes = ordered().filter(function (d) { return d.enabled && !d.broken; }).map(function (d) { return d.name; });
+        oo.broken = defs.filter(function (d) { return d.broken; }).map(function (d) { return d.name; });
+        oo.w = S.box.W; oo.h = S.box.H; oo.cssW = S.box.w; oo.cssH = S.box.h; oo.dpr = S.box.dpr; oo.srcW = S.srcW; oo.srcH = S.srcH;
+        oo.pulse = pulseValue(nowMs()); oo.ms = S.ms; oo.shown = S.shown;
+        return oo;
+      },
+      destroy: function () {
+        S.alive = false; api.active = false; api.reason = 'destroyed';
+        try { if (rafId && root.cancelAnimationFrame) root.cancelAnimationFrame(rafId); } catch (e) { }
+        try { root.removeEventListener('resize', onResize); if (ro) ro.disconnect(); } catch (e) { }
+        try { var ext = gl.getExtension('WEBGL_lose_context'); if (ext) ext.loseContext(); } catch (e) { }
+        try { if (ov.parentNode) ov.parentNode.removeChild(ov); } catch (e) { }
+        var li = LIVE.indexOf(api); if (li >= 0) LIVE.splice(li, 1);
+        return api;
+      }
+    };
+
+    var B = builtinPasses();
+    for (var bi = 0; bi < B.length; bi++) addPass(B[bi]);
+    applyPassesParam();
+    request();
+    LIVE.push(api);
+    return api;
+  }
+
+  function applyParams(P, p) {
+    if (p.look !== undefined && LOOKS[p.look]) { P.look = p.look; var L = LOOKS[p.look]; for (var k in L) P[k] = L[k]; }
+    for (var key in p) {
+      if (key === 'look' || key === 'ink') continue;
+      if (!(key in DEFAULTS)) continue;
+      var d = DEFAULTS[key];
+      P[key] = typeof d === 'number' ? num(p[key], P[key]) : p[key];
+    }
+  }
+
+  root.GameDNA_Post = { version: VERSION, create: create, supported: supported, instances: function () { return LIVE.slice(); }, defaults: DEFAULTS, looks: LOOKS, glslPrelude: PRELUDE };
+})(typeof window !== 'undefined' ? window : this);
+
+</script>
+<script>
+/* GameDNA J-06 · Colour grading LUT (+ J-07 vignette and film grain) · module v1.1 (plain script, no dependencies, one global)
+ *
+ *   // after webgl-post.js (I-08) and after the game's own GameDNA_Post.create(...) if it has one
+ *   const grade = GameDNA_ColorGrade.create({
+ *     canvas: myCanvas,                          // the game's 2D canvas (the same one I-08 post-processes)
+ *     clock: () => frameCount * 1000 / 60,       // game time in ms: blends and grain follow it (never Date.now())
+ *     params: { preset: 'neutral', strength: 1, vignette: 0.3, grain: 0.05 },
+ *     uiRects: () => [{ x: 0, y: 0, w: 256, h: 16 }]   // HUD plates in canvas px ({r} corner radius, {soft} px fade): left untouched
+ *   });
+ *   grade.to('night', 1200);                     // blend to another LUT over 1.2 s of game time (idempotent: safe every step)
+ *   grade.render();                              // once per drawn frame (forwards to post.render())
+ *
+ * A 32x32x32 3D lookup table is stored as a 1024x32 strip texture. Presets are generated procedurally from small recipes
+ * (no image files); designers can also load a .cube file, a PNG strip or grid, a float array or a function. Two LUT slots
+ * blend over game time. A second pass adds vignette and deterministic film grain. Both passes leave UI pixels untouched
+ * (the 'uiMask' input convention). Without WebGL (or ?webgl=0) every method is a safe no-op and the game looks as before.
+ * Never throws.
+ */
+(function (root) {
+  'use strict';
+  var VERSION = '1.1.0';
+  var N = 32, STRIP_W = N * N;                       // 32^3 LUT as a 1024 x 32 strip: x = b * 32 + r, y = g
+  var ORDER_LUT = 750, ORDER_LENS = 860;              // I-08 order bands: LUT 700-799, built-in grade 800, lens 850-899
+  var IN_A = 'gdna-lut-a', IN_B = 'gdna-lut-b', IN_UI = 'uiMask';
+
+  var DEFAULTS = {
+    preset: 'neutral',     // LUT at start
+    strength: 1,           // 0 = ungraded, 1 = full LUT (mix in the shader)
+    blend: 900,            // default ms of game time for to(name) without a duration
+    vignette: 0.3,         // 0..1 corner darkening toward the ink colour (this module's own; the built-in one is turned off)
+    grain: 0.035,          // 0..0.3 film grain amplitude (luminance, strongest in the midtones)
+    grainSize: 1.5,        // grain cell in CSS px
+    grainFps: 24,          // how often the grain pattern changes, in game time
+    builtin: 'replace',    // the I-08 built-in 'grade' pass: 'replace' (turned off while this runs) | 'keep' (runs after the LUT, its vignette set to 0)
+    compare: -1,           // before/after split: x in 0..1 of the canvas (left = untouched), < 0 = off
+    webgl: 'auto'          // 'auto' | 'off'
+  };
+
+  // ------------------------------------------------------------------ recipes: small, readable grade descriptions
+  // All fields optional. exposure (stops), temp (-1 cool .. 1 warm), tint (-1 green .. 1 magenta), contrast (-1..1),
+  // lift/gamma/gain [r,g,b], saturation, vibrance, hues [{h deg, w deg, shift deg, sat x, lum x, minSat 0..1, minVal 0..1, keep 0..1 (exempt from global saturation and split toning), hold 0..1 (pull the result back toward the drawn colour)}],
+  // shadows '#hex' + shadowAmt, highlights '#hex' + highAmt, balance (-0.3..0.3), black '#hex', white '#hex'.
+  var PRESETS = {
+    neutral: {},
+    dusk: {
+      label: 'Dusk', exposure: -0.12, temp: 0.42, tint: 0.18, contrast: 0.18, saturation: 1.04,
+      hues: [{ h: 215, w: 55, shift: 28, sat: 0.8 }, { h: 105, w: 55, shift: -16, sat: 0.78 }, { h: 30, w: 35, sat: 1.18 }],
+      shadows: '#55306f', shadowAmt: 0.55, highlights: '#ffad66', highAmt: 0.55, black: '#0c0712'
+    },
+    night: {
+      label: 'Cold night', exposure: -1.05, temp: -0.6, contrast: 0.12, saturation: 0.42,
+      hues: [{ h: 32, w: 30, keep: 1, sat: 1.15, lum: 1.7, minSat: 0.55 },             // fire, embers, saturated lamp glass
+             { h: 44, w: 34, keep: 1, sat: 1.2, lum: 1.95, minSat: 0.1, minVal: 0.95, hold: 0.8 }, // pale warm light at full brightness: stays lit (v1.1: wider, held)
+             { h: 210, w: 45, lum: 0.78, minVal: 0.8 }],                                   // bright blue sky about 0.35 EV darker (v1.1)
+      shadows: '#1d3a78', shadowAmt: 0.85, highlights: '#bcd6ff', highAmt: 0.35, black: '#03060f', white: '#e2eeff'
+    },
+    memory: {
+      label: 'Faded memory', exposure: 0.06, temp: 0.32, contrast: -0.26, saturation: 0.42,
+      shadows: '#6d5a76', shadowAmt: 0.32, highlights: '#ffe0aa', highAmt: 0.45, black: '#231d27', white: '#f6ecda'
+    },
+    combat: {   // v1.1: teal-to-black shadows, darker midtones, reds kept hot, greens muted toward teal (no neon on green-heavy games)
+      label: 'High-contrast combat', exposure: -0.45, contrast: 0.55, saturation: 0.95, balance: 0.12, gamma: [0.82, 0.84, 0.86],
+      hues: [{ h: 0, w: 34, keep: 1, sat: 1.45, lum: 1.25 }, { h: 30, w: 22, keep: 0.5, sat: 1.1, lum: 1.12, minSat: 0.5 },
+             { h: 105, w: 55, shift: 14, sat: 0.6 }, { h: 200, w: 50, shift: -12, sat: 0.9 }],
+      shadows: '#06505e', shadowAmt: 1.05, highlights: '#ffc890', highAmt: 0.2, black: '#010607', white: '#e9e6df'
+    },
+    toxic: {
+      label: 'Toxic swamp', exposure: -0.1, temp: -0.08, tint: -0.55, contrast: 0.28, saturation: 1.08,
+      hues: [{ h: 285, w: 60, shift: -70, sat: 0.55 }, { h: 205, w: 45, shift: -40 }, { h: 0, w: 30, shift: 22, sat: 0.8 }],
+      shadows: '#123d2b', shadowAmt: 0.75, highlights: '#d8ff73', highAmt: 0.55, black: '#05120b'
+    }
+  };
+
+  // ------------------------------------------------------------------ helpers
+  function num(v, d) { v = Number(v); return isFinite(v) ? v : d; }
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function c01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+  function warn(msg) { try { if (root.console && console.warn) console.warn('[GameDNA_ColorGrade] ' + msg); } catch (e) { } }
+  function hexRgb(h, d) {
+    if (Array.isArray(h) && h.length >= 3) return [num(h[0], 0), num(h[1], 0), num(h[2], 0)];
+    var m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(String(h || '').trim());
+    if (!m) return d;
+    var s = m[1]; if (s.length === 3) s = s[0] + s[0] + s[1] + s[1] + s[2] + s[2];
+    return [parseInt(s.slice(0, 2), 16) / 255, parseInt(s.slice(2, 4), 16) / 255, parseInt(s.slice(4, 6), 16) / 255];
+  }
+  function urlOff() {
+    try { var q = new URLSearchParams(root.location ? root.location.search : ''); var w = q.get('webgl'); return w === '0' || w === 'off' || w === 'false'; } catch (e) { return false; }
+  }
+  function s2l(c) { return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }
+  function l2s(c) { return c <= 0.0031308 ? c * 12.92 : 1.055 * Math.pow(c, 1 / 2.4) - 0.055; }
+  function luma(r, g, b) { return 0.2126 * r + 0.7152 * g + 0.0722 * b; }
+  function smooth(a, b, x) { var t = c01((x - a) / (b - a)); return t * t * (3 - 2 * t); }
+  function rgb2hsv(r, g, b) {
+    var mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn, h = 0;
+    if (d > 1e-6) { if (mx === r) h = ((g - b) / d) % 6; else if (mx === g) h = (b - r) / d + 2; else h = (r - g) / d + 4; h *= 60; if (h < 0) h += 360; }
+    return [h, mx > 0 ? d / mx : 0, mx];
+  }
+  function hsv2rgb(h, s, v) {
+    h = ((h % 360) + 360) % 360; var c = v * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = v - c, r = 0, g = 0, b = 0;
+    if (h < 60) { r = c; g = x; } else if (h < 120) { r = x; g = c; } else if (h < 180) { g = c; b = x; } else if (h < 240) { g = x; b = c; } else if (h < 300) { r = x; b = c; } else { r = c; b = x; }
+    return [r + m, g + m, b + m];
+  }
+
+  // one colour through a recipe (0..1 sRGB in, 0..1 sRGB out)
+  function applyRecipe(R, r, g, b) {
+    var i, k;
+    // 1) exposure and white balance in linear light, soft shoulder instead of a hard clip
+    var ev = Math.pow(2, num(R.exposure, 0)), temp = num(R.temp, 0), tint = num(R.tint, 0);
+    var wb = [1 + 0.16 * temp + 0.05 * tint, 1 - 0.12 * tint, 1 - 0.16 * temp + 0.05 * tint];
+    var c = [s2l(r) * ev * wb[0], s2l(g) * ev * wb[1], s2l(b) * ev * wb[2]];
+    var top = Math.max(ev * wb[0], ev * wb[1], ev * wb[2]), knee = 0.75;   // > 1: roll the brightest input off to 1 above the knee
+    for (i = 0; i < 3; i++) {
+      var x = c[i];
+      if (top > 1 && x > knee) { var tt = c01((x - knee) / (top - knee)); x = knee + (1 - knee) * (1 - (1 - tt) * (1 - tt)); }
+      c[i] = l2s(c01(x));
+    }
+    // 2) contrast: S-curve (> 0) or flatten (< 0) around mid-grey
+    var ct = num(R.contrast, 0);
+    if (ct) for (i = 0; i < 3; i++) { x = c[i]; c[i] = ct > 0 ? x + (x * x * (3 - 2 * x) - x) * Math.min(1, ct) * 1.6 : 0.5 + (x - 0.5) * (1 + ct * 0.7); c[i] = c01(c[i]); }
+    // 3) lift / gamma / gain per channel
+    if (R.lift || R.gamma || R.gain) for (i = 0; i < 3; i++) {
+      var li = R.lift ? num(R.lift[i], 0) : 0, ga = R.gamma ? num(R.gamma[i], 1) : 1, gn = R.gain ? num(R.gain[i], 1) : 1;
+      x = gn * (c[i] + li * (1 - c[i])); c[i] = Math.pow(c01(x), 1 / Math.max(0.05, ga));
+    }
+    // 4) colour bands (hue-selective), weighed once on the colour the game drew (before exposure and contrast)
+    var bands = [], keepW = 0, holdW = 0, hsv = rgb2hsv(r, g, b);
+    if (R.hues && R.hues.length && hsv[1] > 0.001) for (k = 0; k < R.hues.length; k++) {
+      var H = R.hues[k], dist = Math.abs(((hsv[0] - num(H.h, 0)) % 360 + 540) % 360 - 180), wdt = Math.max(1, num(H.w, 30));
+      var wgt = (1 - smooth(0, wdt, dist)) * smooth(0.02, 0.18, hsv[1]), ms0 = num(H.minSat, 0), mv0 = num(H.minVal, 0);
+      if (ms0 > 0) wgt *= smooth(ms0 - 0.12, ms0 + 0.08, hsv[1]);
+      if (mv0 > 0) wgt *= smooth(mv0 - 0.03, mv0 + 0.01, hsv[2]);
+      if (wgt <= 0) continue;
+      bands.push([H, wgt]); keepW = Math.max(keepW, wgt * c01(num(H.keep, 0))); holdW = Math.max(holdW, wgt * c01(num(H.hold, 0)));
+    }
+    // 5) saturation and vibrance around luma (a band with keep: 1 is exempt), then the band changes
+    var sat = num(R.saturation, 1), vib = num(R.vibrance, 0), l = luma(c[0], c[1], c[2]);
+    if (sat !== 1 || vib) {
+      var mx = Math.max(c[0], c[1], c[2]), mn = Math.min(c[0], c[1], c[2]), cur = mx - mn;
+      var f = sat * (1 + vib * (1 - c01(cur * 1.5)));
+      f = f + (1 - f) * keepW;
+      for (i = 0; i < 3; i++) c[i] = c01(l + (c[i] - l) * f);
+    }
+    if (bands.length) {
+      var hv = rgb2hsv(c[0], c[1], c[2]), dh = 0, ds = 1, dv = 1;
+      for (k = 0; k < bands.length; k++) { var HB = bands[k][0], wb2 = bands[k][1];
+        dh += num(HB.shift, 0) * wb2; ds *= 1 + (num(HB.sat, 1) - 1) * wb2; dv *= 1 + (num(HB.lum, 1) - 1) * wb2; }
+      var out = hsv2rgb(hv[0] + dh, c01(hv[1] * ds), c01(hv[2] * dv));
+      c = [c01(out[0]), c01(out[1]), c01(out[2])];
+    }
+    // 6) split toning: chroma of the tint colour added by luma band (keeps brightness)
+    l = luma(c[0], c[1], c[2]);
+    var bal = num(R.balance, 0);
+    if (R.shadows) { var sc = hexRgb(R.shadows, [0.5, 0.5, 0.5]), sl = luma(sc[0], sc[1], sc[2]), sw = (1 - smooth(0.0, 0.62 + bal, l)) * (0.45 + 0.55 * smooth(0.0, 0.14, l)) * num(R.shadowAmt, 0.5) * (1 - keepW);
+      for (i = 0; i < 3; i++) c[i] += (sc[i] - sl) * sw; }
+    if (R.highlights) { var hc = hexRgb(R.highlights, [0.5, 0.5, 0.5]), hl = luma(hc[0], hc[1], hc[2]), hw = smooth(0.32 + bal, 1.0, l) * num(R.highAmt, 0.5) * (1 - keepW);
+      for (i = 0; i < 3; i++) c[i] += (hc[i] - hl) * hw; }
+    // 7) output black and white points (fade / tinted blacks)
+    var bk = R.black ? hexRgb(R.black, [0, 0, 0]) : null, wt = R.white ? hexRgb(R.white, [1, 1, 1]) : null;
+    for (i = 0; i < 3; i++) { x = c01(c[i]); if (bk || wt) { var lo = bk ? bk[i] : 0, hi = wt ? wt[i] : 1; x = lo + x * (hi - lo); } c[i] = c01(x); }
+    // 8) hold: a band with hold > 0 pulls the result back toward the colour the game drew (lamp glass and its halo stay lit at night)
+    if (holdW > 0) { var src0 = [r, g, b]; for (i = 0; i < 3; i++) c[i] = c01(c[i] + (src0[i] - c[i]) * holdW); }
+    return c;
+  }
+
+  // ------------------------------------------------------------------ LUT objects: {size: 32, data: Uint8ClampedArray(1024*32*4), identity, name}
+  function newLut() { return { size: N, data: new Uint8ClampedArray(STRIP_W * N * 4), identity: false, image: null }; }
+  function fill(fn) {
+    var L = newLut(), d = L.data, ident = true;
+    for (var g = 0; g < N; g++) for (var b = 0; b < N; b++) for (var r = 0; r < N; r++) {
+      var o = ((g * STRIP_W) + b * N + r) * 4, out;
+      try { out = fn(r / (N - 1), g / (N - 1), b / (N - 1)); } catch (e) { out = null; }
+      if (!out) out = [r / (N - 1), g / (N - 1), b / (N - 1)];
+      d[o] = Math.round(c01(num(out[0], 0)) * 255); d[o + 1] = Math.round(c01(num(out[1], 0)) * 255); d[o + 2] = Math.round(c01(num(out[2], 0)) * 255); d[o + 3] = 255;
+      if (ident && (Math.abs(d[o] - Math.round(r * 255 / (N - 1))) > 0 || Math.abs(d[o + 1] - Math.round(g * 255 / (N - 1))) > 0 || Math.abs(d[o + 2] - Math.round(b * 255 / (N - 1))) > 0)) ident = false;
+    }
+    L.identity = ident; return L;
+  }
+  function identity() { return fill(function (r, g, b) { return [r, g, b]; }); }
+  function fromRecipe(R) { R = R || {}; return fill(function (r, g, b) { return applyRecipe(R, r, g, b); }); }
+  function fromFunction(fn) { return fill(function (r, g, b) { var o = fn(r, g, b); return o && o.length >= 3 ? o : null; }); }
+  // trilinear sample of a float table (size S, r fastest), used to resample any size to 32
+  function sampleTable(tab, S, r, g, b) {
+    var fr = r * (S - 1), fg = g * (S - 1), fb = b * (S - 1);
+    var r0 = Math.floor(fr), g0 = Math.floor(fg), b0 = Math.floor(fb), r1 = Math.min(S - 1, r0 + 1), g1 = Math.min(S - 1, g0 + 1), b1 = Math.min(S - 1, b0 + 1);
+    var tr = fr - r0, tg = fg - g0, tb = fb - b0, out = [0, 0, 0];
+    for (var ch = 0; ch < 3; ch++) {
+      var v = function (R0, G0, B0) { return tab[((B0 * S + G0) * S + R0) * 3 + ch]; };
+      var c00 = v(r0, g0, b0) * (1 - tr) + v(r1, g0, b0) * tr, c10 = v(r0, g1, b0) * (1 - tr) + v(r1, g1, b0) * tr;
+      var c01v = v(r0, g0, b1) * (1 - tr) + v(r1, g0, b1) * tr, c11 = v(r0, g1, b1) * (1 - tr) + v(r1, g1, b1) * tr;
+      out[ch] = (c00 * (1 - tg) + c10 * tg) * (1 - tb) + (c01v * (1 - tg) + c11 * tg) * tb;
+    }
+    return out;
+  }
+  // float array in .cube order (r fastest, then g, then b), values 0..1
+  function fromArray(size, values) {
+    var S = Math.round(num(size, 0));
+    if (S < 2 || !values || values.length < S * S * S * 3) { warn('fromArray: need size >= 2 and size^3 * 3 values'); return null; }
+    return fill(function (r, g, b) { return sampleTable(values, S, r, g, b); });
+  }
+  // text of an Adobe/Resolve .cube file (3D only)
+  function parseCube(text) {
+    try {
+      var lines = String(text || '').split(/\r?\n/), S = 0, vals = [], lo = [0, 0, 0], hi = [1, 1, 1];
+      for (var i = 0; i < lines.length; i++) {
+        var ln = lines[i].replace(/#.*/, '').trim(); if (!ln) continue;
+        var p = ln.split(/\s+/);
+        if (/^LUT_3D_SIZE$/i.test(p[0])) { S = parseInt(p[1], 10); continue; }
+        if (/^LUT_1D_SIZE$/i.test(p[0])) { warn('parseCube: 1D LUTs are not supported'); return null; }
+        if (/^DOMAIN_MIN$/i.test(p[0])) { lo = [num(p[1], 0), num(p[2], 0), num(p[3], 0)]; continue; }
+        if (/^DOMAIN_MAX$/i.test(p[0])) { hi = [num(p[1], 1), num(p[2], 1), num(p[3], 1)]; continue; }
+        if (/^[A-Z_]+$/i.test(p[0])) continue;                    // TITLE and other keywords
+        if (p.length >= 3) for (var k = 0; k < 3; k++) vals.push(c01((num(p[k], 0) - lo[k]) / ((hi[k] - lo[k]) || 1)));
+      }
+      if (!S || vals.length < S * S * S * 3) { warn('parseCube: LUT_3D_SIZE missing or too few rows'); return null; }
+      return fromArray(S, vals);
+    } catch (e) { warn('parseCube: ' + e.message); return null; }
+  }
+  // image (strip N*N x N, e.g. 1024x32 / 256x16, or square grid, e.g. 512x512 = 64^3): tile index = blue, x in tile = red, y = green
+  function fromStrip(img) {
+    try {
+      var w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+      var S = Math.round(Math.cbrt(w * h));
+      if (!S || S * S * S !== w * h || w % S || h % S) { warn('fromStrip: image must hold size^3 pixels as size x size tiles (got ' + w + 'x' + h + ')'); return null; }
+      var cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+      var x = cv.getContext('2d'); x.drawImage(img, 0, 0);
+      var px = x.getImageData(0, 0, w, h).data, per = w / S, tab = new Float32Array(S * S * S * 3);
+      for (var b = 0; b < S; b++) for (var g = 0; g < S; g++) for (var r = 0; r < S; r++) {
+        var tx = (b % per) * S + r, ty = Math.floor(b / per) * S + g, o = (ty * w + tx) * 4, q = ((b * S + g) * S + r) * 3;
+        tab[q] = px[o] / 255; tab[q + 1] = px[o + 1] / 255; tab[q + 2] = px[o + 2] / 255;
+      }
+      return fromArray(S, tab);
+    } catch (e) { warn('fromStrip: ' + (e && e.message || e) + ' (cross-origin images cannot be read)'); return null; }
+  }
+  function toLut(src) {
+    if (!src) return null;
+    if (src.size === N && src.data && src.data.length === STRIP_W * N * 4) return src;
+    if (typeof src === 'function') return fromFunction(src);
+    if (typeof src === 'string') return /LUT_3D_SIZE/i.test(src) ? parseCube(src) : null;
+    if (src.width && src.height && (src.getContext || src.naturalWidth !== undefined || src.close)) return fromStrip(src);
+    if (src.size && src.values) return fromArray(src.size, src.values);
+    if (typeof src === 'object') return fromRecipe(src);
+    return null;
+  }
+  // CPU lookup (trilinear, same maths as the shader): for tests and for showing a swatch
+  function sample(L, r, g, b) {
+    if (!L || !L.data) return [r, g, b];
+    var d = L.data, fr = c01(r) * (N - 1), fg = c01(g) * (N - 1), fb = c01(b) * (N - 1);
+    var r0 = Math.floor(fr), g0 = Math.floor(fg), b0 = Math.floor(fb), r1 = Math.min(N - 1, r0 + 1), g1 = Math.min(N - 1, g0 + 1), b1 = Math.min(N - 1, b0 + 1);
+    var tr = fr - r0, tg = fg - g0, tb = fb - b0, out = [0, 0, 0];
+    function at(R0, G0, B0, ch) { return d[((G0 * STRIP_W) + B0 * N + R0) * 4 + ch] / 255; }
+    for (var ch = 0; ch < 3; ch++) {
+      var a0 = (at(r0, g0, b0, ch) * (1 - tr) + at(r1, g0, b0, ch) * tr) * (1 - tg) + (at(r0, g1, b0, ch) * (1 - tr) + at(r1, g1, b0, ch) * tr) * tg;
+      var a1 = (at(r0, g0, b1, ch) * (1 - tr) + at(r1, g0, b1, ch) * tr) * (1 - tg) + (at(r0, g1, b1, ch) * (1 - tr) + at(r1, g1, b1, ch) * tr) * tg;
+      out[ch] = a0 * (1 - tb) + a1 * tb;
+    }
+    return out;
+  }
+  function imageOf(L) {
+    if (!L) return null;
+    if (!L.image) { try { L.image = new ImageData(L.data, STRIP_W, N); } catch (e) { L.image = null; } }
+    return L.image;
+  }
+  function toCanvas(L) {
+    try { var cv = document.createElement('canvas'); cv.width = STRIP_W; cv.height = N; var im = imageOf(L); if (im) cv.getContext('2d').putImageData(im, 0, 0); return cv; } catch (e) { return null; }
+  }
+  function lerpLut(A, B, m) {
+    var L = newLut(), a = A.data, b = B.data, d = L.data, im = 1 - m;
+    for (var i = 0; i < d.length; i++) d[i] = a[i] * im + b[i] * m;
+    L.identity = A.identity && B.identity; return L;
+  }
+
+  // ------------------------------------------------------------------ GLSL (GLSL ES 1.00; the I-08 prelude is added by GameDNA_Post)
+  var LUT_FRAG = [
+    'uniform sampler2D uLutA; uniform sampler2D uLutB; uniform sampler2D uUi;',
+    'uniform float uLutAOn; uniform float uLutBOn; uniform float uUiOn;',
+    'uniform float uMix; uniform float uStrength; uniform float uSplit;',
+    'vec3 lut(sampler2D t, vec3 c) {',
+    '  c = clamp(c, 0.0, 1.0);',
+    '  float bz = c.b * 31.0; float b0 = floor(bz); float b1 = min(b0 + 1.0, 31.0);',
+    '  float x = c.r * 31.0 + 0.5; float v = 1.0 - (c.g * 31.0 + 0.5) / 32.0;',
+    '  vec3 s0 = texture2D(t, vec2((b0 * 32.0 + x) / 1024.0, v)).rgb;',
+    '  vec3 s1 = texture2D(t, vec2((b1 * 32.0 + x) / 1024.0, v)).rgb;',
+    '  return mix(s0, s1, bz - b0);',
+    '}',
+    'void main() {',
+    '  vec3 c = texture2D(uPrev, vUv).rgb;',
+    '  vec3 gr;',
+    '  if (uMix >= 0.999 && uLutBOn > 0.5) gr = lut(uLutB, c);              // settled: one table',
+    '  else if (uMix <= 0.001 && uLutAOn > 0.5) gr = lut(uLutA, c);',
+    '  else { vec3 a = uLutAOn > 0.5 ? lut(uLutA, c) : c; vec3 b = uLutBOn > 0.5 ? lut(uLutB, c) : a; gr = mix(a, b, uMix); }',
+    '  vec3 o = mix(c, gr, uStrength);',
+    '  o += (hash12(gl_FragCoord.xy + 17.0) - 0.5) / 255.0;',
+    '  float ui = texture2D(uUi, vUv).r * uUiOn;',
+    '  float before = (uSplit >= 0.0 && vUv.x < uSplit) ? 1.0 : 0.0;',
+    '  o = mix(o, c, max(ui, before));',
+    '  if (uSplit >= 0.0) { float dx = abs(vUv.x - uSplit) * uRes.x; o = mix(o, vec3(1.0), (1.0 - smoothstep(0.6 * uDpr, 1.6 * uDpr, dx)) * 0.85 * (1.0 - ui)); }',
+    '  gl_FragColor = vec4(clamp(o, 0.0, 1.0), 1.0);',
+    '}'
+  ].join('\n');
+
+  var LENS_FRAG = [
+    'uniform sampler2D uUi; uniform float uUiOn;',
+    'uniform float uVig; uniform vec3 uInk; uniform float uGrain; uniform float uGrainSize; uniform float uGrainFrame; uniform float uSplit;',
+    'void main() {',
+    '  vec3 c = texture2D(uPrev, vUv).rgb; vec3 o = c;',
+    '  vec2 q = (vUv - 0.5) * vec2(uRes.x / uRes.y, 1.0);',
+    '  float d = length(q) / length(vec2(uRes.x / uRes.y, 1.0) * 0.5);',
+    '  float v = uVig * smoothstep(0.32, 1.12, d);',
+    '  o = mix(o, vec3(luma(o)), v * 0.35);',
+    '  o = mix(o, uInk, v);',
+    '  if (uGrain > 0.0) {',
+    '    vec2 cell = floor(gl_FragCoord.xy / max(1.0, uGrainSize * uDpr));',
+    '    vec2 k = vec2(mod(uGrainFrame, 61.0) * 13.17, mod(uGrainFrame, 47.0) * 7.31);',
+    '    float n = hash12(cell + k) + hash12(cell * 1.37 + k.yx + 3.1) - 1.0;',
+    '    float l = luma(o); float w = 1.0 - 0.7 * pow(abs(l * 2.0 - 1.0), 2.0);',
+    '    o += vec3(n * uGrain * w);',
+    '  }',
+    '  float ui = texture2D(uUi, vUv).r * uUiOn;',
+    '  float before = (uSplit >= 0.0 && vUv.x < uSplit) ? 1.0 : 0.0;',
+    '  o = mix(o, c, max(ui, before));',
+    '  gl_FragColor = vec4(clamp(o, 0.0, 1.0), 1.0);',
+    '}'
+  ].join('\n');
+
+  // ------------------------------------------------------------------ shared LUT cache (presets are generated once per page)
+  var CACHE = {};
+  function presetLut(name, table) {
+    if (CACHE[name]) return CACHE[name];
+    var src = table[name]; if (!src) return null;
+    var L = toLut(src);
+    if (!L) return null;
+    L.name = name; CACHE[name] = L; return L;
+  }
+
+  // ------------------------------------------------------------------ the instance
+  function create(o) {
+    o = o || {};
+    var P = {}, k;
+    for (k in DEFAULTS) P[k] = DEFAULTS[k];
+    setP(o.params || {});
+    var table = {};                                  // name -> recipe | LUT; this instance's presets
+    for (k in PRESETS) table[k] = PRESETS[k];
+    var localCache = {};                             // name -> LUT for presets defined on this instance
+
+    var src = o.canvas || null;
+    if (typeof src === 'string') { try { src = document.querySelector(src); } catch (e) { src = null; } }
+    if (src && src.canvas && src.canvas.getContext) src = src.canvas;
+    var clock = typeof o.clock === 'function' ? o.clock : null;
+    var ink = [0.02, 0.016, 0.05];
+    try { var SK = root.GameDNA_Skin && o.skin ? root.GameDNA_Skin.resolve(o.skin) : null; if (SK && SK.palette && SK.palette.ink) ink = hexRgb(SK.palette.ink, ink); } catch (e) { }
+    if (o.ink) ink = hexRgb(o.ink, ink);
+
+    var S = {
+      post: null, owned: false, attached: false, saved: null,
+      fromLut: null, toLut: null, fromName: P.preset, toName: P.preset, t0: 0, dur: 0, lastMs: 0,
+      uiRects: o.uiRects || null, uiSig: '', uiCanvas: null, view: o.view || null,
+      stats: { blends: 0, bakes: 0, ignored: 0, unknown: 0, renders: 0, uploads: 0, uiUpdates: 0, reattached: 0, errors: 0 }
+    };
+    for (k in o.presets || {}) defineOn(k, o.presets[k]);
+
+    function nowMs() {
+      if (clock) { try { var v = Number(clock()); if (isFinite(v)) return v; } catch (e) { } }
+      return S.lastMs;
+    }
+    function lutFor(name) {
+      if (localCache[name]) return localCache[name];
+      if (!table[name]) return null;
+      if (table[name] === PRESETS[name]) return presetLut(name, PRESETS);
+      var L = toLut(table[name]); if (L) { L.name = name; localCache[name] = L; } return L;
+    }
+    function defineOn(name, source) {
+      try {
+        name = String(name);
+        var L = toLut(source);
+        if (!L) { warn('define("' + name + '"): could not read that LUT source'); return false; }
+        L.name = name; table[name] = source; localCache[name] = L;
+        if (S.toName === name || S.fromName === name) {   // redefining what is on screen: show the new one
+          if (S.toName === name) S.toLut = L; if (S.fromName === name) S.fromLut = L; upload();
+        }
+        return true;
+      } catch (e) { warn('define: ' + e.message); return false; }
+    }
+    function ease(x) { x = c01(x); return x * x * (3 - 2 * x); }
+    function mixAt(ms) {
+      if (S.dur <= 0) return 1;
+      var dt = ms - S.t0;
+      if (dt < 0) return 1;              // the game clock went back (restart): show the target
+      return ease(dt / S.dur);
+    }
+    function live() { return !!(S.post && S.post.active !== false && S.post.mode !== 'off' && S.attached); }
+
+    // ---- LUT slots → textures (ImageData uploaded once, re-uploaded only when a slot changes)
+    function upload() {
+      if (!live()) return;
+      try {
+        var A = S.fromLut || identityLut(), B = S.toLut || A;
+        S.post.setInput(IN_A, imageOf(A), { filter: 'linear', live: false });
+        S.post.setInput(IN_B, imageOf(B), { filter: 'linear', live: false });
+        S.stats.uploads++;
+      } catch (e) { S.stats.errors++; }
+    }
+    var ID = null;
+    function identityLut() { if (!ID) { ID = presetLut('neutral', PRESETS); } return ID; }
+
+    // ---- UI mask from rects (in view px; default = canvas px)
+    function readRects() {
+      var r = S.uiRects;
+      if (typeof r === 'function') { try { r = r(); } catch (e) { r = null; } }
+      return Array.isArray(r) ? r : [];
+    }
+    function updateUi() {
+      if (!S.uiRects || !live()) return;
+      try {
+        var rects = readRects(), vw = S.view && S.view.w ? S.view.w : src.width, vh = S.view && S.view.h ? S.view.h : src.height;
+        var sig = vw + 'x' + vh + ':';
+        for (var i = 0; i < rects.length; i++) { var q = rects[i]; if (q) sig += Math.round(num(q.x, 0)) + ',' + Math.round(num(q.y, 0)) + ',' + Math.round(num(q.w, 0)) + ',' + Math.round(num(q.h, 0)) + ',' + num(q.r, 0) + (q.soft ? ',' + num(q.soft, 0) : '') + ';'; }
+        if (sig === S.uiSig) return;
+        S.uiSig = sig;
+        if (!S.uiCanvas) S.uiCanvas = document.createElement('canvas');
+        var cv = S.uiCanvas; if (cv.width !== vw || cv.height !== vh) { cv.width = Math.max(1, vw | 0); cv.height = Math.max(1, vh | 0); }
+        var x = cv.getContext('2d'); x.fillStyle = '#000'; x.fillRect(0, 0, cv.width, cv.height); x.fillStyle = '#fff';
+        var rr = function (rx, ry, rw, rh, rad) {
+          if (rad <= 0) { x.fillRect(rx, ry, rw, rh); return; }
+          x.beginPath(); x.moveTo(rx + rad, ry); x.arcTo(rx + rw, ry, rx + rw, ry + rh, rad); x.arcTo(rx + rw, ry + rh, rx, ry + rh, rad);
+          x.arcTo(rx, ry + rh, rx, ry, rad); x.arcTo(rx, ry, rx + rw, ry, rad); x.closePath(); x.fill();
+        };
+        for (i = 0; i < rects.length; i++) {
+          q = rects[i]; if (!q) continue;
+          var rx = Math.round(num(q.x, 0)), ry = Math.round(num(q.y, 0)), rw = Math.round(num(q.w, 0)), rh = Math.round(num(q.h, 0)), rad = clamp(num(q.r, 0), 0, Math.min(rw, rh) / 2);
+          if (rw <= 0 || rh <= 0) continue;
+          // soft (px, v1.1): the rect stays fully masked; the mask fades to 0 over `soft` px outside it (for text drawn without a backing plate)
+          var sf = Math.round(clamp(num(q.soft, 0), 0, 32));
+          for (var k = sf; k >= 1; k--) { var gv = Math.round(255 * (1 - k / (sf + 1))); x.fillStyle = 'rgb(' + gv + ',' + gv + ',' + gv + ')'; rr(rx - k, ry - k, rw + 2 * k, rh + 2 * k, rad + k); }
+          x.fillStyle = '#fff'; rr(rx, ry, rw, rh, rad);
+        }
+        S.post.setInput(IN_UI, cv, { filter: 'nearest', live: false });
+        S.stats.uiUpdates++;
+      } catch (e) { S.stats.errors++; }
+    }
+
+    // ---- the two passes
+    function lutUniforms(s, p) {
+      try {
+        if (!clock && s && isFinite(s.ms)) S.lastMs = s.ms;
+        guardBuiltin(); updateUi();
+        var ms = nowMs();
+        return { uMix: mixAt(ms), uStrength: c01(num(P.strength, 1)), uSplit: P.compare >= 0 ? c01(num(P.compare, -1)) : -1 };
+      } catch (e) { S.stats.errors++; return { uMix: 1, uStrength: 0, uSplit: -1 }; }
+    }
+    function lutSkip() {
+      if (P.compare >= 0) return false;
+      if (num(P.strength, 1) <= 0) return true;
+      var A = S.fromLut, B = S.toLut;
+      return (!A || A.identity) && (!B || B.identity);
+    }
+    function lensUniforms(s, p) {
+      if (!clock && s && isFinite(s.ms)) S.lastMs = s.ms;
+      var ms = nowMs();
+      return { uVig: clamp(num(P.vignette, 0), 0, 1), uInk: ink, uGrain: clamp(num(P.grain, 0), 0, 0.3), uGrainSize: clamp(num(P.grainSize, 1.5), 0.5, 16),
+        uGrainFrame: Math.floor(ms * clamp(num(P.grainFps, 24), 1, 60) / 1000), uSplit: P.compare >= 0 ? c01(num(P.compare, -1)) : -1 };
+    }
+    function lensSkip() { return num(P.vignette, 0) <= 0 && num(P.grain, 0) <= 0; }
+
+    // ---- I-08's built-in grade: replace it (off while this runs) or keep it after the LUT without its vignette
+    function guardBuiltin() {
+      var post = S.post; if (!post || !S.saved) return;
+      try {
+        if (P.builtin === 'keep') {      // one vignette only: ours wins while it is on
+          if (num(P.vignette, 0) > 0 && post.params && num(post.params().vignette, 0) > 0) post.setParams({ vignette: 0 });
+        } else {
+          var g2 = post.get('grade'); if (g2 && g2.enabled) post.enable('grade', false);
+        }
+      } catch (e) { }
+    }
+    function attach(post) {
+      S.post = post; S.attached = false;
+      if (!post || post.active === false || post.mode === 'off') return;
+      try {
+        var g = post.get ? post.get('grade') : null;
+        S.saved = { gradeEnabled: g ? g.enabled : undefined, vignette: post.params ? post.params().vignette : undefined };
+        var a = post.addPass({ name: 'color-grade-lut', order: ORDER_LUT, frag: LUT_FRAG, inputs: { uLutA: IN_A, uLutB: IN_B, uUi: IN_UI },
+          uniforms: lutUniforms, skip: lutSkip });
+        var b = post.addPass({ name: 'lens-grain', order: ORDER_LENS, frag: LENS_FRAG, inputs: { uUi: IN_UI },
+          uniforms: lensUniforms, skip: lensSkip });
+        S.attached = !!(a && b);
+        if (o.uiMask && o.uiMask.getContext) post.setInput(IN_UI, o.uiMask, { filter: 'nearest', live: true });
+        S.uiSig = '';
+        guardBuiltin(); upload(); updateUi();
+      } catch (e) { S.attached = false; S.stats.errors++; warn('attach: ' + e.message); }
+    }
+    function detach() {
+      var post = S.post; if (!post) return;
+      try {
+        post.removePass('color-grade-lut'); post.removePass('lens-grain');
+        post.removeInput(IN_A); post.removeInput(IN_B);
+        if (S.uiRects) post.removeInput(IN_UI);
+        if (S.saved) {
+          if (S.saved.gradeEnabled !== undefined) post.enable('grade', S.saved.gradeEnabled);
+          if (S.saved.vignette !== undefined && P.builtin === 'keep') post.setParams({ vignette: S.saved.vignette });
+        }
+      } catch (e) { }
+      S.attached = false; S.saved = null;
+    }
+    function hostInstance() {
+      try {
+        var L = root.GameDNA_Post && root.GameDNA_Post.instances ? root.GameDNA_Post.instances() : [];
+        for (var i = 0; i < L.length; i++) if (L[i] && L[i].source === src && L[i] !== (S.owned ? S.post : null)) return L[i];
+      } catch (e) { }
+      return null;
+    }
+
+    // ---- public: blend to a LUT over game time
+    function to(name, ms) {
+      try {
+        name = String(name);
+        var dur = ms === undefined || ms === null ? num(P.blend, 900) : Math.max(0, num(ms, 0));
+        if (name === S.toName && (S.toLut || !live())) { S.stats.ignored++; return api; }   // already there or on the way: no restart
+        if (!table[name]) { S.stats.unknown++; if (S.stats.unknown < 4) warn('unknown LUT "' + name + '" (define it first); ignored'); return api; }
+        var now = nowMs();
+        S.stats.blends++;
+        if (live()) {
+          var B = lutFor(name); if (!B) return api;
+          var A0 = S.fromLut || identityLut(), B0 = S.toLut || A0, m = mixAt(now);
+          var A = m >= 1 ? B0 : m <= 0 ? A0 : (S.stats.bakes++, lerpLut(A0, B0, m));   // start from what is on screen now
+          S.fromLut = A; S.toLut = B;
+        }
+        S.fromName = S.toName; S.toName = name; S.t0 = now; S.dur = dur;
+        if (dur <= 0) S.fromName = name;
+        upload();
+      } catch (e) { S.stats.errors++; }
+      return api;
+    }
+    function setNow(name) {
+      try {
+        name = String(name);
+        if (!table[name]) { S.stats.unknown++; if (S.stats.unknown < 4) warn('unknown LUT "' + name + '"; ignored'); return api; }
+        S.fromName = S.toName = name; S.dur = 0; S.t0 = nowMs();
+        if (live()) { var L = lutFor(name); S.fromLut = S.toLut = L; upload(); }
+      } catch (e) { S.stats.errors++; }
+      return api;
+    }
+    function setP(p) {
+      for (var key in p || {}) {
+        if (!(key in DEFAULTS)) continue;
+        var d = DEFAULTS[key];
+        P[key] = typeof d === 'number' ? num(p[key], P[key]) : String(p[key]);
+      }
+      if (P.builtin !== 'keep') P.builtin = 'replace';
+    }
+
+    // ---- set up: share the host's I-08 instance for this canvas, or make our own
+    var api = {
+      version: VERSION, active: false, mode: 'off', reason: '', post: null,
+      to: to,
+      set: setNow,
+      define: function (name, source) { defineOn(name, source); return api; },
+      has: function (name) { return !!table[String(name)]; },
+      names: function () { return Object.keys(table); },
+      setParams: function (p) {
+        try {
+          var before = P.builtin, beforeVig = P.vignette;
+          setP(p || {});
+          if (p && p.preset !== undefined && String(p.preset) !== S.toName) setNow(String(p.preset));
+          if (before !== P.builtin && S.post && S.saved) {
+            if (P.builtin === 'replace') { if (S.saved.vignette !== undefined) S.post.setParams({ vignette: S.saved.vignette }); }
+            else if (S.saved.gradeEnabled !== undefined) S.post.enable('grade', S.saved.gradeEnabled);
+          }
+          if (P.builtin === 'keep' && beforeVig > 0 && P.vignette <= 0 && S.post && S.saved && S.saved.vignette !== undefined) S.post.setParams({ vignette: S.saved.vignette });
+          guardBuiltin();
+          if (S.post) S.post.render();
+        } catch (e) { S.stats.errors++; }
+        return api;
+      },
+      params: function () { var oo = {}; for (var key in P) oo[key] = P[key]; return oo; },
+      compare: function (x) { P.compare = x === false || x === null || x === undefined || !isFinite(Number(x)) ? -1 : c01(Number(x)); if (S.post) S.post.render(); return api; },
+      setUiRects: function (r) { S.uiRects = r || null; S.uiSig = ''; if (!r && S.post && live()) S.post.removeInput(IN_UI); updateUi(); return api; },
+      render: function (arg) {
+        try {
+          S.stats.renders++;
+          if (S.owned) { var h = hostInstance(); if (h) { detach(); try { S.post.destroy(); } catch (e) { } S.owned = false; attach(h); api.post = h; S.stats.reattached++; refresh(); } }
+          updateUi();
+          if (S.post) S.post.render(arg);
+        } catch (e) { S.stats.errors++; }
+        return api;
+      },
+      state: function () {
+        var ms = nowMs(), m = mixAt(ms);
+        return { from: S.fromName, to: S.toName, mix: m, blending: m < 1, preset: m >= 1 ? S.toName : S.fromName + '>' + S.toName, ms: ms, strength: P.strength };
+      },
+      lut: function (name) { return name === undefined ? (S.toLut || null) : lutFor(String(name)); },
+      strip: function (name) { var L = name === undefined ? (S.toLut || lutFor(S.toName)) : lutFor(String(name)); return L ? toCanvas(L) : null; },
+      setEnabled: function (on) { try { if (S.post && S.attached) { S.post.enable('color-grade-lut', on !== false); S.post.enable('lens-grain', on !== false); } } catch (e) { } return api; },
+      stats: function () {
+        var oo = {}; for (var key in S.stats) oo[key] = S.stats[key];
+        oo.mode = api.mode; oo.reason = api.reason; oo.active = api.active; oo.owned = S.owned; oo.attached = S.attached;
+        oo.state = api.state(); oo.uiRects = readRects().length;
+        try { oo.passes = S.post && S.post.passes ? S.post.passes() : []; } catch (e) { oo.passes = []; }
+        try { var g = S.post && S.post.get ? S.post.get('grade') : null; oo.builtinGrade = g ? g.enabled : null; } catch (e) { oo.builtinGrade = null; }
+        return oo;
+      },
+      destroy: function () { detach(); if (S.owned && S.post) { try { S.post.destroy(); } catch (e) { } } S.post = null; api.post = null; api.active = false; api.reason = 'destroyed'; return api; }
+    };
+    function refresh() {
+      var p = S.post;
+      api.post = p; api.active = live(); api.mode = api.active ? (p.mode || 'webgl') : 'off';
+      if (!api.active && !api.reason) api.reason = p && p.reason ? p.reason : 'off';
+      if (api.active) api.reason = '';
+    }
+
+    var off = P.webgl === 'off' || urlOff();
+    if (!src || !src.getContext) { api.reason = 'no-canvas'; warn('no canvas given; colour grading off'); }
+    else if (off) api.reason = P.webgl === 'off' ? 'option' : 'url';
+    else if (!root.GameDNA_Post || !root.GameDNA_Post.create) { api.reason = 'no-webgl-post'; warn('webgl-post.js (GameDNA_Post, I-08) must load before color-grade-lut.js; colour grading off'); }
+    else {
+      var host = o.post && o.post.addPass ? o.post : hostInstance();
+      if (!host) {
+        try { host = root.GameDNA_Post.create({ canvas: src, clock: clock || undefined, params: { passes: 'none' }, skin: o.skin, ink: o.ink }); S.owned = !!(host && host.active); }
+        catch (e) { host = null; }
+      }
+      attach(host);
+      refresh();
+      if (api.active) {
+        var start = lutFor(P.preset) ? P.preset : 'neutral';
+        S.fromName = S.toName = start; S.fromLut = S.toLut = lutFor(start); upload();
+        if (P.compare >= 0) P.compare = c01(P.compare);
+      }
+    }
+    return api;
+  }
+
+  root.GameDNA_ColorGrade = {
+    version: VERSION, create: create, defaults: DEFAULTS, presets: PRESETS, size: N,
+    identity: identity, fromRecipe: fromRecipe, fromFunction: fromFunction, fromArray: fromArray, parseCube: parseCube, fromStrip: fromStrip,
+    toCanvas: toCanvas, sample: sample, apply: function (recipe, rgb) { return applyRecipe(recipe || {}, c01(num(rgb[0], 0)), c01(num(rgb[1], 0)), c01(num(rgb[2], 0))); },
+    shaders: { lut: LUT_FRAG, lens: LENS_FRAG }, orders: { lut: ORDER_LUT, lens: ORDER_LENS }
+  };
+})(typeof window !== 'undefined' ? window : this);
+
+</script>
+<script src="../../../demo-kit/kit-art.js"></script>
+<script src="../../cutout-characters/module/cutout-characters.js"></script>
+<script src="../../cutout-characters/assets/pack.js"></script>
+<script src="../../../demo-kit/kit.js"></script>
+<script>
+/* J-06 demo: a lakeside camp in plain daylight (painted demo-kit scene and cast) on a 2D canvas, graded by GameDNA_ColorGrade over GameDNA_Post. */
+(function () {
+  'use strict';
+  var Q = new URLSearchParams(location.search);
+  var HAS_T = Q.has('t'), FREEZE = Q.get('freeze') === '1', T0 = HAS_T ? Math.max(0, Number(Q.get('t')) || 0) : 0;
+  var W = 640, H = 360, STEP = 1000 / 60, TAU = Math.PI * 2;
+  var cv = document.getElementById('game'), g = cv.getContext('2d');
+  var frame = 0;                                   // fixed-step counter: the only clock
+  function gameMs() { return frame * STEP; }
+
+  var BEATS = [
+    { id: 'neutral', title: 'Noon', place: 'Willowmere Shore' },
+    { id: 'dusk', title: 'Dusk', place: 'Willowmere Shore' },
+    { id: 'night', title: 'Cold night', place: 'Willowmere Shore' },
+    { id: 'memory', title: 'Faded memory', place: 'Ten years earlier' },
+    { id: 'combat', title: 'Ambush', place: 'Combat' },
+    { id: 'toxic', title: 'Toxic fen', place: 'Mirefall Marsh' }
+  ];
+  var BEAT_MS = 3600;
+
+  // ---------------------------------------------------------------- helpers
+  function hash(n) { var s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); }
+  function lin(c, x0, y0, x1, y1, stops) { var gr = c.createLinearGradient(x0, y0, x1, y1); for (var i = 0; i < stops.length; i += 2) gr.addColorStop(stops[i], stops[i + 1]); return gr; }
+  function rad(c, x, y, r, stops) { var gr = c.createRadialGradient(x, y, 0, x, y, r); for (var i = 0; i < stops.length; i += 2) gr.addColorStop(stops[i], stops[i + 1]); return gr; }
+  function ell(c, x, y, rx, ry, fill) { c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, TAU); c.fillStyle = fill; c.fill(); }
+  function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+  function poly(c, pts, fill) { c.beginPath(); c.moveTo(pts[0], pts[1]); for (var i = 2; i < pts.length; i += 2) c.lineTo(pts[i], pts[i + 1]); c.closePath(); c.fillStyle = fill; c.fill(); }
+  function ridge(x, s, f) { return Math.sin(x * f + s) * 0.5 + Math.sin(x * f * 2.3 + s * 1.7) * 0.27 + Math.sin(x * f * 5.1 + s * 2.9) * 0.11; }
+
+  // ---------------------------------------------------------------- scene: the shared painted demo kit (demo-kit/)
+  // Backdrop 'lakeside-day' is painted in neutral daylight so every LUT has something to grade. The 2D canvas is drawn at
+  // SS x the 640x360 stage so the painted art stays sharp on HiDPI screens; all coordinates below are stage units.
+  var KIT = window.GameDNA_DemoKit;
+  var SS = 2;
+  cv.width = W * SS; cv.height = H * SS;
+  var back = document.createElement('canvas'); back.width = W * SS; back.height = H * SS;
+  function paintBack() {
+    var c = back.getContext('2d'); c.setTransform(SS, 0, 0, SS, 0, 0);
+    KIT.backdrop(c, 'lakeside-day', { x: 0, y: 0, w: W, h: H });
+    // Scene prep (once): strongly saturated orange PIGMENT (roof tiles, sand path, timber) is eased below the saturation where
+    // the night look treats a colour as a light source, so at night only the lamp, the fire and the windows stay warm.
+    // Light sources are drawn live on top and are not touched. The art is data URIs, so the canvas is readable on file://.
+    try {
+      var im = c.getImageData(0, 0, back.width, back.height), d = im.data, KNEE = 0.38, K = 0.22;
+      for (var i = 0; i < d.length; i += 4) {
+        var r = d[i], g2 = d[i + 1], b = d[i + 2], mx = r > g2 ? (r > b ? r : b) : (g2 > b ? g2 : b), mn = r < g2 ? (r < b ? r : b) : (g2 < b ? g2 : b);
+        if (mx !== r || mx === mn) continue;                               // warm hues only (red is the largest channel)
+        var sat = (mx - mn) / mx, hue = 60 * (g2 - b) / (mx - mn);
+        if (mx > 226 && sat > 0.06 && hue > 8) {                           // sunlit sand and plaster: just under "full brightness"
+          var v = (226 + (mx - 226) * 0.25) / mx; d[i] = r = r * v; d[i + 1] = g2 = g2 * v; d[i + 2] = b = b * v;
+        }
+        if (sat <= KNEE) continue;
+        var dist = Math.abs(hue - 32); if (dist >= 34) continue;
+        var u = Math.min(1, (34 - dist) / 12), wgt = u * u * (3 - 2 * u), s2 = KNEE + (sat - KNEE) * K, f = 1 - wgt * (1 - s2 / sat);
+        // keep the perceived lightness: desaturate toward the pixel's own luma, not toward its max channel
+        var l = 0.299 * r + 0.587 * g2 + 0.114 * b;
+        d[i] = l + (r - l) * f; d[i + 1] = l + (g2 - l) * f; d[i + 2] = l + (b - l) * f;
+      }
+      c.putImageData(im, 0, 0);
+    } catch (e) { }
+  }
+  var LAKE = { x0: 300, x1: 636, y0: 184, y1: 244 };
+  var HERO = { x: 296, y: 300, h: 98 }, FIRE = { x: 380, y: 305, h: 64 }, LAMP = { x: 440, y: 290, h: 150 }, WISP = { x: 516, y: 254, h: 38 };
+  var HERO_F = 1, WISP_F = -1;   // the one facing every draw / update call of the hero (and its HUD portrait) and of the wisp reads; __state reports it
+  function wispX(t) { return WISP.x + Math.sin(t * 0.0011) * 16; }
+  var heroA = KIT.actor('sword', { h: HERO.h }), faceA = KIT.actor('sword', { h: 120 }), wispA = KIT.actor('wisp', { h: WISP.h });
+
+  // warm / cool light pools are drawn OVER the picture (normal blending), never added: an additive halo over the pale sky or the
+  // sand path clips to plain white and no LUT can bring the warmth back (the night look keys on warm, unclipped light colours)
+  function glow(c, x, y, r, rgb, a) {
+    c.fillStyle = rad(c, x, y, r, [0, 'rgba(' + rgb + ',' + a + ')', 0.4, 'rgba(' + rgb + ',' + (a * 0.4) + ')', 1, 'rgba(' + rgb + ',0)']);
+    c.fillRect(x - r, y - r, r * 2, r * 2);
+  }
+  function water(c, t) {
+    for (var i = 0; i < 22; i++) {
+      var y = LAKE.y0 + hash(i + 30) * (LAKE.y1 - LAKE.y0), ph = (t * 0.0006 * (0.5 + hash(i)) + hash(i + 40)) % 1, span = LAKE.x1 - LAKE.x0;
+      var w = 8 + hash(i + 60) * 22, x = LAKE.x0 + (hash(i + 50) * span + ph * 50) % (span - w);
+      var a = (0.1 + 0.2 * Math.sin(ph * Math.PI)).toFixed(3);
+      c.fillStyle = lin(c, x, 0, x + w, 0, [0, 'rgba(240,248,255,0)', 0.5, 'rgba(240,248,255,' + a + ')', 1, 'rgba(240,248,255,0)']); c.fillRect(x, y, w, 0.8);
+    }
+  }
+  function windows(c, t) {
+    var fl = 0.85 + 0.15 * Math.sin(t * 0.004) * Math.sin(t * 0.0023);
+    glow(c, 103.5, 125, 13, '255,196,96', 0.5 * fl);      // gable window
+    glow(c, 87.5, 167.5, 15, '255,196,96', 0.5 * fl);     // ground-floor window
+    glow(c, 158.7, 166, 17, '255,190,90', 0.62 * fl);     // lantern on the porch beam
+  }
+  function lamp(c, t) {
+    c.save(); c.translate(LAMP.x + 10, LAMP.y); c.scale(1, 0.28); glow(c, 0, 0, 62, '255,170,80', 0.2); c.restore();   // its pool on the ground
+    KIT.sprite(c, 'lamp', LAMP.x, LAMP.y, { h: LAMP.h });
+    var s = LAMP.h / 540, lx = LAMP.x + 76 * s, ly = LAMP.y - 405 * s, hr = 40 + Math.sin(t * 0.005) * 1.5;
+    glow(c, lx, ly, hr, '255,196,104', 0.5);
+    glow(c, lx, ly, 9, '255,226,150', 0.75);
+  }
+  function fire(c, t) {
+    var x = FIRE.x, y = FIRE.y, s = FIRE.h / 250, fy = y - 62 * s, fl = 1 + Math.sin(t * 0.011) * 0.06 + Math.sin(t * 0.027 + 1.7) * 0.04;
+    c.save(); c.translate(x, y - 2); c.scale(1, 0.3); glow(c, 0, 0, 92 * fl, '255,140,50', 0.34); c.restore();   // light pool on the path
+    KIT.sprite(c, 'campfire', x, y, { h: FIRE.h });
+    glow(c, x, fy, 30 * fl, '255,168,70', 0.42);
+    // live flame tongues over the painted fire: soft-edged, same palette as the painted flame
+    c.save(); c.globalAlpha = 0.85;
+    for (var k = 0; k < 3; k++) {
+      var sw = Math.sin(t * 0.012 + k * 2.1) * 1.6, hh = (11 + k % 2 * 4) * (0.8 + 0.2 * Math.sin(t * 0.019 + k * 1.7)), bx = x + (k - 1) * 4.5, by = y - 44 * s, hw = 3.6;
+      c.beginPath(); c.moveTo(bx - hw, by); c.bezierCurveTo(bx - hw, by - hh * 0.5, bx + sw * 0.5 - 1, by - hh * 0.7, bx + sw, by - hh);
+      c.bezierCurveTo(bx + sw * 0.5 + 1, by - hh * 0.7, bx + hw, by - hh * 0.5, bx + hw, by); c.closePath();
+      c.fillStyle = lin(c, 0, by, 0, by - hh, [0, 'rgba(255,236,170,0.95)', 0.45, 'rgba(255,176,60,0.85)', 1, 'rgba(240,96,30,0)']); c.fill();
+    }
+    c.restore();
+    for (var i = 0; i < 9; i++) {
+      var k2 = ((t * 0.0007 + hash(i + 900)) % 1), sx = x + Math.sin(k2 * 9 + i) * 9 * k2, sy = y - 26 - k2 * 70;
+      ell(c, sx, sy, 1.1 - k2 * 0.5, 1.1 - k2 * 0.5, 'rgba(255,' + (200 - k2 * 100 | 0) + ',80,' + (1 - k2).toFixed(2) + ')');
+    }
+  }
+  function hero(c) { heroA.draw(c, HERO.x, HERO.y, { h: HERO.h, facing: HERO_F, light: 'right' }); }
+  function wisp(c, t) {
+    var x = wispX(t), y = WISP.y + Math.sin(t * 0.0023) * 5, cy = y - WISP.h * 1.42;
+    glow(c, x, cy, 30, '90,235,215', 0.34);
+    wispA.draw(c, x, y, { h: WISP.h, facing: WISP_F, shadow: false });
+    // its light on the water below
+    c.save(); c.translate(x, y - 22); c.scale(1, 0.22); glow(c, 0, 0, 26, '120,240,220', 0.3); c.restore();
+  }
+  function fireflies(c, t) {
+    for (var i = 0; i < 12; i++) {
+      var x = 120 + hash(i + 1100) * 420 + Math.sin(t * 0.0009 + i) * 20, y = 236 + hash(i + 1200) * 56 + Math.cos(t * 0.0013 + i * 2) * 8;
+      var a = 0.4 + 0.6 * Math.max(0, Math.sin(t * 0.003 + i * 1.9));
+      glow(c, x, y, 5, '226,255,130', 0.5 * a); ell(c, x, y, 0.9, 0.9, 'rgba(248,255,200,' + a.toFixed(2) + ')');
+    }
+  }
+  // HUD portrait: the same rigged hero, cropped to the head (posed once, never animated)
+  function portrait(c, cx, cy, r) {
+    var o = { h: 120, facing: HERO_F, light: 'right', shadow: false }, hp = faceA.point('head', 0, 0, o);
+    c.save(); c.beginPath(); c.arc(cx, cy, r, 0, TAU); c.clip();
+    c.fillStyle = lin(c, 0, cy - r, 0, cy + r, [0, '#4a5f8a', 1, '#2a2540']); c.fillRect(cx - r, cy - r, r * 2, r * 2);
+    faceA.draw(c, cx - hp.x + PORT.dx, cy - hp.y + PORT.dy, o); c.restore();
+  }
+  var PORT = { dx: -1, dy: -9 };
+
+  // ---------------------------------------------------------------- HUD (crisp UI, protected by uiRects)
+  var HUD = { card: { x: 12, y: 12, w: 196, h: 54 }, zone: { x: 0, y: 12, w: 0, h: 40 }, bar: { x: 214, y: 316, w: 212, h: 34 } };
+  function hudText(c, s, x, y, size, col, weight, align) { c.font = (weight || 600) + ' ' + size + 'px ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif'; c.textAlign = align || 'left'; c.textBaseline = 'alphabetic'; c.fillStyle = col; c.fillText(s, x, y); }
+  function panel(c, r) {
+    c.save(); c.shadowColor = 'rgba(0,0,0,0.45)'; c.shadowBlur = 10; c.shadowOffsetY = 3;
+    rr(c, r.x, r.y, r.w, r.h, 9); c.fillStyle = 'rgba(16,14,26,0.86)'; c.fill(); c.restore();
+    rr(c, r.x + 0.5, r.y + 0.5, r.w - 1, r.h - 1, 9); c.strokeStyle = 'rgba(255,255,255,0.14)'; c.lineWidth = 1; c.stroke();
+  }
+  function drawHud(c, t, beat) {
+    var r = HUD.card; panel(c, r);
+    portrait(c, r.x + 27, r.y + 27, 18);
+    c.beginPath(); c.arc(r.x + 27, r.y + 27, 18, 0, TAU); c.strokeStyle = '#e8c04a'; c.lineWidth = 2; c.stroke();
+    hudText(c, 'Wren', r.x + 54, r.y + 19, 13, '#ffffff', 700);
+    hudText(c, 'Lv 7', r.x + r.w - 10, r.y + 19, 11, '#c9c2e0', 600, 'right');
+    function bar(y, frac, a, b, label) {
+      rr(c, r.x + 54, y, r.w - 64, 8, 4); c.fillStyle = '#2a2540'; c.fill();
+      rr(c, r.x + 54, y, (r.w - 64) * frac, 8, 4); c.fillStyle = lin(c, r.x + 54, 0, r.x + r.w - 10, 0, [0, a, 1, b]); c.fill();
+      c.fillStyle = 'rgba(255,255,255,0.35)'; c.fillRect(r.x + 58, y + 1, (r.w - 72) * frac, 1.5);
+      hudText(c, label, r.x + r.w - 12, y + 7.5, 8.5, '#ffffff', 700, 'right');
+    }
+    bar(r.y + 27, 0.78, '#e8423a', '#ff8a5a', '62/80'); bar(r.y + 40, 0.55, '#3a7ae8', '#6ac8ff', '22/40');
+    // zone card (right)
+    c.font = '700 11px ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif';
+    var w1 = c.measureText(beat.place.toUpperCase()).width; c.font = '600 15px ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif';
+    var w = Math.ceil(Math.max(w1 + 8, c.measureText(beat.title).width) + 28);
+    var z = HUD.zone; z.w = w; z.x = W - 12 - w; panel(c, z);
+    hudText(c, beat.place.toUpperCase(), z.x + 14, z.y + 16, 10, '#e8c04a', 700);
+    hudText(c, beat.title, z.x + 14, z.y + 33, 15, '#ffffff', 600);
+    // hotbar: saturated item icons (the HUD must keep these exact colours)
+    var hb = HUD.bar; panel(c, hb);
+    var items = [['#e8423a', 'potion'], ['#4fbf4a', 'herb'], ['#4a8ae8', 'crystal'], ['#e8c04a', 'key'], ['#b06ae0', 'rune']];
+    for (var i = 0; i < 5; i++) {
+      var sx = hb.x + 8 + i * 41, sy = hb.y + 5;
+      rr(c, sx, sy, 34, 24, 5); c.fillStyle = i === 0 ? '#3a3258' : '#24203a'; c.fill();
+      var col = items[i][0], mx = sx + 17, my = sy + 12;
+      if (i === 0) { ell(c, mx, my + 2, 6, 6, col); c.fillStyle = '#d8d0e8'; c.fillRect(mx - 2, my - 8, 4, 5); }
+      else if (i === 1) { poly(c, [mx, my - 8, mx + 6, my, mx, my + 8, mx - 6, my], col); }
+      else if (i === 2) { poly(c, [mx, my - 9, mx + 5, my - 2, mx, my + 9, mx - 5, my - 2], col); }
+      else if (i === 3) { ell(c, mx - 4, my, 4, 4, col); c.fillStyle = col; c.fillRect(mx, my - 1.5, 9, 3); c.fillRect(mx + 6, my, 2, 4); }
+      else { rr(c, mx - 6, my - 7, 12, 14, 3); c.fillStyle = col; c.fill(); c.fillStyle = '#fff'; c.fillRect(mx - 1, my - 4, 2, 8); }
+      hudText(c, String(i + 1), sx + 31, sy + 22, 8, '#c9c2e0', 700, 'right');
+    }
+  }
+  function hudRects() {
+    if (!S.hud) return [];
+    return [HUD.card, HUD.zone, HUD.bar].map(function (r) { return { x: r.x * SS, y: r.y * SS, w: r.w * SS, h: r.h * SS, r: 9 * SS }; });   // exactly the panels, rounded like them (canvas px)
+  }
+
+  // ---------------------------------------------------------------- state, params, URL overrides
+  var S = { tour: Q.get('tour') !== '0' && !Q.has('preset'), beat: 0, picked: Q.get('preset') || 'neutral', hud: Q.get('hud') !== '0', webgl: true };
+  var P0 = { strength: 1, blend: 1200, vignette: 0.3, grain: 0.035, grainSize: 1.5, builtin: 'replace' };
+  ['strength', 'blend', 'vignette', 'grain', 'grainSize'].forEach(function (k) { if (Q.has(k) && isFinite(Number(Q.get(k)))) P0[k] = Number(Q.get(k)); });
+  if (Q.get('builtin') === 'keep') P0.builtin = 'keep';
+  var split = Q.has('split') ? Math.max(0.05, Math.min(0.95, Number(Q.get('split')) || 0.5)) : 0.5;
+  var cmpOn = Q.has('split');
+
+  // the game's own I-08 instance (as a game with I-08 would have), then the grade shares it
+  var post = GameDNA_Post.create({ canvas: cv, clock: gameMs, params: { passes: 'grade+pulse', look: 'filmic', vignette: 0.35 } });
+  var grade = GameDNA_ColorGrade.create({
+    canvas: cv, clock: gameMs,
+    params: { preset: S.tour ? 'neutral' : S.picked, strength: P0.strength, blend: P0.blend, vignette: P0.vignette, grain: P0.grain, grainSize: P0.grainSize, builtin: P0.builtin, compare: cmpOn ? split : -1 },
+    uiRects: hudRects
+  });
+  // ?to=night&at=1000: start one blend at a fixed game time (deterministic mid-blend screenshots)
+  var TO = Q.get('to'), AT = Q.has('at') ? Number(Q.get('at')) || 0 : 0;
+
+  function wanted() {
+    if (S.tour) return BEATS[Math.floor(gameMs() / BEAT_MS) % BEATS.length].id;
+    if (TO && gameMs() >= AT) return TO;
+    return S.picked;
+  }
+  function beatOf(id) { for (var i = 0; i < BEATS.length; i++) if (BEATS[i].id === id) return BEATS[i]; return { id: id, title: id === 'custom' ? 'Custom LUT' : id, place: 'Loaded strip' }; }
+  function step() {
+    frame++;
+    heroA.update(STEP, { facing: HERO_F }); wispA.update(STEP, { facing: WISP_F });
+    grade.to(wanted(), grade.params().blend);   // idempotent: the look follows the beat / pick
+  }
+  function draw() {
+    var t = gameMs();
+    var st = grade.active ? grade.state() : { to: wanted() };
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.drawImage(back, 0, 0);
+    g.setTransform(SS, 0, 0, SS, 0, 0);
+    water(g, t); windows(g, t); wisp(g, t);
+    lamp(g, t); hero(g); fire(g, t); fireflies(g, t);
+    drawHud(g, t, beatOf(st.to));
+    grade.render();
+  }
+
+  // ---------------------------------------------------------------- panel
+  function $(id) { return document.getElementById(id); }
+  // ?t=&freeze=1 pages have no loop: after a control change, cut to the wanted look and draw one frame (no blend can run in frozen time)
+  var FROZEN = false;
+  function refresh() {
+    if (!FROZEN) return;
+    try { if (grade.active && grade.state().to !== wanted()) grade.set(wanted()); draw(); post.renderNow(); panelTick(); } catch (e) { }
+  }
+  function pipelineOn() { return !!(grade.active && post.active && S.webgl); }
+  var beatsEl = $('beats');
+  BEATS.forEach(function (b) {
+    var btn = document.createElement('button'); btn.className = 'beat'; btn.dataset.id = b.id;
+    var sw = document.createElement('canvas'); sw.width = 120; sw.height = 22; btn.appendChild(sw);
+    btn.appendChild(document.createTextNode(b.title));
+    var L = GameDNA_ColorGrade.fromRecipe(GameDNA_ColorGrade.presets[b.id]), x = sw.getContext('2d'), sky = [[0.25, 0.47, 0.77], [0.5, 0.69, 0.89], [0.36, 0.62, 0.27], [0.94, 0.76, 0.6], [1, 0.65, 0.2], [0.85, 0.23, 0.17], [0.42, 0.23, 0.6], [0.5, 0.5, 0.5]];
+    sky.forEach(function (col, i) { var o = GameDNA_ColorGrade.sample(L, col[0], col[1], col[2]); x.fillStyle = 'rgb(' + o.map(function (v) { return Math.round(v * 255); }).join(',') + ')'; x.fillRect(i * 15, 0, 15, 22); });
+    btn.onclick = function () { S.tour = false; $('tour').checked = false; S.picked = b.id; TO = null; syncBeats(); refresh(); };
+    beatsEl.appendChild(btn);
+  });
+  function syncBeats() { var id = grade.active ? grade.state().to : wanted(); [].forEach.call(beatsEl.children, function (b) { b.setAttribute('aria-pressed', b.dataset.id === id ? 'true' : 'false'); }); }
+  function fillRange(r) { var a = Number(r.min), b = Number(r.max); r.style.setProperty('--fill', ((Number(r.value) - a) / (b - a) * 100) + '%'); }
+  [].forEach.call(document.querySelectorAll('input[data-k]'), function (r) {
+    var k = r.dataset.k, out = r.parentNode.querySelector('output');
+    r.value = P0[k]; fillRange(r); out.textContent = r.value;
+    r.oninput = function () { var o = {}; o[k] = Number(r.value); grade.setParams(o); out.textContent = r.value; fillRange(r); refresh(); };
+  });
+  $('tour').checked = S.tour; $('tour').onchange = function () { S.tour = this.checked; if (!S.tour) S.picked = grade.state().to; refresh(); };
+  $('hud').checked = S.hud; $('hud').onchange = function () { S.hud = this.checked; refresh(); };
+  // without WebGL (or with ?webgl=0) the switch shows off and cannot be turned on
+  $('webgl').checked = !!grade.active; $('webgl').disabled = !grade.active;
+  $('webgl').onchange = function () { S.webgl = this.checked; if (post.active || post.mode !== 'off') post.setEnabled(S.webgl); applySplit(); panelTick(); refresh(); };
+  var splitR = $('split'); splitR.value = split; fillRange(splitR); $('o-split').textContent = split.toFixed(2);
+  $('cmp').checked = cmpOn;
+  function applySplit() { grade.compare(cmpOn ? split : false); var tg = cmpOn && pipelineOn(); $('tagL').classList.toggle('on', tg); $('tagR').classList.toggle('on', tg); splitR.value = split; fillRange(splitR); $('o-split').textContent = split.toFixed(2); refresh(); }
+  $('cmp').onchange = function () { cmpOn = this.checked; applySplit(); };
+  splitR.oninput = function () { split = Number(splitR.value); cmpOn = true; $('cmp').checked = true; applySplit(); };
+  var dragging = false;
+  function dragTo(e) { var r = cv.getBoundingClientRect(); split = Math.max(0.05, Math.min(0.95, (e.clientX - r.left) / r.width)); cmpOn = true; $('cmp').checked = true; applySplit(); }
+  $('frame').addEventListener('pointerdown', function (e) { dragging = true; dragTo(e); });
+  addEventListener('pointermove', function (e) { if (dragging) dragTo(e); });
+  addEventListener('pointerup', function () { dragging = false; });
+  [].forEach.call($('builtin').children, function (b) {
+    b.setAttribute('aria-checked', b.dataset.v === P0.builtin ? 'true' : 'false');
+    b.onclick = function () { grade.setParams({ builtin: b.dataset.v }); [].forEach.call($('builtin').children, function (x) { x.setAttribute('aria-checked', x === b ? 'true' : 'false'); }); refresh(); };
+  });
+  $('file').onchange = function () {
+    var f = this.files && this.files[0]; if (!f) return;
+    var done = function (ok) { if (ok) { S.tour = false; $('tour').checked = false; S.picked = 'custom'; TO = null; grade.set('custom'); syncBeats(); refresh(); } else alert('Could not read that LUT (need a 3D .cube or a strip / grid PNG).'); };
+    if (/\.cube$/i.test(f.name)) { f.text().then(function (txt) { grade.define('custom', txt); done(grade.has('custom')); }); }
+    else { var img = new Image(); img.onload = function () { grade.define('custom', img); done(grade.has('custom')); }; img.onerror = function () { done(false); }; img.src = URL.createObjectURL(f); }
+  };
+  $('save').onclick = function () { try { var c2 = grade.strip(grade.active ? grade.state().to : S.picked) || GameDNA_ColorGrade.toCanvas(GameDNA_ColorGrade.identity()); this.href = c2.toDataURL('image/png'); this.download = (grade.active ? grade.state().to : 'neutral') + '-lut-strip.png'; } catch (e) { } };
+  applySplit();
+
+  var shownA = null, shownB = null;
+  function panelTick() {
+    var st = grade.active ? grade.state() : null;
+    var on = pipelineOn();
+    $('mode').textContent = on ? (post.mode.toUpperCase() + ' · ' + grade.stats().passes.filter(function (n) { return post.get(n) && post.get(n).enabled; }).join(' → '))
+      : grade.active ? 'Pipeline off · plain 2D canvas' : 'WebGL off · plain 2D canvas (' + (grade.reason || 'off') + ')';
+    $('mode').classList.toggle('off', !on);
+    ['sec-lut', 'sec-lens', 'sec-hud'].forEach(function (id) { $(id).classList.toggle('dim', !on); });
+    $('beats').classList.toggle('dim', !on); $('offnote').classList.toggle('on', !on);
+    var tg = cmpOn && on; $('tagL').classList.toggle('on', tg); $('tagR').classList.toggle('on', tg);
+    if (st) {
+      $('now').innerHTML = 'look <b>' + (st.blending ? st.from + ' → ' + st.to + ' ' + Math.round(st.mix * 100) + '%' : st.to) + '</b>';
+      $('fromN').textContent = st.from; $('toN').textContent = st.to; $('mix').style.width = (st.mix * 100).toFixed(1) + '%';
+      if (shownA !== st.from) { shownA = st.from; var a = grade.strip(st.from); if (a) $('stripA').getContext('2d').drawImage(a, 0, 0); }
+      if (shownB !== st.to) { shownB = st.to; var b = grade.strip(st.to); if (b) $('stripB').getContext('2d').drawImage(b, 0, 0); }
+      var ps = post.stats();
+      $('cost').innerHTML = 'post <b>' + (ps.avgMs || 0).toFixed(1) + ' ms</b> CPU · ' + ps.w + '×' + ps.h;
+      var gs = grade.stats();
+      $('stat').innerHTML = 'chain <b>' + ps.passes.join(' → ') + '</b><br>built-in grade <b>' + (gs.builtinGrade ? 'on (after LUT)' : 'off (replaced)') + '</b> · HUD rects <b>' + gs.uiRects + '</b><br>blends <b>' + gs.blends + '</b> · baked mid-blend <b>' + gs.bakes + '</b> · game <b>' + (gameMs() / 1000).toFixed(1) + ' s</b>';
+    } else {
+      $('now').innerHTML = 'look <b>' + wanted() + ' (not applied)</b>';
+      $('stat').innerHTML = 'GameDNA_ColorGrade inactive: <b>' + grade.reason + '</b>. The canvas shows exactly as drawn.';
+    }
+    syncBeats();
+  }
+
+  // ---------------------------------------------------------------- loop (fixed step; ?t=&freeze=1 deterministic)
+  /* text state for critics and tools/sprites/statecheck.py (640x360 stage px): the hero by the fire looks at the wisp over the water, the wisp
+     looks back; the HUD portrait is the same rig cropped to the head (a UI picture: it looks into the HUD card, no target) */
+  window.__state = function () { var t = gameMs(), dir = function (f) { return f > 0 ? 'right' : 'left'; }, hp = faceA.point('head', 0, 0, { h: 120, facing: HERO_F });
+    return { t: Math.round(t), actors: [
+      { id: 'hero', x: HERO.x, y: HERO.y, facing: dir(HERO_F), target: 'wisp', asset: 'sword' },
+      { id: 'wisp', x: Math.round(wispX(t)), y: Math.round(WISP.y + Math.sin(t * 0.0023) * 5), facing: dir(WISP_F), target: 'hero', asset: 'wisp' },
+      { id: 'hud-portrait', x: Math.round(HUD.card.x + 27 - hp.x + PORT.dx), y: Math.round(HUD.card.y + 27 - hp.y + PORT.dy), facing: dir(HERO_F), target: null, asset: 'sword' }] }; };
+  window.__demo = { grade: grade, post: post, state: function () { return { ms: gameMs(), frame: frame, grade: grade.state(), active: grade.active }; } };
+  var acc = 0, prev = null, pt = 0;
+  function loop(now) {
+    if (prev === null) prev = now;
+    acc += Math.min(250, now - prev); prev = now;
+    while (acc >= STEP) { step(); acc -= STEP; }
+    draw();
+    if (++pt % 6 === 0) panelTick();
+    requestAnimationFrame(loop);
+  }
+  // boot once the kit art has decoded (no timers: safe under fake clocks); the frozen paint happens in here
+  KIT.ready(function () {
+    paintBack(); faceA.update(0, { facing: HERO_F });
+    if (HAS_T) { var n = Math.floor(T0 / STEP); for (var i = 0; i < n; i++) step(); }
+    draw(); panelTick();
+    if (HAS_T && FREEZE) { post.renderNow(); panelTick(); FROZEN = true; window.__frozen = true; document.documentElement.dataset.frozen = '1'; return; }
+    requestAnimationFrame(loop);
+  });
+})();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,762 @@
+{
+ "format": "gamedna-assets/1",
+ "pack": "normal-maps sample: Lanternwood sprites, a portrait and a UI slot with derived normal + material maps (L-05)",
+ "budgetBytes": 600000,
+ "generated": {
+  "tool": "codex image_gen.imagegen (built-in) for the albedo (L-00, L-02, L-06 runs); maps derived by tools/assets/normalmap.py",
+  "model": "image generator",
+  "effort": "high",
+  "date": "2026-11-16"
+ },
+ "normalMaps": {
+  "layout": "nh2",
+  "script": "tools/assets/normalmap.py",
+  "doc": "README.md"
+ },
+ "assets": [
+  {
+   "key": "herbalist",
+   "file": "albedo/herbalist.webp",
+   "role": "sprite",
+   "kind": "herbalist",
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "drawH": 118,
+   "baseline": 240,
+   "w": 134,
+   "h": 240,
+   "bytes": 12928,
+   "sha256": "91b509113c440051fe82cb3860a68f897f38929db92f43f3ad35cd8629d43ec6",
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 240
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "from": {
+    "element": "art-direction-lock",
+    "key": "herbalist",
+    "file": "../../art-direction-lock/assets/with/herbalist.webp"
+   },
+   "source": {
+    "run": "../../art-direction-lock/assets/gen/with",
+    "file": "herbalist.png",
+    "sha256": "d96fbbf9170c80eee72f8bae01b8ebebc7cd5ddca7f07854c1015d19da23bc15"
+   },
+   "prompt": [
+    "../../art-direction-lock/assets/gen/with/PROMPT.md",
+    "../../art-direction-lock/assets/gen/with/GEN.md"
+   ],
+   "normal": "herbalist-nh"
+  },
+  {
+   "key": "herbalist-nh",
+   "role": "normalmap",
+   "file": "maps/herbalist.nh.webp",
+   "derivedFrom": "herbalist",
+   "params": {
+    "strength": 0.8,
+    "dome": "auto",
+    "detail": 2.5,
+    "grain": 1.0,
+    "ao": 0.8,
+    "aoRadius": 6.0,
+    "aoScale": 18.0,
+    "gloss": 0.25,
+    "cut": "",
+    "floor": 0.08,
+    "v": 3
+   },
+   "w": 268,
+   "h": 240,
+   "bytes": 55052,
+   "sha256": "5249dcb97119bb29a08a3c5b63ffe5a7585f22b1c8af7dad925f7c1267e36e14",
+   "layout": "nh2",
+   "albedoSha256": "91b509113c440051fe82cb3860a68f897f38929db92f43f3ad35cd8629d43ec6",
+   "alpha": false,
+   "domeR": 28.35,
+   "prompt": [
+    "../../art-direction-lock/assets/gen/with/PROMPT.md",
+    "../../art-direction-lock/assets/gen/with/GEN.md"
+   ]
+  },
+  {
+   "key": "keeper",
+   "file": "albedo/keeper.webp",
+   "role": "sprite",
+   "kind": "lantern-keeper",
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "drawH": 120,
+   "baseline": 240,
+   "w": 136,
+   "h": 240,
+   "bytes": 10130,
+   "sha256": "5e0e529b77ee515638327f06af8dcf96c1f92ea0499a5de944222f8f35a7f680",
+   "post": [
+    {
+     "pick": {
+      "index": 0
+     }
+    },
+    "trim",
+    {
+     "resize": {
+      "h": 240
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "from": {
+    "element": "art-direction-lock",
+    "key": "keeper",
+    "file": "../../art-direction-lock/assets/sheet-parts/keeper.webp"
+   },
+   "source": {
+    "run": "../../art-direction-lock/assets/gen/sheet",
+    "file": "sheet.png",
+    "sha256": "d910612f64f895374bf309019a8141d0df309621cde274e89aef3d32f02e8d84"
+   },
+   "prompt": [
+    "../../art-direction-lock/assets/gen/sheet/PROMPT.md",
+    "../../art-direction-lock/assets/gen/sheet/GEN.md"
+   ],
+   "normal": "keeper-nh"
+  },
+  {
+   "key": "keeper-nh",
+   "role": "normalmap",
+   "file": "maps/keeper.nh.webp",
+   "derivedFrom": "keeper",
+   "params": {
+    "strength": 0.8,
+    "dome": "auto",
+    "detail": 2.5,
+    "grain": 1.0,
+    "ao": 0.8,
+    "aoRadius": 6.0,
+    "aoScale": 18.0,
+    "gloss": 0.25,
+    "cut": "",
+    "floor": 0.08,
+    "v": 3
+   },
+   "w": 272,
+   "h": 240,
+   "bytes": 44590,
+   "sha256": "7d9ce7482eb535c518af83840f3446bd15fa4b88f0cf62993eb1474371b0b8f1",
+   "layout": "nh2",
+   "albedoSha256": "5e0e529b77ee515638327f06af8dcf96c1f92ea0499a5de944222f8f35a7f680",
+   "alpha": false,
+   "domeR": 25.24,
+   "prompt": [
+    "../../art-direction-lock/assets/gen/sheet/PROMPT.md",
+    "../../art-direction-lock/assets/gen/sheet/GEN.md"
+   ]
+  },
+  {
+   "key": "lamppost",
+   "file": "albedo/lamppost.webp",
+   "role": "prop",
+   "kind": "lamppost",
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "drawH": 170,
+   "baseline": 299,
+   "w": 122,
+   "h": 300,
+   "bytes": 9898,
+   "sha256": "fc41d0f8af28810e077821ffc1d8d396c1d8d0328bd8b95106c1bb50bdfa0165",
+   "post": [
+    {
+     "pick": {
+      "index": 1
+     }
+    },
+    "trim",
+    {
+     "resize": {
+      "h": 300
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "from": {
+    "element": "art-direction-lock",
+    "key": "lamppost",
+    "file": "../../art-direction-lock/assets/sheet-parts/lamppost.webp"
+   },
+   "source": {
+    "run": "../../art-direction-lock/assets/gen/sheet",
+    "file": "sheet.png",
+    "sha256": "d910612f64f895374bf309019a8141d0df309621cde274e89aef3d32f02e8d84"
+   },
+   "prompt": [
+    "../../art-direction-lock/assets/gen/sheet/PROMPT.md",
+    "../../art-direction-lock/assets/gen/sheet/GEN.md"
+   ],
+   "state": {
+    "of": "lamppost",
+    "lit": true
+   },
+   "normal": "lamppost-nh"
+  },
+  {
+   "key": "lamppost-nh",
+   "role": "normalmap",
+   "file": "maps/lamppost.nh.webp",
+   "derivedFrom": "lamppost",
+   "params": {
+    "strength": 0.8,
+    "dome": "auto",
+    "detail": 2.5,
+    "grain": 1.0,
+    "ao": 0.8,
+    "aoRadius": 6.0,
+    "aoScale": 18.0,
+    "gloss": 0.25,
+    "cut": "",
+    "floor": 0.08,
+    "v": 3
+   },
+   "w": 244,
+   "h": 300,
+   "bytes": 40358,
+   "sha256": "5fb1708056410d9e6b8c96f68ea3ac55d02a2b1578de7764d67045feba51fdc4",
+   "layout": "nh2",
+   "albedoSha256": "fc41d0f8af28810e077821ffc1d8d396c1d8d0328bd8b95106c1bb50bdfa0165",
+   "alpha": false,
+   "domeR": 19.11,
+   "prompt": [
+    "../../art-direction-lock/assets/gen/sheet/PROMPT.md",
+    "../../art-direction-lock/assets/gen/sheet/GEN.md"
+   ]
+  },
+  {
+   "key": "well",
+   "file": "albedo/well.webp",
+   "role": "prop",
+   "kind": "well",
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "drawH": 150,
+   "baseline": 260,
+   "w": 183,
+   "h": 260,
+   "bytes": 16500,
+   "sha256": "0399e034ed7ba4c2f46bc9476cbe9213450bbde0e5cf228656b66cdc2ec66292",
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 260
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "from": {
+    "element": "art-direction-lock",
+    "key": "well",
+    "file": "../../art-direction-lock/assets/with/well.webp"
+   },
+   "source": {
+    "run": "../../art-direction-lock/assets/gen/with",
+    "file": "well.png",
+    "sha256": "55169162d54b7a0967b72d86e3d0af3ddff55ba014c7dafd514c5097e6dc363e"
+   },
+   "prompt": [
+    "../../art-direction-lock/assets/gen/with/PROMPT.md",
+    "../../art-direction-lock/assets/gen/with/GEN.md"
+   ],
+   "normal": "well-nh"
+  },
+  {
+   "key": "well-nh",
+   "role": "normalmap",
+   "file": "maps/well.nh.webp",
+   "derivedFrom": "well",
+   "params": {
+    "strength": 0.8,
+    "dome": "auto",
+    "detail": 2.5,
+    "grain": 1.0,
+    "ao": 0.8,
+    "aoRadius": 6.0,
+    "aoScale": 18.0,
+    "gloss": 0.2,
+    "cut": "",
+    "floor": 0.08,
+    "v": 3
+   },
+   "w": 366,
+   "h": 260,
+   "bytes": 73766,
+   "sha256": "c5b0592e8dbb0d5ab2e1a407a447b6a2e535e9303fdfce54ac63d90971660e61",
+   "layout": "nh2",
+   "albedoSha256": "0399e034ed7ba4c2f46bc9476cbe9213450bbde0e5cf228656b66cdc2ec66292",
+   "alpha": false,
+   "domeR": 38.3,
+   "prompt": [
+    "../../art-direction-lock/assets/gen/with/PROMPT.md",
+    "../../art-direction-lock/assets/gen/with/GEN.md"
+   ]
+  },
+  {
+   "key": "vial",
+   "file": "albedo/vial.webp",
+   "role": "icon",
+   "kind": "lamp-oil",
+   "alpha": true,
+   "w": 80,
+   "h": 128,
+   "bytes": 3998,
+   "sha256": "c231a23bc635b95cea180fc733224ba02a113fa5f1e499a23ad5c2c173623ce2",
+   "post": [
+    {
+     "pick": {
+      "index": 3
+     }
+    },
+    "trim",
+    {
+     "resize": {
+      "h": 128
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "from": {
+    "element": "art-direction-lock",
+    "key": "vial",
+    "file": "../../art-direction-lock/assets/sheet-parts/vial.webp"
+   },
+   "source": {
+    "run": "../../art-direction-lock/assets/gen/sheet",
+    "file": "sheet.png",
+    "sha256": "d910612f64f895374bf309019a8141d0df309621cde274e89aef3d32f02e8d84"
+   },
+   "prompt": [
+    "../../art-direction-lock/assets/gen/sheet/PROMPT.md",
+    "../../art-direction-lock/assets/gen/sheet/GEN.md"
+   ],
+   "anchor": [
+    0.5,
+    1
+   ],
+   "drawH": 48,
+   "normal": "vial-nh"
+  },
+  {
+   "key": "vial-nh",
+   "role": "normalmap",
+   "file": "maps/vial.nh.webp",
+   "derivedFrom": "vial",
+   "params": {
+    "strength": 0.8,
+    "dome": "auto",
+    "detail": 2.5,
+    "grain": 1.0,
+    "ao": 0.8,
+    "aoRadius": 6.0,
+    "aoScale": 18.0,
+    "gloss": 0.6,
+    "cut": "",
+    "floor": 0,
+    "v": 3
+   },
+   "w": 160,
+   "h": 128,
+   "bytes": 17506,
+   "sha256": "f46df174bacdc42b8924193c0aea7d806f2f5c22bdb5d71ffaa2fcabccf412dd",
+   "layout": "nh2",
+   "albedoSha256": "c231a23bc635b95cea180fc733224ba02a113fa5f1e499a23ad5c2c173623ce2",
+   "alpha": false,
+   "domeR": 22.25,
+   "prompt": [
+    "../../art-direction-lock/assets/gen/sheet/PROMPT.md",
+    "../../art-direction-lock/assets/gen/sheet/GEN.md"
+   ]
+  },
+  {
+   "key": "key",
+   "file": "albedo/key.webp",
+   "role": "icon",
+   "kind": "key",
+   "alpha": true,
+   "w": 106,
+   "h": 128,
+   "bytes": 4338,
+   "sha256": "b8a5128d2eda695ab96cde353da9ec86593e37134d9c14701669656ff3faf151",
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 128
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "from": {
+    "element": "art-direction-lock",
+    "key": "key",
+    "file": "../../art-direction-lock/assets/with/key.webp"
+   },
+   "source": {
+    "run": "../../art-direction-lock/assets/gen/with",
+    "file": "icon-key.png",
+    "sha256": "377b1f60e5492064bc84b48f2374f732cd7e5c976861b82631d149619a601f51"
+   },
+   "prompt": [
+    "../../art-direction-lock/assets/gen/with/PROMPT.md",
+    "../../art-direction-lock/assets/gen/with/GEN.md"
+   ],
+   "anchor": [
+    0.5,
+    1
+   ],
+   "drawH": 48,
+   "normal": "key-nh"
+  },
+  {
+   "key": "key-nh",
+   "role": "normalmap",
+   "file": "maps/key.nh.webp",
+   "derivedFrom": "key",
+   "params": {
+    "strength": 0.8,
+    "dome": "auto",
+    "detail": 2.5,
+    "grain": 1.0,
+    "ao": 0.8,
+    "aoRadius": 6.0,
+    "aoScale": 18.0,
+    "gloss": 0.55,
+    "cut": "",
+    "floor": 0,
+    "v": 3
+   },
+   "w": 212,
+   "h": 128,
+   "bytes": 16274,
+   "sha256": "2940ee45c2b1e5b46c34deb4f4b052e0bc2aa5189c8740d88c5cbb3352cb482f",
+   "layout": "nh2",
+   "albedoSha256": "b8a5128d2eda695ab96cde353da9ec86593e37134d9c14701669656ff3faf151",
+   "alpha": false,
+   "domeR": 6.02,
+   "prompt": [
+    "../../art-direction-lock/assets/gen/with/PROMPT.md",
+    "../../art-direction-lock/assets/gen/with/GEN.md"
+   ]
+  },
+  {
+   "key": "maren",
+   "file": "albedo/maren.webp",
+   "role": "sprite",
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "w": 366,
+   "h": 336,
+   "bytes": 16758,
+   "sha256": "750183300a05ca7a8077f29006fb2633b4f1812ecfd671aa0ec50310d47fedea",
+   "post": [
+    {
+     "portraitset": {
+      "h": 336,
+      "margin": 0.03
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 84
+     }
+    }
+   ],
+   "side": "left",
+   "facing": "right",
+   "origRole": "portrait",
+   "from": {
+    "element": "painted-portraits",
+    "key": "maren-neutral",
+    "file": "../../painted-portraits/assets/cast/maren-neutral.webp"
+   },
+   "source": {
+    "run": "../../painted-portraits/assets/gen/base-maren",
+    "file": "maren-neutral.png",
+    "sha256": "2f2db9dd3275bc000e4655943be8612893b9fd53ea179af2f829d7e0241dbb3b"
+   },
+   "prompt": [
+    "../../painted-portraits/assets/gen/base-maren/PROMPT.md",
+    "../../painted-portraits/assets/gen/base-maren/GEN.md",
+    "../../painted-portraits/assets/prompts/style-lock.txt"
+   ],
+   "drawH": 168,
+   "normal": "maren-nh"
+  },
+  {
+   "key": "maren-nh",
+   "role": "normalmap",
+   "file": "maps/maren.nh.webp",
+   "derivedFrom": "maren",
+   "params": {
+    "strength": 0.8,
+    "dome": "auto",
+    "detail": 2.5,
+    "grain": 1.0,
+    "ao": 0.8,
+    "aoRadius": 6.0,
+    "aoScale": 18.0,
+    "gloss": 0.15,
+    "cut": "bottom",
+    "floor": 0,
+    "v": 3
+   },
+   "w": 732,
+   "h": 336,
+   "bytes": 98444,
+   "sha256": "142ce09800d81c33f87721b769056e854e3e3d7ba2a13097aa19a4af203653eb",
+   "layout": "nh2",
+   "albedoSha256": "750183300a05ca7a8077f29006fb2633b4f1812ecfd671aa0ec50310d47fedea",
+   "alpha": false,
+   "domeR": 83.91,
+   "prompt": [
+    "../../painted-portraits/assets/gen/base-maren/PROMPT.md",
+    "../../painted-portraits/assets/gen/base-maren/GEN.md",
+    "../../painted-portraits/assets/prompts/style-lock.txt"
+   ]
+  },
+  {
+   "key": "slot",
+   "file": "albedo/slot.webp",
+   "role": "prop",
+   "alpha": true,
+   "w": 127,
+   "h": 128,
+   "bytes": 3374,
+   "sha256": "a69ce6088710feb3958c46b69f2fcfbb5f099e22db4f390e0749e68a5fdbd5c1",
+   "post": [
+    "uikit.py slot <src> <out> --size 128"
+   ],
+   "slice": [
+    38,
+    38,
+    38,
+    38
+   ],
+   "inset": [
+    20,
+    20,
+    20,
+    20
+   ],
+   "origRole": "frame9",
+   "from": {
+    "element": "painted-ui",
+    "key": "slot",
+    "file": "../../painted-ui/assets/kit/slot.webp"
+   },
+   "source": {
+    "run": "../../painted-ui/assets/gen/frames",
+    "file": "slot.png",
+    "sha256": "dad1ea39cc2467d2fd759651e29aed55947e163ca31623225cfe804d9b585040"
+   },
+   "prompt": [
+    "../../painted-ui/assets/gen/frames/PROMPT.md",
+    "../../painted-ui/assets/gen/frames/GEN.md"
+   ],
+   "anchor": [
+    0.5,
+    1
+   ],
+   "drawH": 64,
+   "normal": "slot-nh"
+  },
+  {
+   "key": "slot-nh",
+   "role": "normalmap",
+   "file": "maps/slot.nh.webp",
+   "derivedFrom": "slot",
+   "params": {
+    "strength": 0.8,
+    "dome": "auto",
+    "detail": 2.5,
+    "grain": 1.0,
+    "ao": 0.8,
+    "aoRadius": 6.0,
+    "aoScale": 18.0,
+    "gloss": 0.4,
+    "cut": "",
+    "floor": 0,
+    "v": 3
+   },
+   "w": 254,
+   "h": 128,
+   "bytes": 14054,
+   "sha256": "f47f98f5fca42726f0822c6f68fdc1f932eb5706dd912f92067413f9792ba704",
+   "layout": "nh2",
+   "albedoSha256": "a69ce6088710feb3958c46b69f2fcfbb5f099e22db4f390e0749e68a5fdbd5c1",
+   "alpha": false,
+   "domeR": 37.8,
+   "prompt": [
+    "../../painted-ui/assets/gen/frames/PROMPT.md",
+    "../../painted-ui/assets/gen/frames/GEN.md"
+   ]
+  },
+  {
+   "key": "lamppost-off",
+   "role": "prop",
+   "file": "albedo/lamppost-off.webp",
+   "alpha": true,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "drawH": 170,
+   "state": {
+    "of": "lamppost",
+    "lit": false
+   },
+   "source": {
+    "run": "gen/lamppost-off",
+    "file": "lamppost-off.png",
+    "sha256": "46e245c4ea6fbb0e39dae9c549ff7633922313e097ce8455c2324ccc8fc8ab08"
+   },
+   "prompt": [
+    "gen/lamppost-off/PROMPT.md",
+    "gen/lamppost-off/GEN.md"
+   ],
+   "post": [
+    "trim",
+    {
+     "resize": {
+      "h": 300
+     }
+    },
+    {
+     "alpha": {
+      "defringe": 3
+     }
+    },
+    {
+     "export": {
+      "quality": 86
+     }
+    }
+   ],
+   "w": 117,
+   "h": 300,
+   "bytes": 9590,
+   "sha256": "c42a08aafb71bd199c5602b7bb87cd985b3a68d7f2925ae18882184ae7c02b3c",
+   "baseline": 300,
+   "normal": "lamppost-off-nh"
+  },
+  {
+   "key": "lamppost-off-nh",
+   "role": "normalmap",
+   "file": "maps/lamppost-off.nh.webp",
+   "derivedFrom": "lamppost-off",
+   "params": {
+    "strength": 0.8,
+    "dome": "auto",
+    "detail": 2.5,
+    "grain": 1.0,
+    "ao": 0.8,
+    "aoRadius": 6.0,
+    "aoScale": 18.0,
+    "gloss": 0.25,
+    "cut": "",
+    "floor": 0.08,
+    "v": 3
+   },
+   "w": 234,
+   "h": 300,
+   "bytes": 40566,
+   "sha256": "499dd6f1955414f158d2e93c32eebef92a90359a66208df3d3c50da8980b23e4",
+   "layout": "nh2",
+   "albedoSha256": "c42a08aafb71bd199c5602b7bb87cd985b3a68d7f2925ae18882184ae7c02b3c",
+   "alpha": false,
+   "domeR": 18.53,
+   "prompt": [
+    "gen/lamppost-off/PROMPT.md",
+    "gen/lamppost-off/GEN.md"
+   ]
+  }
+ ],
+ "totalBytes": 87514
+}

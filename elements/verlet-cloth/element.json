@@ -1,0 +1,76 @@
+{
+  "id": "verlet-cloth",
+  "code": "E-12",
+  "name": "Verlet rope & cloth",
+  "kind": "addon",
+  "family": "secondary-motion",
+  "oneLiner": "Capes, scarves, ribbons, hair tufts, banners, hanging ropes and chains that swing with movement and wind: a small Verlet solver (points and distance constraints, a strand or a 2D grid) pinned to an anchor on an actor or a post, with gravity, damping, gusts from game time, a ground line, solid rects and a body circle to drape over. Drawn as smooth shaded strips and quads with an ink outline, or whole pixels with a 1 px outline on pixel games. It only reads anchors and only draws: hit boxes and rules never change. Fixed 1/120 s sub-steps, so ?t=&freeze=1 is deterministic; a teleporting anchor re-poses its cloth hanging at rest instead of stretching it across the screen.",
+  "fits": [
+    "side-scrolling platformer / action (capes, scarves, banners, hanging ropes)",
+    "top-down action RPG (capes, ribbons, banners in town)",
+    "metroidvania and soulslike-lite heroes with a cape or scarf",
+    "turn-based or tactics battles (banners, capes on idle units)",
+    "any 2D game drawn on a canvas, pixel or HD"
+  ],
+  "notFor": [
+    "3D or WebGL-rendered characters (this is a 2D canvas solver and drawing)",
+    "gameplay ropes (grappling hooks, swinging on ropes, rope bridges you walk on): the cloth never affects the player; use a physics rule for that",
+    "cloth that must collide with every sprite in the scene (only a ground line, a short rect list and one body circle per piece)",
+    "very large cloth (sails, curtains covering the screen): fine up to a few hundred points per piece, not thousands"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "actor",
+    "needs": [
+      "a fixed update step that calls update(dt) once per step after movement (also run by ?t= fast-forward and ?auto=1)",
+      "for each attached piece an anchor: world position (shoulders, neck, head, pole top, beam) and facing of the actor or post, or null while hidden",
+      "the draw pass of each actor (draw the actor's pieces right before / after its sprite) and of the scenery",
+      "optional: camera offset when the game subtracts it by hand; a ground line or solid rects; swing / dash / hit events for impulses"
+    ],
+    "provides": [
+      "cloth and rope pieces drawn behind or in front of their actor (capes and hair behind, scarves in front, banners and ropes in the scenery)",
+      "automatic teleport handling (snap) on respawn, restart, room change and blinks",
+      "wind(x, y): the same wind for grass, smoke or particles",
+      "tip(id): the free end of a rope or chain, to hang a lantern or bell on",
+      "stats() and list(): points, snaps, stretch, reach, pin error, resets (for tests)"
+    ]
+  },
+  "params": [
+    { "key": "wind", "label": "Wind (+ blows right)", "type": "range", "min": -3, "max": 3, "step": 0.05, "default": 0.5 },
+    { "key": "gust", "label": "Gustiness", "type": "range", "min": 0, "max": 1, "step": 0.05, "default": 0.5 },
+    { "key": "stiffness", "label": "Stiffness", "type": "range", "min": 0, "max": 1, "step": 0.05, "default": 0.8 },
+    { "key": "segments", "label": "Segments per piece", "type": "range", "min": 2, "max": 24, "step": 1, "default": 8 },
+    { "key": "damping", "label": "Damping", "type": "range", "min": 0, "max": 0.3, "step": 0.005, "default": 0.03 },
+    { "key": "gravity", "label": "Gravity", "type": "range", "min": 0, "max": 3, "step": 0.05, "default": 1 },
+    { "key": "drape", "label": "Drape toward the back", "type": "range", "min": 0, "max": 2, "step": 0.05, "default": 0.5 },
+    { "key": "shade", "label": "Fold shading", "type": "range", "min": 0, "max": 1, "step": 0.05, "default": 1 },
+    { "key": "outline", "label": "Outline", "type": "select", "options": ["auto", "on", "off"], "default": "auto" },
+    { "key": "snap", "label": "Pixel snap", "type": "select", "options": ["auto", "pixel", "smooth"], "default": "auto" },
+    { "key": "reduced", "label": "Reduced motion", "type": "select", "options": ["system", "on", "off"], "default": "system" },
+    { "key": "view", "label": "View (auto: top-down when anchors return fx, fy)", "type": "select", "options": ["auto", "side", "top"], "default": "auto" }
+  ],
+  "variants": [
+    { "name": "Breezy (default)", "params": { "wind": 0.5, "gust": 0.5, "stiffness": 0.8, "segments": 8, "damping": 0.03, "gravity": 1, "drape": 0.5, "shade": 1 } },
+    { "name": "Still air", "params": { "wind": 0, "gust": 0 } },
+    { "name": "Storm", "params": { "wind": 1.8, "gust": 1, "damping": 0.02 } },
+    { "name": "Heavy wool", "params": { "stiffness": 1, "damping": 0.08, "gravity": 1.4, "drape": 0.8, "wind": 0.3 } },
+    { "name": "Silk", "params": { "stiffness": 0.55, "damping": 0.01, "gravity": 0.7, "wind": 0.7 } },
+    { "name": "Low-cost", "params": { "segments": 4, "stiffness": 0.5 } },
+    { "name": "Underwater", "params": { "gravity": 0.25, "damping": 0.12, "wind": 0.15, "gust": 1 } },
+    { "name": "Pixel-snapped", "params": { "snap": "pixel" } },
+    { "name": "Top-down", "params": { "view": "top" } }
+  ],
+  "assets": [
+    "module/verlet-cloth.js: the element as one dependency-free script (global GameDNA_Cloth): Verlet strands and grids, anchors with teleport snap, wind from game time, ground / rects / body collision, painted HD drawing (smooth silhouette, fold lighting from a light direction, back face, length gradient, brush texture, lit rim, thin hue edge, trim, twisted rope strands; `look: 'flat'` keeps the v1.1 flat tones) and a whole-pixel rasteriser with a 1 px outline; skins only give the ink, outline width, pixel mode and default colour",
+    "no image or audio files of its own (the demo's hero and backdrop come from the shared demo-kit; posts, poles and fittings are painted in code)"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/verlet-cloth.js",
+    "global": "GameDNA_Cloth",
+    "version": "1.2.0",
+    "docs": "module/README.md",
+    "skin": "optional: skins/skin-api.js + a skin, passed as `skin` (ink, outline width, pixel mode, default colour)"
+  }
+}

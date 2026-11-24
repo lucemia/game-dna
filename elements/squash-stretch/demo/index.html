@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Squash, Stretch &amp; Anticipation</title>
+<style>
+:root {
+  --bg: #0c0b14; --panel: #15131f; --panel2: #1c1929; --line: #2b2742; --text: #eeeaf7; --dim: #9690b2; --accent: #7ff0c8; --accent2: #ffb86b; --off: #ff7a8a;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1100px 560px at 30% -12%, #1f2a44 0%, var(--bg) 62%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 16px 20px 10px; max-width: 1360px; margin: 0 auto; }
+.code { white-space: nowrap; font: 700 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #06231a; background: linear-gradient(#b8ffe6, var(--accent)); padding: 6px 8px; border-radius: 6px; box-shadow: 0 0 0 1px #00000040, 0 4px 14px #7ff0c840; }
+h1 { font-size: 18px; margin: 0; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; max-width: 920px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 18px; padding: 0 20px 20px; max-width: 1360px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; }
+.frame { position: relative; border-radius: 14px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px #34304e, 0 24px 60px #00000090; }
+#game { display: block; width: 100%; height: auto; aspect-ratio: 960 / 420; }
+#game.px { image-rendering: pixelated; }
+.caption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; margin-top: 10px; color: var(--dim); font-size: 12px; }
+.caption b { color: var(--text); font-weight: 600; }
+.keys { margin-top: 8px; color: var(--dim); font-size: 12px; }
+.keys kbd { font: 600 11px ui-monospace, Menlo, monospace; background: #221f33; border: 1px solid #3a3556; border-bottom-width: 2px; border-radius: 4px; padding: 1px 5px; color: var(--text); }
+.pads { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.pads button { flex: 1 1 90px; }
+aside { background: linear-gradient(var(--panel2), var(--panel)); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+section { border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+section:last-of-type { border-bottom: 0; padding-bottom: 0; }
+h2 { display: flex; align-items: center; justify-content: space-between; margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.row { margin-bottom: 8px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 3px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 5px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--fill), #2c2842 var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 15px; height: 15px; border-radius: 50%; background: #effff8; box-shadow: 0 0 0 3px #7ff0c855, 0 2px 6px #000a; cursor: pointer; }
+.seg { display: flex; background: #0e0d17; border: 1px solid var(--line); border-radius: 8px; padding: 2px; gap: 2px; }
+.seg button { flex: 1; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 4px; border-radius: 6px; cursor: pointer; }
+.seg button[aria-checked=true] { background: #29253f; color: var(--text); box-shadow: inset 0 0 0 1px #4a4468; }
+.btn { appearance: none; border: 1px solid #3a3556; background: #1f1c2e; color: var(--text); border-radius: 9px; padding: 9px 10px; font: 600 12.5px/1 inherit; cursor: pointer; }
+.btn:active { transform: scale(.98); }
+.btn.hot { color: #06231a; border: 0; background: linear-gradient(#b8ffe6, var(--accent)); box-shadow: 0 6px 18px #7ff0c830; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips button { appearance: none; border: 1px solid #3a3556; background: #1a1828; color: var(--text); border-radius: 999px; padding: 5px 10px; font: 600 12px/1 inherit; cursor: pointer; }
+.chips button.on { border-color: var(--accent); color: var(--accent); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.note { color: var(--dim); font-size: 11.5px; margin: 4px 0 0; }
+.stat { font: 11.5px/1.55 ui-monospace, Menlo, monospace; color: var(--dim); }
+.stat b { color: var(--text); font-weight: 600; }
+.chk { display: flex; align-items: center; gap: 8px; font-size: 12.5px; cursor: pointer; }
+@media (max-width: 1040px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 680px; width: 100%; margin: 0 auto; } }
+@media (max-width: 560px) { header { padding: 12px 16px 8px; } main { padding: 0 16px 16px; gap: 12px; } .frame { border-radius: 10px; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">E-10</span>
+  <div><h1>Squash, stretch &amp; anticipation</h1><p>Every character here is <b>one still image</b>. The module bends it about the feet: a crouch before a jump or a swing, a stretch while rising and falling, a squash on landing and on taking a hit, a springy overshoot back, a lean into movement and a slow breath at rest. Area is kept (sx&times;sy = 1), and the game&rsquo;s hit boxes never change. Left: the same game without the module.</p></div>
+</header>
+<main>
+  <div id="stage">
+    <div class="frame"><canvas id="game" width="960" height="420"></canvas></div>
+    <div class="caption">
+      <span id="cap-mode"><b>HD</b> 960&times;420</span>
+      <span id="cap-time">t <b>0.00 s</b></span>
+      <span id="cap-ev">events <b>0</b></span>
+    </div>
+    <div class="pads">
+      <button class="btn" id="b-jump">Jump (Z)</button>
+      <button class="btn" id="b-attack">Swing (X)</button>
+      <button class="btn" id="b-cast">Hold to charge (C)</button>
+    </div>
+    <p class="keys"><kbd>&larr;</kbd><kbd>&rarr;</kbd> run &middot; <kbd>Z</kbd> jump &middot; <kbd>X</kbd> swing &middot; hold <kbd>C</kbd> to charge the mage&rsquo;s bolt &middot; <kbd>S</kbd> slow motion. Pressing a key takes over from the script; &ldquo;Script&rdquo; gives it back.</p>
+  </div>
+  <aside>
+    <section>
+      <h2>Playback</h2>
+      <div class="row"><label>Speed</label><div class="seg" id="slow"><button data-v="1" aria-checked="true">1&times;</button><button data-v="0.35" aria-checked="false">0.35&times;</button><button data-v="0.12" aria-checked="false">0.12&times;</button></div></div>
+      <div class="two">
+        <div class="row"><label>Render</label><div class="seg" id="mode"><button data-v="hd" aria-checked="true">HD</button><button data-v="pixel" aria-checked="false">Pixel</button></div></div>
+        <div class="row"><label>Drive</label><div class="seg" id="drive"><button data-v="script" aria-checked="true">Script</button><button data-v="play" aria-checked="false">Play</button></div></div>
+      </div>
+      <label class="chk"><input type="checkbox" id="boxes"> Show hit boxes (same in both halves)</label>
+    </section>
+    <section>
+      <h2>Presets</h2>
+      <div class="chips" id="variants"></div>
+    </section>
+    <section>
+      <h2>Parameters</h2>
+      <div id="params"></div>
+      <h2 style="margin-top:12px">Per actor (attach options)</h2>
+      <div id="feel"></div>
+      <div class="two">
+        <div class="row"><label>Pixel snap</label><div class="seg" id="snap"><button data-v="auto" aria-checked="true">auto</button><button data-v="pixel" aria-checked="false">pixel</button><button data-v="smooth" aria-checked="false">smooth</button></div></div>
+        <div class="row"><label>Reduced motion</label><div class="seg" id="reduced"><button data-v="system" aria-checked="true">sys</button><button data-v="on" aria-checked="false">on</button><button data-v="off" aria-checked="false">off</button></div></div>
+      </div>
+    </section>
+    <section>
+      <h2>Live transform (right half)</h2>
+      <div class="stat" id="stat"></div>
+      <p class="note">sx&times;sy stays 1: the sprite gets thinner as it gets taller. In pixel mode both are rounded to whole pixels of the sprite, so the product drifts by a pixel&rsquo;s worth.</p>
+    </section>
+  </aside>
+</main>
+<script src="../module/squash-stretch.js"></script>
+<script>
+"use strict";
+(() => {
+  const SS = window.GameDNA_SquashStretch;
+  const qs = new URLSearchParams(location.search);
+  const DEBUG = qs.get('debug') === '1' || qs.get('stats') === '1';   // event ticker chips: dev only
+  const LW = 960, LH = 420, PW = 480, GROUND = 350, STEP = 1000 / 60, LOOP = 400, Z = 1.55;   // Z: art scale
+  const PARAMS = [
+    { key: 'amount', label: 'Amount', min: 0, max: 2, step: 0.05 },
+    { key: 'squash', label: 'Squash depth', min: 0, max: 0.6, step: 0.01 },
+    { key: 'stretch', label: 'Stretch at full speed', min: 0, max: 0.6, step: 0.01 },
+    { key: 'spring', label: 'Spring (Hz)', min: 1, max: 20, step: 0.5 },
+    { key: 'wobble', label: 'Wobble (overshoot)', min: 0, max: 0.95, step: 0.05 },
+    { key: 'lean', label: 'Lean (deg)', min: 0, max: 30, step: 1 },
+    { key: 'breathe', label: 'Idle breathing', min: 0, max: 0.1, step: 0.005 },
+    { key: 'walk', label: 'Stride bounce', min: 0, max: 0.2, step: 0.01 },
+    { key: 'anticipation', label: 'Anticipation (ms)', min: 0, max: 400, step: 10 }
+  ];
+  const VARIANTS = [
+    { name: 'Classic cartoon', params: { amount: 1, squash: 0.28, stretch: 0.2, spring: 6, wobble: 0.55, lean: 9, breathe: 0.025, walk: 0.05, anticipation: 70, snap: 'auto', reduced: 'system' } },
+    { name: 'Snappy arcade', params: { squash: 0.22, stretch: 0.16, spring: 9, wobble: 0.35, lean: 7, anticipation: 50 } },
+    { name: 'Rubbery', params: { squash: 0.38, stretch: 0.3, spring: 4.5, wobble: 0.75, lean: 13, breathe: 0.04, walk: 0.09, anticipation: 110 } },
+    { name: 'Subtle HD', params: { amount: 0.6, breathe: 0.015, walk: 0.03, lean: 6 } },
+    { name: 'Pixel-snapped', params: { snap: 'pixel' } },
+    { name: 'Reduced motion', params: { reduced: 'on' } }
+  ];
+
+  // ---------------------------------------------------------------- module instance (params from the URL win)
+  const start = Object.assign({}, VARIANTS[0].params);
+  for (const k in SS.defaults) if (qs.has(k)) start[k] = isNaN(+qs.get(k)) ? qs.get(k) : +qs.get(k);
+  const ss = SS.create({ skin: false, params: start });
+  window.__ss = ss;
+  let mode = qs.get('mode') === 'pixel' ? 'pixel' : 'hd';
+  let slow = +(qs.get('slow') || 1) || 1;
+  let showBoxes = qs.get('boxes') === '1';
+  let drive = qs.get('drive') === 'play' ? 'play' : 'script';
+  // per-actor feel (attach options): the armoured knight is stiffer than the slime
+  const FEEL = { knight: qs.has('knightStiffness') ? +qs.get('knightStiffness') : 0.45, slime: qs.has('slimeAmount') ? +qs.get('slimeAmount') : 1.2 };
+
+  // ---------------------------------------------------------------- art: three still images, painted once
+  const INK = '#1a1530';
+  function lg(g, x0, y0, x1, y1, stops) { const G = g.createLinearGradient(x0, y0, x1, y1); stops.forEach((c, i) => G.addColorStop(i / (stops.length - 1), c)); return G; }
+  function rg(g, x, y, r0, r1, stops) { const G = g.createRadialGradient(x, y, r0, x, y, r1); stops.forEach((c, i) => G.addColorStop(i / (stops.length - 1), c)); return G; }
+  function rr(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+  const ART = {
+    hero: { w: 56, h: 68, paint(g) {      // foot at (28, 68), facing right
+      g.lineJoin = 'round'; g.lineWidth = 2.5; g.strokeStyle = INK;
+      g.beginPath(); g.moveTo(16, 30); g.quadraticCurveTo(4, 48, 8, 62); g.lineTo(22, 58); g.lineTo(26, 32); g.closePath();          // cape
+      g.fillStyle = lg(g, 0, 30, 0, 62, ['#e2524a', '#8e2238']); g.fill(); g.stroke();
+      for (const [x, c] of [[17, '#3b2f4a'], [29, '#2f2540']]) { rr(g, x, 54, 11, 14, 4); g.fillStyle = c; g.fill(); g.stroke(); }  // boots
+      rr(g, 14, 28, 28, 30, 10); g.fillStyle = lg(g, 14, 28, 42, 58, ['#cfdcf0', '#8ea3c9', '#4c5f8a']); g.fill(); g.stroke();      // torso
+      g.fillStyle = '#6b4526'; g.fillRect(15, 47, 26, 5); g.fillStyle = '#f2c14e'; g.fillRect(26, 46.5, 5, 6);
+      g.beginPath(); g.moveTo(44, 4); g.lineTo(48, 4); g.lineTo(48, 38); g.lineTo(44, 38); g.closePath();                            // sword
+      g.fillStyle = lg(g, 44, 0, 48, 0, ['#ffffff', '#b8c6dc']); g.fill(); g.stroke();
+      g.fillStyle = '#f2c14e'; rr(g, 39, 37, 14, 4, 2); g.fill(); g.stroke();
+      g.fillStyle = '#6b4526'; g.fillRect(44.5, 41, 3, 7); g.strokeRect(44.5, 41, 3, 7);
+      g.beginPath(); g.arc(38, 44, 5, 0, Math.PI * 2); g.fillStyle = '#9fb2d4'; g.fill(); g.stroke();                               // fist
+      g.beginPath(); g.arc(28, 20, 15, 0, Math.PI * 2); g.fillStyle = rg(g, 22, 13, 2, 18, ['#f4f8ff', '#a9bad8', '#56698f']); g.fill(); g.stroke();  // helmet
+      g.beginPath(); g.moveTo(26, 6); g.quadraticCurveTo(14, -2, 6, 10); g.quadraticCurveTo(16, 6, 22, 12); g.closePath();          // plume
+      g.fillStyle = lg(g, 6, 0, 26, 12, ['#ff8a6a', '#d23a46']); g.fill(); g.stroke();
+      rr(g, 27, 17, 14, 6, 3); g.fillStyle = INK; g.fill();
+      g.fillStyle = '#7ff0c8'; g.fillRect(34, 19, 4, 2);
+      g.globalAlpha = .5; g.fillStyle = '#fff'; g.beginPath(); g.ellipse(21, 12, 5, 3, -0.6, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
+    } },
+    slime: { w: 64, h: 48, paint(g) {     // foot at (32, 48)
+      g.lineJoin = 'round'; g.lineWidth = 2.5; g.strokeStyle = '#0e3438';
+      g.beginPath(); g.moveTo(4, 47); g.bezierCurveTo(0, 30, 12, 4, 32, 3); g.bezierCurveTo(52, 4, 64, 30, 60, 47); g.quadraticCurveTo(32, 50, 4, 47); g.closePath();
+      g.fillStyle = rg(g, 26, 14, 2, 46, ['#c8fff0', '#56dcc0', '#1d8f86', '#11585c']); g.fill(); g.stroke();
+      g.globalAlpha = .75; g.fillStyle = '#fff'; g.beginPath(); g.ellipse(20, 15, 8, 4.5, -0.5, 0, Math.PI * 2); g.fill();
+      g.beginPath(); g.arc(31, 10, 2, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
+      for (const x of [24, 40]) { g.beginPath(); g.ellipse(x, 27, 3.6, 5.2, 0, 0, Math.PI * 2); g.fillStyle = '#0d2326'; g.fill(); g.beginPath(); g.arc(x + 1, 25, 1.4, 0, Math.PI * 2); g.fillStyle = '#fff'; g.fill(); }
+      g.beginPath(); g.moveTo(28, 36); g.quadraticCurveTo(32, 39, 36, 36); g.strokeStyle = '#0d2326'; g.lineWidth = 2; g.stroke();
+      g.globalAlpha = .35; g.fillStyle = '#ff8fb0'; g.beginPath(); g.ellipse(17, 34, 4, 2.4, 0, 0, Math.PI * 2); g.fill(); g.beginPath(); g.ellipse(47, 34, 4, 2.4, 0, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
+    } },
+    mage: { w: 60, h: 90, paint(g) {      // foot at (30, 90), facing left
+      g.lineJoin = 'round'; g.lineWidth = 2.5; g.strokeStyle = INK;
+      g.beginPath(); g.moveTo(9, 22); g.lineTo(9, 88); g.strokeStyle = '#4a2f1c'; g.lineWidth = 4; g.stroke(); g.lineWidth = 2.5; g.strokeStyle = INK;   // staff
+      g.beginPath(); g.moveTo(22, 44); g.lineTo(10, 89); g.lineTo(52, 89); g.lineTo(40, 44); g.closePath();                         // robe
+      g.fillStyle = lg(g, 10, 44, 52, 89, ['#9a7ce6', '#5a3fa6', '#33246a']); g.fill(); g.stroke();
+      g.fillStyle = '#f2c14e'; g.fillRect(12, 82, 39, 3);
+      g.beginPath(); g.arc(13, 52, 5, 0, Math.PI * 2); g.fillStyle = '#e9b98f'; g.fill(); g.stroke();                               // hand on staff
+      g.beginPath(); g.arc(30, 40, 10, 0, Math.PI * 2); g.fillStyle = rg(g, 27, 36, 1, 12, ['#ffe3c4', '#e0a97c']); g.fill(); g.stroke();  // face
+      g.beginPath(); g.moveTo(22, 45); g.quadraticCurveTo(28, 62, 34, 45); g.closePath(); g.fillStyle = '#eef0f6'; g.fill(); g.stroke();  // beard
+      g.fillStyle = INK; g.fillRect(24, 38, 3, 3); g.fillRect(31, 38, 3, 3);
+      g.beginPath(); g.moveTo(8, 32); g.lineTo(52, 32); g.lineTo(36, 26); g.lineTo(42, 2); g.lineTo(22, 26); g.closePath();          // hat
+      g.fillStyle = lg(g, 8, 2, 52, 32, ['#7a5ad0', '#3c2a7c']); g.fill(); g.stroke();
+      g.fillStyle = '#f2c14e'; g.beginPath(); g.arc(34, 18, 2.4, 0, Math.PI * 2); g.fill();
+      g.beginPath(); g.arc(9, 18, 6, 0, Math.PI * 2); g.fillStyle = rg(g, 7, 16, 1, 7, ['#ffffff', '#7fe0ff', '#2f7fbf']); g.fill(); g.stroke();  // gem
+    } }
+  };
+  const GEM = { x: (9 - 30) * Z, y: (18 - 90) * Z };   // gem offset from the mage's feet (facing left)
+  const SPR = {};   // [mode][name][facing 0 = as painted, 1 = mirrored]
+  function bake(scale, hard) {
+    const out = {};
+    for (const name in ART) {
+      const A = ART[name], pad = 4;
+      const mk = flip => {
+        const c = document.createElement('canvas');
+        c.width = Math.ceil((A.w + pad * 2) * scale); c.height = Math.ceil((A.h + pad) * scale);
+        const g = c.getContext('2d');
+        g.setTransform(flip ? -scale : scale, 0, 0, scale, flip ? c.width : 0, 0); g.translate(pad, pad);
+        A.paint(g);
+        if (hard) {   // pixel look: hard alpha, 5-level posterised colour
+          const im = g.getImageData(0, 0, c.width, c.height), d = im.data;
+          for (let i = 0; i < d.length; i += 4) {
+            if (d[i + 3] < 110) { d[i + 3] = 0; continue; }
+            d[i + 3] = 255; for (let j = 0; j < 3; j++) d[i + j] = Math.round(d[i + j] / 51) * 51;
+          }
+          g.putImageData(im, 0, 0);
+        }
+        return { c, ax: (pad + A.w / 2) * scale, ay: (pad + A.h) * scale, s: scale / Z };
+      };
+      out[name] = [mk(false), mk(true)];
+    }
+    return out;
+  }
+
+  // ---------------------------------------------------------------- the game (one deterministic sim, drawn twice)
+  let G;
+  function reset() {
+    G = { step: 0, loopStep: 0, hero: { x: 80, y: GROUND, vx: 0, vy: 0, ground: true, face: 1, move: 0, stopAt: null, atk: 0, atkHit: false, w: 34 * Z, h: 58 * Z },
+      slime: { x: 300, y: GROUND, vx: 0, vy: 0, ground: true, home: 300, flash: 0, w: 52 * Z, h: 38 * Z, hopT: 0 },
+      mage: { x: 428, y: GROUND, vx: 0, vy: 0, ground: true, charge: 0, w: 36 * Z, h: 70 * Z },
+      bolt: null, slash: 0, dust: [], log: [], held: { left: false, right: false, cast: false }, total: 0 };
+  }
+  function logEv(id, kind, s) { G.log.unshift({ id, kind, s, t: G.step }); G.log.length = Math.min(G.log.length, 6); G.total++; }
+  function puff(x, y, n, s) { for (let i = 0; i < n; i++) { const a = (i / (n - 1)) * Math.PI - Math.PI; G.dust.push({ x: x + Math.cos(a) * 10, y, vx: Math.cos(a) * (1.2 + (i % 3) * 0.5) * s, vy: -0.4 - (i % 2) * 0.5, t: 0, life: 26 + (i % 4) * 4 }); } }
+  function jump(id) { const a = G[id]; if (!a.ground) return; a.vy = id === 'hero' ? -12 : -7; a.ground = false; }
+  function attack() { const h = G.hero; if (h.atk > 0) return; h.atk = 26; h.atkHit = false; ss.event('hero', 'attack', 1, h.face); logEv('hero', 'attack', 1); }
+  function charge(on) {
+    const m = G.mage;
+    if (on && m.charge === 0 && !G.bolt) { m.charge = 1; ss.event('mage', 'charge', 1, -1); logEv('mage', 'charge', 1); }
+    if (!on && m.charge > 0) { const s = Math.min(1.4, 0.5 + m.charge / 60); m.charge = 0; ss.event('mage', 'release'); logEv('mage', 'release', 1);
+      G.bolt = { x: m.x + GEM.x - 6, y: m.y + GEM.y + 4, vx: -7.5, s }; }
+  }
+  // the script: one loop of LOOP steps (6.7 s), same every loop
+  const SCRIPT = { 0: () => { G.hero.move = 1; G.hero.stopAt = 150; }, 62: () => jump('hero'), 118: () => { G.hero.move = 1; G.hero.stopAt = 232; },
+    150: () => attack(), 214: () => charge(true), 272: () => charge(false), 330: () => { G.hero.move = -1; G.hero.stopAt = 80; } };
+
+  function physics(id, a, accel, maxV) {
+    const wasGround = a.ground;
+    a.vy += 0.62; a.y += a.vy; a.x += a.vx;
+    if (a.y >= GROUND) { a.y = GROUND; a.ground = true; if (!wasGround) { puff(a.x, GROUND, id === 'hero' ? 9 : 6, Math.min(1.4, a.vy / 8)); logEv(id, 'land', Math.min(1, a.vy / 11)); } a.vy = 0; }
+    else a.ground = false;
+  }
+  function step() {
+    G.step++;
+    const ls = G.loopStep;
+    if (drive === 'script') { if (SCRIPT[ls]) SCRIPT[ls](); if (++G.loopStep >= LOOP) { G.loopStep = 0; const keep = G.step, tot = G.total, log = G.log; reset(); G.step = keep; G.total = tot; G.log = log; ss.clear(); } }
+    const h = G.hero, sl = G.slime, m = G.mage;
+    if (drive === 'play') h.move = (G.held.right ? 1 : 0) - (G.held.left ? 1 : 0);
+    if (h.move) h.face = h.move;
+    if (h.stopAt != null && (h.move > 0 ? h.x >= h.stopAt - 22 : h.x <= h.stopAt + 22)) { h.move = 0; h.stopAt = null; }
+    h.vx += (h.move * 3.4 - h.vx) * (h.ground ? 0.2 : 0.08);
+    physics('hero', h);
+    h.x = Math.max(40, Math.min(PW - 40, m.x - (m.w + h.w) / 2, h.x));   // the mage blocks the way
+    if (h.atk > 0) {
+      h.atk--;
+      if (h.atk === 20) G.slash = 10;
+      if (h.atk === 20 && !h.atkHit && Math.abs(sl.x - (h.x + h.face * 60)) < 60 && sl.y > GROUND - 60) {
+        h.atkHit = true; sl.vx = h.face * 5; sl.flash = 6; ss.event('slime', 'hit', 1, h.face); logEv('slime', 'hit', 1);
+      }
+    }
+    if (G.slash > 0) G.slash--;
+    // slime: knockback slides, then it hops home
+    sl.vx *= sl.ground ? 0.82 : 0.98; if (Math.abs(sl.vx) < 0.05) sl.vx = 0;
+    if (sl.ground && sl.vx === 0 && Math.abs(sl.x - sl.home) > 6 && ++sl.hopT > 14) { sl.hopT = 0; jump('slime'); sl.vx = Math.sign(sl.home - sl.x) * Math.min(3, Math.abs(sl.home - sl.x) / 14); }
+    physics('slime', sl);
+    if (sl.flash > 0) sl.flash--;
+    // mage charge and the bolt
+    if (m.charge > 0) m.charge++;
+    if (G.held.cast && drive === 'play') charge(true); else if (drive === 'play' && m.charge > 0) charge(false);
+    if (G.bolt) {
+      const b = G.bolt; b.x += b.vx;
+      if (Math.abs(b.x - sl.x) < 36 && sl.y > GROUND - 80) { sl.vx = -3.2 * b.s; sl.flash = 8; ss.event('slime', 'hit', b.s, -1); logEv('slime', 'hit', b.s); G.bolt = null; puff(sl.x, GROUND, 5, 1); }
+      else if (b.x < -20) G.bolt = null;
+    }
+    for (const d of G.dust) { d.t++; d.x += d.vx; d.y += d.vy; d.vx *= 0.9; d.vy *= 0.92; }
+    G.dust = G.dust.filter(d => d.t < d.life);
+    // the module: motion per actor, then one update per step
+    ss.motion('hero', h.vx, h.vy, h.ground); ss.motion('slime', sl.vx, sl.vy, sl.ground); ss.motion('mage', 0, 0, true);
+    ss.update(STEP);
+  }
+
+  // ---------------------------------------------------------------- drawing
+  const cv = document.getElementById('game'), ctx = cv.getContext('2d');
+  let BG = null, bgKey = '';
+  function paintBackground(g, s) {     // one pane, logical 480 x 420, at scale s
+    g.save(); g.scale(s, s);
+    g.fillStyle = lg(g, 0, 0, 0, 420, ['#151a36', '#2d2d5c', '#6b4f7c', '#d48a72', '#f2c48a']); g.fillRect(0, 0, PW, 420);
+    g.fillStyle = rg(g, 236, 196, 4, 170, ['#fff3d0', '#ffcf8a88', '#ff9a6a22', '#ff9a6a00']); g.fillRect(0, 0, PW, 420);
+    g.beginPath(); g.arc(236, 196, 20, 0, Math.PI * 2); g.fillStyle = '#fff2cf'; g.fill();
+    const ridge = (base, amp, f, ph, col) => { g.beginPath(); g.moveTo(0, 420); for (let x = 0; x <= PW; x += 6) g.lineTo(x, base - amp * (0.6 * Math.sin(x * f + ph) + 0.4 * Math.sin(x * f * 2.7 + ph * 1.7))); g.lineTo(PW, 420); g.closePath(); g.fillStyle = col; g.fill(); };
+    ridge(270, 46, 0.012, 1.2, '#7a5a86');
+    g.fillStyle = lg(g, 0, 220, 0, 320, ['#f2b48a00', '#e3a08a66']); g.fillRect(0, 220, PW, 100);
+    ridge(300, 34, 0.02, 3.1, '#4e3a6a');
+    ridge(322, 20, 0.035, 0.4, '#30294f');
+    for (let i = 0; i < 9; i++) { const x = 20 + i * 57 + (i * 37 % 23), hgt = 34 + (i * 53 % 30); g.beginPath(); g.moveTo(x - 14, 330); g.lineTo(x, 330 - hgt); g.lineTo(x + 14, 330); g.closePath(); g.fillStyle = '#231e3d'; g.fill(); }
+    g.fillStyle = lg(g, 0, GROUND - 6, 0, 420, ['#5fa86a', '#2f6a4c', '#1c3a33', '#121f22']); g.fillRect(0, GROUND - 6, PW, 420);
+    g.fillStyle = '#8fd27c'; g.fillRect(0, GROUND - 6, PW, 2);
+    for (let x = 3; x < PW; x += 7) { const hh = 3 + ((x * 31) % 5); g.fillStyle = (x % 3) ? '#4c9460' : '#77c071'; g.fillRect(x, GROUND - 6 - hh, 2, hh); }
+    for (let i = 0; i < 26; i++) { g.fillStyle = '#ffffff10'; g.fillRect((i * 97) % PW, GROUND + 14 + (i * 41) % 60, 6 + i % 9, 2); }
+    g.fillStyle = rg(g, PW / 2, 210, 120, 380, ['#00000000', '#00000055']); g.fillRect(0, 0, PW, 420);
+    g.restore();
+  }
+  function ensureBg(scale) {
+    const key = mode + scale;
+    if (key === bgKey) return;
+    bgKey = key;
+    BG = document.createElement('canvas'); BG.width = Math.round(PW * scale); BG.height = Math.round(LH * scale);
+    paintBackground(BG.getContext('2d'), scale);
+  }
+
+  function drawPaneWorld(g, ox, on, S, spr) {   // S = target px per logical px; g = the game canvas (or the low-res pixel buffer)
+    const pix = mode === 'pixel';
+    const P = v => pix ? Math.round(v * S) / S : v;
+    g.save();
+    g.setTransform(S, 0, 0, S, ox * S, 0);
+    g.beginPath(); g.rect(0, 0, PW, LH); g.clip();
+    g.imageSmoothingEnabled = !pix;
+    g.drawImage(BG, 0, 0, PW, LH);
+    const actors = [['mage', G.mage, 0], ['slime', G.slime, 0], ['hero', G.hero, G.hero.face > 0 ? 0 : 1]];
+    // soft contact shadows (the host's own; widened with the squash when the module is on)
+    for (const [id, a] of actors) {
+      const tr = on ? ss.transform(id, g) : { sx: 1 }, air = Math.max(0, GROUND - a.y);
+      const w = (id === 'slime' ? 30 : id === 'mage' ? 24 : 22) * Z * tr.sx * Math.max(0.45, 1 - air / 160);
+      g.fillStyle = `rgba(10,6,24,${0.42 * Math.max(0.3, 1 - air / 140)})`; g.beginPath(); g.ellipse(P(a.x), GROUND + 1, w, w * 0.22, 0, 0, Math.PI * 2); g.fill();
+    }
+    for (const d of G.dust) { const k = 1 - d.t / d.life; g.fillStyle = `rgba(236,222,200,${0.55 * k})`; g.beginPath(); g.arc(P(d.x), P(d.y - 3), (3 + d.t * 0.25) * (pix ? 1 : 1), 0, Math.PI * 2); g.fill(); }
+    // mage gem glow behind (charging)
+    for (const [id, a, flip] of actors) {
+      const sp = spr[id][flip], fx = P(a.x), fy = P(a.y);
+      if (on) ss.apply(g, id, fx, fy);
+      g.drawImage(sp.c, fx - sp.ax / sp.s, fy - sp.ay / sp.s, sp.c.width / sp.s, sp.c.height / sp.s);
+      if (id === 'slime' && a.flash > 0) { g.globalCompositeOperation = 'lighter'; g.globalAlpha = a.flash / 10; g.drawImage(sp.c, fx - sp.ax / sp.s, fy - sp.ay / sp.s, sp.c.width / sp.s, sp.c.height / sp.s); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; }
+      if (id === 'mage' && a.charge > 0) {
+        const k = Math.min(1, a.charge / 40), gx = fx + GEM.x, gy = fy + GEM.y;
+        g.globalCompositeOperation = 'lighter';
+        g.fillStyle = rg(g, gx, gy, 0, 10 + 22 * k, ['#e6fbffcc', '#7fe0ff88', '#2f7fbf00']); g.beginPath(); g.arc(gx, gy, 10 + 22 * k, 0, Math.PI * 2); g.fill();
+        g.globalCompositeOperation = 'source-over';
+      }
+      if (on) ss.restore(g);
+    }
+    // swing arc and bolt (host effects, identical both sides)
+    if (G.slash > 0) {
+      const h = G.hero, k = G.slash / 10, cx = h.x + h.face * 16, cy = h.y - 52;
+      g.strokeStyle = `rgba(255,255,255,${0.85 * k})`; g.lineWidth = 7 * k + 1; g.lineCap = 'round';
+      g.beginPath(); h.face > 0 ? g.arc(cx, cy, 62, -1.3, 0.9) : g.arc(cx, cy, 62, Math.PI - 0.9, Math.PI + 1.3); g.stroke(); g.lineCap = 'butt';
+    }
+    if (G.bolt) {
+      const b = G.bolt; g.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < 6; i++) { g.fillStyle = `rgba(127,224,255,${0.5 - i * 0.07})`; g.beginPath(); g.arc(P(b.x - b.vx * i * 0.8), P(b.y), 9 - i, 0, Math.PI * 2); g.fill(); }
+      g.fillStyle = '#ffffff'; g.beginPath(); g.arc(P(b.x), P(b.y), 4, 0, Math.PI * 2); g.fill(); g.globalCompositeOperation = 'source-over';
+    }
+    g.restore();
+  }
+  function drawPaneOverlay(ox, on, S) {
+    // hit boxes and labels (HUD: never deformed, always HD)
+    ctx.save(); ctx.setTransform(S, 0, 0, S, ox * S, 0);
+    if (showBoxes) {
+      // styled as a HUD overlay (faint fill, corner brackets), not a dashed debug rectangle
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      for (const a of [G.hero, G.slime, G.mage]) {
+        const x = a.x - a.w / 2, y = a.y - a.h, w = a.w, h = a.h, c = Math.min(9, w * 0.28, h * 0.28);
+        ctx.fillStyle = 'rgba(255,236,170,0.07)'; ctx.fillRect(x, y, w, h);
+        ctx.beginPath();
+        ctx.moveTo(x, y + c); ctx.lineTo(x, y); ctx.lineTo(x + c, y); ctx.moveTo(x + w - c, y); ctx.lineTo(x + w, y); ctx.lineTo(x + w, y + c);
+        ctx.moveTo(x + w, y + h - c); ctx.lineTo(x + w, y + h); ctx.lineTo(x + w - c, y + h); ctx.moveTo(x + c, y + h); ctx.lineTo(x, y + h); ctx.lineTo(x, y + h - c);
+        ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(20,16,36,0.55)'; ctx.stroke();
+        ctx.lineWidth = 2; ctx.strokeStyle = '#ffe9a8'; ctx.stroke();
+      }
+    }
+    ctx.restore();
+    // labels: HUD, never deformed, always HD. On a narrow screen they grow (u) so they stay ~9 px or more on the phone,
+    // and the event ticker moves under the label (2 rows) instead of sitting on the right.
+    const css = (cv.getBoundingClientRect().width || LW) / LW, u = Math.max(1, Math.min(2.4, 0.78 / css)), compact = u > 1.4;
+    const font = (w, px, mono) => w + ' ' + px + 'px ' + (mono ? 'ui-monospace, Menlo, monospace' : 'ui-sans-serif, -apple-system, Segoe UI, sans-serif');
+    ctx.save(); ctx.setTransform(S * u, 0, 0, S * u, ox * S, 0); ctx.imageSmoothingEnabled = true;
+    const label = on ? 'MODULE ON' : 'MODULE OFF', sub = on ? 'squash · stretch · anticipation' : 'same game, same frame';
+    ctx.font = font(700, 12);
+    const tw = compact ? ctx.measureText(label).width : Math.max(ctx.measureText(label).width, 150), bh = compact ? 26 : 40;
+    ctx.fillStyle = '#0c0a18b8'; rr(ctx, 12, 12, tw + 34, bh, 9); ctx.fill();
+    ctx.fillStyle = on ? '#7ff0c8' : '#ff8a96'; ctx.beginPath(); ctx.arc(26, 25, 4.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#f4f0ff'; ctx.fillText(label, 37, 29.5);
+    if (!compact) { ctx.font = font(500, 10.5); ctx.fillStyle = '#b9b2d6'; ctx.fillText(sub, 22, 45); }
+    ctx.restore();
+    if (on && DEBUG && G.log.length) {   // event ticker (?debug=1)
+      ctx.save();
+      if (compact) ctx.setTransform(S * u, 0, 0, S * u, ox * S, 0); else ctx.setTransform(S, 0, 0, S, ox * S, 0);
+      ctx.font = font(600, 11, true);
+      G.log.slice(0, compact ? 2 : 4).forEach((e, i) => {
+        const age = G.step - e.t, a = Math.max(0, 1 - age / 150); if (a <= 0) return;
+        const txt = e.id + ' · ' + e.kind + (e.kind === 'charge' || e.kind === 'release' ? '' : ' ' + e.s.toFixed(2)), w = ctx.measureText(txt).width + 18;
+        const x = compact ? 12 : PW - 12 - w, y = compact ? 44 + i * 23 : 12 + i * 24;
+        ctx.globalAlpha = a; ctx.fillStyle = '#0c0a18b0'; rr(ctx, x, y, w, 20, 6); ctx.fill();
+        ctx.fillStyle = e.kind === 'hit' ? '#ff9a8a' : e.kind === 'land' ? '#ffd27a' : '#7ff0c8'; ctx.fillText(txt, x + 9, y + 14);
+      });
+      ctx.globalAlpha = 1; ctx.restore();
+    }
+    if (slow < 1) {   // anchored bottom-left
+      ctx.save(); ctx.setTransform(S * u, 0, 0, S * u, ox * S, LH * S * (1 - u));
+      ctx.font = font(700, 11, true); ctx.fillStyle = '#0c0a18b8'; rr(ctx, 12, LH - 34, 104, 22, 6); ctx.fill(); ctx.fillStyle = '#ffd27a'; ctx.fillText('SLOW-MO ' + slow + '×', 20, LH - 19);
+      ctx.restore();
+    }
+  }
+  let LB = null;
+  function render() {
+    const pix = mode === 'pixel';
+    const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+    let S = Math.max(1, Math.min(2.5, (r.width || LW) * dpr / LW)); const w = Math.round(LW * S); if (cv.width !== w) { cv.width = w; cv.height = Math.round(LH * S); } S = cv.width / LW;
+    const s = pix ? 1 / 3 : S;
+    ensureBg(s);
+    const spr = pix ? (SPR.px || (SPR.px = bake(Z / 3, true))) : (SPR.hd || (SPR.hd = bake(3 * Z, false)));
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, cv.width, cv.height);
+    if (pix) {   // the game itself at 320 x 140, scaled up with hard pixels; labels stay HD
+      if (!LB) { LB = document.createElement('canvas'); LB.width = 320; LB.height = 140; }
+      const g = LB.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 320, 140);
+      drawPaneWorld(g, 0, false, s, spr); drawPaneWorld(g, PW, true, s, spr);
+      ctx.imageSmoothingEnabled = false; ctx.drawImage(LB, 0, 0, cv.width, cv.height); ctx.imageSmoothingEnabled = true;
+    } else { drawPaneWorld(ctx, 0, false, S, spr); drawPaneWorld(ctx, PW, true, S, spr); }
+    drawPaneOverlay(0, false, S); drawPaneOverlay(PW, true, S);
+    ctx.setTransform(S, 0, 0, S, 0, 0); ctx.fillStyle = '#ffffffd0'; ctx.fillRect(PW - 1, 0, 2, LH);
+    updateUi();
+  }
+  function setPixelSizes() {   // the module snaps scale to whole pixels of the drawn sprite size
+    const k = (mode === 'pixel' ? 1 / 3 : 1) * Z;
+    ss.attach('hero', { w: 56 * k, h: 68 * k, maxSpeed: 3.4, maxFall: 12, stiffness: FEEL.knight });   // armour: squashes less
+    ss.attach('slime', { w: 64 * k, h: 48 * k, maxSpeed: 5, maxFall: 8, amount: FEEL.slime });         // jelly: squashes more
+    ss.attach('mage', { w: 60 * k, h: 90 * k, maxSpeed: 2, maxFall: 8, stiffness: 0.15 });
+  }
+
+  // ---------------------------------------------------------------- UI
+  const $ = id => document.getElementById(id);
+  function updateUi() {
+    $('cap-mode').innerHTML = mode === 'pixel' ? '<b>Pixel</b> game at 320&times;140, whole-pixel scale' : '<b>HD</b> ' + cv.width + '&times;' + cv.height + ' backing';
+    $('cap-time').innerHTML = 't <b>' + (G.step * STEP / 1000).toFixed(2) + ' s</b>' + (slow < 1 ? ' &middot; slow ' + slow + '&times;' : '');
+    $('cap-ev').innerHTML = 'events <b>' + ss.stats().events + '</b>';
+    const rows = ['hero', 'slime', 'mage'].map(id => { const t = ss.transform(id, mode === 'pixel' && LB ? LB.getContext('2d') : ctx); return `<b>${id.padEnd(5)}</b> sx ${t.sx.toFixed(2)} sy ${t.sy.toFixed(2)} &middot; ${(t.sx * t.sy).toFixed(3)} &middot; lean ${(Math.atan(t.k) * 180 / Math.PI).toFixed(1)}&deg;`; });
+    $('stat').innerHTML = rows.join('<br>');
+  }
+  function seg(id, value, fn) {
+    const el = $(id);
+    const sync = v => el.querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', String(b.dataset.v === String(v))));
+    el.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; sync(b.dataset.v); fn(b.dataset.v); });
+    sync(value); return sync;
+  }
+  const syncSlow = seg('slow', slow, v => { slow = +v; });
+  seg('mode', mode, v => { mode = v; setPixelSizes(); render(); });
+  const syncDrive = seg('drive', drive, v => { drive = v; reset(); ss.clear(); });
+  const syncSnap = seg('snap', ss.params().snap, v => { ss.setParams({ snap: v }); });
+  const syncRed = seg('reduced', ss.params().reduced, v => { ss.setParams({ reduced: v }); });
+  $('boxes').checked = showBoxes; $('boxes').addEventListener('change', e => { showBoxes = e.target.checked; render(); });
+  const sliders = {};
+  for (const p of PARAMS) {
+    const row = document.createElement('div'); row.className = 'row';
+    row.innerHTML = `<label>${p.label} <output></output></label><input type="range" min="${p.min}" max="${p.max}" step="${p.step}">`;
+    const inp = row.querySelector('input'), out = row.querySelector('output');
+    const show = () => { out.textContent = (+inp.value).toFixed(p.step < 0.01 ? 3 : p.step < 1 ? 2 : 0); inp.style.setProperty('--fill', ((inp.value - p.min) / (p.max - p.min) * 100) + '%'); };
+    inp.value = ss.params()[p.key]; show();
+    inp.addEventListener('input', () => { ss.setParams({ [p.key]: +inp.value }); show(); });
+    sliders[p.key] = { inp, show };
+    $('params').appendChild(row);
+  }
+  for (const f of [{ key: 'knight', label: 'Knight stiffness (armour)', min: 0, max: 1, step: 0.05 }, { key: 'slime', label: 'Slime amount (jelly)', min: 0, max: 2, step: 0.05 }]) {
+    const row = document.createElement('div'); row.className = 'row';
+    row.innerHTML = `<label>${f.label} <output></output></label><input type="range" min="${f.min}" max="${f.max}" step="${f.step}">`;
+    const inp = row.querySelector('input'), out = row.querySelector('output');
+    const show = () => { out.textContent = (+inp.value).toFixed(2); inp.style.setProperty('--fill', ((inp.value - f.min) / (f.max - f.min) * 100) + '%'); };
+    inp.value = FEEL[f.key]; show();
+    inp.addEventListener('input', () => { FEEL[f.key] = +inp.value; setPixelSizes(); show(); });
+    $('feel').appendChild(row);
+  }
+  for (const v of VARIANTS) {
+    const b = document.createElement('button'); b.textContent = v.name;
+    b.addEventListener('click', () => {
+      ss.setParams(Object.assign({}, VARIANTS[0].params, v.params));
+      const P = ss.params(); for (const k in sliders) { sliders[k].inp.value = P[k]; sliders[k].show(); }
+      syncSnap(P.snap); syncRed(P.reduced);
+      document.querySelectorAll('#variants button').forEach(x => x.classList.toggle('on', x === b));
+    });
+    $('variants').appendChild(b);
+  }
+  document.querySelector('#variants button').classList.add('on');
+  function takeOver() { if (drive !== 'play') { drive = 'play'; syncDrive('play'); G.hero.move = 0; G.loopStep = 0; } }
+  addEventListener('keydown', e => {
+    const k = e.key.toLowerCase();
+    if (['arrowleft', 'arrowright', 'z', ' ', 'x', 'c'].includes(k)) { e.preventDefault(); if (e.repeat) return; takeOver(); }
+    if (k === 'arrowleft') G.held.left = true; else if (k === 'arrowright') G.held.right = true;
+    else if (k === 'z' || k === ' ') jump('hero'); else if (k === 'x') attack(); else if (k === 'c') G.held.cast = true;
+    else if (k === 's') { slow = slow === 1 ? 0.35 : slow === 0.35 ? 0.12 : 1; syncSlow(slow); }
+  });
+  addEventListener('keyup', e => { const k = e.key.toLowerCase(); if (k === 'arrowleft') G.held.left = false; else if (k === 'arrowright') G.held.right = false; else if (k === 'c') G.held.cast = false; });
+  $('b-jump').addEventListener('click', () => { takeOver(); jump('hero'); });
+  $('b-attack').addEventListener('click', () => { takeOver(); attack(); });
+  const bc = $('b-cast');
+  bc.addEventListener('pointerdown', e => { e.preventDefault(); takeOver(); G.held.cast = true; });
+  for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) bc.addEventListener(ev, () => { G.held.cast = false; });
+
+  // ---------------------------------------------------------------- loop (game time only; ?t=&freeze=1 is deterministic)
+  reset(); setPixelSizes();
+  /* text state for critics and tools/sprites/statecheck.py (world units, feet; each pane of the page draws the same world).
+     NATIVE = the side the drawn-in-code hero looks at; it has a mirrored copy (spr.hero[1]) used when hero.face < 0. The slime and the mage
+     are frontal figures and never mirrored (the mage's staff is on the slime's side; its bolt leaves from the gem). */
+  const NATIVE = { hero: 'right' };
+  window.__state = () => { const h = G.hero, flip = h.face > 0 ? 0 : 1;
+    return { t: Math.round(G.step * STEP), actors: [
+      { id: 'hero', x: Math.round(h.x), y: Math.round(h.y), facing: (NATIVE.hero === 'right') !== !!flip ? 'right' : 'left', target: h.atk > 0 ? 'slime' : null, vx: h.move ? h.move * 3.4 : 0 },
+      { id: 'slime', x: Math.round(G.slime.x), y: Math.round(G.slime.y), facing: null, target: null, vx: Math.round(G.slime.vx * 100) / 100, noFace: 'frontal art' },
+      { id: 'mage', x: Math.round(G.mage.x), y: Math.round(G.mage.y), facing: null, target: 'slime', noFace: 'frontal art' }] }; };
+  window.__demo = () => ({ step: G.step, loop: G.loopStep, hero: { x: G.hero.x, y: G.hero.y, ground: G.hero.ground }, slime: { x: G.slime.x, y: G.slime.y }, events: ss.stats().events, transform: { hero: ss.transform('hero'), slime: ss.transform('slime'), mage: ss.transform('mage') } });
+  const T = qs.has('t') ? Math.max(0, +qs.get('t') || 0) : null;
+  if (T !== null) { for (let n = Math.floor(T / STEP); n > 0; n--) step(); }
+  render();
+  if (T !== null && qs.get('freeze') === '1') { window.__frozen = true; return; }
+  let acc = 0, prev = null;
+  function frame(now) {
+    if (prev === null) prev = now;
+    acc += Math.min(250, now - prev) * slow; prev = now;
+    while (acc >= STEP) { step(); acc -= STEP; }
+    render(); requestAnimationFrame(frame);
+  }
+  addEventListener('resize', render);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

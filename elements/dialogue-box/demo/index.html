@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dialogue Box</title>
+<style>
+:root {
+  --bg: #0b0d16; --panel: #141826; --line: #283048; --text: #e9ecf8; --dim: #959cb8; --accent: #ffe070; --accent2: #7aa8ff;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1200px 600px at 30% -10%, #1c2444 0%, var(--bg) 60%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 14px 20px 10px; max-width: 1240px; margin: 0 auto; }
+.code { white-space: nowrap; font: 700 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #0e1428; background: var(--accent2); padding: 6px 8px; border-radius: 4px; box-shadow: 0 0 0 1px #00000040, 0 2px 0 #2c50b8; }
+h1 { font-size: 18px; margin: 0; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; padding: 0 20px 20px; max-width: 1240px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; display: flex; flex-direction: column; align-items: center; }
+.frame { padding: 6px; background: linear-gradient(#222a44, #121626); border-radius: 8px; box-shadow: 0 0 0 1px #343e60, 0 18px 50px #00000080; max-width: 100%; }
+canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; border-radius: 3px; touch-action: manipulation; max-width: 100%; }
+.caption { display: flex; justify-content: space-between; gap: 12px; width: 100%; max-width: 780px; margin-top: 8px; color: var(--dim); font-size: 12px; }
+.caption b { color: var(--text); font-weight: 600; }
+#lamp { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: #5ad86a; box-shadow: 0 0 8px #5ad86a; }
+#lamp.on { background: #7aa8ff; box-shadow: 0 0 8px #7aa8ff; }
+aside { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+h2 { margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.triggers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.triggers button { --c: var(--accent2); appearance: none; border: 1px solid #00000060; border-radius: 6px; padding: 8px 4px 6px; cursor: pointer; color: var(--text); font: 600 11.5px/1.1 inherit;
+  background: linear-gradient(#232a44, #1a2034); box-shadow: inset 0 1px 0 #ffffff14, inset 0 -2px 0 color-mix(in srgb, var(--c) 70%, black); }
+.triggers button:hover { background: linear-gradient(#2c3554, #20283e); }
+.triggers button i { display: block; font-style: normal; font: 800 12px/1 ui-monospace, Menlo, monospace; color: var(--c); margin-bottom: 4px; letter-spacing: .04em; }
+.triggers kbd { display: block; font: 10px/1 ui-monospace, Menlo, monospace; color: var(--dim); margin-top: 4px; }
+.row { margin-bottom: 10px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 5px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--accent2) var(--fill), #283048 var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 4px; background: #e8f0ff; border: 2px solid #0e1428; box-shadow: 0 1px 4px #000a; cursor: pointer; }
+.seg { display: flex; background: #0e1120; border: 1px solid var(--line); border-radius: 6px; padding: 2px; gap: 2px; }
+.seg button { flex: 1; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 3px; border-radius: 4px; cursor: pointer; text-transform: capitalize; }
+.seg button[aria-checked=true] { background: #273050; color: var(--text); box-shadow: inset 0 0 0 1px #3c4870, inset 0 -2px 0 var(--accent2); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+select { width: 100%; appearance: none; background: #0e1120; color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; font: 600 12px inherit; }
+.foot { display: flex; justify-content: space-between; align-items: center; color: var(--dim); font-size: 11.5px; border-top: 1px solid var(--line); padding-top: 10px; gap: 8px; }
+.foot button { appearance: none; background: none; border: 1px solid var(--line); color: var(--text); border-radius: 5px; padding: 5px 9px; font: 600 11.5px inherit; cursor: pointer; }
+.meter { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center; font: 700 11px ui-monospace, Menlo, monospace; color: var(--dim); }
+.meter div { background: #0e1120; border: 1px solid var(--line); border-radius: 6px; padding: 6px 2px; }
+.meter span { display: block; font-size: 16px; color: var(--text); }
+@media (max-width: 980px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 640px; width: 100%; margin: 0 auto; } }
+@media (max-width: 560px) { header { padding: 12px 16px 8px; } main { padding: 0 16px 16px; gap: 12px; } .frame { padding: 3px; } .caption { flex-direction: column; gap: 2px; } .triggers { grid-template-columns: repeat(2, 1fr); } .two { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">H-01</span>
+  <div><h1>Typewriter dialogue box</h1><p>Lines type out letter by letter with pauses at punctuation, a name tag on the speaker's side and a blinking arrow. Z / Enter / tap finishes the line or turns the page; hold to fast-forward. The box stays off the speaker and the HUD.</p></div>
+</header>
+<main>
+  <section id="stage">
+    <div class="frame"><canvas id="cv" width="256" height="224" aria-label="Village square with a dialogue box"></canvas></div>
+    <div class="caption"><span><span id="lamp"></span><b id="state">World running</b> · <span id="now">no dialogue</span></span><span style="white-space:nowrap"><span id="scaleinfo">256×224 native</span> · <b>Z</b>/<b>Enter</b>/tap · hold <b>Z</b> · keys <b>1–4</b></span></div>
+  </section>
+  <aside>
+    <div>
+      <h2>Start a conversation</h2>
+      <div class="triggers">
+        <button data-act="mira" style="--c:#ffe070"><i>MIRA</i>Lamplighter<kbd>1</kbd></button>
+        <button data-act="sign" style="--c:#c8b088"><i>SIGN</i>Narration<kbd>2</kbd></button>
+        <button data-act="brann" style="--c:#ff8a6a"><i>BRANN</i>Guard (low)<kbd>3</kbd></button>
+        <button data-act="cutscene" style="--c:#8ae4ff"><i>AUTO</i>Cutscene<kbd>4</kbd></button>
+        <button data-act="sound" style="--c:#b8ffc0"><i id="sndlab">SOUND</i>Blips off<kbd>S</kbd></button>
+        <button data-act="end" style="--c:var(--dim)"><i>X</i>End now<kbd>X</kbd></button>
+      </div>
+    </div>
+    <div class="meter"><div><span id="m-line">-</span>line</div><div><span id="m-page">-</span>page</div><div><span id="m-chars">-</span>chars</div><div><span id="m-ticks">0</span>ticks</div></div>
+    <div>
+      <div class="row"><label>Speed (letters / s, 0 = instant) <output data-out="speed"></output></label><input type="range" data-key="speed" min="0" max="120" step="5"></div>
+      <div class="row"><label>Punctuation pause (ms) <output data-out="pause"></output></label><input type="range" data-key="pause" min="0" max="400" step="20"></div>
+      <div class="row"><label>Auto-advance (ms, 0 = wait for Z) <output data-out="autoAdvance"></output></label><input type="range" data-key="autoAdvance" min="0" max="3000" step="100"></div>
+      <div class="row"><label>Box width (px, 0 = full) <output data-out="width"></output></label><input type="range" data-key="width" min="0" max="256" step="8"></div>
+      <div class="row"><label>Dim behind <output data-out="dim"></output></label><input type="range" data-key="dim" min="0" max="0.5" step="0.05"></div>
+    </div>
+    <div class="two">
+      <div><h2>Rows</h2><div class="seg" data-key="rows"><button>2</button><button>3</button><button>4</button></div></div>
+      <div><h2>Place</h2><div class="seg" data-key="place"><button>auto</button><button>top</button><button>bottom</button></div></div>
+      <div><h2>Name tag</h2><div class="seg" data-key="nameTag"><button>on</button><button>off</button></div></div>
+      <div><h2>Hold to skip</h2><div class="seg" data-key="hold"><button>on</button><button>off</button></div></div>
+      <div><h2>Tint</h2><div class="seg" data-key="tint"><button>a</button><button>n</button><button>b</button></div></div>
+      <div><h2>Skin</h2><select id="skin"><option value="pixel16">pixel16</option><option value="flat-demo">flat (non-pixel)</option></select></div>
+      <div><h2>Loop</h2><div class="seg" id="loop"><button data-v="1" aria-checked="true">auto</button><button data-v="0">manual</button></div></div>
+    </div>
+    <div class="foot"><span>Same module as <b>module/dialogue-box.js</b> · URL: <code>?t=ms&amp;freeze=1</code>, <code>?speed=20</code></span><button id="reset">Reset</button></div>
+  </aside>
+</main>
+<script src="../../../skins/skin-api.js"></script>
+<script src="../../../skins/pixel16.js"></script>
+<script src="../../../pixel-kit/pixel-scene.js"></script>
+<script src="../module/dialogue-box.js"></script>
+<script>
+'use strict';
+(function () {
+  var W = 256, H = 224, HUD_H = 14, STEP = 1000 / 60;
+  var Q = new URLSearchParams(location.search), num = function (k, d) { var v = Q.get(k); return v == null || v === '' || isNaN(+v) ? d : +v; };
+  var FREEZE = Q.get('freeze') === '1', T_AT = num('t', 0), LOOP = Q.get('loop') !== '0';
+  var cv = document.getElementById('cv'), SKAPI = window.GameDNA_Skin, DB = window.GameDNA_DialogueBox;
+
+  // a token-only, non-pixel skin: proves the box, the tag and the text draw through the skin
+  if (SKAPI) SKAPI.register({
+    id: 'flat-demo', name: 'Flat demo', pixel: false, native: { w: 256, h: 224, scale: 'fit', smoothing: true },
+    palette: { ink: '#29304d', paper: '#f4f6fb',
+      ui: { fill: '#ffffff', fillTo: '#eef1f8', edge: '#cdd2de', highlight: '#ffffff', shadow: 'rgba(40,46,90,0.25)' },
+      team: { a: '#5b6cff', b: '#ff6a5a', n: '#7b8199' },
+      overlay: { move: { fill: '#6f8cff', edge: '#4d68d6' }, attack: { fill: '#ff6f6f', edge: '#d9624f' }, threat: { fill: '#8f86ff', edge: '#5b4bff' }, heal: { fill: '#3fcf8e', edge: '#2f9e63' } },
+      fx: { hot: '#ff8a3c', cold: '#4aa8ff', heal: '#2f9e63', crit: '#f5b520', status: '#8f86ff' },
+      text: { main: '#29304d', shadow: 'rgba(0,0,0,0)', outline: '#29304d', dim: '#8a90a8', gold: '#b07a10', accent: '#5b6cff' } },
+    fonts: { ui: { type: 'canvas', family: 'system-ui, -apple-system, sans-serif', size: 7.5, weight: 600 }, num: { type: 'canvas', family: 'system-ui, sans-serif', size: 11, weight: 800 } },
+    shape: { radius: 4, padding: 4 }, shadow: { text: null, window: { blur: 4, dy: 1 } }, outline: { text: { width: 0 } }, motion: { snap: false }
+  });
+
+  /* ---------------- parameters (element.json defaults, URL overrides) ---------------- */
+  var params = {}; function resetParams() { params = {}; Object.keys(DB.DEFAULTS).forEach(function (k) { params[k] = DB.DEFAULTS[k]; }); }
+  resetParams();
+  Object.keys(params).forEach(function (k) { if (Q.has(k)) params[k] = typeof params[k] === 'number' ? num(k, params[k]) : Q.get(k); });
+  var skinId = Q.get('skin') || 'pixel16', sound = false;
+
+  /* ---------------- scene art (original, drawn once) ---------------- */
+  function mk(w, h) { var c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+  function hashf(i) { var x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+  function sprite(rows, pal) { var c = mk(rows[0].length, rows.length), g = c.getContext('2d'); rows.forEach(function (r, y) { for (var x = 0; x < r.length; x++) if (pal[r[x]]) { g.fillStyle = pal[r[x]]; g.fillRect(x, y, 1, 1); } }); return c; }
+  var OUT = '#14101e';
+  // Meadowhold square, drawn by the shared pixel scene kit (pixel-kit/pixel-scene.js); the same spec is used by dialogue-box and dialogue-choices
+  var PXS = window.GameDNA_PixelScene;
+  var SCENE = PXS.scene({ seed: 44, map: [
+    'TTTTTTTTTTTTTTTT', 'TTTTTT,T.TT,TTTT', ',....,.....,T.,T', '...........,..T,', '................', '................', '....ccccccccc...',
+    '....cccccccccppp', '....cccccccccppp', '....ccccccccc...', '.......pp.......', '.FF....pp.....u.', 'FF.F...pp.......', '.......pp.......'],
+    props: [{ k: 'house', x: 40, y: 92, o: { w: 60, roofH: 24, wallH: 22, wall: 'stone', lit: true } }, { k: 'barrel', x: 88, y: 91 }, { k: 'crate', x: 100, y: 93 }, { k: 'well', x: 30, y: 136 },
+      { k: 'sign', x: 88, y: 130 }, { k: 'stall', x: 230, y: 108, o: { color: 'blue' } }, { k: 'bench', x: 166, y: 172 }, { k: 'hay', x: 20, y: 168 },
+      { k: 'fence', x: 2, y: 208, o: { len: 104 } }, { k: 'fence', x: 150, y: 208, o: { len: 106 } }] });
+  var LAMPS = [[72, 100], [196, 98], [60, 152], [196, 152]];
+  function drawLamp(g, x, y, a, t, i) {   // a = 0 dark .. 1 lit
+    var p = PXS.prop('lantern', { lit: a > 0.5 });
+    if (a > 0.02) PXS.glow(g, x, y - 13, 14, '#ffd070', a * (0.85 + 0.15 * Math.sin(t / 130 + i * 2)));
+    g.drawImage(p.frames[p.frames.length > 1 ? Math.floor(t / 140 + i) % p.frames.length : 0], x - p.ax, y - p.ay);
+  }
+
+  // the hero: three drawings (down = front, up = back, side = looking right), two walk frames each; 'left' is the side art mirrored
+  var HERO_PAL = { o: OUT, h: '#c86a2a', s: '#f0c8a0', e: '#20102a', a: '#3a7ad8', y: '#ffe070', b: '#2a4a8a', d: '#4a3a2a' };
+  var HERO = { asset: { facing: 'right' } };
+  HERO.down = [0, 1].map(function (f) {
+    return sprite([
+      '....oooo....', '...ohhhho...', '..ohhhhhho..', '..ohsssshho.', '..osesseso..', '..ossssssoo.', '...oooooo...', '..oaaaaaao..', '.oaayaayaao.', 'osaaaaaaaaso',
+      'osoaaaaaaoso', '.o.abbbba.o.', '...obooobo..', f ? '...obo.obo..' : '...obo..obo.', f ? '..oddo.oddo.' : '..oddo..oddo', '..ooo...ooo.'], HERO_PAL);
+  });
+  HERO.up = [0, 1].map(function (f) {
+    return sprite([
+      '....oooo....', '...ohhhho...', '..ohhhhhho..', '.ohhhhhhho..', '..ohhhhhho..', '.oohhhhhho..', '...oooooo...', '..oaaaaaao..', '.oaaaaaaaao.', 'osaaaaaaaaso',
+      'osoaaaaaaoso', '.o.abbbba.o.', '..obooobo...', f ? '..obo.obo...' : '.obo..obo...', f ? '.oddo.oddo..' : 'oddo..oddo..', '.ooo...ooo..'], HERO_PAL);
+  });
+  HERO.side = [0, 1].map(function (f) {
+    return sprite([
+      '....oooo....', '...ohhhho...', '..ohhhhhho..', '..ohhhhsso..', '..ohhhseso..', '..oohhssso..', '...oooooo...', '...oaaaao...', '...oaaayo...', '...oasaao...',
+      '...oasaao...', '...oabbbo...', f ? '...obbbbo...' : '....obbo....', f ? '...obo.obo..' : '....obbo....', f ? '..oddo.oddo.' : '....odddo...', f ? '..ooo..oooo.' : '....ooooo...'], HERO_PAL);
+  });
+  // flip computed in one place: want !== the side the art looks at (pixel-kit flipX); up / down frames are never mirrored
+  function drawHero(g, x, y, dir, fr) {
+    var side = dir === 'left' || dir === 'right', im = (side ? HERO.side : HERO[dir] || HERO.down)[fr];
+    if (side && PXS.flipX(HERO.asset, dir)) { g.save(); g.translate(x + 12, y); g.scale(-1, 1); g.drawImage(im, 0, 0); g.restore(); } else g.drawImage(im, x, y);
+  }
+  // standing in a conversation the hero turns to whoever (or whatever) he talks to: the longer axis picks the frame
+  function heroLook(name) {
+    var h = sim.hero, id = name === 'cutscene' ? 'mira' : name, n = NPC[id], sg = name === 'sign' && typeof SIGN !== 'undefined' ? SIGN : null;
+    var p = n ? [n.x + 7, n.y] : sg ? [sg.x + 7, sg.y + sg.h] : null; if (!p) return;
+    var dx = p[0] - (h.x + 6), dy = p[1] - h.y;
+    h.dir = Math.abs(dy) >= Math.abs(dx) ? (dy > 0 ? 'down' : 'up') : dx > 0 ? 'right' : 'left'; h.look = n ? id : p[0];
+  }
+  var MIRA = [0, 1].map(function (f) {   // the lamplighter: silver hair, violet robe, a lantern on a pole
+    return sprite([
+      '........ooo...', '.....oooo#o...', '....owwwwo#o..', '...owwwwwwo#..', '...owsssswo#o.', '...osesseso#y.', '...ossssssooyo', '....oooooo.oy.', '...oppppppo.#.', '..oppPpPppo.#.',
+      '..opppppppso#.', '..oppppppp.o#.', '..oppPPPppo.#.', '..opppppppo.#.', f ? '..opppppppo.#.' : '...oppppppo.#.', '..ooooooooo.o.'],
+      { o: OUT, w: '#e8e8f4', s: '#f0c8a0', e: '#20102a', p: '#7a4ab8', P: '#a878e8', '#': '#6a4224', y: f ? '#ffe070' : '#fff4b0' });
+  });
+  var BRANN = [0, 1].map(function (f) {   // the gate guard: steel helm with a red plume, tabard, spear
+    return sprite([
+      '...rrr.......o', '..orrro.....o#', '..ommmmo....o#', '.ommmmmmo...o#', '.omsssmmo...o#', '.osesesso..o#.', '.osssssso..o#.', '..oooooo...o#.', '.otttttto.oo#.', 'ommtyytmmoss#.',
+      'ommttttmmo.o#.', '.otttttto..o#.', '..oggggo...o#.', f ? '..ogo.go...o#.' : '..ogo.ogo..o#.', '..odo.odo..o#.', '..ooo.ooo...o.'],
+      { o: OUT, r: '#e84838', m: '#a8b0c8', s: '#e0b890', e: '#20102a', t: '#c83a3a', y: '#ffe070', g: '#4a4a5a', d: '#3a2a20', '#': '#8a5a30' });
+  });
+  var NPC = { mira: { x: 150, y: 70, img: MIRA }, brann: { x: 206, y: 186, img: BRANN } };
+  function spriteRect(id) {
+    if (id === 'hero') return { x: Math.round(sim.hero.x), y: Math.round(sim.hero.y) - 16, w: 12, h: 16, id: 'hero' };
+    var n = NPC[id]; return n ? { x: n.x, y: n.y - 16, w: 14, h: 16, id: id } : null;
+  }
+  var SIGN = { x: 81, y: 119, w: 14, h: 12, id: 'sign' };
+
+  /* ---------------- simulation (the "game"): a hero walking, a few critters, a HUD ---------------- */
+  var HUD = { x: 0, y: 0, w: W, h: HUD_H };
+  var sim, dlg, ticks = 0, lastEnd = null;
+  function newSim() { sim = { t: 0, loopAt: 0, hero: { x: 120, y: 140, tx: 120, ty: 140, dir: 'down', look: null }, birds: [{ x: 20, y: 60, v: 0.4 }, { x: 180, y: 120, v: 0.3 }], gold: 12, talked: 0, held: false, holdAt: 0 }; ticks = 0; }
+  newSim();
+  var audio = null;
+  function blip(ch) {
+    if (!sound) return;
+    try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); var o = audio.createOscillator(), g = audio.createGain(); o.type = 'square'; o.frequency.value = 520 + (ch.charCodeAt(0) % 7) * 30; g.gain.value = 0.03; o.connect(g); g.connect(audio.destination); o.start(); o.stop(audio.currentTime + 0.025); } catch (e) { }
+  }
+  function makeDlg() {
+    dlg = DB.create({
+      bounds: { x: 0, y: 0, w: W, h: H }, skin: skinId, params: params,
+      getAnchor: function (who) { return who === 'sign' ? SIGN : spriteRect(String(who).toLowerCase()); },
+      getObstacles: function () { return [HUD, spriteRect('hero'), spriteRect('mira'), spriteRect('brann')]; },
+      onTick: function (ch) { ticks++; blip(ch); },
+      onEnd: function (r) { lastEnd = r; sim.talked++; }
+    });
+  }
+  makeDlg();
+
+  var SCRIPTS = {
+    mira: [
+      { speaker: 'Mira', text: 'Evening, traveller! I light the lanterns of Meadowhold, all forty of them, every single night, from the mill gate to the old bridge... and tonight, for the first time in years, the oil has run out.' },
+      { speaker: 'Hero', who: 'hero', text: 'Run out? Where do you usually get it?' },
+      { speaker: 'Mira', text: 'From the {gold}old mill{/} past the west road. Bring back one flask, and the square stays bright. {p300}I will pay you {gold}30 gold{/}.' }
+    ],
+    sign: [{ text: 'WEST ROAD - Old Mill, 2 leagues.\nMind the geese.' }],
+    brann: [
+      { speaker: 'Brann', text: 'Halt. The south gate stays shut after dark, by order of the reeve.' },
+      { speaker: 'Brann', text: 'Unless you carry a lantern pass. No pass? Then turn around, friend.' }
+    ],
+    cutscene: [
+      { text: 'Night settles over the square.', auto: 1200 },
+      { speaker: 'Mira', text: 'One by one... {p400}the lanterns flicker out.', auto: 1400 },
+      { speaker: 'Brann', text: 'Mira! The gate lantern is dark too!', auto: 1400 }
+    ]
+  };
+  var SPOT = { mira: [150, 92], sign: [100, 142], brann: [182, 194], cutscene: [128, 130] };
+  var queued = null;
+  function talk(name, opts) {
+    if (dlg.busy()) return;
+    var s = SPOT[name]; sim.hero.tx = s[0]; sim.hero.ty = s[1]; queued = { name: name, opts: opts || {} };
+  }
+
+  /* ---------------- scripted loop (deterministic: driven by sim time) ---------------- */
+  // the loop: each conversation starts 500 ms after the previous one ended (the hero walks there first); restarts 1.5 s after the last
+  var SEQ = ['mira', 'sign', 'brann', 'cutscene'], idleMs = 0;
+  // a scripted "player" for the loop: presses Z 700 ms after a page is complete; during Brann's lines it holds Z (fast-forward)
+  var sIdx = 0;
+  function stepSim() {
+    sim.t += STEP;
+    if (LOOP) {
+      idleMs = dlg.busy() || queued ? 0 : idleMs + STEP;
+      if (sIdx < SEQ.length && idleMs >= (sIdx ? 500 : 200)) { talk(SEQ[sIdx]); sIdx++; idleMs = 0; }
+      if (sIdx >= SEQ.length && idleMs >= 1500) { sim.loopAt = sim.t; sIdx = 0; idleMs = 0; sim.night = 0; dlg.clear(); queued = null; sim.hero.x = sim.hero.tx = 120; sim.hero.y = sim.hero.ty = 140; sim.hero.dir = 'down'; sim.hero.look = null; }
+      var st = dlg.state();
+      if (st) {
+        st.waitMs = (st.stage === 'wait') ? (sim.waitMs = (sim.waitMs || 0) + STEP) : (sim.waitMs = 0);
+        var bot = st.speaker === 'Brann';
+        if (bot && !sim.held && st.stage === 'type' && st.shown > 8) { sim.held = true; dlg.press(); dlg.hold(true); }
+        if (!bot && sim.held) { sim.held = false; dlg.hold(false); }
+        if (!bot && st.stage === 'wait' && sim.waitMs >= 900 && !st.auto && !/AUTO/.test(st.text)) { dlg.press(); sim.waitMs = 0; }
+        if (st.index === 0 && st.speaker === 'Mira' && st.stage === 'type' && st.page === 1 && st.shown === 12) dlg.press();   // finish a page early once
+      } else if (sim.held) { sim.held = false; }
+    }
+    // the world: walking hero and birds; everything here waits while the box is open
+    if (!dlg.busy()) {
+      var h = sim.hero, dx = h.tx - h.x, dy = h.ty - h.y;
+      if (Math.abs(dx) > 0.5) { h.x += Math.sign(dx) * Math.min(1.2, Math.abs(dx)); h.dir = dx > 0 ? 'right' : 'left'; h.look = null; } else if (Math.abs(dy) > 0.5) { h.y += Math.sign(dy) * Math.min(1.2, Math.abs(dy)); h.dir = dy > 0 ? 'down' : 'up'; h.look = null; }
+      else if (queued) { var q = queued; queued = null; heroLook(q.name); dlg.open(SCRIPTS[q.name], q.opts); if (q.name === 'cutscene') sim.night = 0.001; }
+      sim.birds.forEach(function (bd, i) { bd.x += bd.v; if (bd.x > W + 10) bd.x = -10; bd.y += Math.sin(sim.t / 300 + i) * 0.2; });
+    }
+    if (sim.night) sim.night = Math.min(0.5, sim.night + STEP / 9000);   // the cutscene's dusk (story time runs while the box is open)
+    dlg.update(STEP);
+  }
+
+  /* text state for critics and tools/sprites/statecheck.py. The hero reports the frame drawHero() gets this frame (sim.hero.dir):
+     facing left / right for the side art, noFace 'up frame' / 'down frame' otherwise; target = who he talks to (an x for the sign).
+     Mira and Brann are single front-view drawings, never mirrored: noFace. x = feet centre (sprites are drawn from their left edge). */
+  window.__state = function () {
+    var h = sim.hero, mv = Math.abs(h.tx - h.x) > 0.5 ? Math.sign(h.tx - h.x) * 1.2 : 0, side = h.dir === 'left' || h.dir === 'right';
+    return { t: Math.round(sim.t), actors: [
+      { id: 'hero', x: Math.round(h.x) + 6, y: Math.round(h.y), dir: h.dir, facing: side ? h.dir : null, target: h.look, vx: mv, noFace: side ? undefined : h.dir + ' frame' },
+      { id: 'mira', x: NPC.mira.x + 7, y: NPC.mira.y, facing: null, target: 'hero', noFace: 'frontal art' },
+      { id: 'brann', x: NPC.brann.x + 7, y: NPC.brann.y, facing: null, target: 'hero', noFace: 'frontal art' }] };
+  };
+
+  /* ---------------- drawing ---------------- */
+  var SKN = function () { return SKAPI ? SKAPI.resolve(skinId) : null; };
+  var low = mk(W, H), lg = low.getContext('2d'); lg.imageSmoothingEnabled = false;
+  function drawWorld(g) {
+    var t = sim.t;
+    SCENE.drawGround(g, t);
+    // birds
+    sim.birds.forEach(function (bd) { var f = Math.floor(t / 160) % 2; g.fillStyle = OUT; g.fillRect(Math.round(bd.x) - 2, Math.round(bd.y) + (f ? 0 : -1), 2, 1); g.fillRect(Math.round(bd.x) + 1, Math.round(bd.y) + (f ? 0 : -1), 2, 1); g.fillRect(Math.round(bd.x), Math.round(bd.y), 1, 1); });
+    // characters, back to front, with contact shadows
+    var list = [['mira', NPC.mira.x, NPC.mira.y, MIRA], ['brann', NPC.brann.x, NPC.brann.y, BRANN], ['hero', Math.round(sim.hero.x), Math.round(sim.hero.y), HERO]];
+    var objs = SCENE.sorted(t).map(function (o) { return [o, 0, o.y]; });
+    LAMPS.forEach(function (p, i) { objs.push([{ draw: function (gg) { drawLamp(gg, p[0], p[1], 1, t, i); } }, 0, p[1]]); });
+    list.concat(objs).sort(function (a, c) { return a[2] - c[2]; }).forEach(function (c) {
+      if (c[0].draw) { c[0].draw(g); return; }
+      var moving = c[0] === 'hero' && (Math.abs(sim.hero.tx - sim.hero.x) > 0.5 || Math.abs(sim.hero.ty - sim.hero.y) > 0.5) && !dlg.busy();
+      var fr = c[0] === 'hero' ? (moving ? Math.floor(t / 130) % 2 : 0) : Math.floor(t / 520) % 2;
+      g.fillStyle = 'rgba(20,16,30,0.4)'; g.fillRect(c[1] + 2, c[2] - 1, 9, 2);
+      if (c[0] === 'hero') drawHero(g, c[1], c[2] - 16 - (moving && fr ? 1 : 0), sim.hero.dir, fr); else g.drawImage(c[3][fr], c[1], c[2] - 16 - (moving && fr ? 1 : 0));
+    });
+    if (sim.night) { g.fillStyle = '#0a0c2a'; g.globalAlpha = sim.night; g.fillRect(0, 0, W, H); g.globalAlpha = 1; }
+    // a talk marker above whoever speaks now
+    var st = dlg.state();
+    if (st && st.anchor) { var a = st.anchor, bob = Math.floor(t / 250) % 2; g.fillStyle = OUT; g.fillRect(a.x + a.w / 2 - 3, a.y - 9 + bob, 7, 6); g.fillStyle = '#ffffff'; g.fillRect(a.x + a.w / 2 - 2, a.y - 8 + bob, 5, 4); g.fillStyle = OUT; g.fillRect(a.x + a.w / 2 - 1, a.y - 7 + bob, 1, 1); g.fillRect(a.x + a.w / 2 + 1, a.y - 7 + bob, 1, 1); }
+  }
+  function drawHud(g) {
+    var S = SKN();
+    if (S && S.frame && S.pixel !== false) S.frame(g, { x: 0, y: 0, w: W, h: HUD_H }, { role: 'window', team: 'n' }); else { g.fillStyle = '#0e1226'; g.fillRect(0, 0, W, HUD_H); g.fillStyle = '#2c3a6a'; g.fillRect(0, HUD_H - 1, W, 1); }
+    if (S) { S.text(g, 'MEADOWHOLD', 6, 4, { font: 'ui', color: '#ffe890' }); S.text(g, 'GOLD ' + (sim.gold + (lastEnd && sim.talked ? 0 : 0)), W - 6, 4, { font: 'ui', align: 'right', color: '#e8ecff' }); S.text(g, dlg.busy() ? 'TALKING' : 'EXPLORE', W / 2, 4, { font: 'ui', align: 'center', color: dlg.busy() ? '#8ab4ff' : '#8ad870' }); }
+  }
+
+  var ctx = cv.getContext('2d');
+  function render() {
+    var S = SKN(), pixel = !S || S.pixel !== false, k = pixel ? 1 : 3;
+    if (cv.width !== W * k) { cv.width = W * k; cv.height = H * k; fit(); }
+    if (pixel) {
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false;
+      drawWorld(ctx); drawHud(ctx); dlg.draw(ctx);
+    } else {
+      drawWorld(lg); drawHud(lg);
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false; ctx.drawImage(low, 0, 0, W * k, H * k);
+      ctx.setTransform(k, 0, 0, k, 0, 0); ctx.imageSmoothingEnabled = true; dlg.draw(ctx);
+    }
+    var st = dlg.state();
+    document.getElementById('lamp').className = dlg.busy() ? 'on' : '';
+    document.getElementById('state').textContent = dlg.busy() ? 'World paused' : 'World running';
+    document.getElementById('now').textContent = st ? (st.speaker || 'narration') + ', ' + st.stage + (st.fastForward ? ', fast-forward' : '') : (lastEnd ? 'last: ' + lastEnd.lines + ' lines' + (lastEnd.skipped ? ', ended early' : '') : 'no dialogue');
+    document.getElementById('m-line').textContent = st ? (st.index + 1) + '/' + st.lines : '-';
+    document.getElementById('m-page').textContent = st ? (st.page + 1) + '/' + st.pages : '-';
+    document.getElementById('m-chars').textContent = st ? st.shown + '/' + st.total : '-';
+    document.getElementById('m-ticks').textContent = ticks;
+    document.documentElement.dataset.state = JSON.stringify({ t: Math.round(sim.t), dlg: st, busy: dlg.busy(), rect: dlg.rect(), last: lastEnd && { lines: lastEnd.lines, skipped: lastEnd.skipped } });
+  }
+  function fit() {
+    var avail = Math.min(document.getElementById('stage').clientWidth - 12, 780), s = Math.max(1, Math.floor(avail / W));
+    var cw = s >= 2 ? W * s : Math.max(W, Math.floor(avail));          // phones: fill the width (nearest-neighbour) rather than 1x
+    cv.style.width = cw + 'px'; cv.style.height = Math.round(cw * H / W) + 'px';
+    document.getElementById('scaleinfo').textContent = '256×224 native · ' + (s >= 2 ? s + '×' : (cw / W).toFixed(2) + '×');
+  }
+  addEventListener('resize', fit); fit();
+
+  /* ---------------- controls ---------------- */
+  function manual() { if (LOOP) setLoop(false); }
+  var ACT = { mira: function () { talk('mira'); }, sign: function () { talk('sign'); }, brann: function () { talk('brann'); }, cutscene: function () { talk('cutscene'); },
+    sound: function () { sound = !sound; document.getElementById('sndlab').textContent = sound ? 'SOUND ON' : 'SOUND'; }, end: function () { dlg.end(); } };
+  document.querySelectorAll('.triggers button').forEach(function (btn) { btn.addEventListener('click', function () { if (btn.dataset.act !== 'sound') manual(); ACT[btn.dataset.act](); }); });
+  addEventListener('keydown', function (e) {
+    if (e.repeat && dlg.busy() && /^(KeyZ|Enter|Space|NumpadEnter)$/.test(e.code)) { e.preventDefault(); return; }
+    if (dlg.key(e.code, true)) { manual(); e.preventDefault(); return; }           // the box takes only Z / Space / Enter while open
+    var m = { Digit1: 'mira', Digit2: 'sign', Digit3: 'brann', Digit4: 'cutscene', KeyS: 'sound', KeyX: 'end', Escape: 'end' }[e.code];
+    if (m) { if (m !== 'sound') manual(); ACT[m](); }
+  });
+  addEventListener('keyup', function (e) { dlg.key(e.code, false); });
+  cv.addEventListener('pointerdown', function (e) { if (dlg.busy()) { manual(); dlg.tap(); dlg.hold(true); e.preventDefault(); } });
+  addEventListener('pointerup', function () { dlg.hold(false); });
+  function syncControls() {
+    document.querySelectorAll('input[type=range][data-key]').forEach(function (inp) {
+      var k = inp.dataset.key; inp.value = params[k];
+      inp.style.setProperty('--fill', (params[k] - inp.min) / (inp.max - inp.min) * 100 + '%');
+      document.querySelector('[data-out="' + k + '"]').textContent = params[k];
+    });
+    document.querySelectorAll('.seg[data-key]').forEach(function (seg) { seg.querySelectorAll('button').forEach(function (bt) { bt.setAttribute('aria-checked', String(bt.textContent === String(params[seg.dataset.key]))); }); });
+    document.getElementById('skin').value = skinId;
+  }
+  document.querySelectorAll('input[type=range][data-key]').forEach(function (inp) { inp.addEventListener('input', function () { params[inp.dataset.key] = +inp.value; dlg.setParams(params); syncControls(); }); });
+  document.querySelectorAll('.seg[data-key]').forEach(function (seg) { seg.querySelectorAll('button').forEach(function (bt) { bt.addEventListener('click', function () {
+    var k = seg.dataset.key; params[k] = typeof DB.DEFAULTS[k] === 'number' ? +bt.textContent : bt.textContent; dlg.setParams(params); syncControls(); }); }); });
+  document.getElementById('skin').addEventListener('change', function (e) { skinId = e.target.value; dlg.clear(); makeDlg(); });
+  function seg(id, fn) { var el = document.getElementById(id); el.querySelectorAll('button').forEach(function (bt) { bt.addEventListener('click', function () { fn(+bt.dataset.v); }); }); }
+  function setLoop(on) { LOOP = on; document.querySelectorAll('#loop button').forEach(function (x) { x.setAttribute('aria-checked', String(+x.dataset.v === (on ? 1 : 0))); }); if (on) { sim.loopAt = sim.t; sIdx = 0; idleMs = 0; dlg.clear(); queued = null; } if (!on && sim.held) { sim.held = false; dlg.hold(false); } }
+  seg('loop', function (v) { setLoop(!!v); });
+  if (!LOOP) setLoop(false);
+  document.getElementById('reset').addEventListener('click', function () { resetParams(); skinId = 'pixel16'; dlg.clear(); makeDlg(); newSim(); queued = null; sIdx = 0; syncControls(); setLoop(true); });
+  syncControls();
+
+  /* ---------------- run ---------------- */
+  if (FREEZE) {
+    var n = Math.floor(T_AT / STEP); for (var i = 0; i < n; i++) stepSim(); render();
+  } else {
+    var last = performance.now(), acc = 0;
+    (function loop(now) { acc += Math.min(250, now - last); last = now; while (acc >= STEP) { stepSim(); acc -= STEP; } render(); requestAnimationFrame(loop); })(performance.now());
+  }
+})();
+</script>
+</body>
+</html>

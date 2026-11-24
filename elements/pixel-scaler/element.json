@@ -1,0 +1,63 @@
+{
+  "id": "pixel-scaler",
+  "code": "I-01",
+  "kind": "addon",
+  "name": "Native resolution + integer scaling",
+  "family": "presentation",
+  "oneLiner": "A game that stretches its small canvas with CSS (blurry, uneven pixels) becomes pixel-perfect: the canvas keeps drawing at its native size, is shown at the largest whole number of device pixels per game pixel that fits (any devicePixelRatio), centred in a themed border on the same pixel grid, with toGame() mapping taps back to game pixels, an optional fit step for small phones, an optional CRT overlay and a fullscreen toggle. No game logic or timing changes.",
+  "fits": [
+    "any canvas game drawn at a fixed low resolution (256x224, 320x180, 240x160, 256x240...)",
+    "platformers, top-down adventures, tactics, turn-based battles, shooters, puzzle",
+    "single-file browser games that use width: 100% / max-width: calc(...) to fill the window"
+  ],
+  "notFor": [
+    "games that resize the canvas backing store to the window (canvas.width = innerWidth): not native-resolution",
+    "smooth vector or HD games that should scale fractionally",
+    "games drawn into several stacked canvases (wrap each, or scale their common parent instead)"
+  ],
+  "interfaces": {
+    "time": "realtime",
+    "coords": "side",
+    "layer": "post",
+    "needs": [
+      "the canvas element the game draws on and its native size (width/height attributes)",
+      "every pointer/touch -> game coordinate mapping in the game (kept when it uses the canvas rect ratio, else replaced by toGame)"
+    ],
+    "provides": [
+      "toGame(clientX, clientY | event) -> native game pixels, inside flag",
+      "scale(): device px per game px, css scale, letterbox, canvas rect",
+      "fullscreen toggle on the game area"
+    ]
+  },
+  "params": [
+    { "key": "mode", "label": "Scaling", "type": "select", "options": ["integer", "fit"], "default": "integer" },
+    { "key": "border", "label": "Border", "type": "select", "options": ["frame", "dither", "solid", "none"], "default": "frame" },
+    { "key": "color", "label": "Border colour (skin token)", "type": "select", "options": ["ink", "ui.shadow", "ui.edge", "ui.fill", "team.a"], "default": "ink" },
+    { "key": "pad", "label": "Frame width (game px)", "type": "range", "min": 0, "max": 12, "step": 1, "default": 4 },
+    { "key": "crt", "label": "CRT overlay", "type": "select", "options": ["off", "scanlines", "crt"], "default": "off" },
+    { "key": "scanlines", "label": "Scanline darkness", "type": "range", "min": 0, "max": 0.8, "step": 0.05, "default": 0.3 },
+    { "key": "fill", "label": "Area height", "type": "select", "options": ["auto", "page", "window"], "default": "auto" },
+    { "key": "align", "label": "Vertical align", "type": "select", "options": ["center", "top"], "default": "center" },
+    { "key": "maxScale", "label": "Max scale (css px per game px, 0 = none)", "type": "range", "min": 0, "max": 12, "step": 1, "default": 0 },
+    { "key": "button", "label": "Fullscreen button", "type": "select", "options": ["corner", "off"], "default": "corner" },
+    { "key": "key", "label": "Fullscreen key", "type": "select", "options": ["off", "KeyF", "Backquote", "F2"], "default": "off" }
+  ],
+  "variants": [
+    { "name": "Console frame (default)", "params": { "mode": "integer", "border": "frame", "crt": "off" } },
+    { "name": "Arcade CRT", "params": { "border": "solid", "color": "ink", "crt": "crt", "scanlines": 0.35 } },
+    { "name": "Phone friendly", "params": { "mode": "fit", "border": "dither", "align": "top", "fill": "page" } },
+    { "name": "Plain black bars", "params": { "border": "none", "button": "off" } }
+  ],
+  "assets": [
+    "module/pixel-scaler.js: the element as one dependency-free script (global GameDNA_PixelScaler): layout, device-pixel snapping, border, CRT overlay, fullscreen button, toGame",
+    "checks/scaler-check.py, checks/input-check.py: browser measurements (scale, blur, letterbox, mapping; real taps on the two unseen hosts)",
+    "no image or audio files"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/pixel-scaler.js",
+    "global": "GameDNA_PixelScaler",
+    "version": "1.0.0",
+    "docs": "module/README.md"
+  }
+}

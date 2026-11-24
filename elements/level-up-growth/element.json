@@ -1,0 +1,81 @@
+{
+  "id": "level-up-growth",
+  "code": "G-02",
+  "kind": "addon",
+  "name": "Level-up stat growth",
+  "family": "experience-growth",
+  "oneLiner": "Experience and levels for a party: after a fight a results window counts EXP and gold up, each unit's gauge fills and wraps with LV UP! at every level, then a panel per levelled unit lists its stat gains row by row (+1 rows slide in with a highlight). Growth is a percent chance per stat per level from plain per-class tables, rolled with the module's own seeded RNG, with a guaranteed minimum so a level is never empty. The game supplies stat getters and setters and calls award(exp, gold) where the fight is won; stats change only through its setter. Save / load helpers for the EXP state.",
+  "fits": [
+    "turn-based RPG battle (results after each battle or wave)",
+    "tactics RPG (EXP per hit and kill, tally after each unit's attack or at map end)",
+    "action RPG or dungeon crawler (EXP per enemy, level-up window between rooms)",
+    "monster-collecting and party RPGs (per-creature growth tables)",
+    "any game with a party whose numbers should grow between fights"
+  ],
+  "notFor": [
+    "skill trees or point-buy where the player spends points (a different element)",
+    "equipment and items that change stats (G-01 shop and inventory)",
+    "games without persistent units (one-off arcade runs)",
+    "online games where growth must be computed on a server"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "a unit list (the party now): id, name, class, alive, and a getter and setter per stat the growth tables name",
+      "the one place in update logic where a fight / wave / map is won: award(exp, gold) there; what ran next moves into onDone",
+      "the confirm input routed to the window while busy() (press() on the key-down edge, or key(code, down))",
+      "a fixed 60 Hz update step (the window's only clock), also while the world is paused for it",
+      "the play field size in native px and ui rects to keep clear (HUD, command panel)",
+      "optional: the game's autoplay flag; per-hit EXP via addExp(id, n); the game's save to store serialize()"
+    ],
+    "provides": [
+      "levels and EXP per unit id (level, exp, toNext), an EXP curve (formula or table) and seeded per-class stat growth",
+      "stat changes delivered only through the game's setter, inside award(), each read back with the getter",
+      "busy flag: route the confirm input here and pause the world while the results window is open",
+      "tally end via onDone({exp, gold, levelUps, units: [{id, fromLevel, toLevel, gains, values}]}) (synchronous, inside update())",
+      "serialize() / restore() of the EXP state as plain JSON for a save",
+      "the window rectangle on screen, for other overlays to avoid"
+    ]
+  },
+  "params": [
+    {
+      "key": "when",
+      "label": "When EXP is awarded and the results window shows (required; the designer's words)",
+      "type": "text",
+      "default": "after every won battle: EXP and gold from the defeated enemies, for every living party member"
+    },
+    { "key": "base", "label": "EXP to reach level 2 (curve base)", "type": "range", "min": 5, "max": 100, "step": 5, "default": 20 },
+    { "key": "power", "label": "Curve power (EXP for the next level = base x level^power)", "type": "range", "min": 1, "max": 2.5, "step": 0.1, "default": 1.5 },
+    { "key": "maxLevel", "label": "Max level", "type": "range", "min": 5, "max": 99, "step": 1, "default": 20 },
+    { "key": "minGain", "label": "Guaranteed stat gains per level", "type": "range", "min": 0, "max": 3, "step": 1, "default": 1 },
+    { "key": "seed", "label": "Growth seed", "type": "range", "min": 1, "max": 999, "step": 1, "default": 1 },
+    { "key": "countMs", "label": "Count-up time (ms)", "type": "range", "min": 0, "max": 3000, "step": 100, "default": 1500 },
+    { "key": "autoMs", "label": "Autoplay pace (ms a finished window stays)", "type": "range", "min": 300, "max": 2000, "step": 100, "default": 900 },
+    { "key": "panel", "label": "Level-up panel per unit", "type": "select", "options": ["on", "off"], "default": "on" },
+    { "key": "share", "label": "EXP share", "type": "select", "options": ["each", "split"], "default": "each" },
+    { "key": "autoGrowth", "label": "Growth under autoplay (hold = keep the original ?auto=1 ending)", "type": "select", "options": ["apply", "hold"], "default": "apply" },
+    { "key": "tint", "label": "Window colour (a blue, n slate, b red)", "type": "select", "options": ["a", "n", "b"], "default": "a" },
+    { "key": "dim", "label": "Dim behind", "type": "range", "min": 0, "max": 0.6, "step": 0.05, "default": 0.4 }
+  ],
+  "variants": [
+    { "name": "Classic 16-bit RPG", "params": { "base": 20, "power": 1.5, "maxLevel": 20, "minGain": 1, "countMs": 1500, "panel": "on", "share": "each" } },
+    { "name": "Quick tallies (tactics, per unit)", "params": { "countMs": 700, "autoMs": 600, "panel": "on" } },
+    { "name": "Long grind", "params": { "base": 40, "power": 1.8, "maxLevel": 99, "minGain": 1 } },
+    { "name": "Generous growth", "params": { "minGain": 2, "base": 15, "power": 1.3 } },
+    { "name": "Shared pool", "params": { "share": "split", "base": 10, "power": 1.4 } },
+    { "name": "Autoplay keeps its ending", "params": { "autoGrowth": "hold" } }
+  ],
+  "assets": [
+    "module/level-up-growth.js: the element as one dependency-free script (global GameDNA_LevelUpGrowth): EXP curve (formula or table), per-unit EXP state, seeded growth rolls with caps and a guaranteed minimum, setter-only stat changes with read-back, results window and level-up panel drawing (C-03 6x8 font built in), autoplay, queueing, serialize / restore",
+    "no image or audio files (sound cues are a callback; growth tables are plain data in the game)"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/level-up-growth.js",
+    "global": "GameDNA_LevelUpGrowth",
+    "version": "1.0.0",
+    "docs": "module/README.md"
+  }
+}

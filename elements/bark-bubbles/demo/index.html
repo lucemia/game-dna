@@ -1,0 +1,1400 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>World-space Bark Bubbles</title>
+<style>
+:root { --bg: #0d0f14; --panel: #161a22; --line: #2a3140; --text: #eef0f4; --dim: #9aa3b5; --accent: #ffd45a; --talk: #f1ebdf; --alarm: #ffd866; --hurt: #ff8a7a; --shout: #ffb877; --whisper: #b9b2c8; --think: #aebcf0; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1100px 560px at 25% -10%, #1d2a2a 0%, var(--bg) 62%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 16px 20px 10px; max-width: 1280px; margin: 0 auto; }
+.code { white-space: nowrap; font: 800 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #1a1406; background: linear-gradient(#ffe48a, var(--accent)); padding: 6px 8px; border-radius: 5px; box-shadow: 0 2px 10px #ffd45a40; }
+h1 { font-size: 19px; margin: 0; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; max-width: 880px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; padding: 0 20px 24px; max-width: 1280px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.frame { padding: 6px; background: linear-gradient(#26303a, #12161c); border-radius: 12px; box-shadow: 0 0 0 1px #34404c, 0 24px 60px #000a; }
+#game { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; background: #000; touch-action: manipulation; }
+.caption { display: flex; justify-content: space-between; gap: 12px; color: var(--dim); font-size: 12px; padding: 0 4px; }
+.caption b { color: var(--text); font-weight: 600; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 12px; color: var(--dim); }
+.legend span::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 3px; background: var(--c); margin-right: 5px; vertical-align: -1px; box-shadow: 0 0 8px var(--c); }
+.cmp { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px 14px; }
+.cmp p { margin: 0 0 10px; color: var(--dim); font-size: 12.5px; }
+#pixel { display: block; width: 384px; max-width: 100%; margin: 0 auto; image-rendering: crisp-edges; image-rendering: pixelated; border-radius: 4px; box-shadow: 0 0 0 1px #34404c, 0 12px 30px #0008; background: #1c2418; }
+aside { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+h2 { margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.triggers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.triggers button { --c: var(--talk); appearance: none; border: 1px solid #00000060; border-radius: 7px; padding: 8px 2px 7px; cursor: pointer; color: var(--text); font: 600 11.5px/1.1 inherit;
+  background: linear-gradient(#262c3a, #1b202a); box-shadow: inset 0 1px 0 #ffffff14, inset 0 -2px 0 var(--c); transition: transform .06s, background .15s; }
+.triggers button:hover { background: linear-gradient(#303849, #222834); }
+.triggers button:active { transform: translateY(1px) scale(.98); }
+.triggers button i { display: block; font-style: normal; font: 900 15px/1 inherit; color: var(--c); margin-bottom: 3px; text-shadow: 0 0 10px var(--c), 0 1px 0 #000; }
+.row { margin-bottom: 10px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 5px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--fill), #2a3040 var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #fff6d6; border: 2px solid #1a1406; box-shadow: 0 1px 6px #000a; cursor: pointer; }
+input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: #fff6d6; border: 2px solid #1a1406; }
+.seg { display: flex; flex-wrap: wrap; background: #0f1218; border: 1px solid var(--line); border-radius: 7px; padding: 2px; gap: 2px; }
+.seg button { flex: 1; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 4px; border-radius: 5px; cursor: pointer; text-transform: capitalize; }
+.seg button[aria-checked=true] { background: #283040; color: var(--text); box-shadow: inset 0 0 0 1px #3e4a60, inset 0 -2px 0 var(--accent); }
+.tog { display: flex; flex-wrap: wrap; gap: 6px; }
+.tog button { flex: 1; appearance: none; background: #0f1218; border: 1px solid var(--line); color: var(--text); border-radius: 7px; padding: 7px 8px; font: 600 12px inherit; cursor: pointer; white-space: nowrap; }
+.tog button[aria-pressed=true] { box-shadow: inset 0 -2px 0 #6fd38a; }
+select { width: 100%; appearance: none; background: #0f1218 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239aa3b5'/%3E%3C/svg%3E") no-repeat right 10px center; border: 1px solid var(--line); color: var(--text); border-radius: 7px; padding: 8px 10px; font: 600 12.5px inherit; cursor: pointer; }
+.foot { color: var(--dim); font-size: 11.5px; border-top: 1px solid var(--line); padding-top: 10px; }
+.foot code { color: var(--text); word-break: break-all; }
+@media (max-width: 1000px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 680px; width: 100%; margin: 0 auto; } }
+@media (max-width: 560px) { header { padding: 12px 16px 8px; } main { padding: 0 16px 16px; gap: 12px; } .frame { padding: 3px; } .caption { flex-direction: column; gap: 2px; } .triggers { grid-template-columns: repeat(3, 1fr); } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">H-05</span>
+  <div><h1>World-space bark bubbles</h1><p>Short lines pop out above characters, right in the world: they type in, follow the speaker as it walks, keep clear of each other, other characters and the HUD, stay on screen with a pointer when the speaker walks off the edge, and fade by themselves. The game never pauses.</p></div>
+</header>
+<main>
+  <section id="stage">
+    <div class="frame"><canvas id="game" width="640" height="360" aria-label="Village square with characters talking in speech bubbles"></canvas></div>
+    <div class="caption"><span><b>Watch:</b> the guard spots you (alarm), jellies blorp, the hero is hurt, Tamsin walks off the edge and her bubble pins to the border with a pointer, four people talk at once without overlapping.</span><span>Keys 1–7 trigger lines · click a character</span></div>
+    <div class="legend"><span style="--c:var(--talk)">talk</span><span style="--c:var(--alarm)">alarm (spotted)</span><span style="--c:var(--hurt)">hurt</span><span style="--c:var(--shout)">shout</span><span style="--c:var(--whisper)">whisper</span><span style="--c:var(--think)">think</span></div>
+    <div class="cmp">
+      <h2>Same module on a native pixel canvas</h2>
+      <p>384 × 216 native pixels, shown at a whole multiple. On a small canvas the module switches by itself to crisp pixel bubbles with its built-in 6 × 8 bitmap font: a 1 px ink outline with stair-step corners, a lit top row, a shaded bottom row, a stair-step tail and a 1 px drop shadow.</p>
+      <canvas id="pixel" width="384" height="216" aria-label="Pixel-art version of the scene with crisp speech bubbles"></canvas>
+    </div>
+  </section>
+  <aside>
+    <div>
+      <h2>Say something</h2>
+      <div class="triggers">
+        <button type="button" data-ev="idle" style="--c:var(--talk)"><i>…</i>Idle</button>
+        <button type="button" data-ev="spotted" style="--c:var(--alarm)"><i>!</i>Spotted</button>
+        <button type="button" data-ev="hurt" style="--c:var(--hurt)"><i>✶</i>Hurt</button>
+        <button type="button" data-ev="taunt" style="--c:var(--shout)"><i>‼</i>Shout</button>
+        <button type="button" data-ev="secret" style="--c:var(--whisper)"><i>~</i>Whisper</button>
+        <button type="button" data-ev="wonder" style="--c:var(--think)"><i>○</i>Think</button>
+        <button type="button" data-ev="long" style="--c:var(--talk)"><i>¶</i>Long line</button>
+        <button type="button" data-ev="crowd" style="--c:var(--accent)"><i>4×</i>Crowd</button>
+      </div>
+    </div>
+    <div>
+      <h2>Speaker</h2>
+      <div class="seg" id="who" role="radiogroup"></div>
+    </div>
+    <div class="tog"><button type="button" id="script" aria-pressed="true">Script: on</button><button type="button" id="window" aria-pressed="false">Window: off</button><button type="button" id="reset">Reset</button></div>
+    <div><h2>Parameters</h2><div id="params"></div></div>
+    <div class="foot">Deterministic: <code>?t=5200&amp;freeze=1</code> shows the same frame every time. Any parameter can be set in the URL, e.g. <code>?palette=dark&amp;cps=0</code>.</div>
+  </aside>
+</main>
+<script src="assets/pixel/atlas.js"></script>
+<script>/* GameDNA H-05 - World-space bark bubbles (bark-bubbles) - module v1.3.1 (plain script, no dependencies, one global)
+ *
+ *   const barks = GameDNA_BarkBubbles.create({
+ *     bounds: { x: 0, y: 0, w: 640, h: 360 },        // visible play field in screen px (logical canvas px)
+ *     getAnchor: id => ({ x, top, w, h }),           // speaker: centre x and top of the head in SCREEN px (null = gone)
+ *     getObstacles: () => [{ x, y, w, h, id }],      // unit sprites (with id) and UI rects (no id) to keep clear
+ *     speakers: () => [{ id, voice }],               // optional: who may chat when idle (on-screen NPCs)
+ *     lines: { guard: { spotted: ['Halt!'] } },      // optional: your own lines, merged over the built-in ones
+ *     params: { size: 0, cps: 45, idle: 6000, ... },
+ *     font: '"Nunito", sans-serif'                  // optional: CSS font family for smooth bubbles (default: a rounded UI stack)
+ *   });
+ *   barks.bark(id, 'spotted', { voice: 'guard' })    // an event: picks a line, respects cooldowns
+ *   barks.say(id, 'The bridge is out.', { tone })    // an exact line
+ *   barks.update(dtMs)                               // world time (never pauses the game; 0 while your world is frozen)
+ *   barks.draw(ctx, offsetX, offsetY)                // after sprites, before HUD and windows
+ *
+ * Short lines in speech bubbles above characters, in the world: each bubble pops out of its speaker with a little
+ * spring, types its text in, follows the speaker as it walks, keeps clear of other bubbles, units and UI rects, stays
+ * on screen (clamped, with its tail turned into a pointer toward a speaker near or past the edge), and expires by
+ * itself after a reading time. Tones: talk, shout (spiky, bold), alarm (yellow with a "!" badge: spotted), hurt (red
+ * burst, shaky), whisper (dashed, faint), think (cloud with trailing puffs). Smooth cel-shaded vector bubbles (ink edge,
+ * rim light, drop shadow, a curved tail) on HD canvases; crisp pixel bubbles with a built-in 6x8 bitmap font on native pixel canvases (256x224 and the like).
+ * Everything is a function of the time passed to update(): ?t=&freeze=1 screenshots are deterministic.
+ */
+(function (root) {
+  'use strict';
+  var VERSION = '1.3.1';
+  var DEFAULTS = { size: 0, width: 20, cps: 45, read: 55, hold: 1500, max: 0, cooldown: 4000, idle: 7000, palette: 'light', render: 'auto', pop: 0.5, edge: 'pointer', stagger: 600 };
+  var FAMILY = '"Nunito", "Baloo 2", "Quicksand", "Arial Rounded MT Bold", "Varela Round", ui-rounded, "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif';
+  var TONES = { talk: 1, shout: 1, alarm: 1, hurt: 1, whisper: 1, think: 1 };
+  var EVENT_TONE = { idle: 'talk', greet: 'talk', heal: 'talk', thanks: 'talk', spotted: 'alarm', alert: 'alarm', lost: 'think', wonder: 'think',
+    hurt: 'hurt', lowhp: 'hurt', kill: 'shout', taunt: 'shout', win: 'shout', flee: 'hurt', secret: 'whisper' };
+  var TONE_PRIO = { alarm: 3, hurt: 3, shout: 2, talk: 1, think: 1, whisper: 1 };
+
+  /* ---------- built-in lines (neutral fantasy; merged under options.lines) ---------- */
+  var LINES = {
+    villager: { idle: ['Lovely weather today.', 'Mind the geese.', "Bread's fresh at noon.", 'The well tastes of iron again.', 'Have you seen my cat?'],
+      greet: ['Hello there!', 'Safe travels, friend.'], hurt: ['Ow!', 'Hey, watch it!'], spotted: ['Oh! A visitor.'], thanks: ['Thank you kindly!'], lost: ['Where did they go?'] },
+    guard: { idle: ['All quiet.', 'Keep to the road.', 'Long watch tonight.', 'Gate closes at dusk.'], greet: ['Move along, friend.'],
+      spotted: ['Halt!', 'Who goes there?'], hurt: ['Agh!', 'Steady...'], lost: ['Must have been the wind.'], kill: ['Stand down!'] },
+    merchant: { idle: ['Fresh stock today!', 'Potions! Bread! Fair prices!', 'Psst. Need supplies?'], greet: ['Come, have a look!'],
+      hurt: ['My wares!'], thanks: ['Pleasure doing business!'], spotted: ['A customer!'] },
+    hero: { idle: ['Which way now?', 'Quiet out here.', 'Keep moving.'], hurt: ['Oof!', 'That stung.', 'Ngh!'], lowhp: ['I need a potion...', "Can't take much more."],
+      kill: ['Got it!', 'One down.'], spotted: ['Here they come!'], heal: ['Much better.'], win: ['Done!'] },
+    monster: { idle: ['*snuffle*', 'Hrrm...'], spotted: ['Grrr!', 'Intruder!', 'There!'], hurt: ['Gah!', 'Ngk!'], lost: ["Where'd it go?"],
+      kill: ['Ha!'], taunt: ['Come closer!'], flee: ['Run!'] },
+    critter: { idle: ['...blub', '*wobble*', 'Blip.'], spotted: ['Blorp!', 'Blip?!'], hurt: ['Splut!', 'Eep!'], lost: ['Blub?'], flee: ['Squee!'] }
+  };
+
+  /* ---------- built-in 6x8 bitmap font for crisp mode ('#' = ink, rows top -> bottom; caps rows 0-6, descenders row 7) ---------- */
+  var GL = {
+    '!': '# # # # # . #', '"': '#.# #.#', '#': '.#.#. .#.#. ##### .#.#. ##### .#.#. .#.#.', '$': '..#.. .#### #.#.. .###. ..#.# ####. ..#..',
+    '%': '##... ##..# ...#. ..#.. .#... #..## ...##', '&': '.##.. #..#. #.#.. .#... #.#.# #..#. .##.#', "'": '# #', '(': '..# .#. #.. #.. #.. .#. ..#',
+    ')': '#.. .#. ..# ..# ..# .#. #..', '*': '..... ..#.. #.#.# .###. #.#.# ..#..', '+': '..... ..#.. ..#.. ##### ..#.. ..#..', ',': '.. .. .. .. .. ## .# #.',
+    '-': '.... .... .... ####', '.': '.. .. .. .. .. ## ##', '/': '....# ...#. ...#. ..#.. .#... .#... #....',
+    '0': '.###. #...# #..## #.#.# ##..# #...# .###.', '1': '..#.. .##.. ..#.. ..#.. ..#.. ..#.. .###.', '2': '.###. #...# ....# ...#. ..#.. .#... #####',
+    '3': '####. ....# ....# .###. ....# ....# ####.', '4': '...#. ..##. .#.#. #..#. ##### ...#. ...#.', '5': '##### #.... ####. ....# ....# #...# .###.',
+    '6': '..##. .#... #.... ####. #...# #...# .###.', '7': '##### ....# ...#. ..#.. .#... .#... .#...', '8': '.###. #...# #...# .###. #...# #...# .###.',
+    '9': '.###. #...# #...# .#### ....# ...#. .##..', ':': '.. ## ## .. .. ## ##', ';': '.. ## ## .. .. ## .# #.', '<': '...# ..#. .#.. #... .#.. ..#. ...#',
+    '=': '.... .... #### .... ####', '>': '#... .#.. ..#. ...# ..#. .#.. #...', '?': '.###. #...# ....# ...#. ..#.. ..... ..#..',
+    '@': '.###. #...# #.### #.#.# #.### #.... .####',
+    'A': '.###. #...# #...# ##### #...# #...# #...#', 'B': '####. #...# #...# ####. #...# #...# ####.', 'C': '.###. #...# #.... #.... #.... #...# .###.',
+    'D': '###.. #..#. #...# #...# #...# #..#. ###..', 'E': '##### #.... #.... ####. #.... #.... #####', 'F': '##### #.... #.... ####. #.... #.... #....',
+    'G': '.###. #...# #.... #.### #...# #...# .####', 'H': '#...# #...# #...# ##### #...# #...# #...#', 'I': '### .#. .#. .#. .#. .#. ###',
+    'J': '..### ...#. ...#. ...#. #..#. #..#. .##..', 'K': '#...# #..#. #.#.. ##... #.#.. #..#. #...#', 'L': '#... #... #... #... #... #... ####',
+    'M': '#...# ##.## #.#.# #.#.# #...# #...# #...#', 'N': '#...# ##..# #.#.# #..## #...# #...# #...#', 'O': '.###. #...# #...# #...# #...# #...# .###.',
+    'P': '####. #...# #...# ####. #.... #.... #....', 'Q': '.###. #...# #...# #...# #.#.# #..#. .##.#', 'R': '####. #...# #...# ####. #.#.. #..#. #...#',
+    'S': '.#### #.... #.... .###. ....# ....# ####.', 'T': '##### ..#.. ..#.. ..#.. ..#.. ..#.. ..#..', 'U': '#...# #...# #...# #...# #...# #...# .###.',
+    'V': '#...# #...# #...# #...# #...# .#.#. ..#..', 'W': '#...# #...# #...# #.#.# #.#.# ##.## #...#', 'X': '#...# #...# .#.#. ..#.. .#.#. #...# #...#',
+    'Y': '#...# #...# .#.#. ..#.. ..#.. ..#.. ..#..', 'Z': '##### ....# ...#. ..#.. .#... #.... #####',
+    '[': '### #.. #.. #.. #.. #.. ###', ']': '### ..# ..# ..# ..# ..# ###', '_': '..... ..... ..... ..... ..... ..... ..... #####',
+    'a': '.... .... .##. ...# .### #..# .###', 'b': '#... #... ###. #..# #..# #..# ###.', 'c': '.... .... .### #... #... #... .###',
+    'd': '...# ...# .### #..# #..# #..# .###', 'e': '.... .... .##. #..# #### #... .###', 'f': '..## .#.. #### .#.. .#.. .#.. .#..',
+    'g': '.... .... .### #..# #..# .### ...# ###.', 'h': '#... #... ###. #..# #..# #..# #..#', 'i': '# . # # # # #', 'j': '..# ... .## ..# ..# ..# ..# ##.',
+    'k': '#... #... #..# #.#. ##.. #.#. #..#', 'l': '#. #. #. #. #. #. .#', 'm': '..... ..... ##.#. #.#.# #.#.# #.#.# #.#.#',
+    'n': '.... .... ###. #..# #..# #..# #..#', 'o': '.... .... .##. #..# #..# #..# .##.', 'p': '.... .... ###. #..# #..# ###. #... #...',
+    'q': '.... .... .### #..# #..# .### ...# ...#', 'r': '.... .... #.## ##.. #... #... #...', 's': '.... .... .### #... .##. ...# ###.',
+    't': '.#. .#. ### .#. .#. .#. ..#', 'u': '.... .... #..# #..# #..# #..# .###', 'v': '..... ..... #...# #...# .#.#. .#.#. ..#..',
+    'w': '..... ..... #...# #...# #.#.# #.#.# .#.#.', 'x': '..... ..... #...# .#.#. ..#.. .#.#. #...#', 'y': '.... .... #..# #..# #..# .### ...# ###.',
+    'z': '.... .... #### ...# .##. #... ####', '~': '..... ..... .#... #.#.# ...#.', '\u2026': '..... ..... ..... ..... ..... ..... #.#.#',
+    '\u2019': '# #', '\u2014': '..... ..... ..... #####', '\ufffd': '##### #...# #...# #...# #...# #...# #####'
+  };
+  var GLYPH = {};
+  (function () { for (var ch in GL) { var rows = GL[ch].split(' '), w = 0; for (var i = 0; i < rows.length; i++) w = Math.max(w, rows[i].length); GLYPH[ch] = { rows: rows, w: w }; } })();
+  function glyph(ch) { return GLYPH[ch] || GLYPH[ch === '\u2018' ? "'" : ch === '\u201c' || ch === '\u201d' ? '"' : '\ufffd']; }
+  function bmpAdv(ch) { return ch === ' ' ? 3 : glyph(ch).w + 1; }
+  function bmpWidth(s) { var w = 0; for (var i = 0; i < s.length; i++) w += bmpAdv(s.charAt(i)); return Math.max(0, w - 1); }
+
+  /* ---------- helpers ---------- */
+  function mk(w, h) { try { var c = document.createElement('canvas'); c.width = Math.max(1, Math.ceil(w)); c.height = Math.max(1, Math.ceil(h)); return c; } catch (e) { return null; } }
+  function hashS(s) { var h = 2166136261; s = String(s); for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+  function hash2(a, b) { var h = Math.imul((a | 0) * 374761393 + (b | 0) * 668265263, 3266489917); h ^= h >>> 13; h = Math.imul(h, 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; }
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function easeOut(u) { u = clamp(u, 0, 1); return 1 - (1 - u) * (1 - u) * (1 - u); }
+  function overlap(a, b) { var w = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x), h = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y); return w > 0 && h > 0 ? w * h : 0; }
+  function devScale(ctx) { try { var m = ctx.getTransform(); return Math.sqrt(Math.abs(m.a * m.d - m.b * m.c)) || 1; } catch (e) { return 1; } }
+  function num(v) { return typeof v === 'number' && isFinite(v); }
+  // pop-in scale: 0.55 -> 1 + 0.16*pop at 120 ms (ease-out), then a damped spring to 1 by 300 ms
+  function popScale(a, pop) {
+    if (a <= 0) return 0.55;
+    var peak = 1 + 0.16 * pop;
+    if (a < 120) return 0.55 + (peak - 0.55) * easeOut(a / 120);
+    var u = (a - 120) / 180; if (u >= 1) return 1;
+    return 1 + (peak - 1) * Math.exp(-u * 3) * Math.cos(u * Math.PI * 1.5);
+  }
+
+  /* ---------- palettes: fill top, fill bottom, edge, text, accent ---------- */
+  var PAL = {
+    light: { talk: ['#fffdf6', '#e6dcc8', '#2a2233', '#2a2233', '#ffcf4a'], shout: ['#fffaf0', '#ffdfae', '#2d1408', '#2d1408', '#ff8a2a'], alarm: ['#ffec94', '#ffc12e', '#3a2604', '#2e1d02', '#e8402e'],
+      hurt: ['#ffece8', '#ffb9ad', '#7a1420', '#4d0c12', '#e8402e'], whisper: ['rgba(255,253,246,0.80)', 'rgba(230,220,200,0.80)', 'rgba(42,34,51,0.62)', '#544c60', '#b9b2c8'],
+      think: ['#f6f8ff', '#cfd9f4', '#2a2f52', '#2a2f52', '#8fa2e8'] },
+    dark: { talk: ['rgba(46,41,64,0.96)', 'rgba(26,22,38,0.96)', '#e2dcf0', '#f6f1e7', '#ffcf4a'], shout: ['rgba(62,38,28,0.96)', 'rgba(36,20,14,0.96)', '#ffcf8a', '#fff1dc', '#ff8a2a'],
+      alarm: ['rgba(70,54,10,0.96)', 'rgba(40,30,4,0.96)', '#ffd84a', '#fff3c0', '#ff5a3c'], hurt: ['rgba(74,22,28,0.96)', 'rgba(40,10,14,0.96)', '#ff8a7a', '#ffe6e2', '#ff5a3c'],
+      whisper: ['rgba(34,30,48,0.72)', 'rgba(22,19,32,0.72)', 'rgba(216,210,232,0.6)', '#c4bcd6', '#8a84a0'], think: ['rgba(36,42,72,0.96)', 'rgba(18,20,38,0.96)', '#aebcf0', '#e8edff', '#8fa2e8'] },
+    parchment: { talk: ['#efdcb2', '#d2b278', '#4a2a12', '#3a2210', '#c8862c'], shout: ['#f4e2bc', '#d8b06c', '#4a230c', '#3a1c08', '#c8662c'], alarm: ['#f3d98e', '#d8a640', '#4a2a0c', '#3a2006', '#a8321c'],
+      hurt: ['#efd2b4', '#d49c74', '#5a1e10', '#4a160a', '#a8321c'], whisper: ['rgba(239,220,178,0.82)', 'rgba(217,187,132,0.82)', 'rgba(74,42,18,0.62)', '#6a4a2c', '#b8945c'],
+      think: ['#ece0c4', '#cfbc90', '#4a3a20', '#3a2c18', '#a89468'] }
+  };
+
+  function create(opt) {
+    opt = opt || {};
+    var P = {}, k0; for (k0 in DEFAULTS) P[k0] = DEFAULTS[k0]; setP(opt.params);
+    var SK = null; try { SK = root.GameDNA_Skin && opt.skin != null && opt.skin !== false ? root.GameDNA_Skin.resolve(opt.skin) : null; } catch (e) { SK = null; }
+    var t = 0, seq = 0, bubbles = [], drawn = [], warned = {}, lastView = null, mode = null, idleNext = null, said = {}, picks = {}, obsCache = [];
+    var meas = mk(4, 4), mctx = meas ? meas.getContext('2d') : null, TXT = {};
+    var LN = mergeLines(LINES, opt.lines);
+
+    function setP(o) { if (o) for (var key in o) if (key in DEFAULTS && o[key] != null && o[key] !== '') P[key] = typeof DEFAULTS[key] === 'number' ? (num(+o[key]) ? +o[key] : DEFAULTS[key]) : String(o[key]); }
+    function warn(k, msg) { if (warned[k]) return; warned[k] = 1; try { if (root.console) console.warn('GameDNA_BarkBubbles: ' + msg); } catch (e) {} }
+    function call(name, a) { var f = opt[name]; if (typeof f !== 'function') return undefined; try { return f(a); } catch (e) { warn('cb-' + name, name + '() threw: ' + (e && e.message)); return undefined; } }
+    function mergeLines(base, extra) {
+      var out = {}, v, e;
+      for (v in base) { out[v] = {}; for (e in base[v]) out[v][e] = base[v][e].slice(); }
+      if (extra && typeof extra === 'object') for (v in extra) { if (!extra[v] || typeof extra[v] !== 'object') continue; out[v] = out[v] || {}; for (e in extra[v]) { var L = extra[v][e]; if (typeof L === 'string') L = [L]; if (L && L.length) out[v][e] = L.filter(function (s) { return typeof s === 'string' && s; }); } }
+      return out;
+    }
+    function B() {
+      var b = opt.bounds; if (typeof b === 'function') { try { b = b(); } catch (e) { b = null; } }
+      if (b && num(+b.w) && +b.w > 0 && num(+b.h) && +b.h > 0) return { x: +b.x || 0, y: +b.y || 0, w: +b.w, h: +b.h };
+      return lastView || { x: 0, y: 0, w: 256, h: 224 };
+    }
+    function crisp() {
+      if (mode) return mode === 'crisp';
+      if (P.render === 'crisp') return true; if (P.render === 'smooth') return false;
+      if (SK) return !!SK.pixel;
+      return B().w <= 400;
+    }
+    // metrics in native px; crisp: integer scale of the 6x8 bitmap font, smooth: font px of the sans
+    function M() {
+      var b = B(), c = crisp();
+      if (c) { var sc = +P.size > 0 ? Math.max(1, Math.round(+P.size / 8)) : Math.max(1, Math.round(b.w / 400)); return { crisp: true, sc: sc, fs: 8 * sc, lh: 10 * sc, padX: 4 * sc, padY: 3 * sc, tail: 4 * sc, gap: 1 * sc, r: 2 * sc, margin: 2 * sc }; }
+      var fs = +P.size > 0 ? +P.size : clamp(Math.round(b.w / 46), 9, 28);
+      return { crisp: false, sc: 1, fs: fs, lh: Math.round(fs * 1.3), padX: Math.round(fs * 0.8), padY: Math.round(fs * 0.5), tail: Math.round(fs * 0.85), gap: Math.max(2, Math.round(fs * 0.22)), r: Math.round(fs * 0.95), margin: Math.max(3, Math.round(fs * 0.35)) };
+    }
+    function toneFs(tone, fs) { return tone === 'shout' ? Math.round(fs * 1.12) : tone === 'whisper' ? Math.round(fs * 0.94) : fs; }
+    function fontOf(tone, fs) {
+      var fam = typeof opt.font === 'string' && opt.font ? opt.font : FAMILY; try { var f = SK && !SK.pixel && SK.fonts && SK.fonts.ui; if (f && f.type === 'canvas' && f.family) fam = f.family; } catch (e) {}
+      if (P.palette === 'parchment' && !(SK && SK.fonts)) fam = 'Georgia, "Palatino Linotype", "Book Antiqua", Palatino, serif';
+      return (tone === 'whisper' ? 'italic 600 ' : tone === 'shout' ? '900 ' : tone === 'alarm' ? '800 ' : '700 ') + toneFs(tone, fs) + 'px ' + fam;
+    }
+    function textOf(b) { return b.tone === 'shout' ? b.text.toUpperCase() : b.text; }
+    function measureStr(s, m, tone) {
+      if (m.crisp) return bmpWidth(s) * m.sc;
+      var key = tone + '|' + m.fs + '|' + s; if (TXT[key] != null) return TXT[key];
+      var w = s.length * m.fs * 0.55; if (mctx) { mctx.font = fontOf(tone, m.fs); w = mctx.measureText(s).width; }
+      if (Object.keys(TXT).length > 800) TXT = {}; return (TXT[key] = w);
+    }
+    function wrap(s, maxW, m, tone) {
+      var words = s.split(/\s+/).filter(Boolean), out = [], line = '';
+      words.forEach(function (w) {
+        while (measureStr(w, m, tone) > maxW && w.length > 1) {   // a word longer than the line: cut it
+          var n = w.length - 1; while (n > 1 && measureStr(w.slice(0, n), m, tone) > maxW) n--;
+          if (line) { out.push(line); line = ''; } out.push(w.slice(0, n)); w = w.slice(n);
+        }
+        var tryL = line ? line + ' ' + w : w;
+        if (line && measureStr(tryL, m, tone) > maxW) { out.push(line); line = w; } else line = tryL;
+      });
+      if (line) out.push(line);
+      if (out.length > 4) {   // too long: keep 4 lines and end the last with an ellipsis (dropping words until it fits)
+        out = out.slice(0, 4); var last = out[3];
+        while (last.indexOf(' ') > 0 && measureStr(last + '\u2026', m, tone) > maxW) last = last.slice(0, last.lastIndexOf(' '));
+        out[3] = last.replace(/[\s,.;:!?-]+$/, '') + '\u2026';
+      }
+      return out.length ? out : [''];
+    }
+    // body size of one bubble (native px)
+    function shape(b) {
+      var m = M(), s = textOf(b), maxW = Math.max(m.fs * 4, (+P.width || 20) * (m.crisp ? 5 * m.sc : m.fs * 0.52));
+      if (b.tone === 'shout') maxW *= 0.9;
+      var lines = wrap(s, maxW, m, b.tone), tw = 0; lines.forEach(function (l) { tw = Math.max(tw, measureStr(l, m, b.tone)); });
+      var w = Math.ceil(tw + 2 * m.padX), h = Math.ceil(lines.length * m.lh - (m.crisp ? 2 * m.sc : (m.lh - m.fs) * 0.6) + 2 * m.padY);
+      if (b.tone === 'alarm') w += m.crisp ? 8 * m.sc : Math.round(m.fs * 1.05);                 // room for the "!" badge
+      if (b.tone === 'shout') { var sd = spikeD(m); w += 2 * sd; h += 2 * sd; }        // the spikes sit outside the text box on every side
+      if (b.tone === 'think') { if (m.crisp) { w += 2 * m.sc; h += 6 * m.sc; } else { w += Math.round(m.fs * 0.4); h += Math.round(m.fs * 0.3); } }
+      if (m.crisp) { w = Math.round(w); h = Math.round(h); }
+      b.lines = lines; b.w = w; b.h = h; b.m = m; b.chars = lines.join('').length;
+    }
+    function spikeD(m) { return m.crisp ? 4 * m.sc : Math.round(m.fs * 0.62); }
+    function lifeOf(b) { var type = P.cps > 0 ? b.chars / P.cps * 1000 : 0; return 260 + type + Math.max(+P.hold, b.chars * +P.read); }
+    function maxN() { return +P.max > 0 ? +P.max : B().w <= 400 ? 3 : 4; }
+
+    /* ---------- anchors ---------- */
+    var cache = {};
+    function anchor(id) {
+      var a = call('getAnchor', id);
+      if (a && num(+a.x) && num(+(a.top != null ? a.top : a.y))) { a = { x: +a.x, top: +(a.top != null ? a.top : a.y), w: num(+a.w) ? +a.w : 0, h: num(+a.h) ? +a.h : 0 }; cache[id] = a; return { a: a, fresh: true }; }
+      if (cache[id]) return { a: cache[id], fresh: false };
+      return null;
+    }
+
+    /* ---------- spawning ---------- */
+    function say(id, text, o) {
+      try {
+        o = o || {}; if (id == null || text == null || String(text).trim() === '') return null;
+        var tone = TONES[o.tone] ? o.tone : 'talk', prio = o.priority != null ? +o.priority : (o.event === 'idle' ? 0 : TONE_PRIO[tone]);
+        if (!anchor(id)) { warn('noanchor-' + id, 'no anchor for speaker "' + id + '" (getAnchor returned nothing); the line is skipped'); return null; }
+        var live = bubbles.filter(function (q) { return !q.gone && !q.ending; });
+        var mine = live.filter(function (q) { return String(q.spk) === String(id); })[0];
+        if (mine) {   // the speaker talks again: the same bubble takes the new line and re-pops in place
+          if (mine.prio > prio && t - mine.born < lifeOf(mine) * 0.6) return null;
+          mine.text = String(text); mine.tone = tone; mine.prio = prio; mine.event = o.event || null; mine.born = t; mine.rebump = t; mine.extra = +o.ms || 0; shape(mine);
+          emit(mine); return mine.id;
+        }
+        if (live.length >= maxN()) {
+          var weakest = live.slice().sort(function (a, b) { return a.prio - b.prio || a.born - b.born; })[0];
+          if (!weakest || weakest.prio >= prio && prio < 2) return null;   // full: idle chatter and talk wait for room
+          if (weakest.prio > prio) return null;
+          endB(weakest);
+        }
+        var b = { repop: -1e9, id: ++seq, spk: id, text: String(text), tone: tone, prio: prio, event: o.event || null, born: t, rebump: -1e9, extra: +o.ms || 0, ox: 0, oy: 0, tx: 0, ty: 0, placed: false, vis: 1, cand: -1, ending: false, endT: 0, gone: false };
+        shape(b); bubbles.push(b); place(); emit(b); return b.id;
+      } catch (e) { warn('say', 'say() failed: ' + (e && e.message)); return null; }
+    }
+    function emit(b) { if (typeof opt.onBark === 'function') try { opt.onBark({ id: b.id, speaker: b.spk, text: b.text, tone: b.tone, event: b.event }); } catch (e) {} }
+    function pickLine(voice, event, id) {
+      var V = LN[voice] || LN[event === 'hurt' || event === 'kill' || event === 'lowhp' ? 'hero' : 'villager'] || {}, L = V[event];
+      if (!L || !L.length) return null;
+      var key = voice + '|' + event + '|' + id, n = picks[key] || 0; picks[key] = n + 1;
+      return L[(n + (hashS(id) % L.length)) % L.length];
+    }
+    function bark(id, event, o) {
+      try {
+        o = o || {}; event = String(event || 'idle');
+        var key = id + '|' + event, last = said[key], lastAny = said['*|' + event];
+        if (o.cooldown == null && event !== 'idle' && +P.stagger > 0 && lastAny != null && t - lastAny < +P.stagger && String(said['*who|' + event]) !== String(id)) return null;   // a crowd noticing at once: one voice
+        var cd = o.cooldown != null ? +o.cooldown : event === 'idle' ? Math.max(+P.cooldown, +P.idle * 1.5) : +P.cooldown;
+        if (last != null && t - last < cd) return null;
+        var text = o.text || pickLine(o.voice || 'villager', event, id);
+        if (!text) return null;
+        var r = say(id, text, { tone: o.tone || EVENT_TONE[event] || 'talk', event: event, priority: o.priority, ms: o.ms });
+        if (r != null) { said[key] = t; said['*|' + event] = t; said['*who|' + event] = id; }
+        return r;
+      } catch (e) { warn('bark', 'bark() failed: ' + (e && e.message)); return null; }
+    }
+    function endB(b) { if (!b.ending) { b.ending = true; b.endT = t; } }
+
+    /* ---------- placement (in update: the stored offsets are relative to the speaker's head) ---------- */
+    function obstacles() {
+      var o = call('getObstacles'); if (!o || !o.length) return [];
+      var out = [];
+      for (var i = 0; i < o.length; i++) { var r = o[i]; if (r && num(+r.x) && num(+r.y) && +r.w > 0 && +r.h > 0) out.push({ x: +r.x, y: +r.y, w: +r.w, h: +r.h, id: r.id, soft: !!r.soft, hard: !!r.hard }); }
+      return out;
+    }
+    // candidate body positions around head point H (x = centre, y = top of head); side: where the tail leaves the body
+    function candidates(b, A) {
+      var m = b.m, w = b.w, h = b.h, up = A.top - m.gap - m.tail - h, hw = Math.max(A.w, m.fs) / 2, down = A.top + (A.h > 0 ? A.h : m.fs * 2) + m.gap + m.tail;
+      return [
+        { x: A.x - w / 2, y: up, side: 'b', pref: 0 },
+        { x: A.x - w * 0.82, y: up, side: 'b', pref: 5 },
+        { x: A.x - w * 0.18, y: up, side: 'b', pref: 5 },
+        { x: A.x - w / 2, y: up - h * 0.55, side: 'b', pref: 9 },
+        { x: A.x - hw - m.tail - w, y: A.top - h * 0.35, side: 'r', pref: 14 },
+        { x: A.x + hw + m.tail, y: A.top - h * 0.35, side: 'l', pref: 14 },
+        { x: A.x - w * 0.95, y: up - h * 0.6, side: 'b', pref: 16 },
+        { x: A.x - w * 0.05, y: up - h * 0.6, side: 'b', pref: 16 },
+        { x: A.x - w / 2, y: down, side: 't', pref: 26 },
+        { x: A.x - w * 0.82, y: down, side: 't', pref: 30 },
+        { x: A.x - w * 0.18, y: down, side: 't', pref: 30 },
+        { x: A.x - hw - m.tail - w, y: up - h * 0.2, side: 'r', pref: 19 },   // up and out to a side: the way out of a melee cluster
+        { x: A.x + hw + m.tail, y: up - h * 0.2, side: 'l', pref: 19 },
+        { x: A.x - hw - m.tail * 1.9 - w, y: A.top - h * 0.3, side: 'r', pref: 21 },   // a little further out beside the head: clear of a neighbour's bubble
+        { x: A.x + hw + m.tail * 1.9, y: A.top - h * 0.3, side: 'l', pref: 21 }
+      ];
+    }
+    function offEdge(A, bb) { return A.x < bb.x || A.x > bb.x + bb.w || A.top > bb.y + bb.h || A.top + (A.h || 0) < bb.y; }
+    // margin from the field edge: a bubble whose speaker is off screen keeps a full pointer's length inside
+    function edgeMg(A, bb, m) { return offEdge(A, bb) ? m.margin + Math.round(m.tail * (m.crisp ? 2.2 : 2.5)) : m.margin; }
+    // the body rect grown to hold its tail (or its off-screen pointer and chevron): what must stay off UI rects
+    function reach(r, A, m, bb) {
+      var below = A.h > 0 && r.y > A.top + A.h * 0.6, tx = A.x, ty = below ? A.top + A.h + m.gap : A.top - m.gap;
+      var nx = clamp(tx, r.x, r.x + r.w), ny = clamp(ty, r.y, r.y + r.h), dx = tx - nx, dy = ty - ny, d = Math.hypot(dx, dy);
+      if (d < 0.5) return r;
+      var L = offEdge(A, bb) ? m.tail * (m.crisp ? 2 : 1.7) + (m.crisp ? 0 : m.fs) : Math.min(d, m.tail * 1.6), ex = nx + dx / d * L, ey = ny + dy / d * L;
+      var x0 = Math.min(r.x, ex), y0 = Math.min(r.y, ey);
+      return { x: x0, y: y0, w: Math.max(r.x + r.w, ex) - x0, h: Math.max(r.y + r.h, ey) - y0 };
+    }
+    function clampBody(x, y, w, h, bb, mg) {
+      return { x: clamp(x, bb.x + mg, Math.max(bb.x + mg, bb.x + bb.w - mg - w)), y: clamp(y, bb.y + mg, Math.max(bb.y + mg, bb.y + bb.h - mg - h)) };
+    }
+    function place() {
+      var bb = B(), obs = obstacles(); obsCache = obs;
+      var acc = [], list = bubbles.filter(function (q) { return !q.gone; }).sort(function (a, b) { return b.prio - a.prio || a.id - b.id; });
+      list.forEach(function (b) {
+        var an = anchor(b.spk); if (!an) { endB(b); return; }
+        if (!an.fresh && !b.ending) endB(b);   // the speaker is gone: finish quickly at its last spot
+        var A = an.a, m = b.m, mg = edgeMg(A, bb, m), area = b.w * b.h, far = 0.6 * bb.w;
+        var off = Math.max(bb.x - A.x, A.x - (bb.x + bb.w), bb.y - A.top, A.top - (bb.y + bb.h), 0);
+        b.far = off > far;
+        var best = null, cs = candidates(b, A);
+        for (var i = 0; i < cs.length; i++) {
+          var c = cs[i], p = clampBody(c.x, c.y, b.w, b.h, bb, mg), r = { x: p.x, y: p.y, w: b.w, h: b.h }, cost = c.pref;
+          cost += Math.hypot(p.x - c.x, p.y - c.y) * 0.08;
+          for (var j = 0; j < acc.length; j++) cost += 1200 * overlap(r, pad(acc[j], m.gap * 2)) / area;
+          var ui = 0, rT = null;
+          for (j = 0; j < obs.length; j++) {
+            var o = obs[j], ov = overlap(r, o);
+            if (o.id == null && !o.soft) {   // UI: the body never sits on it, and neither does the tail or the pointer
+              if (ov) { cost += 900 * ov / area; ui += ov; }
+              else { if (!rT) rT = reach(r, A, m, bb); if (overlap(rT, o)) cost += 160; }
+              continue;
+            }
+            if (!ov) continue;
+            if (o.id == null) cost += 30 * ov / area;
+            else if (String(o.id) === String(b.spk)) cost += 300 * ov / area;
+            else cost += (o.hard ? 900 : 420) * Math.max(ov / area, ov / (o.w * o.h));   // a small unit under a big bubble counts by how much of the unit is hidden
+          }
+          if (b.placed && i === b.cand) cost -= 35;      // stay put unless another spot is clearly better (no flip-flopping)
+          if (!best || cost < best.cost) best = { cost: cost, x: p.x, y: p.y, side: c.side, i: i, ui: ui };
+        }
+        b.cand = best.i; b.side = best.side;
+        b.tx = best.x - A.x; b.ty = best.y - A.top;
+        if (!b.placed) { b.ox = b.tx; b.oy = b.ty; b.placed = true; }
+        else if (Math.hypot(b.tx - b.ox, b.ty - b.oy) > Math.max(b.h, m.fs * 1.5)) { b.ox = b.tx; b.oy = b.ty; b.repop = t; }   // far move: re-pop there instead of sweeping across the screen
+        b.covered = best.ui > area * 0.04;                // a window sits over every free spot: hide until it closes
+        var r2 = { x: A.x + b.tx, y: A.top + b.ty, w: b.w, h: b.h };
+        b.clash = acc.some(function (q) { return overlap(r2, q) > area * 0.2; });
+        acc.push(r2);
+      });
+    }
+    function pad(r, p) { return { x: r.x - p, y: r.y - p, w: r.w + 2 * p, h: r.h + 2 * p }; }
+
+    /* ---------- clock ---------- */
+    function update(dt) {
+      try {
+        dt = +dt; if (!num(dt) || dt < 0) dt = 0; if (dt > 250) dt = 250;
+        t += dt;
+        if (dt > 0 && +P.idle > 0 && typeof opt.speakers === 'function') idleTick();
+        bubbles.forEach(function (b) {
+          if (b.gone) return;
+          var life = lifeOf(b) + b.extra;
+          if (!b.ending && t - b.born >= life) endB(b);
+          if (!b.ending && b.clash && b.prio <= 1 && t - b.born > 600) endB(b);   // low-priority chatter that has no room left goes early
+          if (b.ending && t - b.endT >= 240) b.gone = true;
+          var k = 1 - Math.exp(-dt / 100); b.ox += (b.tx - b.ox) * k; b.oy += (b.ty - b.oy) * k;
+          var tv = b.covered || b.far ? 0 : 1, kv = 1 - Math.exp(-dt / 60); b.vis = tv === 0 ? 0 : b.vis + (tv - b.vis) * kv; if (Math.abs(tv - b.vis) < 0.01) b.vis = tv;   // hide at once, show with a quick fade
+        });
+        bubbles = bubbles.filter(function (b) { return !b.gone; });
+        if (dt > 0 || bubbles.length) place();
+      } catch (e) { warn('update', 'update() failed: ' + (e && e.message)); }
+    }
+    function idleTick() {
+      if (idleNext == null) idleNext = t + +P.idle * 0.45;
+      if (t < idleNext) return;
+      idleNext = t + +P.idle * (0.8 + 0.4 * hash2(seq + 7, Math.floor(t / 97)));
+      var S = call('speakers'); if (!S || !S.length) return;
+      var bb = B(), busy = {};
+      bubbles.forEach(function (b) { if (!b.gone) busy[String(b.spk)] = 1; });
+      var ok = [];
+      for (var i = 0; i < S.length; i++) {
+        var s = S[i], id = s && typeof s === 'object' ? s.id : s, voice = s && typeof s === 'object' && s.voice ? s.voice : 'villager';
+        if (id == null || busy[String(id)]) continue;
+        var an = anchor(id); if (!an || !an.fresh) continue;
+        if (an.a.x < bb.x || an.a.x > bb.x + bb.w || an.a.top < bb.y || an.a.top > bb.y + bb.h) continue;
+        ok.push({ id: id, voice: voice });
+      }
+      if (!ok.length) return;
+      var pick = ok[Math.floor(hash2(Math.floor(t / 113), ok.length) * ok.length) % ok.length];
+      bark(pick.id, 'idle', { voice: pick.voice });
+    }
+
+    /* ---------- drawing ---------- */
+    function colours(tone) {
+      var pal = PAL[P.palette] || PAL.light, C = (pal[tone] || pal.talk).slice();
+      if (P.palette === 'skin' && SK) {
+        var tk = function (p, d) { try { var v = SK.token(p); return typeof v === 'string' && v.charAt(0) === '#' ? v : d; } catch (e) { return d; } };
+        var L = PAL.light[tone] || PAL.light.talk;
+        C = [tk('paper', L[0]), L[1], tk('ink', L[2]), tk('ink', L[3]), tk(tone === 'hurt' ? 'fx.hot' : 'fx.crit', L[4] || '#e8402e')];
+        if (tone === 'alarm') C[1] = tk('fx.crit', L[1]); if (tone === 'hurt') C[1] = L[1];
+      }
+      return C;
+    }
+    // tail tip: the speaker's head (screen px); the tail leaves the body on the side facing it
+    function tailGeom(body, A, m, bb) {
+      var below = A.h > 0 && body.y > A.top + A.h * 0.6, tip = { x: A.x, y: below ? A.top + A.h + m.gap : A.top - m.gap }, cx = body.x + body.w / 2, cy = body.y + body.h / 2, side;
+      var inX = tip.x > body.x + m.r && tip.x < body.x + body.w - m.r;
+      if (tip.y >= body.y + body.h) side = inX || Math.abs(tip.x - cx) / body.w < (tip.y - cy) / body.h ? 'b' : tip.x < cx ? 'l' : 'r';
+      else if (tip.y <= body.y) side = inX || Math.abs(tip.x - cx) / body.w < (cy - tip.y) / body.h ? 't' : tip.x < cx ? 'l' : 'r';
+      else if (tip.x <= body.x) side = 'l'; else if (tip.x >= body.x + body.w) side = 'r'; else return null;   // speaker behind the bubble: no tail
+      var tw = Math.max(m.crisp ? 3 * m.sc : 4, Math.round(m.fs * 0.4)), base, dir, pointer = offEdge(A, bb), rr = Math.min(m.r, body.h / 2, body.w / 2);
+      // smooth bubbles: the tail root sits a little to one side of the speaker so the tail sweeps toward the head (a comic-book tail, not a spike)
+      var lean = m.crisp || pointer ? 0 : tw * clamp(0.9 + (cx - tip.x) / (body.w * 0.2), -1.1, 1.1);
+      if (side === 'b' || side === 't') { var bx = clamp(tip.x + lean, body.x + rr + tw, body.x + body.w - rr - tw); if (body.w < 2 * (rr + tw)) bx = cx; base = { x: bx, y: side === 'b' ? body.y + body.h : body.y }; dir = side === 'b' ? 1 : -1; }
+      else { var by = clamp(tip.y - Math.abs(lean) * 0.6, body.y + rr + tw, body.y + body.h - rr - tw); if (body.h < 2 * (rr + tw)) by = cy; base = { x: side === 'r' ? body.x + body.w : body.x, y: by }; dir = side === 'r' ? 1 : -1; }
+      var dx = tip.x - base.x, dy = tip.y - base.y, d = Math.hypot(dx, dy) || 1, maxL = m.tail * 1.6;
+      if (pointer) { tw = Math.round(tw * 1.3); maxL = m.tail * (m.crisp ? 2 : 1.7); }   // off screen: a full arrow toward the speaker
+      var L = pointer ? maxL : Math.min(d, maxL), end = { x: base.x + dx / d * L, y: base.y + dy / d * L };
+      // the tail never folds back into the body
+      if (side === 'b') end.y = Math.max(end.y, base.y + m.tail * 0.5); if (side === 't') end.y = Math.min(end.y, base.y - m.tail * 0.5);
+      if (side === 'r') end.x = Math.max(end.x, base.x + m.tail * 0.5); if (side === 'l') end.x = Math.min(end.x, base.x - m.tail * 0.5);
+      var ux = end.x - base.x, uy = end.y - base.y, ul = Math.hypot(ux, uy) || 1;
+      return { side: side, base: base, end: end, tw: tw, pointer: pointer, dir: dir, tip: tip, ux: ux / ul, uy: uy / ul };
+    }
+    // a curved horn from the body edge (corners a -> b, in outline order) to the tail tip
+    function horn(g, T, ax, ay, bx, by) {
+      var e = T.end, v = T.side === 'b' || T.side === 't', k1 = v ? 0.1 : 0.74, k2 = v ? 0.74 : 0.1;
+      g.lineTo(ax, ay); g.quadraticCurveTo(ax + (e.x - ax) * k1, ay + (e.y - ay) * k2, e.x, e.y); g.quadraticCurveTo(bx + (e.x - bx) * k1, by + (e.y - by) * k2, bx, by);
+    }
+    function bubblePath(g, x, y, w, h, r, T, tone, m) {
+      g.beginPath();
+      if (tone === 'think') { cloud(g, x, y, w, h, m); return; }
+      if (tone === 'shout') { spikes(g, x, y, w, h, m, T, 0.74, 0, 7); return; }
+      r = Math.min(r, h / 2, w / 2);
+      var tw = T ? T.tw : 0;
+      g.moveTo(x + r, y);
+      if (T && T.side === 't') horn(g, T, T.base.x - tw, y, T.base.x + tw, y);
+      g.lineTo(x + w - r, y); g.arcTo(x + w, y, x + w, y + r, r);
+      if (T && T.side === 'r') horn(g, T, x + w, T.base.y - tw, x + w, T.base.y + tw);
+      g.lineTo(x + w, y + h - r); g.arcTo(x + w, y + h, x + w - r, y + h, r);
+      if (T && T.side === 'b') horn(g, T, T.base.x + tw, y + h, T.base.x - tw, y + h);
+      g.lineTo(x + r, y + h); g.arcTo(x, y + h, x, y + h - r, r);
+      if (T && T.side === 'l') horn(g, T, x, T.base.y + tw, x, T.base.y - tw);
+      g.lineTo(x, y + r); g.arcTo(x, y, x + r, y, r);
+      g.closePath();
+    }
+    function cloud(g, x, y, w, h, m) {
+      var n = Math.max(3, Math.round(w / (m.fs * 1.5))), rr = h * 0.3, cy = y + h / 2, i;
+      for (i = 0; i < n; i++) {
+        var u = (i + 0.5) / n, px = x + rr + (w - 2 * rr) * u, k1 = 1.02 + 0.14 * hash2(i, 3), k2 = 1.02 + 0.14 * hash2(i, 5), px2 = px + (i % 2 ? 1 : -1) * rr * 0.18;
+        g.moveTo(px + rr * k1, y + rr); g.arc(px, y + rr, rr * k1, 0, Math.PI * 2); g.moveTo(px2 + rr * k2, y + h - rr); g.arc(px2, y + h - rr, rr * k2, 0, Math.PI * 2);
+      }
+      g.moveTo(x + rr * 2.6, cy); g.arc(x + rr * 1.3, cy, rr * 1.3, 0, Math.PI * 2); g.moveTo(x + w, cy); g.arc(x + w - rr * 1.3, cy, rr * 1.3, 0, Math.PI * 2);
+      g.rect(x + rr, y + rr, w - 2 * rr, h - 2 * rr);
+    }
+    // a starburst around the text box; reach: how far the points go (1 = the full margin), phase: shifts the points half a step (the back burst)
+    function spikes(g, x, y, w, h, m, T, reach, phase, seed) {
+      var d = spikeD(m), cx0 = x + d, cy0 = y + d, cw = w - 2 * d, ch = h - 2 * d, per = 2 * (cw + ch), step = m.fs * 0.66, n = Math.max(10, Math.round(per / step / 2) * 2), i;
+      function at(sv) {   // a point on the core rect perimeter (clockwise from the top-left) and its outward normal
+        sv = ((sv % per) + per) % per;
+        if (sv < cw) return [cx0 + sv, cy0, 0, -1]; sv -= cw;
+        if (sv < ch) return [cx0 + cw, cy0 + sv, 1, 0]; sv -= ch;
+        if (sv < cw) return [cx0 + cw - sv, cy0 + ch, 0, 1]; sv -= cw;
+        return [cx0, cy0 + ch - sv, -1, 0];
+      }
+      for (i = 0; i < n; i++) {
+        var q = at((i + 0.5 + phase) * per / n), out = i % 2 === 0;
+        var k = out ? d * reach * (0.8 + 0.2 * hash2(i, seed)) : -d * 0.1, px = q[0] + q[2] * k, py = q[1] + q[3] * k;
+        if (out) { var cr = Math.abs(q[0] - (cx0 + cw / 2)) / (cw / 2), cv = Math.abs(q[1] - (cy0 + ch / 2)) / (ch / 2); if (cr > 0.86 && cv > 0.6) { px += (q[0] > cx0 + cw / 2 ? 1 : -1) * d * 0.45 * reach * Math.abs(q[3]); py += (q[1] > cy0 + ch / 2 ? 1 : -1) * d * 0.45 * reach * Math.abs(q[2]); } }
+        if (i === 0) g.moveTo(px, py); else g.lineTo(px, py);
+      }
+      g.closePath();
+      if (T) {
+        var tw = T.tw, bx = clamp(T.base.x, cx0 + tw, cx0 + cw - tw), by = clamp(T.base.y, cy0 + tw, cy0 + ch - tw);
+        if (T.side === 'b') by = cy0 + ch - tw; if (T.side === 't') by = cy0 + tw; if (T.side === 'r') bx = cx0 + cw - tw; if (T.side === 'l') bx = cx0 + tw;
+        // same (clockwise) winding as the starburst, so the nonzero fill unions them instead of punching a hole
+        if (T.side === 'b') { g.moveTo(bx + tw, by); g.lineTo(T.end.x, T.end.y); g.lineTo(bx - tw, by); }
+        else if (T.side === 't') { g.moveTo(bx - tw, by); g.lineTo(T.end.x, T.end.y); g.lineTo(bx + tw, by); }
+        else if (T.side === 'r') { g.moveTo(bx, by - tw); g.lineTo(T.end.x, T.end.y); g.lineTo(bx, by + tw); }
+        else { g.moveTo(bx, by + tw); g.lineTo(T.end.x, T.end.y); g.lineTo(bx, by - tw); }
+        g.closePath();
+      }
+    }
+    function puffs(body, T, m) {   // a thought's trail: three shrinking puffs from the cloud to the thinker
+      var out = [], d = [0.2, 0.55, 0.86], rs = [0.3, 0.2, 0.12], k = T.pointer ? 0.55 : 1, i;
+      for (i = 0; i < 3; i++) out.push({ x: T.base.x + (T.tip.x - T.base.x) * d[i] * k, y: T.base.y + (T.tip.y - T.base.y) * d[i] * k, r: m.fs * rs[i] });
+      return out;
+    }
+    /* The whole bubble is painted on one offscreen layer at device resolution (ink edge, cel-shaded fill, rim light), then stamped with
+       a drop shadow: overlapping sub-paths (cloud lobes, starburst + tail) never show inner seams, even with translucent palettes. */
+    var LAYER = null;
+    function paintLayer(b, body, T, lw, g, C) {
+      try {
+        var m = b.m, tone = b.tone, k = Math.min(8, Math.max(1, devScale(g))), pad = lw * 2 + 3, i;
+        var x0 = Math.min(body.x, T ? T.end.x : body.x) - pad, y0 = Math.min(body.y, T ? T.end.y : body.y) - pad;
+        var x1 = Math.max(body.x + body.w, T ? T.end.x : 0) + pad, y1 = Math.max(body.y + body.h, T ? T.end.y : 0) + pad;
+        var W = Math.ceil((x1 - x0) * k), H = Math.ceil((y1 - y0) * k);
+        if (!LAYER) LAYER = mk(W, H); if (!LAYER) return null;
+        if (LAYER.width < W || LAYER.height < H) { LAYER.width = Math.max(LAYER.width, W); LAYER.height = Math.max(LAYER.height, H); }
+        var lg = LAYER.getContext('2d'); lg.setTransform(1, 0, 0, 1, 0, 0); lg.clearRect(0, 0, LAYER.width, LAYER.height);
+        lg.setTransform(k, 0, 0, k, -x0 * k, -y0 * k);
+        lg.lineJoin = 'round'; lg.lineCap = 'butt'; lg.strokeStyle = C[2];
+        var path = function (dx, dy) { bubblePath(lg, body.x + dx, body.y + dy, body.w, body.h, m.r, T && (dx || dy) ? shiftT(T, dx, dy) : T, tone, m); };
+        if (tone === 'shout') {   // a second, coloured burst behind: its points show between the front ones
+          lg.beginPath(); spikes(lg, body.x, body.y, body.w, body.h, m, null, 1, 1, 31);
+          lg.lineWidth = lw * 2; lg.stroke(); lg.fillStyle = C[4] || C[1]; lg.fill();
+        }
+        var PF = tone === 'think' && T ? puffs(body, T, m) : null;
+        var shapeP = function (dx, dy) { path(dx, dy); if (PF) for (i = 0; i < PF.length; i++) { lg.moveTo(PF[i].x + dx + PF[i].r, PF[i].y + dy); lg.arc(PF[i].x + dx, PF[i].y + dy, PF[i].r, 0, Math.PI * 2); } };
+        shapeP(0, 0);
+        lg.lineWidth = lw * 2; if (tone === 'whisper') lg.setLineDash([lw * 2.6, lw * 2.2]);
+        lg.stroke(); lg.setLineDash([]);
+        lg.globalCompositeOperation = 'destination-out'; lg.fillStyle = '#000'; lg.fill(); lg.globalCompositeOperation = 'source-over';
+        if (tone === 'whisper') { lg.fillStyle = C[0]; lg.fill(); return { c: LAYER, sw: W, sh: H, x: x0, y: y0, w: W / k, h: H / k }; }
+        lg.fillStyle = C[1]; lg.fill();
+        lg.save(); lg.clip();
+        // the lit face: the same shape moved up, so the shade colour stays as a crescent along the bottom
+        shapeP(0, -Math.max(1.5, m.fs * 0.17)); lg.clip(); lg.fillStyle = C[0]; lg.fill();
+        if (P.palette === 'parchment') {   // paper: a burnt rim, grain flecks and fibres instead of the gloss
+          var rim = lg.createRadialGradient(body.x + body.w / 2, body.y + body.h / 2, Math.min(body.w, body.h) * 0.3, body.x + body.w / 2, body.y + body.h / 2, Math.max(body.w, body.h) * 0.62);
+          rim.addColorStop(0, 'rgba(120,70,20,0)'); rim.addColorStop(1, 'rgba(120,70,20,0.26)'); lg.fillStyle = rim; lg.fillRect(body.x - 8, body.y - 8, body.w + 16, body.h + 16);
+          for (i = 0; i < Math.round(body.w * body.h / 90); i++) { var gx = body.x + hash2(b.id * 31 + i, 1) * body.w, gy = body.y + hash2(b.id * 31 + i, 2) * body.h, gk = hash2(i, b.id);
+            lg.fillStyle = gk < 0.5 ? 'rgba(110,64,20,0.16)' : 'rgba(255,248,225,0.30)'; lg.fillRect(gx, gy, gk < 0.85 ? 1.2 : m.fs * 0.5, gk < 0.85 ? 1.2 : 0.8); }
+        } else if (tone !== 'alarm' || P.palette !== 'light') {   // rim light: a thin band along the top-left edge (the face is painted again, moved down-right, over a white wash)
+          var span = Math.min(body.w, m.fs * 8), rl = lg.createLinearGradient(body.x, body.y, body.x + span * 0.6, body.y + Math.max(body.h, m.fs * 1.6) * 1.2), ra = P.palette === 'dark' ? 0.22 : 0.9;
+          rl.addColorStop(0, 'rgba(255,255,255,' + ra + ')'); rl.addColorStop(0.5, 'rgba(255,255,255,' + ra * 0.55 + ')'); rl.addColorStop(1, 'rgba(255,255,255,0)');
+          lg.fillStyle = rl; lg.fillRect(x0, y0, x1 - x0, y1 - y0);
+          shapeP(lw * 0.95, lw * 0.95); lg.fillStyle = C[0]; lg.fill();
+        } else {
+          var al = lg.createLinearGradient(0, body.y, 0, body.y + body.h * 0.6); al.addColorStop(0, 'rgba(255,255,255,0.55)'); al.addColorStop(1, 'rgba(255,255,255,0)'); lg.fillStyle = al; lg.fillRect(x0, y0, x1 - x0, y1 - y0);
+        }
+        lg.restore();
+        return { c: LAYER, sw: W, sh: H, x: x0, y: y0, w: W / k, h: H / k };   // one shared layer: stamped at once, before the next bubble reuses it
+      } catch (e) { return null; }
+    }
+    function shiftT(T, dx, dy) { return { side: T.side, base: { x: T.base.x + dx, y: T.base.y + dy }, end: { x: T.end.x + dx, y: T.end.y + dy }, tw: T.tw }; }
+    function drawSmooth(g, b, body, T, a, ds, C) {
+      var m = b.m, age = t - b.born, re = b.rebump === b.born, pop = +P.pop, s = re ? 1 + 0.1 * pop * Math.sin(clamp(age / 260, 0, 1) * Math.PI) : popScale(age, pop), al = (re ? 1 : Math.min(1, age / 70)) * b.vis, ox = 0, oy = 0;
+      // squash and stretch plus a small rock while the pop settles (all from the bubble's age)
+      var wob = age < 520 ? Math.exp(-age / 120) : 0, st = 0.16 * pop * wob * Math.sin(age / 42), rot = (re ? 0.5 : 1) * 0.09 * pop * wob * Math.sin(age / 58 + 0.6) * (b.id % 2 ? 1 : -1);
+      if (t - b.repop < 160) { var ru = (t - b.repop) / 160; s *= 0.86 + 0.14 * easeOut(ru); al *= 0.35 + 0.65 * ru; }
+      if (b.ending) { var u = clamp((t - b.endT) / 240, 0, 1); al *= 1 - u * u; s *= 1 - 0.3 * u * u; oy -= m.fs * 0.2 * easeOut(u); }
+      if ((b.tone === 'hurt' || b.tone === 'shout') && age < 420) { var amp = m.fs * (b.tone === 'hurt' ? 0.16 : 0.1) * (1 - age / 420), ph = Math.floor(age / 34); ox += (hash2(b.id, ph) - 0.5) * 2 * amp; oy += (hash2(b.id + 99, ph) - 0.5) * 2 * amp; }
+      if (al <= 0.01) return;
+      var px = T ? T.end.x : body.x + body.w / 2, py = T ? T.end.y : body.y + body.h;
+      g.save();
+      g.globalAlpha *= al;
+      g.translate(px + ox, py + oy); g.rotate(rot); g.scale(s * (1 - st * 0.6), s * (1 + st)); g.translate(-px, -py);
+      var lw = Math.max(1.5, m.fs * 0.135), tone = b.tone, dark = P.palette === 'dark';
+      var L = paintLayer(b, body, T, lw, g, C);
+      if (L) {
+        g.save();
+        g.shadowColor = dark ? 'rgba(0,0,0,0.6)' : tone === 'whisper' ? 'rgba(14,8,26,0.22)' : 'rgba(14,8,26,0.42)'; g.shadowBlur = m.fs * 0.3 * ds; g.shadowOffsetY = m.fs * 0.26 * ds;
+        g.drawImage(L.c, 0, 0, L.sw, L.sh, L.x, L.y, L.w, L.h);
+        g.restore();
+      } else { bubblePath(g, body.x, body.y, body.w, body.h, m.r, T, tone, m); g.fillStyle = C[0]; g.fill(); g.lineWidth = lw; g.strokeStyle = C[2]; g.lineJoin = 'round'; g.stroke(); }
+      // off-screen pointer: a chevron ahead of the tail tip, pulsing toward the speaker
+      if (T && T.pointer) {
+        var pu = 0.5 + 0.5 * Math.sin(t / 150), cd = m.fs * (0.42 + 0.2 * pu), cs = m.fs * 0.3, qx = T.end.x + T.ux * cd, qy = T.end.y + T.uy * cd, nx = -T.uy, ny = T.ux;
+        g.beginPath(); g.moveTo(qx - T.ux * cs + nx * cs, qy - T.uy * cs + ny * cs); g.lineTo(qx, qy); g.lineTo(qx - T.ux * cs - nx * cs, qy - T.uy * cs - ny * cs);
+        g.lineJoin = 'round'; g.lineCap = 'round'; g.lineWidth = lw * 2.6; g.strokeStyle = C[2]; g.stroke(); g.lineWidth = lw * 1.1; g.strokeStyle = dark ? solid(C[3]) : solid(C[0]); g.stroke();
+      }
+      // hurt: three impact ticks burst from the top corner away from the tail
+      if (tone === 'hurt') {
+        // the corner away from the tail, unless another unit stands there (the ticks must not read as that unit being hit)
+        var busy = function (lf) { var zx = lf ? body.x - m.fs * 1.2 : body.x + body.w - m.fs * 0.3, z = { x: zx, y: body.y - m.fs * 1.2, w: m.fs * 1.5, h: m.fs * 1.8 }; return obsCache.some(function (o) { return o.id != null && String(o.id) !== String(b.spk) && overlap(z, o) > 0; }); };
+        var left = !!(T && T.side === 'r'); if (busy(left)) left = !left;
+        var hx = left ? body.x + m.fs * 0.25 : body.x + body.w - m.fs * 0.25, hy = body.y + m.fs * 0.25, gu = easeOut(age / 170), sg = left ? -1 : 1, q;
+        g.lineJoin = 'round';
+        for (q = busy(left) ? 3 : 0; q < 3; q++) {
+          var an = -Math.PI / 2 + sg * (0.12 + q * 0.6), r0 = m.fs * 0.72, r1 = m.fs * (0.72 + (q === 1 ? 0.6 : 0.4) * gu), c0 = Math.cos(an), s0 = Math.sin(an), hw = m.fs * 0.1;
+          g.beginPath(); g.moveTo(hx + c0 * r0 - s0 * hw, hy + s0 * r0 + c0 * hw); g.lineTo(hx + c0 * r1, hy + s0 * r1); g.lineTo(hx + c0 * r0 + s0 * hw, hy + s0 * r0 - c0 * hw); g.closePath();
+          g.lineWidth = lw * 1.5; g.strokeStyle = C[2]; g.stroke(); g.fillStyle = C[4]; g.fill();
+        }
+      }
+      // the "!" badge on alarm bubbles: pops in after the body with a wiggle and one ring
+      var tx0 = body.x + m.padX;
+      if (tone === 'alarm') {
+        var br = m.fs * 0.6, bcx = body.x + m.padX * 0.5 + br * 0.72, bcy = b.lines.length > 1 ? body.y + m.padY + m.fs * 0.56 : body.y + body.h / 2, ba = age - 60, bs = popScale(ba, 1.4);
+        g.save(); g.translate(bcx, bcy);
+        if (ba > 0 && ba < 460) { var rg = ba / 460; g.beginPath(); g.arc(0, 0, br * (1 + 1.1 * easeOut(rg)), 0, Math.PI * 2); g.lineWidth = lw * (1.2 - rg); g.strokeStyle = C[4]; g.globalAlpha *= 1 - rg; g.stroke(); g.globalAlpha /= 1 - rg; }
+        g.rotate(ba > 0 && ba < 600 ? 0.4 * Math.exp(-ba / 150) * Math.sin(ba / 40) : 0); g.scale(bs, bs);
+        g.beginPath(); g.arc(0, 0, br, 0, Math.PI * 2); g.fillStyle = C[4]; g.fill();
+        g.save(); g.clip(); g.beginPath(); g.arc(0, br * 0.5, br * 1.05, 0, Math.PI * 2); g.fillStyle = 'rgba(90,0,10,0.28)'; g.globalCompositeOperation = 'source-atop'; g.fillRect(-br, br * 0.45, br * 2, br); g.restore();
+        g.beginPath(); g.arc(0, 0, br, 0, Math.PI * 2); g.lineWidth = lw * 0.85; g.strokeStyle = C[2]; g.stroke();
+        g.beginPath(); g.arc(-br * 0.2, -br * 0.2, br * 0.62, Math.PI * 1.02, Math.PI * 1.5); g.lineWidth = lw * 0.6; g.lineCap = 'round'; g.strokeStyle = 'rgba(255,255,255,0.6)'; g.stroke();
+        g.fillStyle = '#fff'; var ew = br * 0.34;
+        g.beginPath(); g.moveTo(-ew * 0.62, -br * 0.6); g.lineTo(ew * 0.62, -br * 0.6); g.lineTo(ew * 0.36, br * 0.12); g.lineTo(-ew * 0.36, br * 0.12); g.closePath(); g.lineJoin = 'round'; g.lineWidth = ew * 0.3; g.strokeStyle = '#fff'; g.stroke(); g.fill();
+        g.beginPath(); g.arc(0, br * 0.47, ew * 0.58, 0, Math.PI * 2); g.fill();
+        g.restore(); tx0 += Math.round(m.fs * 1.05);
+      }
+      if (tone === 'think') tx0 += Math.round(m.fs * 0.2);
+      // text: typed in, each new letter rises into place
+      var cps = +P.cps, shownF = cps > 0 ? Math.max(0, age - 80) / 1000 * cps : 1e9, full = Math.floor(shownF), frac = shownF - full;
+      g.font = fontOf(tone, m.fs); g.textAlign = 'left'; g.textBaseline = 'alphabetic'; g.fillStyle = C[3];
+      var fsT = toneFs(tone, m.fs), ty0 = body.y + m.padY + m.fs * 0.86 + (tone === 'shout' ? spikeD(m) + (fsT - m.fs) * 0.4 : tone === 'think' ? m.fs * 0.15 : 0), left2 = full, i;
+      for (i = 0; i < b.lines.length && left2 >= 0; i++) {
+        var Ln = b.lines[i], lx = tone === 'shout' ? body.x + (body.w - measureStr(Ln, m, tone)) / 2 : tx0, yy = ty0 + i * m.lh;
+        if (left2 >= Ln.length) { g.fillText(Ln, lx, yy); left2 -= Ln.length; continue; }
+        if (left2 > 0) g.fillText(Ln.slice(0, left2), lx, yy);
+        var ch = Ln.charAt(left2), ga = g.globalAlpha;
+        if (ch && ch !== ' ') { g.globalAlpha = ga * Math.min(1, frac * 1.6); g.fillText(ch, lx + measureStr(Ln.slice(0, left2), m, tone), yy + m.fs * 0.3 * (1 - easeOut(frac))); g.globalAlpha = ga; }
+        break;
+      }
+      g.restore();
+    }
+
+    /* crisp: one cell = sc px. The bubble (body + tail) is built as a small mask, then every cell is classified: 1 px ink outline around
+       the silhouette (clean stair-step corners), a lit top row, a shaded bottom row, a 1 px drop shadow under the whole shape. */
+    var RC = {}, rcN = 0;
+    function textRaster(str, col, sc) {
+      var key = str + '|' + col + '|' + sc; if (RC[key]) return RC[key]; if (rcN > 400) { RC = {}; rcN = 0; } rcN++;
+      var w = Math.max(1, bmpWidth(str) * sc), c = mk(w, 8 * sc); if (!c) return null;
+      var g = c.getContext('2d'), x = 0; g.fillStyle = col;
+      var adv = [];
+      for (var i = 0; i < str.length; i++) {
+        var ch = str.charAt(i); adv.push(x);
+        if (ch !== ' ') { var G = glyph(ch); for (var r = 0; r < G.rows.length; r++) for (var q = 0; q < G.rows[r].length; q++) if (G.rows[r].charAt(q) === '#') g.fillRect((x + q) * sc, r * sc, sc, sc); }
+        x += bmpAdv(ch);
+      }
+      adv.push(x);
+      return (RC[key] = { c: c, adv: adv });
+    }
+    function rgbOf(c) {
+      c = solid(c); var n = /^#([0-9a-f]{6})$/i.exec(c); if (n) { var v = parseInt(n[1], 16); return [(v >> 16) & 255, (v >> 8) & 255, v & 255]; }
+      n = /^#([0-9a-f]{3})$/i.exec(c); if (n) { var s = n[1]; return [parseInt(s.charAt(0) + s.charAt(0), 16), parseInt(s.charAt(1) + s.charAt(1), 16), parseInt(s.charAt(2) + s.charAt(2), 16)]; }
+      return [255, 255, 255];
+    }
+    var MG = 11, SP = {}, spN = 0;
+    var TRI = [3, 2, 1, 0, 1, 2], BUMP = [2, 2, 1, 0, 1, 2];
+    // tail: { side, at (cell along the edge), len, lean } in body cells, or null
+    function crispSprite(tone, wc, hc, tl, C, small) {
+      var key = [tone, wc, hc, tl ? tl.side + tl.at + '_' + tl.len + '_' + tl.lean : '-', C.join(','), P.palette, small ? 1 : 0].join('|');
+      if (SP[key]) return SP[key]; if (spN > 80) { SP = {}; spN = 0; } spN++;
+      var W = wc + 2 * MG, H = hc + 2 * MG, M = new Uint8Array(W * H), x, y, i;
+      var set = function (xx, yy, v) { xx += MG; yy += MG; if (xx > 0 && yy > 0 && xx < W - 1 && yy < H - 2) M[yy * W + xx] = v || 1; };
+      var shout = tone === 'shout' && !small, think = tone === 'think' && !small, ix = shout ? 4 : think ? 1 : 0, iy = shout ? 4 : think ? 3 : 0;
+      var fw = wc - 2, fh = hc - 2;   // the fill box (the outline is the ring of cells around the mask)
+      for (y = 0; y < fh; y++) for (x = 0; x < fw; x++) {
+        var ex = Math.min(x, fw - 1 - x), ey = Math.min(y, fh - 1 - y), on, v = 1;
+        if (shout) {
+          var dx = ix - 1 - ex, dy = iy - 1 - ey, mx = Math.abs(x - (fw >> 1)), my = Math.abs(y - (fh >> 1));   // d > 0: outside the core box, in the spike margin
+          if (dx <= 0 && dy <= 0) on = true;
+          else if (dx > 0 && dy > 0) { on = dx + dy <= 3; v = 2; }
+          else if (dy > 0) { on = dy <= TRI[mx % 6]; v = Math.floor((mx + 3) / 6) % 2 ? 2 : 1; }
+          else { on = dx <= TRI[my % 6]; v = Math.floor((my + 3) / 6) % 2 ? 2 : 1; }
+        } else if (think) {
+          var ty = iy - 1 - ey, mxx = Math.abs(x - (fw >> 1));
+          on = ty <= 0 ? ex > 0 || (ey > iy && ey !== iy + 3) || fh < 12 + 2 * iy : (ty <= BUMP[mxx % 6] && ex >= (ty > 1 ? 2 : 1));
+        } else on = fh >= 12 && fw >= 12 ? ex + ey >= 2 && !(ex === 0 && ey === 1) && !(ex === 1 && ey === 0) || ex + ey >= 3 : ex + ey >= 1;
+        if (on) set(x + 1, y + 1, v);
+      }
+      if (tl) {
+        var vert = tl.side === 'b' || tl.side === 't', start = vert ? (tl.side === 'b' ? hc - 1 - iy : iy) : (tl.side === 'r' ? wc - 1 - ix : ix), dir = tl.side === 'b' || tl.side === 'r' ? 1 : -1, n = tl.len + (vert ? iy : ix);
+        if (tone === 'think') {
+          for (i = 0; i < 2; i++) { var pd = Math.round((vert ? iy : ix) + 1 + tl.len * (i === 0 ? 0.3 : 0.85)), pc = tl.at + Math.round(tl.lean * pd), px0 = vert ? pc : start + dir * pd, py0 = vert ? start + dir * pd : pc;
+            set(px0, py0); if (i === 0) { set(px0 + 1, py0); set(px0, py0 + dir); set(px0 + 1, py0 + dir); } }
+        } else for (i = 0; i < n; i++) {
+          var hf = i < n * 0.5 && n - i > 2 ? 1 : 0, c0 = tl.at + Math.round(tl.lean * Math.max(0, i - (vert ? iy : ix))), q;
+          for (q = -hf; q <= hf; q++) { if (vert) set(c0 + q, start + dir * i); else set(start + dir * i, c0 + q); }
+        }
+      }
+      var cv = mk(W, H); if (!cv) return null;
+      var g = cv.getContext('2d'), im = g.createImageData(W, H), D = im.data, lightPal = P.palette !== 'dark', wh = tone === 'whisper';
+      var cF = rgbOf(C[0]), cS = rgbOf(C[1]), cE = rgbOf(C[2]), cA = rgbOf(C[4] || C[1]), cH = lightPal && !wh ? [255, 255, 255] : cF;
+      var put = function (p, c, a) { D[p * 4] = c[0]; D[p * 4 + 1] = c[1]; D[p * 4 + 2] = c[2]; D[p * 4 + 3] = a == null ? 255 : a; };
+      for (y = 1; y < H - 1; y++) for (x = 1; x < W - 1; x++) {
+        var p = y * W + x, mv = M[p];
+        if (mv) { put(p, !M[p + W] ? (mv === 2 ? cA : cS) : !M[p - W] && mv !== 2 ? cH : mv === 2 ? cA : cF); continue; }
+        if (M[p - 1] || M[p + 1] || M[p - W] || M[p + W]) { if (!wh || ((x + y) & 3) < 2) put(p, cE); else put(p, cS); continue; }
+        var up = p - W; if (!M[up] && y > 1 && (M[up - 1] || M[up + 1] || M[up - W])) put(p, [8, 6, 20], 105);   // drop shadow: one cell under the outline
+      }
+      g.putImageData(im, 0, 0);
+      return (SP[key] = cv);
+    }
+    var BADGE = ['.#####.', '###o###', '###o###', '###o###', '#######', '###o###', '.#####.'];
+    function drawCrisp(g, b, body, T, ds, C) {
+      // crisp never blends (a half-alpha bubble reads as a grey ghost on pixel art): a small seed, the full bubble one cell high, rest; end: one cell low, gone
+      var m = b.m, sc = m.sc, age = t - b.born, re = b.rebump === b.born, stage = re ? 2 : age < 50 ? 0 : age < 110 ? 1 : 2;
+      if (b.vis < 0.5) return;
+      if (b.ending) { var u = (t - b.endT) / 240; if (u >= 0.75) return; if (u >= 0.4) stage = 3; }
+      var x = Math.round(body.x / sc) * sc, y = Math.round(body.y / sc) * sc, wc = Math.round(body.w / sc), hc = Math.round(body.h / sc), tone = b.tone;
+      C = C.map(solid);   // pixel art is opaque
+      var sh = tone === 'shout' ? 4 : 0, think = tone === 'think', ix = sh || (think ? 1 : 0), iy = sh || (think ? 3 : 0);
+      g.save(); g.imageSmoothingEnabled = false;
+      var tl = null;
+      if (T) {
+        var vert = T.side === 'b' || T.side === 't', len = Math.max(2, Math.min(MG - 2 - (vert ? iy : ix), Math.round(Math.hypot(T.end.x - T.base.x, T.end.y - T.base.y) / sc)));
+        var lean = vert ? (T.end.x - T.base.x) / Math.max(1, Math.abs(T.end.y - T.base.y)) : (T.end.y - T.base.y) / Math.max(1, Math.abs(T.end.x - T.base.x));
+        tl = { side: T.side, at: vert ? clamp(Math.round((T.base.x - x) / sc), 3 + ix, wc - 4 - ix) : clamp(Math.round((T.base.y - y) / sc), 3 + iy, hc - 4 - iy), len: len, lean: Math.round(clamp(lean, -1, 1) * 4) / 4 };
+      }
+      if (stage === 0) {
+        var w2 = clamp(Math.round(wc * 0.4), 6, 16), h2 = clamp(Math.round(hc * 0.55), 5, 8), fx = tl && (tl.side === 'b' || tl.side === 't') ? tl.at / wc : tl && tl.side === 'l' ? 0 : tl && tl.side === 'r' ? 1 : 0.5, fy = tl && tl.side === 't' ? 0 : tl && (tl.side === 'l' || tl.side === 'r') ? tl.at / hc : 1;
+        var s0 = crispSprite(tone === 'shout' || think ? 'talk' : tone, w2, h2, null, C, true);
+        if (s0) g.drawImage(s0, x + (Math.round((wc - w2) * fx) - MG) * sc, y + (Math.round((hc - h2) * fy) - MG) * sc, s0.width * sc, s0.height * sc);
+        g.restore(); return;
+      }
+      if (stage === 1) y += (T && T.side === 't' ? 1 : -1) * sc;
+      if (stage === 3) y += (T && T.side === 't' ? -1 : 1) * sc;
+      if ((tone === 'hurt' || tone === 'shout') && age < 300) x += (Math.floor(age / 50) % 2 ? 1 : -1) * sc;
+      var S = crispSprite(tone, wc, hc, tl, C, false);
+      if (S) g.drawImage(S, x - MG * sc, y - MG * sc, S.width * sc, S.height * sc);
+      var px = function (xx, yy, ww, hh, col) { g.fillStyle = col; g.fillRect(xx, yy, ww, hh); };
+      var cx = x + ix * sc, cy = y + iy * sc, ch = (hc - 2 * iy) * sc, cw = (wc - 2 * ix) * sc, tx0 = cx + m.padX, ty0 = cy + m.padY, i, q;
+      if (tone === 'alarm') {   // round "!" badge
+        var by = b.lines.length > 1 ? cy + m.padY : cy + Math.round((ch / sc - 7) / 2) * sc, bx = cx + 3 * sc;
+        for (i = 0; i < 7; i++) for (q = 0; q < 7; q++) { var k = BADGE[i].charAt(q); if (k !== '.') px(bx + q * sc, by + i * sc, sc, sc, k === 'o' ? '#ffffff' : i === 6 || (i === 5 && (q === 0 || q === 6)) ? C[2] === '#ffd84a' ? '#b0281c' : '#a8261c' : C[4]); }
+        tx0 = cx + 12 * sc;
+      }
+      var shown = P.cps > 0 ? Math.floor(Math.max(0, age - 80) / 1000 * P.cps) : 1e9, left = shown;
+      for (i = 0; i < b.lines.length && left > 0; i++) {
+        var Ls = b.lines[i], R = textRaster(Ls, C[3], sc); if (!R) break;
+        var n = Math.min(Ls.length, left), wpx = Math.min(R.c.width, Math.max(0, (R.adv[n] - 1) * sc)); left -= Ls.length;
+        var lx = tone === 'shout' ? cx + Math.round((cw - R.c.width) / 2 / sc) * sc : tx0;
+        if (wpx > 0) g.drawImage(R.c, 0, 0, wpx, R.c.height, lx, ty0 + i * m.lh, wpx, R.c.height);
+      }
+      g.restore();
+    }
+    function solid(c) {
+      var mt = /^rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/.exec(String(c || ''));
+      return mt ? '#' + [mt[1], mt[2], mt[3]].map(function (v) { return ('0' + (+v).toString(16)).slice(-2); }).join('') : c;
+    }
+    function crispMode(ctx, ds) {
+      if (P.render === 'crisp') return true; if (P.render === 'smooth') return false;
+      if (SK) return !!SK.pixel;
+      return ds < 1.5 && ctx.canvas && ctx.canvas.width <= 512;
+    }
+    function draw(ctx, offX, offY) {
+      if (!ctx) return;
+      drawn = [];
+      try {
+        offX = +offX || 0; offY = +offY || 0;
+        var ds = devScale(ctx), c = crispMode(ctx, ds), want = c ? 'crisp' : 'smooth';
+        if (!opt.bounds && ctx.canvas) lastView = { x: 0, y: 0, w: Math.round(ctx.canvas.width / ds), h: Math.round(ctx.canvas.height / ds) };
+        if (mode !== want) { mode = want; bubbles.forEach(shape); place(); bubbles.forEach(function (b) { b.ox = b.tx; b.oy = b.ty; }); }
+        var bb = B();
+        var list = bubbles.filter(function (b) { return !b.gone; }).sort(function (a, b) { return a.prio - b.prio || a.id - b.id; });   // important ones on top
+        list.forEach(function (b) {
+          try {
+            var an = anchor(b.spk); if (!an) return;
+            var A = an.a, m = b.m, p = clampBody(A.x + b.ox, A.top + b.oy, b.w, b.h, bb, edgeMg(A, bb, m));
+            if (m.crisp) { p.x = Math.round(p.x); p.y = Math.round(p.y); }
+            var body = { x: p.x, y: p.y, w: b.w, h: b.h }, sd = b.tone === 'shout' ? spikeD(m) : 0, T = tailGeom(sd ? { x: body.x + sd, y: body.y + sd, w: body.w - 2 * sd, h: body.h - 2 * sd } : body, A, m, bb), C = colours(b.tone);
+            if (b.far && P.edge !== 'pointer') T = null;
+            if (T) for (var qi = 0; qi < obsCache.length; qi++) { var qo = obsCache[qi]; if (qo.id == null && !qo.soft && T.end.x > qo.x && T.end.x < qo.x + qo.w && T.end.y > qo.y && T.end.y < qo.y + qo.h) { T = null; break; } }   // never draw a tail tip or pointer under a HUD panel
+            if (b.vis > 0.02) {
+              ctx.save(); ctx.translate(offX, offY);
+              if (m.crisp) drawCrisp(ctx, b, body, T, ds, C); else drawSmooth(ctx, b, body, T, 1, ds, C);
+              ctx.restore();
+            }
+            var r = { x: body.x, y: body.y, w: body.w, h: body.h };
+            if (T) { var minx = Math.min(r.x, T.end.x), miny = Math.min(r.y, T.end.y), maxx = Math.max(r.x + r.w, T.end.x), maxy = Math.max(r.y + r.h, T.end.y); r = { x: minx, y: miny, w: maxx - minx, h: maxy - miny }; }
+            drawn.push({ id: b.id, speaker: b.spk, text: b.text, tone: b.tone, x: r.x, y: r.y, w: r.w, h: r.h, body: body, tip: T ? { x: T.end.x, y: T.end.y } : null, anchor: { x: A.x, top: A.top }, far: !!b.far, repopAge: t - b.repop,
+              pointer: !!(T && T.pointer), clamped: Math.abs(p.x - (A.x + b.ox)) > 0.5 || Math.abs(p.y - (A.top + b.oy)) > 0.5, alpha: b.vis * (b.ending ? 1 - clamp((t - b.endT) / 240, 0, 1) : 1), age: t - b.born, fresh: an.fresh });
+          } catch (e) { warn('drawb', 'drawing a bubble failed: ' + (e && e.message)); }
+        });
+      } catch (e) { warn('draw', 'draw() failed: ' + (e && e.message)); }
+    }
+
+    return {
+      version: VERSION,
+      say: say, bark: bark, update: update, draw: draw,
+      silence: function (id) { bubbles.forEach(function (b) { if (id == null || String(b.spk) === String(id)) endB(b); }); },
+      clear: function () { bubbles = []; drawn = []; cache = {}; said = {}; idleNext = null; },
+      setParams: function (o) { setP(o); bubbles.forEach(shape); place(); },
+      params: function () { var o = {}; for (var k in P) o[k] = P[k]; return o; },
+      count: function () { return bubbles.filter(function (b) { return !b.gone; }).length; },
+      active: function () { return bubbles.filter(function (b) { return !b.gone; }).map(function (b) { return { id: b.id, speaker: b.spk, text: b.text, tone: b.tone, event: b.event, age: t - b.born, ending: b.ending }; }); },
+      rects: function () { return drawn.map(function (d) { return { x: d.x, y: d.y, w: d.w, h: d.h }; }); },
+      lastDrawn: function () { return drawn.slice(); },
+      obstacles: function () { return obsCache.slice(); },
+      lines: function () { return LN; },
+      time: function () { return t; }
+    };
+  }
+
+  root.GameDNA_BarkBubbles = { create: create, version: VERSION, defaults: DEFAULTS, lines: LINES, tones: Object.keys(TONES) };
+})(typeof window !== 'undefined' ? window : this);
+</script>
+<script>/* ---------- pixel strip cast: authored at native size (24 x 36 cells, foot line at the bottom), not derived from the paintings ----------
+   Each character is painted cell by cell (head / body / legs clusters, 1 x 2 px eyes, 8-12 colours) and gets a 1 px ink outline around
+   its silhouette. Walkers have a 4-step cycle (idle, left step, idle, right step); jellies have a rest and a squash frame. All face right. */
+const PIXEL_CAST = (function () {
+  const W = 24, H = 36, INK = '#2a1a1e', SKIN = '#f2c8a0', SKIN_D = '#d39a74', BOOT = '#6e4426', BOOT_D = '#4a2c18';
+  function sheet(paint) {
+    const G = []; for (let y = 0; y < H; y++) G.push(new Array(W).fill(null));
+    const P = (x, y, w, h, c) => { for (let j = y; j < y + (h || 1); j++) for (let i = x; i < x + (w || 1); i++) if (i >= 0 && j >= 0 && i < W && j < H) G[j][i] = c; };
+    paint(P);
+    const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      if (G[y][x]) { g.fillStyle = G[y][x]; g.fillRect(x, y, 1, 1); continue; }
+      const n = (i, j) => i >= 0 && j >= 0 && i < W && j < H && G[j][i];
+      if (n(x - 1, y) || n(x + 1, y) || n(x, y - 1) || n(x, y + 1)) { g.fillStyle = INK; g.fillRect(x, y, 1, 1); }
+    }
+    return c;
+  }
+  // shared clusters. Head: 12 x 11 at x 6..17, y 8..18; body 10 x 9 at x 7..16, y 19..27; legs to y 33 (the foot line is y 34)
+  function head(P, o) {
+    P(7, 8, 10, 1, SKIN); P(6, 9, 12, 9, SKIN); P(7, 18, 10, 1, SKIN_D); P(17, 10, 1, 8, SKIN_D);
+    P(10, 13, 1, 2, INK); P(15, 13, 1, 2, INK);                                  // eyes: 1 x 2, looking right
+    if (!o || !o.noBlush) { P(8, 16, 2, 1, '#eaa08c'); P(16, 16, 1, 1, '#eaa08c'); }
+  }
+  function torso(P, c, cd, belt) { P(7, 19, 10, 9, c); P(16, 19, 1, 9, cd); P(7, 27, 10, 1, cd); if (belt) P(7, 25, 10, 1, belt); }
+  function arms(P, c, cd) { P(5, 20, 2, 5, c); P(17, 20, 2, 5, cd); P(5, 25, 2, 1, SKIN); P(17, 25, 2, 1, SKIN); }
+  function legs(P, f, c, cd) {   // f: 0 stand, 1 left foot forward (right lifted), 2 right foot forward (left lifted)
+    const L = (x, lift, fwd) => { P(x + fwd, 28, 3, 4 - lift, c); P(x + fwd + 2, 28, 1, 4 - lift, cd); P(x + fwd - (fwd < 0 ? 1 : 0), 32 - lift, 4, 2, BOOT); P(x + fwd - (fwd < 0 ? 1 : 0), 33 - lift, 4, 1, BOOT_D); };
+    L(8, f === 2 ? 2 : 0, f === 1 ? 1 : f === 2 ? -1 : 0); L(13, f === 1 ? 2 : 0, f === 2 ? 1 : f === 1 ? -1 : 0);
+  }
+  function skirt(P, f, c, cd, hem) {   // long dress or coat: only the feet step
+    P(6, 26, 12, 6, c); P(17, 26, 1, 6, cd); P(6, 31, 12, 1, hem || cd);
+    const F = (x, lift, fwd) => { P(x + fwd, 32 - lift, 3, 2, BOOT); P(x + fwd, 33 - lift, 3, 1, BOOT_D); };
+    F(8, f === 2 ? 2 : 0, f === 1 ? 2 : f === 2 ? -1 : 0); F(13, f === 1 ? 2 : 0, f === 2 ? 2 : f === 1 ? -1 : 0);
+  }
+  const hero = f => sheet(P => {
+    const HD = '#3f6e72', HL = '#63989a', HK = '#2a4a50', CL = '#4d7358', CK = '#35523e';
+    legs(P, f, '#5d5546', '#453e32'); torso(P, CL, CK, '#7a4a2a'); P(10, 19, 4, 6, '#ece0c2'); P(11, 21, 2, 1, '#c9b98e'); arms(P, CL, CK);
+    head(P);
+    P(9, 3, 4, 1, HD); P(8, 4, 7, 1, HD); P(7, 5, 10, 3, HD); P(5, 8, 14, 3, HD); P(5, 11, 2, 8, HD); P(17, 11, 2, 8, HK); P(8, 5, 4, 1, HL); P(6, 8, 3, 1, HL); P(16, 5, 1, 6, HK);   // pointed hood
+    P(7, 10, 10, 1, '#2c3a44'); P(7, 11, 2, 1, '#2c3a44');                                                                                     // dark fringe
+    P(5, 19, 14, 1, HD); P(6, 20, 1, 2, HD);                                                                                               // hood collar
+    P(19, 22, 1, 3, '#4a3420'); P(18, 25, 3, 1, '#4a3420'); P(18, 26, 3, 3, '#ffc24a'); P(19, 27, 1, 1, '#fff2b0'); P(18, 29, 3, 1, '#4a3420');   // lantern in the leading hand
+  });
+  const herbalist = f => sheet(P => {
+    const ST = '#dcb86c', SD = '#b08c46', SH = '#5f7c4c', SK = '#44603a', DR = '#7d8c9c', DK = '#5c6a7a';
+    skirt(P, f, DR, DK, '#e9dfc6'); P(9, 24, 6, 7, '#ece2c8'); torso(P, SH, SK); P(7, 23, 10, 1, SK); arms(P, SH, SK);
+    head(P); P(6, 9, 1, 8, '#d2ccc0'); P(17, 9, 1, 7, '#b8b2a6'); P(7, 9, 10, 2, '#d8d2c6');                                                   // grey hair
+    P(8, 3, 8, 1, ST); P(7, 4, 10, 4, ST); P(16, 4, 1, 4, SD); P(7, 7, 10, 1, '#6c8a4c'); P(2, 8, 20, 1, ST); P(3, 9, 18, 1, SD); P(9, 7, 1, 1, '#fff'); P(13, 7, 1, 1, '#f0a0b0');   // straw hat, band, flowers
+    P(1, 24, 5, 1, '#8a5e2c'); P(1, 25, 5, 3, '#c08a48'); P(2, 26, 1, 1, '#8a5e2c'); P(4, 26, 1, 1, '#8a5e2c'); P(2, 23, 3, 1, '#7aa85a');     // herb basket
+    P(19, 21, 1, 13, '#8a5a34');                                                                                                           // walking stick
+  });
+  const guard = f => sheet(P => {
+    const GB = '#4c688c', GD = '#36506e', ST = '#a2acb6', SD = '#6e7882';
+    legs(P, f, '#3c4456', '#2c3242'); torso(P, GB, GD, '#e2a432'); P(9, 20, 1, 4, GD); P(12, 20, 1, 4, GD); P(14, 26, 2, 3, '#e2a432'); arms(P, GB, GD);
+    head(P, { noBlush: true }); P(9, 16, 7, 1, '#6c4628'); P(9, 17, 2, 1, '#6c4628'); P(14, 17, 2, 1, '#6c4628');                               // moustache
+    P(8, 3, 8, 1, ST); P(7, 4, 10, 2, ST); P(6, 6, 12, 3, ST); P(16, 4, 2, 5, SD); P(8, 4, 3, 1, '#dce4ea'); P(4, 9, 16, 1, SD); P(5, 10, 14, 1, '#58626c');   // kettle helmet
+    P(20, 3, 1, 31, '#8a5a34'); P(20, 0, 1, 3, '#dfe6ec'); P(19, 2, 1, 1, '#aab4be'); P(21, 2, 1, 1, '#aab4be'); P(19, 5, 3, 1, '#e2a432');         // spear with a pennant tie
+  });
+  const elder = f => sheet(P => {
+    const CT = '#7c5438', CD = '#5a3a26', CP = '#6c8c4c', CK = '#4c683a', BE = '#f2eee2', BD = '#cbc5b4';
+    skirt(P, f, CT, CD); torso(P, CT, CD); P(8, 24, 2, 2, '#a07a52'); arms(P, CT, CD);
+    head(P, { noBlush: true }); P(9, 12, 3, 1, BE); P(14, 12, 3, 1, BE);                                                                       // brows
+    P(7, 16, 10, 2, BE); P(8, 18, 9, 4, BE); P(9, 22, 7, 2, BE); P(11, 24, 3, 1, BE); P(16, 17, 1, 5, BD); P(15, 22, 1, 2, BD); P(12, 16, 2, 1, SKIN_D);   // long beard
+    P(10, 2, 3, 2, '#e8e0c8'); P(8, 4, 8, 1, CP); P(7, 5, 10, 3, CP); P(6, 8, 12, 2, CK); P(16, 5, 1, 3, CK); P(8, 5, 3, 1, '#8cac68');             // knitted cap with a bobble
+    P(20, 20, 1, 14, '#8a5a34'); P(18, 19, 3, 1, '#8a5a34');                                                                                 // cane
+  });
+  const girl = f => sheet(P => {
+    const DR = '#4f709c', DK = '#3a5478', AP = '#f0e8d2', HR = '#b85a2c', HK = '#8e421e';
+    skirt(P, f, DR, DK, '#f0e8d2'); P(9, 22, 6, 9, AP); torso(P, DR, DK); P(9, 21, 6, 7, AP); arms(P, DR, DK);
+    head(P); P(6, 9, 12, 2, HR); P(6, 11, 1, 3, HR); P(17, 11, 1, 2, HK);                                                                      // auburn fringe
+    P(4, 11, 2, 9, HR); P(18, 11, 2, 9, HK); P(4, 17, 2, 1, '#f0e8d2'); P(18, 17, 2, 1, '#f0e8d2');                                               // two braids with ties
+    P(8, 4, 8, 1, AP); P(7, 5, 10, 2, AP); P(6, 7, 12, 2, AP); P(16, 5, 1, 4, '#d6ccb0'); P(5, 8, 1, 2, AP);                                       // kerchief
+    P(8, 25, 8, 1, '#8a5e2c'); P(8, 26, 8, 3, '#c08a48'); P(10, 27, 1, 1, '#8a5e2c'); P(13, 27, 1, 1, '#8a5e2c'); P(7, 24, 1, 2, SKIN); P(16, 24, 1, 2, SKIN);   // basket held in front
+  });
+  const jelly = (f, A, AL, AD, top) => sheet(P => {
+    const sq = f ? 1 : 0, y0 = 22 + sq, rows = [[8, 8], [6, 12], [5, 14], [4, 16], [4, 16], [3, 18], [3, 18], [3, 18], [2, 20], [2, 20], [3, 18]];
+    rows.slice(sq).forEach((r, i) => { const x = r[0] - sq, w = r[1] + 2 * sq; P(x, y0 + i, w, 1, A); P(x + w - 2, y0 + i, 2, 1, AD); });
+    P(3 - sq, 33, 18 + 2 * sq, 1, AD); P(6, 33, 2, 1, A); P(13, 33, 3, 1, A);
+    P(6, y0 + 2, 3, 2, AL); P(6, y0 + 4, 1, 2, AL);                                           // gloss
+    P(9, y0 + 5 - sq, 1, 2, INK); P(14, y0 + 5 - sq, 1, 2, INK); P(10, y0 + 5 - sq, 1, 1, '#fff');      // eyes
+    if (top === 'sprout') { P(11, y0 - 3, 1, 3, '#4c7a34'); P(8, y0 - 5, 3, 2, '#7ab04c'); P(12, y0 - 6, 4, 2, '#5c9440'); P(9, y0 - 5, 1, 1, '#a4d470'); }
+    else { P(11, y0 - 3, 2, 3, '#e8dcc0'); P(8, y0 - 6, 8, 2, '#c89a64'); P(9, y0 - 7, 6, 1, '#c89a64'); P(14, y0 - 6, 2, 2, '#a07a48'); P(10, y0 - 6, 1, 1, '#f0d8a8'); }
+  });
+  const walk = fn => [fn(0), fn(1), fn(0), fn(2)];
+  return {
+    W, H,
+    build: () => ({ hero: walk(hero), merchant: [herbalist(0)], guard: [guard(0)], bram: [elder(0)], tamsin: walk(girl),
+      'slime-1': [jelly(0, '#f0a832', '#ffd98a', '#c0741c', 'sprout'), jelly(1, '#f0a832', '#ffd98a', '#c0741c', 'sprout')],
+      'slime-2': [jelly(0, '#52b89c', '#a8ecd4', '#2c806c', 'cap'), jelly(1, '#52b89c', '#a8ecd4', '#2c806c', 'cap')] })
+  };
+})();
+
+/* ===== H-05 demo: drives module/bark-bubbles.js on a painted HD village square at dusk (640x360 logical, dpr-aware) and a 384x216 native pixel strip ===== */
+'use strict';
+const VW = 640, VH = 360, WW = 1040, STEP = 1000 / 60, LOOP = 16000;
+const qs = new URLSearchParams(location.search);
+const PARAMS = [
+  { key: 'size', label: 'Text size (0 = auto)', type: 'range', min: 0, max: 28, step: 1, default: 0, unit: 'px' },
+  { key: 'width', label: 'Line width', type: 'range', min: 8, max: 40, step: 1, default: 20, unit: 'ch' },
+  { key: 'cps', label: 'Typing speed (0 = instant)', type: 'range', min: 0, max: 120, step: 5, default: 45, unit: '/s' },
+  { key: 'read', label: 'Reading time', type: 'range', min: 20, max: 120, step: 5, default: 55, unit: 'ms/ch' },
+  { key: 'hold', label: 'Minimum hold', type: 'range', min: 600, max: 4000, step: 100, default: 1500, unit: 'ms' },
+  { key: 'max', label: 'Max on screen (0 = auto)', type: 'range', min: 0, max: 8, step: 1, default: 0, unit: '' },
+  { key: 'cooldown', label: 'Same-event cooldown', type: 'range', min: 0, max: 15000, step: 500, default: 4000, unit: 'ms' },
+  { key: 'stagger', label: 'Crowd stagger (one voice per event)', type: 'range', min: 0, max: 2000, step: 50, default: 600, unit: 'ms' },
+  { key: 'pop', label: 'Pop (overshoot)', type: 'range', min: 0, max: 1.5, step: 0.05, default: 0.5, unit: '' },
+  { key: 'idle', label: 'Idle chatter (script off)', type: 'range', min: 0, max: 12000, step: 500, default: 7000, unit: 'ms' },
+  { key: 'palette', label: 'Palette', type: 'select', options: ['light', 'dark', 'parchment'], default: 'light' },
+  { key: 'render', label: 'Render', type: 'select', options: ['auto', 'smooth', 'crisp'], default: 'auto' },
+  { key: 'edge', label: 'Speaker off screen', type: 'select', options: ['pointer', 'hide'], default: 'pointer' }
+];
+const VARIANTS = [
+  ['Modern action RPG', { cps: 45, palette: 'light', pop: 0.5 }], ['Night / dark UI', { palette: 'dark' }], ['Storybook', { palette: 'parchment', cps: 30, read: 70 }],
+  ['Busy town', { idle: 3500, max: 5, width: 16 }], ['Pixel host', { render: 'crisp', size: 8 }], ['Instant, terse', { cps: 0, hold: 1000, read: 40 }]
+];
+const P = {};
+PARAMS.forEach(p => { P[p.key] = p.default; if (qs.has(p.key)) { const v = qs.get(p.key); P[p.key] = p.type === 'range' ? clamp(+v || 0, p.min, p.max) : p.options.includes(v) ? v : p.default; } });
+const FREEZE = qs.has('t') && qs.get('freeze') === '1', T0 = qs.has('t') ? Math.max(0, +qs.get('t') || 0) : 0;
+let SCRIPT_ON = qs.get('script') !== '0', WINDOW_ON = qs.get('window') === '1';
+function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+const lerp = (a, b, u) => a + (b - a) * u, smooth = u => (u = clamp(u, 0, 1), u * u * (3 - 2 * u));
+function hash(a, b) { let h = Math.imul((a | 0) * 374761393 + (b | 0) * 668265263, 3266489917); h ^= h >>> 13; h = Math.imul(h, 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; }
+function track(keys, t) { if (t <= keys[0][0]) return keys[0].slice(1); for (let i = 1; i < keys.length; i++) if (t <= keys[i][0]) { const a = keys[i - 1], b = keys[i], u = smooth((t - a[0]) / (b[0] - a[0])); return a.slice(1).map((v, k) => lerp(v, b[k + 1], u)); } return keys[keys.length - 1].slice(1); }
+
+/* ---------- cast (world px; x = feet centre, y = feet) ---------- */
+const CAST = [
+  { id: 'hero', name: 'Wren', voice: 'hero', kind: 'person',
+    path: [[0, 330, 262], [2600, 560, 232], [4000, 690, 214], [6750, 692, 212], [6950, 676, 224], [7300, 684, 218], [10000, 700, 214], [11000, 690, 226], [13600, 690, 226], [15600, 330, 262], [16000, 330, 262]] },
+  { id: 'guard', name: 'Guard', voice: 'guard', kind: 'guard', path: [[0, 842, 186]] },
+  { id: 'merchant', name: 'Herbalist', voice: 'merchant', kind: 'merchant', path: [[0, 186, 190]] },
+  { id: 'tamsin', name: 'Tamsin', voice: 'villager', kind: 'villager',
+    path: [[0, 250, 318], [3000, 420, 314], [6000, 390, 322], [9600, 40, 304], [12200, -110, 300], [14200, 160, 314], [16000, 250, 318]] },
+  { id: 'bram', name: 'Old Bram', voice: 'elder', kind: 'elder', path: [[0, 552, 276]] },
+  { id: 'slime-1', name: 'Jelly', voice: 'critter', kind: 'slime',
+    path: [[0, 1010, 150], [5600, 790, 128], [6700, 716, 196], [7000, 744, 176], [8200, 772, 150], [10000, 790, 204], [12500, 900, 210], [15000, 1000, 152], [16000, 1010, 150]] },
+  { id: 'slime-2', name: 'Teal jelly', voice: 'critter', kind: 'slime',
+    path: [[0, 1040, 176], [6000, 800, 138], [11000, 786, 130], [13200, 786, 130], [15000, 1030, 176], [16000, 1040, 176]] }
+];
+const C = id => CAST.find(c => c.id === id);
+const CAM = [[0, 0], [3000, 0], [5300, 300], [9000, 400], [13400, 400], [15500, 0], [16000, 0]];
+const LINES = { elder: { idle: ['In my day, jellies were polite.', "The well's humming again.", 'Sit a while, young one.'], greet: ['Ah, a fresh face.'],
+  hurt: ['My back!'], spotted: ['Eh? Who is that?'], wonder: ['Where did I leave my pipe?'], secret: ['The mill key is under the bell.'], taunt: ['Off with you, goo!'] },
+  hero: { taunt: ['Back off, goo!'], secret: ['Keep this between us.'], wonder: ['Which way to the old mill?'] }, guard: { taunt: ['Stand fast!'], secret: ['Captain sleeps on duty.'], wonder: ['Was that a cat?'] },
+  merchant: { secret: ['Psst... rare goods, cheap.'], wonder: ['Did I lock the cellar?'], taunt: ['No haggling!'], lost: ['Customers, come back!'] },
+  villager: { idle: ['Have you seen my cat?', 'Lovely weather today.', 'Mind the geese.'], secret: ['I hid the pie in the well.'], wonder: ['Was it left at the bakery?'], taunt: ['Shoo, shoo!'] },
+  critter: { secret: ['...blub blub'], wonder: ['Blub?'], taunt: ['BLORP!'] } };
+const SCRIPT = [
+  [400, 'merchant', 'Fresh stock today!', 'talk'],
+  [1100, 'tamsin', 'Have you seen my cat?', 'talk'],
+  [2200, 'bram', "The well's humming again.", 'talk'],
+  [3300, 'guard', 'Halt! Who goes there?', 'alarm'],
+  [4300, 'hero', 'Just passing through.', 'talk'],
+  [5100, 'guard', 'Move along, then.', 'talk'],
+  [5900, 'slime-1', 'Blorp!', 'alarm'], [6100, 'slime-2', 'Blorp!', 'alarm'],
+  [6820, 'hero', 'Oof!', 'hurt'],
+  [7950, 'hero', 'Back off, goo!', 'shout'],
+  [8350, 'slime-1', 'Splut!', 'hurt'],
+  [8700, 'tamsin', 'Kitty, come back!', 'talk'],
+  [9500, 'merchant', 'Psst... rare goods, cheap.', 'whisper'],
+  [10500, 'hero', 'Which way to the old mill?', 'think'],
+  [11900, 'guard', 'Gate closes at dusk.', 'talk'], [11950, 'bram', 'In my day, jellies were polite.', 'talk'], [12000, 'hero', 'Noted.', 'talk'], [12050, 'slime-2', '...blub', 'talk']
+];
+
+/* ---------- art: painted Lanternwood set (L-00 lock). Everything the scene draws is in demo/assets/ (the L-00 / L-06 files are vendored copies),
+   so the demo runs from this element's folder alone; the pixel strip's props come from tools/pixelize.py, its cast from pixelcast.js ---------- */
+const OWN = 'assets/';
+const ART = {
+  ground: 'art/ground.webp', patch: 'art/patch.webp', oak: 'art/oak.webp', well: 'art/well.webp', lamp: 'art/lamppost.webp',
+  hero: 'art/walk-keeper.webp', merchant: 'art/herbalist.webp', guard: 'art/guard.webp', bram: 'art/elder.webp', tamsin: 'art/walk-girl.webp',
+  'slime-1': 'art/jelly-amber.webp', 'slime-2': 'art/jelly-teal.webp', stall: 'art/stall.webp', gate: 'art/gate.webp',
+  frameS: 'art/frame-small.webp', frameW: 'art/frame-window.webp', atlas: 'pixel/atlas.png'
+};
+// walk sheets: 5 equal cells in a row (idle, then a 4-pose walk cycle); ax = where the body centre sits in a cell
+const SHEET = { hero: { n: 5, ax: 0.5218 }, tamsin: { n: 5, ax: 0.5797 } };
+const IMG = {}, MISSING = [];
+const artReady = Promise.all(Object.keys(ART).map(k => new Promise(res => { const im = new Image(); im.onload = () => { IMG[k] = im; res(); }; im.onerror = () => { MISSING.push(ART[k]); res(); }; im.src = OWN + ART[k]; })));
+const ATLAS = window.BARK_PIXEL_ATLAS || {};
+// static props (world px; x = foot centre, y = foot line; h = drawn height). lit: lantern position as a fraction of the drawn box from the foot point
+const PROPS = [
+  { k: 'gate', x: 842, y: 104, h: 112, lit: [-0.33, -0.5], r: 120 },
+  { k: 'stall', x: 104, y: 176, h: 108, lit: [0.2, -0.56], r: 120 },
+  { k: 'well', x: 480, y: 222, h: 96, lit: [-0.26, -0.68], r: 110 },
+  { k: 'lamp', x: 236, y: 266, h: 104, lit: [-0.3, -0.6], r: 150 },
+  { k: 'lamp', x: 626, y: 338, h: 104, lit: [-0.3, -0.6], r: 150, flip: true },
+  { k: 'lamp', x: 986, y: 236, h: 104, lit: [-0.3, -0.6], r: 140 },
+  { k: 'oak', x: 34, y: 86, h: 168 }, { k: 'oak', x: 262, y: 64, h: 150, flip: true }, { k: 'oak', x: 452, y: 40, h: 140 }, { k: 'oak', x: 634, y: 70, h: 160, flip: true },
+  { k: 'oak', x: 1012, y: 96, h: 170 }, { k: 'oak', x: 16, y: 262, h: 150, flip: true }, { k: 'oak', x: 1024, y: 372, h: 170, flip: true }, { k: 'oak', x: 820, y: 420, h: 150, flip: true }
+];
+// cobble patches under the square and along the lane to the gate: [x, y (foot), h, flip]
+// the cobbled lane: blobs along a few polylines (radius varies with a hash) make one irregular outline; the cobble patch is tiled inside it
+const LANE = [];
+(function () {
+  const run = (pts, r, seed) => { for (let k = 0; k < pts.length - 1; k++) { const a = pts[k], b = pts[k + 1], n = Math.max(1, Math.round(Math.hypot(b[0] - a[0], b[1] - a[1]) / 7));
+    for (let i = 0; i <= n; i++) { const u = i / n, q = LANE.length + seed, w = 0.5 + 0.5 * Math.sin(q * 0.55) * Math.sin(q * 0.17 + 1);
+      LANE.push([a[0] + (b[0] - a[0]) * u + (hash(q, 1) - 0.5) * 8, a[1] + (b[1] - a[1]) * u + (hash(q, 2) - 0.5) * 8, r * (0.78 + 0.3 * w + 0.16 * hash(q, 3))]); } } };
+  run([[842, 100], [846, 150], [838, 196], [790, 232], [700, 250], [600, 256]], 27, 3);        // gate lane
+  run([[600, 258], [520, 262], [440, 258], [360, 262]], 40, 40);                              // the square around the well
+  run([[360, 262], [290, 250], [226, 232], [160, 212], [112, 196]], 25, 90);                 // to the stall
+  run([[330, 290], [250, 306], [150, 308], [40, 302], [-30, 300]], 19, 130);                 // west lane
+  [[486, 236, 46], [560, 280, 38], [430, 288, 30], [846, 120, 34]].forEach(b => LANE.push(b));
+})();
+const DRAW_H = { hero: 58, guard: 68, merchant: 58, tamsin: 52, bram: 54, 'slime-1': 27, 'slime-2': 27 };
+const FACE = { hero: 1, guard: -1, merchant: 1, tamsin: -1, bram: 1, 'slime-1': 1, 'slime-2': 1 };   // which way each picture looks (1 = right)
+
+/* ---------- canvases ---------- */
+const cv = document.getElementById('game'), ctx = cv.getContext('2d');
+const pcv = document.getElementById('pixel'), pctx = pcv.getContext('2d');
+const PW = 384, PH = 216, K = 0.6;
+const S = { t: 0, lt: 0, si: 0, cam: 0, flash: {}, who: 'hero', pos: {}, dir: {}, dist: {} };
+const HUD = [{ x: 10, y: 10, w: 168, h: 44 }, { x: VW - 208, y: 10, w: 198, h: 30 }];
+const WIN = { x: 40, y: 262, w: 560, h: 88 };
+function uiRects() { return WINDOW_ON ? HUD.concat([WIN]) : HUD; }
+function where(c) { const p = S.pos[c.id]; return p || { x: c.path[0][1], y: c.path[0][2] }; }
+function ratio(k) { const im = IMG[k]; return im ? im.width / (SHEET[k] ? SHEET[k].n : 1) / im.height : 0.5; }
+function sprite(c) { const p = where(c), h = DRAW_H[c.id], w = Math.min(h * ratio(c.id) * (SHEET[c.id] ? 0.8 : 1), 30); return { x: p.x - w / 2 - S.cam, y: p.y - h, w, h: h + 2 }; }
+
+const barks = GameDNA_BarkBubbles.create({
+  bounds: { x: 0, y: 0, w: VW, h: VH },
+  getAnchor: id => { const c = C(id); if (!c) return null; const r = sprite(c); return { x: r.x + r.w / 2, top: r.y + (c.kind === 'slime' ? 5 : 2), w: r.w, h: r.h }; },
+  getObstacles: () => CAST.map(c => Object.assign(sprite(c), { id: c.id })).concat(uiRects()),
+  speakers: () => SCRIPT_ON ? [] : CAST.map(c => ({ id: c.id, voice: c.voice })),
+  lines: LINES,
+  params: Object.assign({}, P)
+});
+// the pixel strip: the same cast at 0.6 scale on a 384x216 native canvas (crisp mode is picked by the module itself)
+const PBOX = { hero: [16, 33], merchant: [20, 32], guard: [18, 33], bram: [16, 33], tamsin: [16, 31], 'slime-1': [20, 13], 'slime-2': [20, 13] };   // drawn size of each authored pixel sprite
+function pSprite(c) { const p = where(c), w = PBOX[c.id][0], h = PBOX[c.id][1]; return { x: Math.round(p.x * K - S.cam * K) - w / 2, y: Math.round(p.y * K) - h, w, h }; }
+const pbarks = GameDNA_BarkBubbles.create({
+  bounds: { x: 0, y: 0, w: PW, h: PH },
+  getAnchor: id => { const c = C(id); if (!c) return null; const r = pSprite(c); return { x: Math.round(r.x + r.w / 2), top: r.y + (c.kind === 'slime' ? 2 : 0), w: r.w, h: r.h }; },
+  getObstacles: () => CAST.map(c => Object.assign(pSprite(c), { id: c.id })).concat([{ x: 5, y: 5, w: 92, h: 24 }]),
+  lines: LINES,
+  params: Object.assign({}, P, { size: 0, width: 18, max: P.max || 4, render: P.render === 'smooth' ? 'auto' : P.render })
+});
+
+/* ---------- step ---------- */
+function step() {
+  S.t += STEP;
+  if (SCRIPT_ON) {
+    S.lt += STEP;
+    if (S.lt >= LOOP) { S.lt -= LOOP; S.si = 0; barks.clear(); pbarks.clear(); }
+    while (S.si < SCRIPT.length && SCRIPT[S.si][0] <= S.lt) {
+      const [, id, text, tone] = SCRIPT[S.si++]; barks.say(id, text, { tone }); pbarks.say(id, text, { tone });
+      if (tone === 'hurt') S.flash[id] = S.t;
+    }
+    S.cam = track(CAM, S.lt)[0];
+    CAST.forEach(c => { const [x, y] = track(c.path, S.lt), n = track(c.path, S.lt + 120), dx = n[0] - x; const o = S.pos[c.id]; if (o && o.lt != null && S.lt > o.lt) S.dist[c.id] = (S.dist[c.id] || 0) + Math.hypot(x - o.x, y - o.y); else S.dist[c.id] = 0;
+      S.pos[c.id] = { x, y, lt: S.lt }; if (Math.abs(dx) > 0.4) S.dir[c.id] = dx > 0 ? 1 : -1; S.pos[c.id].moving = Math.hypot(dx, n[1] - y) > 0.5; });
+  } else CAST.forEach(c => { if (S.pos[c.id]) S.pos[c.id].moving = false; });
+  barks.update(STEP); pbarks.update(STEP);
+}
+// who each character looks at when standing still
+// the hero's opponent / partner by script time: answers the guard, fights the jelly (knock-back and the step back included), answers the guard again
+function heroLook() { const lt = S.lt; return !SCRIPT_ON ? null : lt >= 3300 && lt < 5600 ? 'guard' : lt >= 5600 && lt < 11200 ? 'slime-1' : lt >= 11200 && lt < 13600 ? 'guard' : null; }
+function facing(c) {
+  const p = where(c);
+  if (c.id === 'hero' && S.lt >= 5600 && heroLook()) { const q = where(C(heroLook())); return q.x >= p.x ? 1 : -1; }   // keeps looking at them while knocked back or stepping away
+  if (p.moving && S.dir[c.id]) return S.dir[c.id];
+  if (c.id === 'hero') return S.dir.hero || 1;
+  if (c.id === 'merchant') return 1; if (c.id === 'guard') return -1;
+  const h = where(C('hero')); return h.x >= p.x ? 1 : -1;
+}
+
+/* ---------- world art (static ground pre-rendered at the backing scale) ---------- */
+let ground = null, groundR = 0;
+function buildGround(R) {
+  const c = document.createElement('canvas'); c.width = Math.ceil(WW * R); c.height = Math.ceil(VH * R);
+  const g = c.getContext('2d'); g.setTransform(R, 0, 0, R, 0, 0);
+  g.fillStyle = '#4a5d3a'; g.fillRect(0, 0, WW, VH);
+  if (IMG.ground) { const T = 128; g.imageSmoothingQuality = 'high'; for (let y = 0; y < VH; y += T) for (let x = 0; x < WW; x += T) g.drawImage(IMG.ground, x, y, T + 0.5, T + 0.5); }
+  // packed earth: a soft worn band under and around the cobbles
+  g.save(); g.globalCompositeOperation = 'soft-light'; g.fillStyle = 'rgba(232,206,150,0.5)'; try { g.filter = 'blur(9px)'; } catch (e) {}
+  g.beginPath(); LANE.forEach(([x, y, r]) => { g.moveTo(x + r * 1.25, y); g.ellipse(x, y, r * 1.25, r * 0.95, 0, 0, 7); }); g.fill(); g.restore();
+  // cobbles: the patch tiled on a staggered, turned grid, then cut to the lane's irregular, slightly soft outline
+  if (IMG.patch) {
+    const lane = document.createElement('canvas'); lane.width = c.width; lane.height = c.height; const q = lane.getContext('2d'); q.setTransform(R, 0, 0, R, 0, 0); q.imageSmoothingQuality = 'high';
+    const ph = 54, pw = ph * ratio('patch'); let n = 0;
+    for (let row = 0, y = 60; y < VH + ph; y += ph * 0.56, row++) for (let x = -(row % 2) * pw * 0.4; x < WW + pw; x += pw * 0.72, n++) {
+      if (!LANE.some(([lx, ly, lr]) => Math.abs(lx - x) < lr + pw && Math.abs(ly - y) < lr + ph)) continue;
+      q.save(); q.translate(x + (hash(n, 5) - 0.5) * 10, y + (hash(n, 6) - 0.5) * 8); q.rotate((hash(n, 7) - 0.5) * 1.1); if (hash(n, 8) < 0.5) q.scale(-1, 1); q.drawImage(IMG.patch, -pw / 2, -ph / 2, pw, ph); q.restore();
+    }
+    const mask = document.createElement('canvas'); mask.width = c.width; mask.height = c.height; const mq = mask.getContext('2d'); mq.setTransform(R, 0, 0, R, 0, 0);
+    mq.beginPath(); LANE.forEach(([x, y, r]) => { mq.moveTo(x + r, y); mq.ellipse(x, y, r, r * 0.74, 0, 0, 7); }); mq.fill();
+    q.setTransform(1, 0, 0, 1, 0, 0); q.globalCompositeOperation = 'destination-in'; try { q.filter = 'blur(' + (2.2 * R).toFixed(1) + 'px)'; } catch (e) {} q.drawImage(mask, 0, 0);
+    g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 0.97; g.drawImage(lane, 0, 0); g.restore();
+  }
+  // contact shadows of the props
+  PROPS.forEach(p => { const w = p.h * ratio(p.k) * (p.k === 'oak' ? 0.34 : p.k === 'lamp' ? 0.3 : 0.5); shadow(g, p.x, p.y - 2, w, 0.42); });
+  return c;
+}
+function shadow(g, x, y, w, a) {
+  g.save(); const gr = g.createRadialGradient(x, y, 0, x, y, w);
+  gr.addColorStop(0, 'rgba(10,14,20,' + a + ')'); gr.addColorStop(0.6, 'rgba(10,14,20,' + a * 0.6 + ')'); gr.addColorStop(1, 'rgba(10,14,20,0)');
+  g.fillStyle = gr; g.translate(x, y); g.scale(1, 0.34); g.beginPath(); g.arc(0, 0, w, 0, 7); g.fill(); g.restore();
+}
+function drawImg(g, k, x, y, h, o) {   // foot-anchored, crisp at any backing scale
+  const im = IMG[k]; if (!im) return; o = o || {}; const sh = SHEET[k], cw = im.width / (sh ? sh.n : 1), w = h * cw / im.height;
+  g.save(); g.translate(x, y + (o.dy || 0)); if (o.rot) g.rotate(o.rot); g.scale((o.flip ? -1 : 1) * (o.sx || 1), o.sy || 1);
+  g.imageSmoothingQuality = 'high'; g.drawImage(o.src || im, (o.frame || 0) * cw, 0, cw, im.height, -w * (sh ? sh.ax : 0.5), -h, w, h); g.restore();
+}
+// a white silhouette of a sprite (hit flash), cached
+const WHITE = {};
+function whiteOf(k) {
+  if (WHITE[k]) return WHITE[k]; const im = IMG[k]; if (!im) return null;
+  const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const g = c.getContext('2d');
+  g.drawImage(im, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(255,244,230,0.86)'; g.fillRect(0, 0, c.width, c.height); return (WHITE[k] = c);
+}
+
+/* ---------- characters: the walkers (Wren, Tamsin) step through a 4-pose walk cycle by distance covered; jellies hop; the others breathe ---------- */
+const STRIDE = { hero: 27, tamsin: 23 };   // ground covered by one step (px): the planted foot stays put while the body passes over it
+function walkFrame(c) { const p = where(c); return SHEET[c.id] && p.moving ? 1 + Math.floor((S.dist[c.id] || 0) / (STRIDE[c.id] / 2)) % 4 : 0; }
+function actor(g, c, x, y, t, hurt) {
+  const p = where(c), h = DRAW_H[c.id], slime = c.kind === 'slime', ts = t / 1000, ph = ts * 6.2 + c.id.length * 1.7, frame = walkFrame(c);
+  let dy = 0, rot = 0, sx = 1, sy = 1;
+  if (slime && p.moving) { const s = Math.abs(Math.sin(ph)); dy = -s * 5; sy = 1 - 0.16 * (1 - s) + 0.1 * s; sx = 1 + 0.16 * (1 - s) - 0.06 * s; }   // jellies hop
+  else if (!p.moving) { const b = Math.sin(ts * (slime ? 2.6 : 1.6) + c.id.length); sy = 1 + (slime ? 0.05 : 0.012) * b; sx = 1 - (slime ? 0.04 : 0) * b; }   // breathing
+  else if (frame === 2 || frame === 4) dy = -1;                                                                                                // passing pose: the body rises a little
+  const fa = S.flash[c.id] != null ? t - S.flash[c.id] : 1e9; if (fa < 320) { rot += 0.1 * Math.sin(fa / 26) * (1 - fa / 320); dy -= 2.5 * Math.sin(Math.PI * fa / 320); }   // flinch
+  shadow(g, x, y - 1, slime ? 13 : 15, 0.5 * (1 + dy / 14));
+  drawImg(g, c.id, x, y, h, { dy, rot, sx, sy, frame, flip: facing(c) !== FACE[c.id], src: hurt ? whiteOf(c.id) : null });
+}
+
+/* ---------- render ---------- */
+let lightLayer = null;
+function fit() {
+  const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  const w = Math.max(VW, Math.round((r.width || VW) * dpr)), h = Math.round(w * VH / VW);
+  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+  const R = cv.width / VW; if (!ground || Math.abs(R - groundR) > 0.01) { ground = buildGround(R); groundR = R; }
+  // the pixel strip is shown at a whole number of device pixels per native pixel
+  const box = pcv.parentNode.getBoundingClientRect(), n = Math.max(1, Math.floor((box.width - 28) * dpr / PW)), cw = PW * n / dpr;
+  if (pcv.style.width !== cw + 'px') { pcv.style.width = cw + 'px'; pcv.style.height = PH * n / dpr + 'px'; }
+}
+function flick(i, ts) { return 0.88 + 0.07 * Math.sin(ts * 9.1 + i * 2.3) + 0.05 * Math.sin(ts * 23.7 + i * 5.1); }
+function lights(ts) {
+  const L = [];
+  PROPS.forEach((p, i) => { if (!p.lit) return; const w = p.h * ratio(p.k); L.push({ x: p.x + (p.flip ? -1 : 1) * p.lit[0] * w, y: p.y + p.lit[1] * p.h, r: p.r, i: flick(i, ts) }); });
+  const hero = C('hero'), hp = where(hero), f = facing(hero) === FACE.hero ? 1 : -1;
+  L.push({ x: hp.x + f * 0.2 * DRAW_H.hero, y: hp.y - 0.36 * DRAW_H.hero, r: 96, i: flick(9, ts) });
+  CAST.forEach(c => { if (c.id === 'hero') return; const p = where(c); L.push({ x: p.x, y: p.y - DRAW_H[c.id] * 0.55, r: c.kind === 'slime' ? 46 : 64, i: 0.5, fill: true }); });   // a dim fill so every speaker stays readable
+  return L;
+}
+function render() {
+  fit();
+  const R = cv.width / VW, g = ctx, t = S.t, ts = t / 1000, cam = S.cam;
+  g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingQuality = 'high'; g.drawImage(ground, Math.round(cam * R), 0, VW * R, VH * R, 0, 0, cv.width, cv.height);
+  g.setTransform(R, 0, 0, R, 0, 0);
+  // selection ring (under the sprites)
+  const sel = C(S.who); if (sel && !FREEZE) { const p = where(sel); g.strokeStyle = 'rgba(255,214,120,0.85)'; g.lineWidth = 1.6; g.setLineDash([5, 4]); g.lineDashOffset = -t / 60; g.beginPath(); g.ellipse(p.x - cam, p.y, 17, 6, 0, 0, 7); g.stroke(); g.setLineDash([]); }
+  // y-sorted world objects
+  const list = [];
+  PROPS.forEach(p => list.push({ y: p.y, d: () => drawImg(g, p.k, p.x - cam, p.y, p.h, { flip: p.flip, rot: p.k === 'oak' ? Math.sin(ts * 0.7 + p.x) * 0.006 : 0 }) }));
+  CAST.forEach(c => { const p = where(c), hurt = S.flash[c.id] != null && t - S.flash[c.id] < 150 && Math.floor((t - S.flash[c.id]) / 50) % 2 === 0; list.push({ y: p.y, d: () => actor(g, c, p.x - cam, p.y, t, hurt) }); });
+  list.sort((a, b) => a.y - b.y).forEach(o => o.d());
+  // dusk: a cool wash with holes at the lanterns, then warm glows and fireflies
+  const L = lights(ts);
+  if (!lightLayer) lightLayer = document.createElement('canvas');
+  const lw = Math.ceil(VW / 2), lh = Math.ceil(VH / 2); if (lightLayer.width !== lw) { lightLayer.width = lw; lightLayer.height = lh; }
+  const o = lightLayer.getContext('2d'); o.setTransform(1, 0, 0, 1, 0, 0); o.globalCompositeOperation = 'source-over'; o.clearRect(0, 0, lw, lh); o.fillStyle = 'rgba(22,28,60,0.5)'; o.fillRect(0, 0, lw, lh);
+  o.setTransform(0.5, 0, 0, 0.5, 0, 0); o.globalCompositeOperation = 'destination-out';
+  L.forEach(l => { const x = l.x - cam, gr = o.createRadialGradient(x, l.y, 0, x, l.y, l.r); gr.addColorStop(0, 'rgba(0,0,0,' + Math.min(1, 0.95 * l.i) + ')'); gr.addColorStop(0.55, 'rgba(0,0,0,' + Math.min(1, 0.45 * l.i) + ')'); gr.addColorStop(1, 'rgba(0,0,0,0)'); o.fillStyle = gr; o.beginPath(); o.arc(x, l.y, l.r, 0, 7); o.fill(); });
+  g.imageSmoothingEnabled = true; g.drawImage(lightLayer, 0, 0, VW, VH);
+  g.save(); g.globalCompositeOperation = 'lighter';
+  L.forEach(l => { if (l.fill) return; const x = l.x - cam, gr = g.createRadialGradient(x, l.y, 0, x, l.y, l.r * 0.75); gr.addColorStop(0, 'rgba(255,196,110,' + (0.5 * l.i) + ')'); gr.addColorStop(0.3, 'rgba(255,150,60,' + (0.2 * l.i) + ')'); gr.addColorStop(1, 'rgba(255,140,40,0)'); g.fillStyle = gr; g.beginPath(); g.arc(x, l.y, l.r, 0, 7); g.fill(); });
+  for (let i = 0; i < 34; i++) {
+    const bx = hash(i, 1) * WW, by = 70 + hash(i, 2) * (VH - 110), sp = 0.2 + hash(i, 3) * 0.5;
+    const x = bx + Math.sin(ts * sp + i) * 40 - cam, y = by + Math.cos(ts * sp * 1.3 + i * 2) * 22, a = Math.max(0, Math.sin(ts * (0.8 + hash(i, 4)) + i * 1.7));
+    if (x < -10 || x > VW + 10) continue;
+    const gr = g.createRadialGradient(x, y, 0, x, y, 7); gr.addColorStop(0, 'rgba(220,255,150,' + (0.85 * a) + ')'); gr.addColorStop(1, 'rgba(180,255,120,0)'); g.fillStyle = gr; g.beginPath(); g.arc(x, y, 7, 0, 7); g.fill();
+  }
+  g.restore();
+  const vg = g.createRadialGradient(VW / 2, VH / 2, VH * 0.45, VW / 2, VH / 2, VW * 0.68); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(4,6,16,0.5)'); g.fillStyle = vg; g.fillRect(0, 0, VW, VH);
+  // bubbles: after the world, before the HUD
+  barks.draw(g);
+  hud(g);
+  renderPixel();
+}
+// nine-slice frame from the painted UI kit (L-06) over a dark walnut panel
+function nine(g, im, sl, r, corner) {
+  const [l, tp, rt, bt] = sl, iw = im.width, ih = im.height, c = corner, mw = r.w - 2 * c, mh = r.h - 2 * c;
+  const xs = [[0, l, r.x, c], [l, iw - l - rt, r.x + c, mw], [iw - rt, rt, r.x + c + mw, c]], ys = [[0, tp, r.y, c], [tp, ih - tp - bt, r.y + c, mh], [ih - bt, bt, r.y + c + mh, c]];
+  g.imageSmoothingQuality = 'high';
+  for (let j = 0; j < 3; j++) for (let i = 0; i < 3; i++) { if (i === 1 && j === 1) continue; if (xs[i][3] > 0 && ys[j][3] > 0) g.drawImage(im, xs[i][0], ys[j][0], xs[i][1], ys[j][1], xs[i][2] - (i === 1 ? 0.3 : 0), ys[j][2] - (j === 1 ? 0.3 : 0), xs[i][3] + (i === 1 ? 0.6 : 0), ys[j][3] + (j === 1 ? 0.6 : 0)); }
+}
+function panel(g, r, big) {
+  const im = IMG[big ? 'frameW' : 'frameS'], corner = big ? 24 : 9, inset = big ? 6.2 : 3.6;
+  const gr = g.createLinearGradient(0, r.y, 0, r.y + r.h); gr.addColorStop(0, 'rgba(48,33,22,0.95)'); gr.addColorStop(1, 'rgba(26,17,12,0.95)');
+  g.save(); g.shadowColor = 'rgba(0,0,0,0.5)'; g.shadowBlur = 10 * (cv.width / VW); g.shadowOffsetY = 3 * (cv.width / VW); g.fillStyle = gr; g.beginPath(); g.roundRect(r.x + inset, r.y + inset, r.w - 2 * inset, r.h - 2 * inset, 3); g.fill(); g.restore();
+  if (im) nine(g, im, big ? [71, 66, 71, 66] : [17, 16, 17, 16], r, corner);
+  else { g.strokeStyle = '#b98a4a'; g.lineWidth = 2; g.strokeRect(r.x + 3, r.y + 3, r.w - 6, r.h - 6); }
+}
+function hud(g) {
+  const SERIF = 'Georgia, "Palatino Linotype", "Book Antiqua", Palatino, serif', SANS = '"Arial Rounded MT Bold", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif';
+  const low = S.flash.hero != null && S.lt > 6800 && S.lt < 15000, hp = low ? 0.72 : 0.9;
+  panel(g, HUD[0]); g.textBaseline = 'alphabetic'; g.textAlign = 'left';
+  g.font = '700 12px ' + SERIF; g.fillStyle = '#f3d68a'; g.fillText('Wren', 23, 28); const nw = g.measureText('Wren').width; g.font = '600 9.5px ' + SANS; g.fillStyle = '#cdbb9a'; g.fillText('Lv 4', 23 + nw + 7, 28);
+  g.textAlign = 'right'; g.fillStyle = '#f4ead2'; g.fillText(Math.round(60 * hp) + ' / 60', 165, 28); g.textAlign = 'left';
+  const bx = 23, by = 34, bw = 142, bh = 8;
+  g.fillStyle = '#120b08'; g.beginPath(); g.roundRect(bx - 1, by - 1, bw + 2, bh + 2, 4); g.fill();
+  const hg = g.createLinearGradient(0, by, 0, by + bh); hg.addColorStop(0, low ? '#ffb07a' : '#ff8f7a'); hg.addColorStop(0.5, low ? '#e8662c' : '#d9473c'); hg.addColorStop(1, low ? '#a83e14' : '#8e2420');
+  g.fillStyle = hg; g.beginPath(); g.roundRect(bx, by, bw * hp, bh, 3); g.fill();
+  g.fillStyle = 'rgba(255,255,255,0.35)'; g.beginPath(); g.roundRect(bx + 2, by + 1.2, bw * hp - 4, 1.6, 1); g.fill();
+  g.strokeStyle = '#b98a4a'; g.lineWidth = 1; g.beginPath(); g.roundRect(bx - 1, by - 1, bw + 2, bh + 2, 4); g.stroke();
+  panel(g, HUD[1]); g.font = '700 11.5px ' + SERIF; g.fillStyle = '#f3d68a'; g.textAlign = 'center'; g.fillText('Find the old mill', HUD[1].x + HUD[1].w / 2 + 6, 29); g.textAlign = 'left';
+  g.fillStyle = '#f3d68a'; g.beginPath(); const qx = HUD[1].x + 22, qy = 25; g.moveTo(qx, qy - 5); g.lineTo(qx + 4, qy); g.lineTo(qx, qy + 5); g.lineTo(qx - 4, qy); g.closePath(); g.fill(); g.strokeStyle = '#6b4a1e'; g.lineWidth = 0.8; g.stroke();
+  if (WINDOW_ON) { panel(g, WIN, true); g.fillStyle = '#f3d68a'; g.font = '700 14px ' + SERIF; g.fillText('Old Bram', 66, 290); g.fillStyle = '#f4ead2'; g.font = '500 13px ' + SANS; g.fillText('A window like this one is a UI rect: bubbles stay clear of it,', 66, 310); g.fillText('and hide while a window sits over every free spot.', 66, 328); }
+}
+let pGround = null, pLight = null;
+function pDraw(g, k, x, y, flip) {   // native-pixel sprite, foot-anchored (the atlas cells carry a 1 px outline margin)
+  const a = ATLAS[k], im = IMG.atlas; if (!a || !im) return;
+  const dx = Math.round(x - a[2] / 2), dy = Math.round(y - a[3] + 1);
+  if (flip) { g.save(); g.translate(dx + a[2], dy); g.scale(-1, 1); g.drawImage(im, a[0], a[1], a[2], a[3], 0, 0, a[2], a[3]); g.restore(); }
+  else g.drawImage(im, a[0], a[1], a[2], a[3], dx, dy, a[2], a[3]);
+}
+let pCast = null;
+function renderPixel() {
+  const g = pctx, cam = Math.round(S.cam * K), t = S.t, ts = t / 1000, im = IMG.atlas;
+  g.imageSmoothingEnabled = false;
+  if (!im) { g.fillStyle = '#4a5d3a'; g.fillRect(0, 0, PW, PH); pbarks.draw(g); return; }
+  if (!pGround) {   // the static ground: tiles, cobbles and prop shadows, once
+    pGround = document.createElement('canvas'); pGround.width = Math.ceil(WW * K); pGround.height = PH; const q = pGround.getContext('2d'); q.imageSmoothingEnabled = false;
+    const a = ATLAS.ground; for (let y = 0; y < PH; y += a[3]) for (let x = 0; x < pGround.width; x += a[2]) q.drawImage(im, a[0], a[1], a[2], a[3], x, y, a[2], a[3]);
+    const ln = document.createElement('canvas'); ln.width = pGround.width; ln.height = PH; const lq = ln.getContext('2d'), pa = ATLAS.patch; lq.imageSmoothingEnabled = false;   // cobbles: tiled, then cut to the lane outline (hard pixel edge)
+    for (let row = 0, y = 30; y < PH + pa[3]; y += Math.round(pa[3] * 0.6), row++) for (let x = -(row % 2) * 20; x < ln.width + pa[2]; x += Math.round(pa[2] * 0.76)) { const fl = hash(x, row) < 0.5; lq.save(); lq.translate(x + (fl ? pa[2] : 0), y); if (fl) lq.scale(-1, 1); lq.drawImage(im, pa[0], pa[1], pa[2], pa[3], 0, 0, pa[2], pa[3]); lq.restore(); }
+    const mk = document.createElement('canvas'); mk.width = ln.width; mk.height = PH; const mq = mk.getContext('2d'); mq.fillStyle = '#000';
+    LANE.forEach(([x, y, r]) => { const rx = Math.round(r * K), ry = Math.round(r * 0.74 * K), cx = Math.round(x * K), cy = Math.round(y * K); for (let j = -ry; j <= ry; j++) { const hw = Math.round(rx * Math.sqrt(1 - (j / (ry + 0.5)) ** 2)); mq.fillRect(cx - hw, cy + j, 2 * hw, 1); } });
+    lq.globalCompositeOperation = 'destination-in'; lq.drawImage(mk, 0, 0); q.drawImage(ln, 0, 0);
+    q.fillStyle = 'rgba(16,14,24,0.4)'; PROPS.forEach(p => { const w = Math.round(ATLAS[p.k][2] * (p.k === 'oak' ? 0.3 : 0.42)), x = Math.round(p.x * K), y = Math.round(p.y * K); q.fillRect(x - w, y - 2, 2 * w, 3); q.fillRect(x - w + 2, y - 3, 2 * w - 4, 5); });
+    pCast = PIXEL_CAST.build();
+  }
+  g.drawImage(pGround, cam, 0, PW, PH, 0, 0, PW, PH);
+  const list = [];
+  PROPS.forEach(p => list.push({ y: p.y, d: () => pDraw(g, p.k, Math.round(p.x * K) - cam, Math.round(p.y * K), !!p.flip) }));
+  CAST.forEach(c => {
+    const p = where(c), hurt = S.flash[c.id] != null && t - S.flash[c.id] < 150 && Math.floor((t - S.flash[c.id]) / 50) % 2 === 0;
+    list.push({ y: p.y, d: () => {
+      const x = Math.round(p.x * K) - cam, y = Math.round(p.y * K), slime = c.kind === 'slime', F = pCast[c.id], PC = PIXEL_CAST;
+      const up = slime && p.moving ? Math.floor(ts * 4 + c.id.length) % 2 : 0, fr = slime ? (p.moving ? 1 - up : 0) : F.length > 1 && p.moving ? 1 + Math.floor((S.dist[c.id] || 0) / (STRIDE[c.id] / 2)) % 4 - 1 : 0;   // jellies: squash on the ground, round in the air
+      g.fillStyle = 'rgba(16,14,24,0.45)'; const sw = slime ? 9 : 6; g.fillRect(x - sw, y - 1, 2 * sw, 2); g.fillRect(x - sw + 1, y - 2, 2 * sw - 2, 4);
+      const flip = facing(c) < 0, dx = x - PC.W / 2, dy = y - PC.H + 1 - up * 3 - (!slime && fr % 2 ? 1 : 0);   // step frames: the body rises one pixel
+      g.save(); if (flip) { g.translate(dx + PC.W, dy); g.scale(-1, 1); } else g.translate(dx, dy);
+      g.drawImage(F[Math.max(0, fr) % F.length], 0, 0);
+      if (hurt) { g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.75; g.drawImage(F[Math.max(0, fr) % F.length], 0, 0); }
+      g.restore();
+    } });
+  });
+  list.sort((a, b) => a.y - b.y).forEach(o => o.d());
+  // dusk at native resolution: a cool wash with holes at the lanterns
+  if (!pLight) { pLight = document.createElement('canvas'); pLight.width = PW; pLight.height = PH; }
+  const o = pLight.getContext('2d'); o.globalCompositeOperation = 'source-over'; o.clearRect(0, 0, PW, PH); o.fillStyle = 'rgba(22,28,60,0.46)'; o.fillRect(0, 0, PW, PH); o.globalCompositeOperation = 'destination-out';
+  lights(ts).forEach(l => { const x = Math.round(l.x * K) - cam, y = Math.round(l.y * K), r = l.r * K; const gr = o.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, 'rgba(0,0,0,' + Math.min(1, 0.95 * (l.fill ? l.i : 1)) + ')'); gr.addColorStop(0.55, 'rgba(0,0,0,' + (l.fill ? 0.22 : 0.45) + ')'); gr.addColorStop(1, 'rgba(0,0,0,0)'); o.fillStyle = gr; o.beginPath(); o.arc(x, y, r, 0, 7); o.fill(); });
+  g.drawImage(pLight, 0, 0);
+  for (let i = 0; i < 20; i++) {   // fireflies: single lit pixels
+    const bx = hash(i, 1) * WW, by = 70 + hash(i, 2) * (VH - 110), sp = 0.2 + hash(i, 3) * 0.5, x = Math.round((bx + Math.sin(ts * sp + i) * 40) * K) - cam, y = Math.round((by + Math.cos(ts * sp * 1.3 + i * 2) * 22) * K);
+    if (Math.sin(ts * (0.8 + hash(i, 4)) + i * 1.7) > 0.3 && x >= 0 && x < PW) { g.fillStyle = '#e6ff9a'; g.fillRect(x, y, 1, 1); g.fillStyle = 'rgba(200,255,130,0.35)'; g.fillRect(x - 1, y, 3, 1); g.fillRect(x, y - 1, 1, 3); }
+  }
+  pbarks.draw(g);
+  // HUD plate: name, HP bar
+  const low = S.flash.hero != null && S.lt > 6800 && S.lt < 15000, hp = low ? 0.72 : 0.9;
+  g.fillStyle = '#1e140e'; g.fillRect(6, 5, 90, 24); g.fillRect(5, 6, 92, 22); g.fillStyle = '#b98a4a'; g.fillRect(7, 6, 88, 1); g.fillRect(7, 27, 88, 1); g.fillRect(6, 7, 1, 20); g.fillRect(95, 7, 1, 20); g.fillStyle = '#3a271a'; g.fillRect(7, 7, 88, 20);
+  g.fillStyle = '#f3d68a'; [[0, '#.#.# #.#.# #.#.# #.#.# .#.#.'], [6, '###. #..# ###. #.#. #..#'], [11, '#### #... ###. #... ####'], [16, '#..# ##.# #.## #..# #..#']].forEach(([ox, rows]) => rows.split(' ').forEach((r, j) => { for (let i = 0; i < r.length; i++) if (r[i] === '#') g.fillRect(11 + ox + i, 10 + j, 1, 1); }));
+  g.fillStyle = '#120b08'; g.fillRect(10, 18, 82, 6); g.fillStyle = low ? '#e8662c' : '#d9473c'; g.fillRect(11, 19, Math.round(80 * hp), 4); g.fillStyle = low ? '#ffb07a' : '#ff8f7a'; g.fillRect(11, 19, Math.round(80 * hp), 1);
+}
+
+/* ---------- controls ---------- */
+const whoEl = document.getElementById('who');
+['hero', 'guard', 'merchant', 'tamsin', 'bram', 'slime-1'].forEach(id => { const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'radio'); b.dataset.v = id; b.textContent = C(id).name; b.setAttribute('aria-checked', id === S.who); whoEl.appendChild(b); });
+whoEl.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.who = b.dataset.v; [...whoEl.children].forEach(x => x.setAttribute('aria-checked', x === b)); });
+function trigger(ev) {
+  const c = C(S.who); if (!c) return;
+  if (ev === 'long') { barks.say(c.id, 'I have been standing here since dawn and not one soul has asked about the turnips.', { tone: 'talk' }); pbarks.say(c.id, 'I have been standing here since dawn and not one soul has asked about the turnips.', { tone: 'talk' }); return; }
+  if (ev === 'crowd') { const vis = CAST.filter(k => { const r = sprite(k); return r.x > 0 && r.x < VW; }).slice(0, 4); vis.forEach(k => { barks.bark(k.id, 'idle', { voice: k.voice, cooldown: 0 }); pbarks.bark(k.id, 'idle', { voice: k.voice, cooldown: 0 }); }); return; }
+  barks.bark(c.id, ev, { voice: c.voice, cooldown: 0 }); pbarks.bark(c.id, ev, { voice: c.voice, cooldown: 0 });
+  if (ev === 'hurt') S.flash[c.id] = S.t;
+}
+document.querySelectorAll('[data-ev]').forEach(b => b.addEventListener('click', () => trigger(b.dataset.ev)));
+const KEYS = ['idle', 'spotted', 'hurt', 'taunt', 'secret', 'wonder', 'long'];
+addEventListener('keydown', e => { const i = '1234567'.indexOf(e.key); if (i >= 0) trigger(KEYS[i]); });
+cv.addEventListener('pointerdown', e => { const r = cv.getBoundingClientRect(), x = (e.clientX - r.left) * VW / r.width, y = (e.clientY - r.top) * VH / r.height; let best = null, bd = 40; CAST.forEach(c => { const s = sprite(c), d = Math.hypot(s.x + s.w / 2 - x, s.y + s.h / 2 - y); if (d < bd) { bd = d; best = c; } }); if (best) { S.who = best.id; [...whoEl.children].forEach(x => x.setAttribute('aria-checked', x.dataset.v === best.id)); trigger('idle'); } });
+const scriptBtn = document.getElementById('script'), winBtn = document.getElementById('window');
+function syncTog() { scriptBtn.setAttribute('aria-pressed', SCRIPT_ON); scriptBtn.textContent = 'Script: ' + (SCRIPT_ON ? 'on' : 'off'); winBtn.setAttribute('aria-pressed', WINDOW_ON); winBtn.textContent = 'Window: ' + (WINDOW_ON ? 'on' : 'off'); }
+scriptBtn.onclick = () => { SCRIPT_ON = !SCRIPT_ON; syncTog(); };
+winBtn.onclick = () => { WINDOW_ON = !WINDOW_ON; syncTog(); };
+document.getElementById('reset').onclick = () => { S.lt = 0; S.si = 0; barks.clear(); pbarks.clear(); S.flash = {}; };
+syncTog();
+const pEl = document.getElementById('params');
+const vRow = document.createElement('div'); vRow.className = 'row';
+vRow.innerHTML = `<label><span>Variant</span></label><select id="variant" aria-label="Variant preset"><option value="">Custom</option>${VARIANTS.map((v, i) => `<option value="${i}">${v[0]}</option>`).join('')}</select>`;
+pEl.appendChild(vRow);
+const controls = {};
+vRow.querySelector('select').onchange = e => { const v = VARIANTS[+e.target.value]; if (!v || e.target.value === '') return; PARAMS.forEach(p => { P[p.key] = p.default; }); Object.assign(P, v[1]); PARAMS.forEach(p => controls[p.key] && controls[p.key](P[p.key])); apply(); };
+PARAMS.forEach(p => {
+  const row = document.createElement('div'); row.className = 'row';
+  if (p.type === 'range') {
+    row.innerHTML = `<label><span>${p.label}</span><output>${P[p.key]}${p.unit ? ' ' + p.unit : ''}</output></label><input type="range" min="${p.min}" max="${p.max}" step="${p.step}" value="${P[p.key]}" aria-label="${p.label}">`;
+    const inp = row.querySelector('input'), out = row.querySelector('output'), fill = () => inp.style.setProperty('--fill', ((inp.value - p.min) / (p.max - p.min) * 100) + '%');
+    fill(); inp.oninput = () => { P[p.key] = +inp.value; out.textContent = inp.value + (p.unit ? ' ' + p.unit : ''); fill(); apply(); };
+    controls[p.key] = v => { inp.value = v; out.textContent = v + (p.unit ? ' ' + p.unit : ''); fill(); };
+  } else {
+    row.innerHTML = `<label><span>${p.label}</span></label><div class="seg" role="radiogroup">${p.options.map(o => `<button type="button" role="radio" aria-checked="${o === P[p.key]}" data-v="${o}">${o}</button>`).join('')}</div>`;
+    controls[p.key] = v => [...row.querySelectorAll('.seg button')].forEach(x => x.setAttribute('aria-checked', x.dataset.v === v));
+    row.querySelector('.seg').onclick = e => { const b = e.target.closest('button'); if (!b) return; P[p.key] = b.dataset.v; [...b.parentNode.children].forEach(x => x.setAttribute('aria-checked', x === b)); apply(); };
+  }
+  pEl.appendChild(row);
+});
+function apply() { barks.setParams(P); pbarks.setParams(Object.assign({}, P, { size: 0, width: 18, max: P.max || 4, render: P.render === 'smooth' ? 'auto' : P.render })); }
+
+/* ---------- loop ---------- */
+CAST.forEach(c => { const [x, y] = track(c.path, 0); S.pos[c.id] = { x, y }; });
+/* text state for critics and tools/sprites/statecheck.py. Painted scene (view px, x = world x - camera): the mirror is facing(c) !== FACE[c.id], so the
+   drawn side is facing(c) itself. The pixel strip (second canvas, canvas:'px', ids px-*) draws the same cast from pixelcast.js, whose sprites all look
+   right: flip = facing(c) < 0. Who looks at whom: a walker faces its way; the hero answers the guard, then fights the jellies, then answers the guard
+   again; everyone else who stands looks at the hero. */
+window.__state = () => {
+  const lt = S.lt, side = v => v > 0 ? 'right' : 'left';
+  const look = c => { const p = where(c); if (c.id === 'hero') return p.moving && lt < 5600 ? null : heroLook(); return p.moving ? null : 'hero'; };
+  const vx = c => { const p = where(c); return p.moving && SCRIPT_ON ? Math.round((track(c.path, lt + 120)[0] - p.x) * 100) / 100 : 0; };
+  const actors = CAST.map(c => { const p = where(c); return { id: c.id, x: Math.round(p.x - S.cam), y: Math.round(p.y), facing: side(facing(c)), target: look(c), vx: vx(c), native: side(FACE[c.id]), flipX: facing(c) !== FACE[c.id] }; });
+  CAST.forEach(c => { const p = where(c), t = look(c); actors.push({ id: 'px-' + c.id, canvas: 'px', x: Math.round(p.x * K) - Math.round(S.cam * K), y: Math.round(p.y * K), facing: side(facing(c)), target: t ? 'px-' + t : null, vx: vx(c), native: 'right', flipX: facing(c) < 0 }); });
+  return { t: Math.round(S.t), lt: Math.round(lt), actors };
+};
+window.__barkDemo = () => ({ t: S.t, lt: S.lt, cam: S.cam, bubbles: barks.lastDrawn().map(d => ({ speaker: d.speaker, text: d.text, tone: d.tone, x: Math.round(d.x), y: Math.round(d.y), w: Math.round(d.w), h: Math.round(d.h), pointer: d.pointer, clamped: d.clamped })), pixel: pbarks.lastDrawn().length });
+for (let n = Math.floor(T0 / STEP); n > 0; n--) step();
+artReady.then(() => {
+  render();
+  if (MISSING.length) {   // never fail silently: say which files are missing, on the canvas
+    const g = ctx, R = cv.width / VW; g.setTransform(R, 0, 0, R, 0, 0); g.fillStyle = 'rgba(20,8,8,0.92)'; g.fillRect(0, VH / 2 - 44, VW, 88); g.fillStyle = '#ffd0c0'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.font = '700 15px system-ui, sans-serif'; g.fillText('Demo art did not load (' + MISSING.length + ' of ' + Object.keys(ART).length + ' files)', VW / 2, VH / 2 - 18);
+    g.font = '500 11px system-ui, sans-serif'; g.fillText('Missing under demo/assets/: ' + MISSING.slice(0, 4).join(', ') + (MISSING.length > 4 ? ', ...' : ''), VW / 2, VH / 2 + 4); g.fillText('Serve the element folder with its demo/assets/ directory. The bubbles themselves need no files.', VW / 2, VH / 2 + 22);
+    window.__artMissing = MISSING.slice(); if (FREEZE) window.__frozen = true; return;
+  }
+  if (FREEZE) { window.__frozen = true; return; }
+  let acc = 0, prev = null;
+  const frame = now => { if (prev === null) prev = now; acc += Math.min(250, now - prev); prev = now; while (acc >= STEP) { step(); acc -= STEP; } render(); requestAnimationFrame(frame); };
+  requestAnimationFrame(frame);
+  addEventListener('resize', render);
+});
+</script>
+</body>
+</html>

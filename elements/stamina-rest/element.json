@@ -1,0 +1,162 @@
+{
+  "id": "stamina-rest",
+  "code": "G-10",
+  "kind": "addon",
+  "name": "Stamina & outpost rest",
+  "family": "stamina-fatigue",
+  "oneLiner": "Squads (or a hero) spend stamina on every march and every attack; at zero they are exhausted, so attacks are refused (or they move and swing slower) until they recover. Resting inside a camp, outpost or shrine their side holds refills the pips per phase (turn clock) or per second (real-time clock), with a warm glow, rising embers and a REST +N tag; standing alone in an empty or enemy site claims it. Pips above every unit (crisp segment strips on native pixel canvases, glassy capsules on HD), a TIRED tag, a sweat drop and a blinking strip when exhausted, a TOO TIRED shake on a refused attack, and campfire, banner and shrine markers with a capture ring. The game asks engage(id) before each attack; the module never moves units, deals damage or pauses.",
+  "fits": [
+    "tactics / strategy RPG (squads, phases, outposts to hold)",
+    "squad-based strategy on a map (march, engage, retreat to camp)",
+    "turn-based board and war games with supply or fatigue",
+    "top-down action RPG (stamina per swing, campfires and shrines to rest)",
+    "survival games with camps and rest spots",
+    "real-time tactics with a few controllable units"
+  ],
+  "notFor": [
+    "a single HP-like resource that never recovers by itself (use the game's own HP)",
+    "mana or skill points spent from a menu (cost lists belong to the skill system)",
+    "games with hundreds of units on screen at once (one strip per unit)",
+    "precision platformers where a refused input feels like a bug"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "actor",
+    "needs": [
+      "a unit list: stable id, side (team), the drawn sprite box (x, y, w, h) in world or screen px, alive",
+      "every place an attack starts (player input, enemy AI, autoplay, counter-attacks): ask engage(id) first and end the action when it says no",
+      "turn clock: the place a move is committed (march) and the place each side's phase begins (turnStart)",
+      "real-time clock: the attack cooldown (divided by speedScale while winded); walking is measured by the module",
+      "rest sites in the game's coordinates (camp, outpost, shrine, fire) with their starting owner",
+      "a fixed 60 Hz update step in every scene (also run by ?t= fast-forward); the camera offset for scrolling games; HUD rects",
+      "optional: the AI / autoplay's target choice, to send exhausted units to nearestSite()"
+    ],
+    "provides": [
+      "stamina per unit id with march / engage / counter costs, regen, rest at owned sites and an exhausted state with hysteresis (recoverAt)",
+      "engage(id) -> false while exhausted (rule noAttack / both); speedScale(id) and moveRange(id, base) while exhausted (rule slow / both)",
+      "site ownership and capture by holding a site; nearestSite(id) for AI",
+      "pips above each unit that avoid HUD rects, other units and each other; rest glow, embers and REST +N; TIRED / READY / TOO TIRED tags; sweat drop; site markers",
+      "callbacks onExhausted, onRecovered, onRest, onCapture, onRefused (sound, toasts); serialize() / restore() for saves"
+    ]
+  },
+  "params": [
+    {
+      "key": "clock",
+      "label": "Clock (required): turn = phases / rounds; realtime = fixed-step action",
+      "type": "select",
+      "options": [
+        "turn",
+        "realtime"
+      ],
+      "default": "turn"
+    },
+    {
+      "key": "sites",
+      "label": "Where units rest (required; the designer's words)",
+      "type": "text",
+      "default": "our camp at the start and the enemy's outpost (claimed by holding it)"
+    },
+    {
+      "key": "pace",
+      "label": "Pace: sets the costs for the chosen clock (standard for turn games; camp for real-time games: rest really happens at fires; forgiving; harsh)",
+      "type": "select",
+      "options": [
+        "standard",
+        "camp",
+        "forgiving",
+        "harsh"
+      ],
+      "default": "standard"
+    },
+    {
+      "key": "max",
+      "label": "Max pips",
+      "type": "range",
+      "min": 1,
+      "max": 12,
+      "step": 1,
+      "default": 6
+    },
+    {
+      "key": "recoverAt",
+      "label": "Exhausted until stamina is back at",
+      "type": "range",
+      "min": 0.5,
+      "max": 6,
+      "step": 0.5,
+      "default": 2
+    },
+    {
+      "key": "capture",
+      "label": "Sites change hands by holding them",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Squad tactics (turn)",
+      "params": {
+        "clock": "turn",
+        "pace": "standard",
+        "max": 6
+      }
+    },
+    {
+      "name": "Supply lines (turn, rest only at camps)",
+      "params": {
+        "clock": "turn",
+        "pace": "camp",
+        "max": 6
+      }
+    },
+    {
+      "name": "Forced march (turn, harsh)",
+      "params": {
+        "clock": "turn",
+        "pace": "harsh",
+        "max": 5
+      }
+    },
+    {
+      "name": "Action hero (real-time, forgiving defaults)",
+      "params": {
+        "clock": "realtime",
+        "pace": "standard",
+        "max": 6
+      }
+    },
+    {
+      "name": "Campfires matter (real-time)",
+      "params": {
+        "clock": "realtime",
+        "pace": "camp",
+        "max": 6
+      }
+    },
+    {
+      "name": "Winded means no swings (real-time, harsh)",
+      "params": {
+        "clock": "realtime",
+        "pace": "harsh",
+        "max": 5
+      }
+    }
+  ],
+  "assets": [
+    "module/stamina-rest.js: the element as one dependency-free script (global GameDNA_StaminaRest): per-unit stamina, march / engage / counter costs, turn and real-time recovery, rest at owned sites, capture by holding, exhausted state with hysteresis, pip strip layout that avoids UI and units, crisp and smooth drawing of pips, tags, sweat drop, rest glow and embers, campfire / banner / shrine markers with a capture ring; built-in 3x5 bitmap font",
+    "no image or audio files (sound cues are callbacks)"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/stamina-rest.js",
+    "global": "GameDNA_StaminaRest",
+    "version": "1.1.0",
+    "docs": "module/README.md"
+  }
+}

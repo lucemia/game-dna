@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cel Skin Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@800&family=M+PLUS+Rounded+1c:wght@800&display=block" rel="stylesheet">
+<style>
+  :root { --bg: #f4efe6; --fg: #1c1433; --muted: #6a6288; --card: #ffffff; --line: #1c1433; --accent: #ffd23a; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #15112a; --fg: #f4f0ff; --muted: #a49dc8; --card: #211a3d; --line: #000000; } }
+  :root[data-theme="dark"] { --bg: #15112a; --fg: #f4f0ff; --muted: #a49dc8; --card: #211a3d; --line: #000000; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: var(--bg); color: var(--fg); font: 14px/1.5 "M PLUS Rounded 1c", "Arial Rounded MT Bold", system-ui, sans-serif; }
+  header { max-width: 1120px; margin: 0 auto 12px; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+  h1 { margin: 0; font: 800 24px/1.1 "Baloo 2", "Arial Rounded MT Bold", system-ui, sans-serif;
+       background: var(--accent); color: #1c1433; padding: 2px 14px; border: 3px solid var(--line); transform: skewX(-12deg); box-shadow: 3px 3px 0 var(--line); }
+  header p { margin: 0; color: var(--muted); }
+  main { max-width: 1120px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 1.25fr); gap: 16px; align-items: start; }
+  figure { margin: 0; min-width: 0; }
+  .stage { background: var(--card); border: 3px solid var(--line); box-shadow: 4px 4px 0 var(--line); padding: 6px; }
+  canvas { display: block; width: 100%; height: auto; }
+  figcaption { color: var(--muted); font-size: 12px; margin-top: 8px; }
+  @media (max-width: 760px) { main { grid-template-columns: minmax(0, 1fr); } }
+</style>
+</head>
+<body>
+<header><h1>cel</h1><p>Cel-shaded anime skin on the shared scene (same map, seed and moments as every style). <code>?t=ms&amp;freeze=1</code> for a fixed moment, <code>&amp;focus=grid|numbers|window</code> for one element.</p></header>
+<main>
+  <figure><div class="stage"><canvas id="cel"></canvas></div><figcaption>cel: grid-range-path, damage-numbers and window-cursor all drawing through the skin; map, units and mood from its tile / unitToken / atmosphere hooks</figcaption></figure>
+  <figure><div class="stage"><canvas id="ref"></canvas></div><figcaption>same moment in pixel16 (reference)</figcaption></figure>
+</main>
+<script src="../skin-api.js"></script>
+<script src="../pixel16.js"></script>
+<script src="cel.js"></script>
+<script src="../../elements/grid-range-path/module/grid-range-path.js"></script>
+<script src="../../elements/damage-numbers/module/damage-numbers.js"></script>
+<script src="../../elements/window-cursor/module/window-cursor.js"></script>
+<script src="../scene/shared-scene.js"></script>
+<script>
+'use strict';
+var Q = new URLSearchParams(location.search), FREEZE = Q.get('freeze') === '1', T0 = Q.has('t') ? +Q.get('t') : GameDNA_Scene.DEFAULT_T;
+var FOCUS = ['grid', 'numbers', 'window'].indexOf(Q.get('focus')) >= 0 ? Q.get('focus') : 'all';
+var celC = document.getElementById('cel'), refC = document.getElementById('ref');
+function widthOf(c) { return Math.max(256, Math.round(c.parentNode.clientWidth * (window.devicePixelRatio || 1))); }
+function render(t) {
+  GameDNA_Scene.draw(celC, 'cel', t, { width: widthOf(celC), focus: FOCUS });
+  GameDNA_Scene.draw(refC, 'pixel16', t, { width: widthOf(refC), focus: FOCUS });
+}
+GameDNA_Scene.ready(['cel', 'pixel16']).then(function () {
+  if (FREEZE) { render(T0); document.documentElement.dataset.ready = '1'; return; }
+  var t0 = performance.now() - T0;
+  (function loop(now) { render((now - t0) % GameDNA_Scene.LOOP); requestAnimationFrame(loop); })(performance.now());
+  document.documentElement.dataset.ready = '1';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HD Pixel Diorama</title>
+<style>
+  :root { --bg: #0b0c12; --fg: #ece4d2; --muted: #9a94a8; --line: #2a2838; --gold: #c9a45c; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); }
+  body { padding: 20px 16px 32px; color: var(--fg); font: 14px/1.5 Georgia, "Palatino", serif; }
+  main { max-width: 800px; margin: 0 auto; }
+  h1 { font-size: 20px; font-weight: 600; margin: 0 0 2px; letter-spacing: .02em; }
+  h1 span { color: var(--gold); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; margin-left: 8px; }
+  p { margin: 0 0 14px; color: var(--muted); font-size: 13px; }
+  figure { margin: 0 0 18px; }
+  canvas { display: block; width: 100%; max-width: 768px; height: auto; background: #000; border: 1px solid var(--line); border-radius: 4px; }
+  figcaption { color: var(--muted); font-size: 12px; margin-top: 6px; }
+  code { color: var(--gold); font-size: 12px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>HD pixel diorama <span>skin: hd-diorama</span></h1>
+  <p>Pixel sprites as cards in a lit miniature: cool ambient against warm point lights with soft cast shadows, tilt-shift blur bands, dust motes, bloom, and gold-edged dark glass windows with crisp pixel text.</p>
+  <figure><canvas id="scene" width="768" height="672"></canvas>
+    <figcaption>Shared scene (same map, seed and moments as every style). All three modules draw through this skin: <code>grid-range-path</code> (range, path arrow), <code>damage-numbers</code> (glyphs, bounce), <code>window-cursor</code> (menu, pointer). <code>?t=1400&amp;freeze=1</code> renders one moment; without <code>freeze</code> it plays a 4 s loop.</figcaption></figure>
+  <figure><canvas id="sheet" width="768" height="384"></canvas>
+    <figcaption>Skin sheet: plates, banner, gauges (every kind, haste / slow tags), HP meters, every number kind, the four overlay kinds, cursors, selected row and backing.</figcaption></figure>
+</main>
+<script src="../skin-api.js"></script>
+<script src="../pixel16.js"></script>
+<script src="hd-diorama.js"></script>
+<script src="../../elements/grid-range-path/module/grid-range-path.js"></script>
+<script src="../../elements/damage-numbers/module/damage-numbers.js"></script>
+<script src="../../elements/window-cursor/module/window-cursor.js"></script>
+<script src="../scene/shared-scene.js"></script>
+<script>
+'use strict';
+/* The map moment is the shared scene (scene/shared-scene.js), the same one compare.html shows; this page adds the skin sheet. */
+var Q = new URLSearchParams(location.search), FREEZE = Q.get('freeze') === '1', T0 = Q.has('t') ? +Q.get('t') : 1400;
+var SK = GameDNA_Skin.resolve('hd-diorama'), P = SK.palette, mix = GameDNA_Skin.color.mix, rgba = GameDNA_Skin.color.rgba;
+var W = 256, H = 224, TS = 16, COLS = 16, ROWS = 14, FRAME = 1000 / 60, LOOP = 4000;
+var DPR = Math.max(1, Math.round(window.devicePixelRatio || 1)), S = Q.has('scale') ? Math.max(1, +Q.get('scale') | 0) : 3 * DPR;
+
+/* ---------- skin sheet: every method once ---------- */
+function drawSheet(T) {
+  var c = document.getElementById('sheet'), t = T / 1000; c.width = 256 * S; c.height = 128 * S; var g = c.getContext('2d');
+  g.setTransform(S, 0, 0, S, 0, 0); GameDNA_Skin.setup(SK, g);
+  for (var y = 0; y < 8; y++) for (var x = 0; x < 16; x++) SK.tile(g, { x: x * 16, y: y * 16, w: 16, h: 16 }, ['grass', 'forest', 'hill', 'road', 'sand', 'water', 'bridge', 'mountain', 'fort', 'wall', 'floor'][(x >> 1) % 11 === 5 && y > 5 ? 5 : y === 7 ? (x % 11) : 0], t);
+  SK.atmosphere(g, { x: 0, y: 0, w: 256, h: 128 }, t, { phase: 'world', lights: [{ x: 190, y: 50, h: 24, col: [1, 0.7, 0.38], i: 1.3, r: 130 }], tiltShift: false, shafts: false });
+  var pw = SK.measure('Active x1.0'); SK.frame(g, { x: 4, y: 4, w: pw + 12, h: 13 }, { role: 'plate' }); SK.text(g, 'Active x1.0', 10, 7, { color: P.text.plate });
+  var ww = SK.measure('Wait x1.0'); SK.frame(g, { x: pw + 20, y: 4, w: ww + 12, h: 13 }, { role: 'plate', alert: true }); SK.text(g, 'Wait x1.0', pw + 26, 7, { color: P.text.accent });
+  SK.frame(g, { x: 150, y: 3, w: 102, h: 16 }, { role: 'banner' }); SK.text(g, 'Fire Storm', 201, 8, { align: 'center', color: P.text.title, color2: P.text.title2 });
+  SK.frame(g, { x: 4, y: 22, w: 124, h: 70 }, { role: 'window', team: 'n' });
+  SK.frame(g, { x: 7, y: 39, w: 118, h: 11 }, { role: 'row' });
+  [['Rowan', 0.62, 'charge', null], ['Mira', 0.35, 'haste', 'haste'], ['Bram', 1, 'ready', null], ['Ilsa', 1, 'queued', 'slow'], ['Osric', 0, null, null]].forEach(function (r, i) {
+    var yy = 28 + i * 12; SK.text(g, r[0], 10, yy); SK.bar(g, { x: 50, y: yy + 1.5, w: 72, h: 4 }, r[1], r[2], { tag: r[3], t: t });
+  });
+  SK.frame(g, { x: 4, y: 96, w: 124, h: 28 }, { role: 'window', team: 'b' });
+  SK.bar(g, { x: 10, y: 102, w: 52, h: 3.5 }, 0.45, 'enemy'); SK.bar(g, { x: 70, y: 102, w: 52, h: 3.5 }, 1, 'enemyFull', { t: t });
+  SK.bar(g, { x: 10, y: 113, w: 52, h: 3.5 }, 0.8, 'hp', { style: 'meter' }); SK.bar(g, { x: 70, y: 113, w: 52, h: 3.5 }, 0.22, 'hpLow', { style: 'meter' });
+  SK.number(g, '128', 140, 34, { kind: 'damage' }); SK.number(g, '57', 176, 34, { kind: 'crit', big: true, label: 'CRITICAL' }); SK.number(g, '+30', 216, 34, { kind: 'heal' });
+  SK.number(g, '12', 140, 64, { kind: 'mp', suffix: 'MP' }); SK.number(g, 'MISS', 176, 66, { kind: 'miss' }); SK.number(g, 'POISON', 210, 66, { kind: 'status' });
+  ['move', 'attack', 'threat', 'heal'].forEach(function (k, i) { for (var j = 0; j < 2; j++) SK.overlay(g, { x: 140 + i * 28 + j * 12, y: 84, w: 12, h: 12 }, k, t, { tile: { x: j, y: 0 }, edges: { top: true, bottom: true, left: j === 0, right: j === 1 }, seams: { right: j === 0 } }); });
+  SK.frame(g, { x: 140, y: 102, w: 60, h: 22 }, { role: 'backing' });
+  SK.cursor(g, { x: 145, y: 110, w: 7, h: 5 }, 'hand', t); SK.text(g, 'Pointer', 155, 109);
+  SK.cursor(g, { x: 222, y: 106, w: 14, h: 14 }, 'bracket', t);
+  SK.post.vignette(g, 256, 128, 0.4);
+}
+
+function render(T) { GameDNA_Scene.draw(document.getElementById('scene'), 'hd-diorama', T, { width: 256 * S }); }   // the shared scene: identical to compare.html
+GameDNA_Skin.ready(SK).then(function () {
+  if (FREEZE) { render(T0); drawSheet(T0); document.documentElement.dataset.ready = '1'; return; }
+  var start = performance.now() - T0;
+  (function loop(now) { var T = (now - start) % LOOP; render(T); drawSheet(T); requestAnimationFrame(loop); })(performance.now());
+  document.documentElement.dataset.ready = '1';
+});
+</script>
+</body>
+</html>

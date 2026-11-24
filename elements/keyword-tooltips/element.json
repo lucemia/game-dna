@@ -1,0 +1,47 @@
+{
+  "id": "keyword-tooltips",
+  "code": "C-15",
+  "kind": "addon",
+  "name": "Keyword tooltips",
+  "family": "keyword-tooltips",
+  "oneLiner": "Rich text whose keywords (statuses, stats, terrain, rules) open a tooltip on mouse hover, touch long-press or tap and keyboard focus: icon, title, kind and text with its own keywords that open nested tooltips. Click, tap or a key pins a tooltip; placement keeps it inside the view, never over the word it explains, clear of the HUD and characters when possible; every move is a fade, glide or crossfade. Crisp bitmap fonts on pixel canvases, smooth text on HD canvases, readable on phones; the game's own font can draw the words.",
+  "fits": ["card battle / deck builder", "turn-based battle / RPG", "tactics", "roguelite", "strategy", "inventory and shop screens", "any game with rules text"],
+  "notFor": [
+    "clickable menu labels (a press on a keyword is taken by the module: show a description line next to the menu instead)",
+    "long scrolling documents (one tooltip text is a few sentences; very long texts are truncated when nothing fits)",
+    "games that already use Tab, T and Escape in play without remapping focusKey / pinKey"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "the game's canvas and the coordinate space of its draw calls (view)",
+      "keyword definitions {title, kind, icon, color, text} written from the game's rules; [id] references between them",
+      "update(stepMs) in the fixed step (also the ?t= fast-forward); draw(ctx) last in every render path",
+      "rich text placed with text() / setText() where the player reads it; mark() for words or icons the game draws itself",
+      "optional uiRects() (HUD) and avoid() (unit boxes) in view units; optional game font {measure, draw, h, lineH}"
+    ],
+    "provides": [
+      "tooltips on hover (delay), long-press / tap (touch) and Tab focus, nested up to depth, pinning by click / tap / pin key",
+      "state(): open chain with rects, anchors and sides; lastDrawn(): panel / text / notch rects; stats(): opens, fallbacks, coverAnchor, offView, unknown, errors",
+      "onOpen / onClose / onPin callbacks; scripted control (open, openAt, pin, close, focusNext, pointer, key)",
+      "consumes only presses on keywords and tooltips, Tab, the pin key and Escape (the last two only while something is open or focused)"
+    ]
+  },
+  "params": [
+    { "key": "theme", "label": "Tooltip theme", "type": "select", "options": ["slate", "night", "parchment"], "default": "slate" },
+    { "key": "delay", "label": "Hover delay (ms)", "type": "range", "min": 0, "max": 600, "step": 20, "default": 180 },
+    { "key": "depth", "label": "Nesting depth", "type": "range", "min": 1, "max": 4, "step": 1, "default": 3 },
+    { "key": "pinKey", "label": "Pin key (a key the game does not use)", "type": "text", "default": "t" },
+    { "key": "hints", "label": "Key hints in keyboard tooltips", "type": "select", "options": ["on", "off"], "default": "on" }
+  ],
+  "variants": [
+    { "name": "Card table", "params": { "theme": "slate", "delay": 180, "depth": 3 } },
+    { "name": "Night strategy", "params": { "theme": "night", "delay": 250 } },
+    { "name": "Parchment codex", "params": { "theme": "parchment", "depth": 4 } },
+    { "name": "Instant", "params": { "delay": 0, "hints": "off" } }
+  ],
+  "assets": "none in the module: 5x7 and 3x5 bitmap fonts, 14 pixel icons with vector twins, panels, notches, pin, focus ring and long-press ring are drawn in code; keywords may pass their own icon image. The demo reuses demo-kit, pixel-kit and painted-ui icon art from this repo.",
+  "status": "built 2026-11-19 (M15); module v1.2.1 after strict critic r2 (parent row on stacked tooltips, focus ring on stacked titles)"
+}

@@ -1,0 +1,144 @@
+{
+  "id": "title-menu",
+  "code": "C-07",
+  "kind": "addon",
+  "name": "Title screen & menu flow",
+  "family": "title-and-menus",
+  "oneLiner": "A title screen built on the game's own art (its name as a bold pixel logo with a glint, a tagline, PRESS START), a menu (continue, new game, options, quit), an options screen that persists (three volumes, text speed, screen shake, flashing, reduce motion, large text, high contrast, a controls page), wipe transitions into the game and a pause menu in play (resume, options, restart, quit to title). Keyboard, mouse and touch; it draws on its own overlay canvas at a readable size on phones, consumes input only while a menu is open, and skips itself under ?auto=1, ?t= and freeze=1, so autoplay and stills are untouched.",
+  "fits": [
+    "any game with a title scene",
+    "platformer",
+    "turn-based battle / RPG",
+    "top-down adventure",
+    "tactics",
+    "arcade and puzzle games"
+  ],
+  "notFor": [
+    "games that must start playing on the first frame with no title (use only the pause menu: isTitle returns false)",
+    "remapping keys (the controls page lists the game's keys; it does not rebind them)",
+    "games whose own title is a playable scene (the menu pauses the world while it is open)"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "the game's canvas (the menu lays its own overlay canvas over it)",
+      "isTitle(): the game's own title scene; onStart(kind) = what the old title confirm did; onQuitToTitle() = back to that scene",
+      "canPause(): where play can be paused; optional onRestart(), canContinue(), onOption(key, value), uiRects() / obstacles() in native px",
+      "update(stepMs) at the top of the fixed step, then return while busy() (the world waits); draw() at the end of every render path",
+      "while titleShown(): draw only the title background (not the old logo or PRESS START text)"
+    ],
+    "provides": [
+      "busy(), titleShown(), paused()",
+      "get(key) / options(): master, music, sfx (0-10), textSpeed (slow/normal/fast/instant), shake, flashes (full/reduced), reduceMotion, largeText, contrast, persisted in localStorage (memory fallback)",
+      "onStart / onQuitToTitle / onRestart / onOption / onQuit / onSound callbacks, synchronous from update()",
+      "skip flags: ?auto=1, ?t=<ms>, freeze=1, ?title=0 (nothing at all), ?title=1 (force on)",
+      "rect() of the open window, lastDrawn() rects for other overlays"
+    ]
+  },
+  "params": [
+    {
+      "key": "transition",
+      "label": "Transition into the game",
+      "type": "select",
+      "options": [
+        "diamond",
+        "iris",
+        "fade"
+      ],
+      "default": "diamond"
+    },
+    {
+      "key": "transMs",
+      "label": "Transition half length (ms)",
+      "type": "range",
+      "min": 120,
+      "max": 700,
+      "step": 20,
+      "default": 320
+    },
+    {
+      "key": "panel",
+      "label": "Window colour",
+      "type": "select",
+      "options": [
+        "royal",
+        "night",
+        "ember",
+        "moss",
+        "slate"
+      ],
+      "default": "royal"
+    },
+    {
+      "key": "quit",
+      "label": "QUIT on the title menu",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "pauseButton",
+      "label": "Touch pause button",
+      "type": "select",
+      "options": [
+        "auto",
+        "on",
+        "off"
+      ],
+      "default": "auto"
+    },
+    {
+      "key": "hints",
+      "label": "Key hints line",
+      "type": "select",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    },
+    {
+      "key": "pauseKeys",
+      "label": "Pause keys (keys the game does not use)",
+      "type": "text",
+      "default": "Escape, P"
+    }
+  ],
+  "variants": [
+    {
+      "name": "Console classic",
+      "params": {
+        "transition": "diamond",
+        "panel": "royal"
+      }
+    },
+    {
+      "name": "Night road",
+      "params": {
+        "transition": "iris",
+        "panel": "night"
+      }
+    },
+    {
+      "name": "Quiet",
+      "params": {
+        "transition": "fade",
+        "transMs": 220,
+        "hints": "off"
+      }
+    },
+    {
+      "name": "Phone first",
+      "params": {
+        "pauseButton": "on"
+      }
+    }
+  ],
+  "assets": "none: everything is drawn in code (5x7 bitmap font, a bold logo face built from it, 7x7 icons, a pointing glove, bevelled windows)",
+  "status": "built 2026-11-18 (M14)"
+}

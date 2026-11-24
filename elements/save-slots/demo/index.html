@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Save Slots</title>
+<style>
+:root {
+  --bg: #0b0d16; --panel: #141724; --line: #282c42; --text: #eceaf6; --dim: #959ab4; --accent: #ffe070; --accent2: #6ad8f0; --good: #4ad870; --bad: #ff7a3a;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(1200px 600px at 30% -10%, #1c2440 0%, var(--bg) 60%) fixed, var(--bg); min-height: 100vh; overflow-x: hidden; }
+header { display: flex; align-items: center; gap: 14px; padding: 14px 20px 10px; max-width: 1240px; margin: 0 auto; }
+.code { white-space: nowrap; font: 700 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; color: #1a1206; background: var(--accent); padding: 6px 8px; border-radius: 4px; box-shadow: 0 0 0 1px #00000040, 0 2px 0 #8a6428; }
+h1 { font-size: 18px; margin: 0; }
+header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; padding: 0 20px 20px; max-width: 1240px; margin: 0 auto; align-items: start; }
+#stage { min-width: 0; display: flex; flex-direction: column; align-items: center; }
+.frame { padding: 6px; background: linear-gradient(#232a46, #12141f); border-radius: 8px; box-shadow: 0 0 0 1px #343a58, 0 18px 50px #00000080; max-width: 100%; }
+canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; border-radius: 3px; touch-action: manipulation; max-width: 100%; }
+.caption { display: flex; justify-content: space-between; gap: 12px; width: 100%; max-width: 780px; margin-top: 8px; color: var(--dim); font-size: 12px; flex-wrap: wrap; }
+.caption b { color: var(--text); font-weight: 600; }
+#lamp { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: #5ad86a; box-shadow: 0 0 8px #5ad86a; }
+#lamp.on { background: #ffc030; box-shadow: 0 0 8px #ffc030; }
+aside { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+h2 { margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.triggers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.triggers button { --c: var(--good); appearance: none; border: 1px solid #00000060; border-radius: 6px; padding: 8px 4px 6px; cursor: pointer; color: var(--text); font: 600 11.5px/1.1 inherit;
+  background: linear-gradient(#262c44, #1a1e30); box-shadow: inset 0 1px 0 #ffffff14, inset 0 -2px 0 color-mix(in srgb, var(--c) 70%, black); }
+.triggers button:hover { background: linear-gradient(#313858, #20253a); }
+.triggers button:active { transform: translateY(1px); }
+.triggers button i { display: block; font-style: normal; font: 800 12px/1 ui-monospace, Menlo, monospace; color: var(--c); margin-bottom: 4px; letter-spacing: .04em; text-shadow: 0 1px 0 #000, 1px 0 0 #000, -1px 0 0 #000, 0 -1px 0 #000; }
+.triggers kbd { display: block; font: 10px/1 ui-monospace, Menlo, monospace; color: var(--dim); margin-top: 4px; }
+.row { margin-bottom: 10px; }
+.row label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 5px; }
+.row output { font: 12px ui-monospace, Menlo, monospace; color: var(--accent); }
+input[type=range] { --fill: 50%; -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--fill), #2a2e44 var(--fill)); outline: none; margin: 4px 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 4px; background: #fff3d0; border: 2px solid #1a1206; box-shadow: 0 1px 4px #000a; cursor: pointer; }
+.seg { display: flex; background: #0d0f19; border: 1px solid var(--line); border-radius: 6px; padding: 2px; gap: 2px; }
+.seg button { flex: 1; appearance: none; border: 0; background: transparent; color: var(--dim); font: 600 12px/1 inherit; padding: 7px 3px; border-radius: 4px; cursor: pointer; }
+.seg button[aria-checked=true] { background: #2a3048; color: var(--text); box-shadow: inset 0 0 0 1px #464e70, inset 0 -2px 0 var(--accent); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+select, textarea { width: 100%; appearance: none; background: #0d0f19; color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; font: 600 12px inherit; }
+textarea { font: 11px/1.35 ui-monospace, Menlo, monospace; height: 54px; resize: vertical; word-break: break-all; }
+.codebar { display: flex; gap: 6px; margin-top: 6px; }
+.codebar button, .foot button { appearance: none; background: none; border: 1px solid var(--line); color: var(--text); border-radius: 5px; padding: 5px 9px; font: 600 11.5px inherit; cursor: pointer; }
+.slotsum { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center; font: 700 11px ui-monospace, Menlo, monospace; }
+.slotsum div { background: #0d0f19; border: 1px solid var(--line); border-radius: 6px; padding: 6px 2px; color: var(--dim); }
+.slotsum span { display: block; font-size: 12px; color: var(--text); margin-top: 2px; }
+.slotsum .damaged span { color: var(--bad); } .slotsum .ok span { color: var(--good); } .slotsum .old span { color: var(--accent2); }
+.foot { display: flex; justify-content: space-between; align-items: center; color: var(--dim); font-size: 11.5px; border-top: 1px solid var(--line); padding-top: 10px; gap: 8px; }
+@media (max-width: 980px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-width: 640px; width: 100%; margin: 0 auto; } }
+@media (max-width: 560px) { header { padding: 12px 16px 8px; } main { padding: 0 16px 16px; gap: 12px; } .frame { padding: 3px; } .caption { flex-direction: column; gap: 2px; } .triggers { grid-template-columns: repeat(2, 1fr); } .slotsum { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+<header>
+  <span class="code">I-04</span>
+  <div><h1>Save &amp; load slots</h1><p>Three slots with a thumbnail from the game's own screen, place, level and play time. Save, load and delete with confirm, an autosave slot, a version number with a migrate hook, checksums (a corrupted slot reads "Damaged data"), and save codes to copy and paste.</p></div>
+</header>
+<main>
+  <section id="stage">
+    <div class="frame"><canvas id="cv" width="256" height="224" aria-label="Village map with a save and load screen"></canvas></div>
+    <div class="caption"><span><span id="lamp"></span><b id="state">Playing</b> · <span id="now">-</span></span><span><span id="scaleinfo">256×224 native</span> · <b>S</b> save · <b>L</b> load · arrows, <b>Z</b>, <b>X</b></span></div>
+  </section>
+  <aside>
+    <div>
+      <h2>Try it (keys go to the screen while it is open)</h2>
+      <div class="triggers">
+        <button data-act="save" style="--c:var(--accent)"><i>SAVE</i>Open screen<kbd>S</kbd></button>
+        <button data-act="load" style="--c:var(--accent2)"><i>LOAD</i>Load screen<kbd>L</kbd></button>
+        <button data-act="auto" style="--c:var(--good)"><i>AUTO</i>Autosave now<kbd>A</kbd></button>
+        <button data-act="corrupt" style="--c:var(--bad)"><i>CORRUPT</i>Damage slot 3<kbd>C</kbd></button>
+        <button data-act="quick" style="--c:#c8a0ff"><i>QUICK</i>Save to slot 1<kbd>Q</kbd></button>
+        <button data-act="reset" style="--c:var(--dim)"><i>RESET</i>Reseed slots<kbd>R</kbd></button>
+      </div>
+    </div>
+    <div class="slotsum" id="slotsum"></div>
+    <div>
+      <h2>Save code (slot 1)</h2>
+      <textarea id="code" spellcheck="false" placeholder="Copy code from slot 1, or paste a code here and import it to slot 2"></textarea>
+      <div class="codebar"><button id="exp">Copy code of slot 1</button><button id="imp">Import into slot 2</button></div>
+    </div>
+    <div>
+      <div class="row"><label>Slots <output data-out="slots"></output></label><input type="range" data-key="slots" min="1" max="6" step="1"></div>
+      <div class="row"><label>Thumbnail width (px) <output data-out="thumbW"></output></label><input type="range" data-key="thumbW" min="24" max="64" step="4"></div>
+      <div class="row"><label>Dim behind <output data-out="dim"></output></label><input type="range" data-key="dim" min="0" max="0.8" step="0.05"></div>
+    </div>
+    <div class="two">
+      <div><h2>Autosave slot</h2><div class="seg" data-key="autosave"><button>on</button><button>off</button></div></div>
+      <div><h2>Thumbnails</h2><div class="seg" data-key="thumb"><button>on</button><button>off</button></div></div>
+      <div><h2>Confirm</h2><div class="seg" data-key="confirm"><button>on</button><button>off</button></div></div>
+      <div><h2>Save codes</h2><div class="seg" data-key="codes"><button>on</button><button>off</button></div></div>
+      <div><h2>Storage</h2><select id="store"><option value="demo">demo (memory)</option><option value="local">localStorage</option><option value="broken">broken (throws)</option></select></div>
+      <div><h2>Skin</h2><select id="skin"><option value="pixel16">pixel16</option><option value="flat-demo">flat (non-pixel)</option></select></div>
+      <div><h2>Close after save</h2><div class="seg" data-key="closeAfterSave"><button>on</button><button>off</button></div></div>
+      <div><h2>Loop</h2><div class="seg" id="loop"><button data-v="1" aria-checked="true">auto</button><button data-v="0">manual</button></div></div>
+    </div>
+    <div class="foot"><span>Same module as <b>module/save-slots.js</b> · URL: <code>?t=ms&amp;freeze=1</code>, <code>?slots=4</code></span><button id="resetAll">Reset</button></div>
+  </aside>
+</main>
+<script src="../../../skins/skin-api.js"></script>
+<script src="../../../skins/pixel16.js"></script>
+<script src="../../../pixel-kit/pixel-scene.js"></script>
+<script src="../module/save-slots.js"></script>
+<script>
+'use strict';
+(function () {
+  var W = 256, H = 224, HUD_H = 16, T = 16, STEP = 1000 / 60;
+  var Q = new URLSearchParams(location.search), num = function (k, d) { var v = Q.get(k); return v == null || v === '' || isNaN(+v) ? d : +v; };
+  var FREEZE = Q.get('freeze') === '1', T_AT = num('t', 0), LOOP = Q.get('loop') !== '0';
+  var cv = document.getElementById('cv'), SKAPI = window.GameDNA_Skin, SSM = window.GameDNA_SaveSlots, SK16 = SKAPI.resolve('pixel16');
+
+  if (SKAPI) SKAPI.register({
+    id: 'flat-demo', name: 'Flat demo', pixel: false, native: { w: 256, h: 224, scale: 'fit', smoothing: true },
+    palette: { ink: '#29304d', paper: '#f4f6fb',
+      ui: { fill: '#ffffff', fillTo: '#eef1f8', edge: '#cdd2de', highlight: '#ffffff', shadow: 'rgba(40,46,90,0.25)', select: 'rgba(91,108,255,0.14)', well: 'rgba(41,48,77,0.08)' },
+      team: { a: '#5b6cff', b: '#ff6a5a', n: '#7b8199' },
+      overlay: { move: { fill: '#6f8cff', edge: '#4d68d6' }, attack: { fill: '#ff6f6f', edge: '#d9624f' }, threat: { fill: '#8f86ff', edge: '#5b4bff' }, heal: { fill: '#3fcf8e', edge: '#2f9e63' } },
+      fx: { hot: '#e0503a', cold: '#4aa8ff', heal: '#2f9e63', crit: '#f5b520', status: '#8f86ff' },
+      text: { main: '#29304d', main2: '#29304d', shadow: 'rgba(0,0,0,0)', outline: '#29304d', dim: '#8a90a8', dim2: '#a8adc0', accent: '#5b6cff', title: '#29304d', title2: '#29304d', label: '#5b6cff', label2: '#5b6cff', pointer: '#5b6cff', pointerEdge: '#29304d' } },
+    fonts: { ui: { type: 'canvas', family: 'system-ui, -apple-system, sans-serif', size: 7, weight: 700 }, num: { type: 'canvas', family: 'system-ui, sans-serif', size: 11, weight: 800 } },
+    shape: { radius: 4, padding: 4 }, shadow: { text: null, window: { blur: 4, dy: 1 } }, outline: { text: { width: 0 } }, motion: { snap: false }
+  });
+
+  /* ---------------- parameters (element.json defaults, URL overrides) ---------------- */
+  var params = {};
+  function resetParams() { params = {}; Object.keys(SSM.DEFAULTS).forEach(function (k) { params[k] = SSM.DEFAULTS[k]; }); }
+  resetParams();
+  Object.keys(params).forEach(function (k) { if (Q.has(k)) params[k] = typeof params[k] === 'number' ? num(k, params[k]) : Q.get(k); });
+  var skinId = Q.get('skin') || 'pixel16', storeMode = Q.get('storage') || 'demo';
+
+  /* ---------------- the little valley (original layout, pixel16 scene hooks; the camera follows the hero) ---------------- */
+  var MW = 26, MH = 19, VW = 16, VH = 13;
+  function h2(x, y) { var n = Math.imul(x, 73856093) ^ Math.imul(y, 19349663); n = Math.imul(n ^ (n >>> 13), 0x5bd1e995); return ((n ^ (n >>> 15)) >>> 0) / 4294967296; }
+  var MAP = [], PROPS = [];
+  (function () {
+    for (var y = 0; y < MH; y++) {
+      var row = [];
+      for (var x = 0; x < MW; x++) {
+        var k = 'grass', px = (x - 12) / 3.6, py = (y - 9) / 2.3;
+        if (x <= 1 || (x < 6 && y > 15) || y === 0 || x === MW - 1 || y === MH - 1) k = 'forest';
+        if (y <= 1 && x >= 16) k = x > 20 ? 'mountain' : 'hill';
+        if (x >= 24 && y < 12) k = y < 6 ? 'mountain' : 'hill';
+        if (x >= 16 && y >= 13 && x < MW - 1 && y < MH - 1) k = 'sand';
+        if (px * px + py * py < 1 || (x === 12 && y > 9 && y < MH)) k = 'water';
+        if ((x === 5 || x === 6 || x === 8 || x === 9) && (y === 5 || y === 6)) k = 'fort';
+        if (x >= 5 && x <= 9 && y === 7) k = 'floor';
+        if ((x >= 3 && x <= 22) && (y === 3 || y === 15) || (y >= 3 && y <= 15) && (x === 3 || x === 22)) k = x === 12 && y === 15 ? 'bridge' : 'road';
+        row.push(k);
+        if (k === 'grass' && !((x >= 3 && x <= 22) && (y >= 3 && y <= 15) && (x === 4 || x === 21 || y === 4 || y === 14))) {
+          var v = h2(x, y), edge = x <= 3 || y <= 2 || y >= 16 || x >= 22;
+          if (v < (edge ? 0.34 : 0.07)) PROPS.push([x, y, v < 0.05 ? 'bush' : 'tree']);
+        }
+      }
+      MAP.push(row);
+    }
+    PROPS.push([7, 8, 'lamp'], [4, 4, 'lamp'], [10, 4, 'lamp'], [21, 9, 'crystal'], [15, 12, 'stone'], [19, 16, 'stone'], [9, 12, 'bush']);
+  })();
+  // the same layout drawn by the shared pixel scene kit (pixel-kit/pixel-scene.js): one baked 26x19 map, props sorted with the hero
+  var PXS = window.GameDNA_PixelScene, VALLEY = null;
+  function valley() {
+    if (VALLEY || !PXS) return VALLEY;
+    var CH = { grass: '.', forest: 'T', hill: 'h', mountain: 'M', sand: 's', water: 'w', fort: '#', floor: 'c', road: 'p', bridge: 'b' }, rows = MAP.map(function (r) { return r.map(function (k) { return CH[k] || '.'; }); }), list = [];
+    PROPS.forEach(function (q) { if (q[2] === 'tree') rows[q[1]][q[0]] = h2(q[0] + 3, q[1]) > 0.6 ? 't' : 'T'; else if (q[2] === 'bush') rows[q[1]][q[0]] = 'u'; else if (q[2] === 'stone') rows[q[1]][q[0]] = 'R'; else list.push({ k: q[2] === 'lamp' ? 'lantern' : 'statue', x: q[0] * T + 8, y: q[1] * T + 14 }); });
+    [[13, 6], [14, 11], [9, 10], [18, 5], [17, 9], [7, 12]].forEach(function (f) { if (rows[f[1]][f[0]] === '.') rows[f[1]][f[0]] = ','; });
+    list.push({ k: 'tower', x: 7 * T + 8, y: 6 * T + 12 }, { k: 'sign', x: 13 * T + 8, y: 14 * T + 14 }, { k: 'fence', x: 14 * T, y: 5 * T, o: { len: 62 } }, { k: 'hay', x: 18 * T, y: 11 * T }, { k: 'tent', x: 19 * T, y: 8 * T, o: { color: 'blue' } }, { k: 'campfire', x: 17 * T + 6, y: 8 * T + 6 }, { k: 'log', x: 16 * T, y: 7 * T + 4 }, { k: 'barrel', x: 20 * T + 12, y: 14 * T + 4 }, { k: 'crate', x: 19 * T + 12, y: 14 * T + 6 });
+    return (VALLEY = PXS.scene({ seed: 44, pines: true, map: rows.map(function (r) { return r.join(''); }), props: list }));
+  }
+  // the hero's walk: a loop along the road
+  var PATH = [];
+  (function () { var x, y; for (x = 3; x < 22; x++) PATH.push([x, 3]); for (y = 3; y < 15; y++) PATH.push([22, y]); for (x = 22; x > 3; x--) PATH.push([x, 15]); for (y = 15; y > 3; y--) PATH.push([3, y]); })();
+  var PL = PATH.length;
+  function placeOf(p) { var i = Math.floor(((p % PL) + PL) % PL), c = PATH[i]; return c[1] === 3 ? (c[0] < 13 ? 'Village road' : 'High pass') : c[0] === 22 ? 'Old fort gate' : c[1] === 15 ? (c[0] > 14 ? 'Dune path' : 'Mill bridge') : 'West woods'; }
+
+  var sim;
+  function newSim() { sim = { t: 0, loopAt: 0, p: 0, gold: 120, lv: 3, ms: 41000, coinAt: 0, sparkle: [], log: '-' }; }
+  newSim();
+  function heroAt(p) {
+    var q = ((p % PL) + PL) % PL, i = Math.floor(q), f = q - i, a = PATH[i], b = PATH[(i + 1) % PL];
+    return { x: (a[0] + (b[0] - a[0]) * f) * T, y: (a[1] + (b[1] - a[1]) * f) * T, face: b[0] < a[0] ? -1 : 1 };
+  }
+  function camOf(h) { return { x: Math.round(clamp(h.x + 8 - VW * T / 2, 0, MW * T - VW * T)), y: Math.round(clamp(h.y + 8 - VH * T / 2, 0, MH * T - VH * T)) }; }
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function drawWorld(g, S) {
+    var t = S.t / 1000, h = heroAt(S.p), cam = camOf(h), ox = -cam.x, oy = HUD_H - cam.y;
+    g.save(); g.beginPath(); g.rect(0, HUD_H, W, H - HUD_H); g.clip();
+    var c0 = Math.floor(cam.x / T), r0 = Math.floor(cam.y / T), V = valley();
+    if (V) V.draw(g, S.t, [{ y: h.y + T, draw: function () { SK16.unitToken(g, { x: Math.round(h.x) + ox, y: Math.round(h.y) + oy, w: T, h: T }, { team: 'a', kind: 'lord', facing: h.face }, t); } }], ox, oy);
+    else for (var y = r0; y <= Math.min(MH - 1, r0 + VH); y++) for (var x = c0; x <= Math.min(MW - 1, c0 + VW); x++) SK16.tile(g, { x: x * T + ox, y: y * T + oy, w: T, h: T }, MAP[y][x], t);
+    var items = [];
+    PROPS.forEach(function (p) { if (p[0] >= c0 - 1 && p[0] <= c0 + VW + 1 && p[1] >= r0 - 1 && p[1] <= r0 + VH + 1) items.push({ y: p[1] * T, draw: function () { SK16.prop(g, { x: p[0] * T + ox, y: p[1] * T + oy, w: T, h: T }, p[2], t, { seed: p[0] * 31 + p[1] }); } }); });
+    items.push({ y: h.y + 0.5, draw: function () { SK16.unitToken(g, { x: Math.round(h.x) + ox, y: Math.round(h.y) + oy, w: T, h: T }, { team: 'a', kind: 'lord', facing: h.face }, t); } });
+    if (!V) items.sort(function (a, b) { return a.y - b.y; }).forEach(function (it) { it.draw(); });
+    (S.sparkle || []).forEach(function (s) { var a = S.t - s.t; if (a > 500) return; var r = Math.floor(a / 70); g.fillStyle = a < 200 ? '#ffffff' : '#ffe070'; g.fillRect(s.x + ox - r, s.y + oy, 1, 1); g.fillRect(s.x + ox + r, s.y + oy, 1, 1); g.fillRect(s.x + ox, s.y + oy - r - 2, 1, 1); });
+    g.restore();
+    // HUD strip
+    g.fillStyle = '#06061a'; g.fillRect(0, 0, W, HUD_H);
+    SK16.frame(g, { x: 0, y: 0, w: W, h: HUD_H }, { role: 'plate' });
+    SK16.text(g, 'GOLD ' + S.gold, 7, 5, { font: 'ui', color: '#ffe890', color2: '#e8c048' });
+    SK16.text(g, 'LV ' + S.lv, 82, 5, { font: 'ui' });
+    SK16.text(g, placeOf(S.p).toUpperCase(), 120, 5, { font: 'ui', color: '#b8d0ff', color2: '#8ca8e8' });
+    SK16.text(g, SSM.formatTime(S.ms / 1000), W - 6, 5, { font: 'ui', align: 'right' });
+  }
+
+  /* ---------------- the game's state: what serialize() returns, nothing else ---------------- */
+  function serialize() { return { p: Math.round(sim.p * 1000) / 1000, gold: sim.gold, lv: sim.lv, ms: Math.round(sim.ms) }; }
+  function deserialize(d) { sim.p = +d.p || 0; sim.gold = d.gold | 0; sim.lv = d.lv | 0; sim.ms = +d.ms || 0; var h = heroAt(sim.p); sim.sparkle = [{ x: h.x + 8, y: h.y + 2, t: sim.t }]; }
+  function summary(S) { S = S || sim; return { place: placeOf(S.p), level: S.lv, time: Math.floor(S.ms / 1000), note: S.gold + ' G' }; }
+  function migrate(d, from) { if (from < 2) return { p: d.pos || 0, gold: d.coins || 0, lv: 1, ms: (d.secs || 0) * 1000 }; return d; }
+
+  /* ---------------- storage for the demo: a deterministic in-memory store, the real localStorage, or one that throws ---------------- */
+  function memStore() { var m = {}; return { getItem: function (k) { return Object.prototype.hasOwnProperty.call(m, k) ? m[k] : null; }, setItem: function (k, v) { m[k] = String(v); }, removeItem: function (k) { delete m[k]; }, _m: m }; }
+  var broken = { getItem: function () { throw new Error('SecurityError'); }, setItem: function () { var e = new Error('blocked'); e.name = 'SecurityError'; throw e; }, removeItem: function () { throw new Error('SecurityError'); } };
+  var store, saves, low = document.createElement('canvas'); low.width = W; low.height = H;
+  var lg = low.getContext('2d'); lg.imageSmoothingEnabled = false;
+  function storeFor() { return storeMode === 'local' ? undefined : storeMode === 'broken' ? broken : store; }
+  function makeSaves() {
+    saves = SSM.create({
+      key: 'gamedna-demo-village', version: 2, skin: skinId, view: { w: W, h: H }, params: params, storage: storeFor(),
+      url: '', serialize: serialize, deserialize: deserialize, summary: function () { return summary(); }, migrate: migrate,
+      canvas: low, thumbRect: { x: 0, y: HUD_H, w: W, h: H - HUD_H },
+      onAction: function (r) { sim.log = r.action + ' ' + (r.slot == null ? '' : r.slot) + (r.ok ? ' ok' : ' - ' + r.error); refreshSum(); },
+      onDone: function () { refreshSum(); }
+    });
+  }
+  function seedSlots() {   // the demo's starting slots: an autosave, slot 1, an old (version 1) slot 2 and a damaged slot 3
+    store = memStore();
+    if (storeMode !== 'demo') return;
+    var keep = sim, off = document.createElement('canvas'); off.width = W; off.height = H; var og = off.getContext('2d');
+    function seed(slot, S, version, data) {
+      sim = S; og.clearRect(0, 0, W, H); drawWorld(og, S);
+      var tmp = SSM.create({ key: 'gamedna-demo-village', version: version, storage: store, url: '', view: { w: W, h: H }, canvas: off, thumbRect: { x: 0, y: HUD_H, w: W, h: H - HUD_H },
+        serialize: function () { return data || serialize(); }, deserialize: function () { }, summary: function () { return summary(S); } });
+      tmp.save(slot, { force: true });
+    }
+    seed('auto', { t: 900, p: 14.4, gold: 95, lv: 2, ms: 31000 }, 2);
+    seed(1, { t: 2600, p: 38.2, gold: 310, lv: 4, ms: 754000 }, 2);
+    seed(2, { t: 400, p: 56.6, gold: 60, lv: 1, ms: 15000 }, 1, { pos: 56.6, coins: 60, secs: 15 });
+    seed(3, { t: 1800, p: 49.5, gold: 205, lv: 3, ms: 402000 }, 2);
+    store._m['gamedna-demo-village/slot-3'] = store._m['gamedna-demo-village/slot-3'].replace('"gold":205', '"gold":905');   // one byte changed: the checksum no longer matches
+    sim = keep;
+  }
+  seedSlots(); makeSaves();
+
+  /* ---------------- scripted loop (deterministic: driven by sim time) ---------------- */
+  var LOOP_MS = 18500, SCRIPT = [
+    [1200, function () { drawWorld(lg, sim); saves.open('both'); }],
+    [2000, 'down'], [2800, 'ok'], [3400, 'ok'], [4000, 'right'], [4500, 'ok'],
+    [6400, function () { drawWorld(lg, sim); saves.autosave({ force: true }); }],
+    [7600, function () { drawWorld(lg, sim); saves.open('load'); }],
+    [8200, 'down'], [8700, 'down'], [9200, 'down'], [9800, 'ok'], [10700, 'back'], [11200, 'up'], [11700, 'up'], [12200, 'ok'], [12800, 'ok']
+  ];
+  var sIdx = 0;
+  function stepSim() {
+    sim.t += STEP;
+    if (LOOP) {
+      var lt = sim.t - sim.loopAt;
+      while (sIdx < SCRIPT.length && lt >= SCRIPT[sIdx][0]) { var a = SCRIPT[sIdx][1]; if (typeof a === 'function') a(); else saves.press(a); sIdx++; }
+      if (lt >= LOOP_MS) { var t0 = sim.t; newSim(); sim.t = t0; sim.loopAt = t0; sIdx = 0; saves.clear(); seedSlots(); makeSaves(); refreshSum(); }
+    }
+    if (saves.busy()) { saves.update(STEP); return; }        // the world waits while the slot screen is open
+    sim.p += 2.2 * STEP / 1000; sim.ms += STEP;
+    if (sim.t - sim.coinAt > 1300) { sim.coinAt = sim.t; sim.gold += 5; var h = heroAt(sim.p); sim.sparkle.push({ x: h.x + 8, y: h.y + 2, t: sim.t }); if (sim.sparkle.length > 4) sim.sparkle.shift(); if (sim.gold % 100 === 0) sim.lv++; }
+    saves.update(STEP);
+  }
+
+  /* text state for critics and tools/sprites/statecheck.py: the one walking hero, same heroAt() / camOf() the draw uses */
+  window.__state = function () {
+    var h = heroAt(sim.p), cam = camOf(h), q = ((sim.p % PL) + PL) % PL, i = Math.floor(q), a = PATH[i], b = PATH[(i + 1) % PL];
+    return { t: Math.round(sim.t), actors: [{ id: 'hero', x: Math.round(h.x) - cam.x + 8, y: Math.round(h.y) + HUD_H - cam.y + T, facing: h.face === -1 ? 'left' : 'right', target: null, vx: b[0] - a[0], vy: b[1] - a[1] }] };
+  };
+
+  /* ---------------- drawing ---------------- */
+  var ctx = cv.getContext('2d');
+  function render() {
+    var S = SKAPI.resolve(skinId), pixel = S.pixel !== false, k = pixel ? 1 : 3;
+    if (cv.width !== W * k) { cv.width = W * k; cv.height = H * k; fit(); }
+    drawWorld(lg, sim);
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false; ctx.drawImage(low, 0, 0, W * k, H * k);
+    ctx.setTransform(k, 0, 0, k, 0, 0); ctx.imageSmoothingEnabled = !pixel;
+    saves.draw(ctx);
+    var st = saves.state();
+    document.getElementById('lamp').className = saves.busy() ? 'on' : '';
+    document.getElementById('state').textContent = saves.busy() ? 'Slot screen has the keys' : 'Playing';
+    document.getElementById('now').textContent = st ? st.mode + ' · ' + st.stage + (st.slot != null ? ' · slot ' + st.slot : '') : 'last: ' + sim.log + ' · storage ' + saves.storageMode();
+    document.documentElement.dataset.state = JSON.stringify({ t: Math.round(sim.t), screen: st, busy: saves.busy(), game: serialize(), last: saves.lastResult(), storage: saves.storageMode() });
+  }
+  function fit() {
+    var avail = Math.min(document.getElementById('stage').clientWidth - 12, 780), s = Math.max(1, Math.floor(avail / W));
+    if (avail < W) s = avail / W;
+    cv.style.width = Math.floor(W * s) + 'px'; cv.style.height = Math.floor(H * s) + 'px';
+    document.getElementById('scaleinfo').textContent = '256×224 native · ' + (Math.round(s * 100) / 100) + '×';
+  }
+  addEventListener('resize', fit); fit();
+  function refreshSum() {
+    var el = document.getElementById('slotsum'); if (!el || !saves) return;
+    el.innerHTML = saves.list().map(function (r) {
+      var cls = r.status === 'ok' ? 'ok' : r.status === 'damaged' ? 'damaged' : r.status === 'old' ? 'old' : '', s = r.summary || {};
+      return '<div class="' + cls + '">' + (r.slot === 'auto' ? 'AUTO' : 'SLOT ' + r.slot) + '<span>' + (r.empty ? 'empty' : r.damaged ? 'damaged' : r.status === 'old' ? 'v' + r.version + ' → migrate' : (s.time != null ? SSM.formatTime(s.time).toLowerCase() : 'ok')) + '</span></div>';
+    }).join('');
+  }
+  refreshSum();
+
+  /* ---------------- controls ---------------- */
+  function manual() { if (LOOP) setLoop(false); }
+  var ACT = {
+    save: function () { saves.open('both'); }, load: function () { saves.open('load'); },
+    auto: function () { var r = saves.autosave({ force: true }); sim.log = r ? 'autosave ' + (r.ok ? 'ok' : r.error) : 'autosave off'; refreshSum(); },
+    corrupt: function () {
+      var k = 'gamedna-demo-village/slot-3', s = storeMode === 'local' ? localStorage.getItem(k) : store.getItem(k);
+      if (!s) { saves.save(3); s = storeMode === 'local' ? localStorage.getItem(k) : store.getItem(k); }
+      if (s) { s = s.replace(/"gold":(\d)/, function (m, d) { return '"gold":' + ((+d + 1) % 10); }); if (storeMode === 'local') localStorage.setItem(k, s); else store.setItem(k, s); }
+      refreshSum();
+    },
+    quick: function () { saves.save(1); refreshSum(); },
+    reset: function () { saves.clear(); seedSlots(); makeSaves(); refreshSum(); }
+  };
+  document.querySelectorAll('.triggers button').forEach(function (btn) { btn.addEventListener('click', function () { manual(); ACT[btn.dataset.act](); }); });
+  addEventListener('keydown', function (e) {
+    if (e.target && e.target.tagName === 'TEXTAREA') return;
+    if (saves.busy()) { if (saves.key(e.code, true)) e.preventDefault(); return; }    // while open, the screen takes its keys
+    var m = { KeyS: 'save', KeyL: 'load', KeyA: 'auto', KeyC: 'corrupt', KeyQ: 'quick', KeyR: 'reset' }[e.code];
+    if (m) { e.preventDefault(); manual(); ACT[m](); }
+  });
+  addEventListener('keyup', function (e) { saves.key(e.code, false); });
+  cv.addEventListener('pointerdown', function (e) {
+    if (!saves.busy()) return; var r = cv.getBoundingClientRect(); e.preventDefault(); manual();
+    saves.tap((e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height);
+  });
+  document.getElementById('exp').addEventListener('click', function () { manual(); var c = saves.exportCode(1); document.getElementById('code').value = c || '(slot 1 is empty)'; });
+  document.getElementById('imp').addEventListener('click', function () { manual(); var r = saves.importCode(document.getElementById('code').value, 2); sim.log = 'import ' + (r.ok ? 'ok' : r.error); refreshSum(); });
+  function syncControls() {
+    document.querySelectorAll('input[type=range][data-key]').forEach(function (inp) {
+      var k = inp.dataset.key; inp.value = params[k];
+      inp.style.setProperty('--fill', (params[k] - inp.min) / (inp.max - inp.min) * 100 + '%');
+      document.querySelector('[data-out="' + k + '"]').textContent = params[k];
+    });
+    document.querySelectorAll('.seg[data-key]').forEach(function (seg) { seg.querySelectorAll('button').forEach(function (bt) { bt.setAttribute('aria-checked', String(bt.textContent === String(params[seg.dataset.key]))); }); });
+    document.getElementById('skin').value = skinId; document.getElementById('store').value = storeMode;
+  }
+  document.querySelectorAll('input[type=range][data-key]').forEach(function (inp) { inp.addEventListener('input', function () { params[inp.dataset.key] = +inp.value; saves.setParams(params); syncControls(); refreshSum(); }); });
+  document.querySelectorAll('.seg[data-key]').forEach(function (seg) { seg.querySelectorAll('button').forEach(function (bt) { bt.addEventListener('click', function () { params[seg.dataset.key] = bt.textContent; saves.setParams(params); syncControls(); refreshSum(); }); }); });
+  document.getElementById('skin').addEventListener('change', function (e) { skinId = e.target.value; saves.clear(); makeSaves(); });
+  document.getElementById('store').addEventListener('change', function (e) { manual(); storeMode = e.target.value; saves.clear(); seedSlots(); makeSaves(); refreshSum(); });
+  function setLoop(on) {
+    LOOP = on; document.querySelectorAll('#loop button').forEach(function (x) { x.setAttribute('aria-checked', String(+x.dataset.v === (on ? 1 : 0))); });
+    if (on) { sim.loopAt = sim.t; sIdx = 0; saves.clear(); seedSlots(); makeSaves(); refreshSum(); }
+  }
+  document.querySelectorAll('#loop button').forEach(function (bt) { bt.addEventListener('click', function () { setLoop(!!+bt.dataset.v); }); });
+  if (!LOOP) setLoop(false);
+  document.getElementById('resetAll').addEventListener('click', function () { resetParams(); skinId = 'pixel16'; storeMode = 'demo'; newSim(); sIdx = 0; seedSlots(); makeSaves(); syncControls(); setLoop(true); });
+  syncControls();
+
+  /* ---------------- run ---------------- */
+  if (FREEZE) {
+    var n = Math.floor(T_AT / STEP); for (var i = 0; i < n; i++) stepSim(); render();
+  } else {
+    var last = performance.now(), acc = 0;
+    render();
+    (function loop(now) { acc += Math.min(250, now - last); last = now; while (acc >= STEP) { stepSim(); acc -= STEP; } render(); requestAnimationFrame(loop); })(performance.now());
+  }
+})();
+</script>
+</body>
+</html>

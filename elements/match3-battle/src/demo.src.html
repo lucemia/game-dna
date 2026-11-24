@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A-17 Match-3 battle board</title>
+<style>
+:root { --bg: #120c10; --ink: #f4ead8; --dim: #b4a488; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font: 13px/1.45 "Trebuchet MS", "Segoe UI", system-ui, sans-serif; }
+#wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px; }
+#stage { width: 100%; display: flex; justify-content: center; }
+#screen { display: block; border-radius: 8px; touch-action: none; }
+#ctl { display: flex; flex-wrap: wrap; gap: 8px 14px; justify-content: center; max-width: 960px; color: var(--dim); }
+#ctl label { display: flex; gap: 6px; align-items: center; }
+#ctl select { background: #2a2026; color: var(--ink); border: 1px solid #5a4632; border-radius: 6px; padding: 4px 6px; font: inherit; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage"><canvas id="screen" width="960" height="540"></canvas></div>
+  <div id="note" style="color:#ffe7b0;font-weight:700"></div>
+  <div id="ctl">
+    <label>Show <select data-q="preset"><option value="battle">Battle (bot plays)</option><option value="line">Row Shard (4)</option><option value="shard">Shard fires</option><option value="blast">Blast gem (L / T)</option><option value="boom">Blast fires</option><option value="prism">Prism (5)</option><option value="rainbow">Prism clears a colour</option><option value="reshuffle">No moves: reshuffle</option></select></label>
+    <label>Foes <select data-q="foes"><option value="imp,wisp,imp">Imps and a wisp</option><option value="slime,wolf">Slime and wolf</option><option value="harpy,wolf">Harpy and wolf</option><option value="skeleton,cultist">Guard and cultist</option><option value="golem">Colossus (boss)</option></select></label>
+    <label>Specials <select data-q="specials"><option>on</option><option>off</option></select></label>
+    <label>Combo bonus <select data-q="combo"><option value="0.25">+25% per cascade</option><option value="0.5">+50%</option><option value="0">none</option></select></label>
+    <label>Speed <select data-q="speed"><option value="1">1x</option><option value="0.5">0.5x</option><option value="2">2x</option></select></label>
+    <label>Hints <select data-q="hints"><option>on</option><option>off</option></select></label>
+    <label>Numbers <select data-q="numbers"><option>on</option><option>off</option></select></label>
+    <label>Layout <select data-q="layout"><option value="">auto</option><option>wide</option><option>tall</option></select></label>
+    <span>Drag or tap two gems, arrows + Z, 1-4 skills, T target, P bot.</span>
+  </div>
+</div>
+<script src="../starter/art/cast-art.js"></script>
+<script src="../starter/art/kit.js"></script>
+<script>
+/*@@MODULE@@*/
+</script>
+<script>
+/*@@DEMO@@*/
+</script>
+</body>
+</html>

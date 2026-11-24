@@ -1,0 +1,62 @@
+{
+  "id": "chip-music",
+  "code": "F-03",
+  "kind": "addon",
+  "name": "Chip music",
+  "family": "music",
+  "oneLiner": "A four-channel chip band synthesized in Web Audio from pattern data: two pulse leads with duty cycle, a stepped triangle bass and a noise drum kit, with arpeggio, vibrato and slide effects. Loops (title, field, battle) wrap without a seam; jingles (victory, defeat, item) pause the loop and bring it back on the next beat, or hand over to another track. Switches land on the beat, play() of the current track is a no-op so the game can name its track every step, and a small badge shows four channel meters and mutes. Silent until the first click, deterministic under ?t= fast-forward, no audio files.",
+  "fits": [
+    "turn-based RPG (title, field, battle, victory fanfare)",
+    "top-down adventure and action RPG",
+    "platformer and metroidvania",
+    "tactics / strategy RPG",
+    "arcade and shoot-em-up",
+    "any game with a title screen and a results screen"
+  ],
+  "notFor": [
+    "sound effects (use F-02 procedural-sfx; pass it in to share one AudioContext)",
+    "recorded or orchestral music, voice",
+    "sample-accurate rhythm judging (see F-04, which can use these tracks)",
+    "music that must change layer by layer with game state (F-05 adaptive-music builds on this)"
+  ],
+  "interfaces": {
+    "time": "any",
+    "coords": "screen",
+    "layer": "ui",
+    "needs": [
+      "the game's fixed update step in every scene (the music clock while audio is off)",
+      "a state-to-track mapping (title / field / battle / none) read each step",
+      "the code that decides each event worth a jingle (item, battle won, final win, game over)",
+      "an empty HUD corner (23x11 native px) and the pointer handler for the sound badge (optional)"
+    ],
+    "provides": [
+      "music through play(track), jingle(name, {after, mode}), stop()",
+      "beat-quantized switches, jingles that pause and resume the loop on a beat, seamless loops",
+      "volume, mute, tempo and transpose (next beat), per-channel gains, addSong(name, data) with validation",
+      "state(): track, bar, beat, row, notes and levels per channel; plan(): the schedule on the music clock",
+      "a sound badge (draw / hit / lastDrawn) and render(spec) via OfflineAudioContext for tests"
+    ]
+  },
+  "params": [
+    { "key": "volume", "label": "Music volume", "type": "range", "min": 0, "max": 1, "step": 0.05, "default": 0.7 },
+    { "key": "jingleMode", "label": "Jingles", "type": "select", "options": ["pause", "duck"], "default": "pause" },
+    { "key": "resume", "label": "Resume the loop on", "type": "select", "options": ["beat", "bar", "row"], "default": "beat" },
+    { "key": "tempo", "label": "Tempo", "type": "range", "min": 0.5, "max": 2, "step": 0.05, "default": 1 },
+    { "key": "transpose", "label": "Key (semitones)", "type": "range", "min": -12, "max": 12, "step": 1, "default": 0 },
+    { "key": "duck", "label": "Loop level under a duck-mode jingle", "type": "range", "min": 0, "max": 1, "step": 0.05, "default": 0.25 },
+    { "key": "mute", "label": "Mute", "type": "select", "options": ["off", "on"], "default": "off" }
+  ],
+  "variants": [
+    { "name": "Classic (default)", "params": { "jingleMode": "pause", "resume": "beat" } },
+    { "name": "Jingles over the music", "params": { "jingleMode": "duck", "duck": 0.3 } },
+    { "name": "Phrase-safe resume", "params": { "resume": "bar" } },
+    { "name": "Tense and fast", "params": { "tempo": 1.2, "transpose": -2 } },
+    { "name": "Quiet background", "params": { "volume": 0.4 } }
+  ],
+  "assets": [
+    "module/chip-music.js: the element as one dependency-free script (global GameDNA_ChipMusic): song parser and validator, 4-channel sample synth, seamless loop buffers, transport (plan on the music clock), Web Audio graph used live and offline, gesture unlock, sound badge",
+    "six original built-in tracks as pattern data in the module (title, field, battle loops; victory, defeat, item jingles); no audio files"
+  ],
+  "status": "draft",
+  "module": { "file": "module/chip-music.js", "global": "GameDNA_ChipMusic", "version": "1.0.4", "docs": "module/README.md" }
+}
