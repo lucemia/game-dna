@@ -84,3 +84,8 @@ Native canvas, any size via `view`; every particle sits on whole native pixels; 
 4. **Cross-fade** (demo `?tour=1&t=7700&freeze=1`): rain and snow together, the HUD label reading "RAIN TO SNOW".
 5. **Determinism**: two loads of the same `?t=&freeze=1` URL give byte-identical PNGs.
 6. **Hosts**: in a platformer and a top-down game, `?auto=1` ends as before with no errors.
+
+## 8. Changelog
+
+- **1.0.1** (2026-11-25, demo only; module unchanged, still v1.0.0, same sha256): the demo hero no longer floats. He walks on his own world x near screen x 104 instead of being pinned to it, jumps the pits on a parabola (gravity 440 px/s², 0.6 s in the air, lands past the far edge), hops up the 8 and 16 px steps and falls down them, and keeps his feet on the ground line in every ground frame. The walk is 4 code-drawn frames cut from the pixel16 lord (alternating legs, body 1 px up on the passing frames), advanced by distance walked so the feet do not slide; the jump has its own tucked pose and a 120 ms landing pose. Gate: `checks/hero-motion.py` (air < 1 s, ≥ 4 distinct walk frames, no jump pose in the walk, feet on the ground) with two mutants that must fail (`float`, `walk2`). Site card loop, poster and moments re-captured.
+- **1.0.0** (2026-11-15): first release.

@@ -61,7 +61,7 @@ Adds an overworld map scene between levels: level, secret, bonus, castle, hut an
 
 ## Self-check without a browser (report each)
 
-- Each module file is byte-identical to the one given: `level-select-map.js` sha256 `71747b1c32c7dfa6...` (`shasum -a 256`).
+- Each module file is byte-identical to the one given: `level-select-map.js` sha256 `fad7a696385b59f8...` (`shasum -a 256`).
 - No function removed or renamed (compare name lists before/after).
 - Every identifier you call exists where called; each instance exists before first use.
 - [Level-select path reveal] Trace autoplay: title -> map -> `enterLevel` -> level -> goal -> `complete` -> map -> reveal -> next level ... -> castle -> win screen.

@@ -168,13 +168,44 @@ function buildArt() {
     A.props = {}; [['bush', 0], ['bush', 1], ['rock', 0], ['boulder', 1], ['stump', 0], ['log', 0], ['flowers', 1], ['flowers', 2]].forEach(([k, v]) => { const pr = PXS.prop(k, { v }); A.props[k + v] = { img: tinted(pr.frames[0]), ax: pr.ax, ay: pr.ay }; });
   }
   if (sk16 && sk16.unitToken) A.lord = [0, 1].map(f => { const c = document.createElement('canvas'); c.width = 18; c.height = 23; sk16.unitToken(c.getContext('2d'), { x: 0, y: 0, w: 18, h: 22 }, { team: 'a', kind: 'lord', facing: 1, noShadow: true }, f * 26 / 60 + 0.01); return tinted(c); });
+  if (A.lord) A.pose = heroPoses(A.lord[0]);
   A.flower = sprite(5, 5, ['.r.r.', 'rrYrr', '.rgr.', '..g..', '..g..'], { r: '#f0607a', Y: '#ffe070', g: '#3e8a3a' });
   return A;
 }
 
+/* ===== hero poses, drawn in code from the baked pixel16 lord (18x23, frontal, soles on row 21):
+   the body (rows 0-18) and the two legs (left cols 4-8, right cols 10-14, rows 19-21) are cut apart and put back
+   with per-pose offsets. walk = 4 frames (plant left / pass with the right leg up / plant right / pass with the
+   left leg up; body 1 px up on the passing frames), jump = both legs tucked, land = body 1 px down, legs wide.
+   A planted leg always ends on row 21, so feet sit on the ground line in every ground frame. ===== */
+const HERO_POSES = {
+  //        body dy, left leg [dx, dy], right leg [dx, dy]   (leg dy < 0 = lifted)
+  walk0: [0, [-1, 0], [0, -1]],
+  walk1: [-1, [0, 0], [0, -2]],
+  walk2: [0, [0, -1], [1, 0]],
+  walk3: [-1, [0, -2], [0, 0]],
+  stand: [0, [0, 0], [0, 0]],
+  jump: [0, [0, -3], [1, -2]],
+  land: [1, [-1, 0], [1, 0]]
+};
+const WALK_FRAMES = ['walk0', 'walk1', 'walk2', 'walk3'], STRIDE = 5;   // one walk frame per 5 px of ground covered: feet move with the ground
+function heroPoses(src) {
+  const out = {};
+  for (const [k, [bdy, L, R]] of Object.entries(HERO_POSES)) {
+    const c = document.createElement('canvas'); c.width = src.width; c.height = src.height; const x = c.getContext('2d');
+    for (const [lx, w, [dx, dy]] of [[4, 5, L], [10, 5, R]]) {
+      x.drawImage(src, lx, 19, w, 3, lx + dx, 19 + dy, w, 3);
+      for (let f = 19 + dy - 1; f >= 18 + bdy; f--) x.drawImage(src, lx, 19, w, 1, lx + dx, f, w, 1);   // stretch the shin up to the hips when the body rose or the leg is planted under a raised body
+    }
+    x.drawImage(src, 0, 0, src.width, 19, 0, bdy, src.width, 19);
+    out[k] = c;
+  }
+  return out;
+}
+
 /* ===== the integration: one instance; update in the fixed step; drawBack before the ground, drawFront after the sprites ===== */
 const cv = document.getElementById('cv'), g = cv.getContext('2d');
-const S = { t: 0, camX: 0, vx: 0, paused: false, keys: {}, tourIdx: -1, face: 1 };   // face: the side the hero looks at (manual camera: the last arrow pressed)
+const S = { t: 0, camX: 0, vx: 0, paused: false, keys: {}, tourIdx: -1, face: 1, hero: null };   // face: the side the hero looks at (manual camera: the last arrow pressed)
 if (Q.get('hold') === 'left' || Q.get('hold') === 'right') S.keys[Q.get('hold') === 'left' ? 'ArrowLeft' : 'ArrowRight'] = true;   // ?cam=manual&hold=left: a held arrow for ?t=&freeze=1 shots
 function camNow() { return CAM === 'static' ? 0 : CAM === 'manual' ? Math.round(S.camX) : Math.floor(S.t * 0.032); }
 function uiRects() { return UI_ON ? UI.map(u => u.r) : [{ x: 4, y: 3, w: 98, h: 14 }]; }
@@ -196,21 +227,58 @@ const TOUR_SEQ = [[0, 'rain'], [7000, 'snow'], [14000, 'leaves'], [21000, 'dust'
 function step() {
   if (S.paused) return;
   S.t += STEP;
-  if (CAM === 'manual') { const ax = (S.keys.ArrowRight ? 1 : 0) - (S.keys.ArrowLeft ? 1 : 0); if (ax) S.face = ax; S.vx = S.vx * 0.85 + ax * 0.45; S.camX += S.vx; }
+  if (CAM === 'manual') { const ax = (S.keys.ArrowRight ? 1 : 0) - (S.keys.ArrowLeft ? 1 : 0); if (ax) S.face = ax; S.vx = S.vx * 0.85 + ax * 0.3; S.camX += S.vx; }
   if (TOUR) {
     const tt = S.t % 35000; let idx = 0; TOUR_SEQ.forEach(([at], i) => { if (tt >= at) idx = i; });
     if (idx !== S.tourIdx) { S.tourIdx = idx; WEATHER = TOUR_SEQ[idx][1]; WX.setWeather(WEATHER, S.t < 100 ? 0 : P.fade); markWeather(); }
   }
+  heroStep();
   WX.update(STEP);
 }
 
-function heroPos(camX) {
-  const wx = camX + 104, foot = c => colTop(Math.floor((wx + c) / TS));
-  let top = Math.min(...[2, 9].map(c => foot(c) ?? 999));
-  let jy = 0;
-  for (let d = -20; d <= 26; d += 2) if (colTop(Math.floor((wx + 6 + d) / TS)) === null) { jy = Math.max(jy, Math.round(Math.cos(d / 26 * Math.PI / 2) * 20)); }
-  if (top === 999) top = 148;
-  return { x: 104, y: top - 16 - jy, jump: jy > 0 };
+/* ===== the hero: walks to keep near screen x 104, hops up steps, falls down them, jumps the pits on a parabola =====
+   hx = world x of the sprite box (feet span hx+1..hx+11), y = feet line. Air time of a pit jump: 2*JUMP_V/GRAV = 0.6 s. */
+const GRAV = 440, JUMP_V = 132, PIT_VX = 90, MAX_V = 130, ANCHOR = 104, LAND_MS = 120;
+function groundUnder(hx) { const a = colTop(Math.floor((hx + 2) / TS)), b = colTop(Math.floor((hx + 10) / TS)); return a === null ? b : b === null ? a : Math.min(a, b); }
+function heroInit() { const hx = camNow() + ANCHOR; S.hero = { hx, y: groundUnder(hx) ?? 148, vx: 0, vy: 0, air: false, dist: 0, land: 0, airMs: 0, prevCam: camNow(), camV: CAM === 'pan' ? 32 : 0 }; }
+function heroStep() {
+  const H = S.hero, dt = STEP / 1000, cam = camNow(); H.camV += ((cam - H.prevCam) / dt - H.camV) * 0.1; H.prevCam = cam; const camV = Math.abs(H.camV) < 1 ? 0 : H.camV;   // camera speed, smoothed (the pan moves in whole px)
+  if (H.air) {
+    H.vy += GRAV * dt; H.y += H.vy * dt; H.hx += H.vx * dt; H.airMs += STEP;
+    const gr = groundUnder(H.hx);
+    if (H.vy > 0 && gr !== null && H.y >= gr) { H.y = gr; H.air = false; H.vy = 0; H.land = LAND_MS; H.vx = 0; }
+    else if (H.y > 260) heroInit();   // safety: never lost in a pit
+    return;
+  }
+  H.airMs = 0; if (H.land > 0) H.land -= STEP;
+  const dx = cam + ANCHOR - H.hx; let v = camV + Math.max(-40, Math.min(40, dx * 1.5));
+  if (camV > 0) v = Math.max(v, camV * 0.5); else if (camV < 0) v = Math.min(v, camV * 0.5); else if (Math.abs(dx) < 2) v = 0;
+  v = Math.max(-MAX_V, Math.min(MAX_V, v));
+  if (v) {
+    const dir = Math.sign(v), front = H.hx + (dir > 0 ? 10 : 2);
+    const pitAhead = colTop(Math.floor((front + dir * 3) / TS)) === null;
+    const upAhead = colTop(Math.floor((front + dir * 6) / TS)), stepUp = upAhead !== null && upAhead < H.y - 2;
+    if (pitAhead) {
+      if (Math.abs(camV) > 10 || dx * dir > 24) { H.air = true; H.vy = -JUMP_V; H.vx = dir * PIT_VX; H.dist += Math.abs(v * dt); return; }   // a pit: jump it
+      v = 0;   // the camera parked over the pit: wait at the edge
+    } else if (stepUp) { H.air = true; H.vy = -JUMP_V; H.vx = dir * Math.max(30, Math.abs(v)); H.dist += Math.abs(v * dt); return; }   // a higher column: hop up
+  }
+  H.hx += v * dt; H.vx = v; H.dist += Math.abs(v * dt);
+  const gr = groundUnder(H.hx);
+  if (gr === null || gr > H.y + 0.5) { H.air = true; H.vy = 0; H.vx = v; }   // walked off a step: fall
+  else H.y = gr;
+  const sx = H.hx - cam; if (sx < 8) H.hx = cam + 8; else if (sx > 296) H.hx = cam + 296;   // fast manual camera: keep him on screen
+}
+function heroPose() {
+  const H = S.hero;
+  if (H.air) return 'jump';
+  if (H.land > 0) return 'land';
+  if (!H.vx) return 'stand';
+  return WALK_FRAMES[Math.floor(H.dist / STRIDE) % WALK_FRAMES.length];
+}
+
+function heroPos(camX) {   // screen box of the 12x16 fallback sprite; the lord is drawn at (x - 3, y - 6), soles at y + 15
+  const H = S.hero; return { x: Math.round(H.hx - camX), y: Math.round(H.y) - 16, jump: H.air, pose: heroPose() };
 }
 function drawScene(camX) {
   g.drawImage(ART.sky, 0, 0);
@@ -240,11 +308,11 @@ function drawSprites(camX) {
   const bob = Math.floor(S.t / 300) % 2;
   for (const base of [470, 470 + 768, 700, 700 + 768]) { const sx = base - (camX % 768); if (sx > -20 && sx < W) { const top = colTop(Math.floor((base) / TS)) ?? 148; g.drawImage(ART.slime[bob], sx, top - 11); } }
   const h = heroPos(camX);
-  const im = ART.lord ? ART.lord[h.jump ? 1 : Math.floor(S.t / 200) % 2] : ART.hero[h.jump ? 1 : Math.floor(S.t / 160) % 2], ix = ART.lord ? h.x - 3 : h.x, iy = ART.lord ? h.y - 6 : h.y;
+  const im = ART.pose ? ART.pose[h.pose] : ART.hero[h.jump ? 1 : Math.floor(S.hero.dist / 8) % 2], ix = ART.lord ? h.x - 3 : h.x, iy = ART.lord ? h.y - 6 : h.y;
   if (heroFace() !== HERO_ART_FACING) { g.save(); g.translate(ix + im.width, iy); g.scale(-1, 1); g.drawImage(im, 0, 0); g.restore(); } else g.drawImage(im, ix, iy);
 }
 const HERO_ART_FACING = 1;   // both hero pictures (the baked pixel16 lord, the fallback sprite) look right
-function heroFace() { return CAM === 'manual' ? S.face : 1; }   // auto-pan runs right
+function heroFace() { const v = S.hero ? S.hero.vx : 0; return v > 5 ? 1 : v < -5 ? -1 : CAM === 'manual' ? S.face : 1; }   // he looks the way he moves (auto-pan: right)
 function col(sk, path, alt) { const v = sk.lookup(path); return typeof v === 'string' && /^(#|rgb|hsl)/.test(v) ? v : alt ? col(sk, alt) : '#ffffff'; }
 function drawUI() {
   const sk = SK();
@@ -276,9 +344,9 @@ function draw() {
 
 /* text state for critics and tools/sprites/statecheck.py (canvas px, feet). One hero, drawn with heroFace(); the slimes are frontal blobs. */
 window.__state = () => { const camX = camNow(), h = heroPos(camX), actors = [{ id: 'hero', x: h.x + 6, y: h.y + 16, facing: heroFace() > 0 ? 'right' : 'left', target: null,
-    vx: CAM === 'pan' ? 0.75 : CAM === 'manual' && Math.abs(S.vx) > 0.2 ? Math.round(S.vx * 100) / 100 : 0, flipX: heroFace() !== HERO_ART_FACING }];
+    vx: Math.round(S.hero.vx / 60 * 100) / 100, pose: h.pose, air: S.hero.air, flipX: heroFace() !== HERO_ART_FACING }];
   for (const base of [470, 470 + 768, 700, 700 + 768]) { const sx = base - (camX % 768); if (sx > -20 && sx < W) actors.push({ id: 'slime-' + base, x: Math.round(sx + 7), y: (colTop(Math.floor(base / TS)) ?? 148), facing: null, target: null, noFace: 'frontal art' }); }
-  return { t: Math.round(S.t), cam: CAM, actors }; };
+  return { t: Math.round(S.t), cam: CAM, actors, hero: { pose: h.pose, air: S.hero.air, airMs: Math.round(S.hero.airMs), feetY: Math.round(S.hero.y), ground: groundUnder(S.hero.hx) } }; };
 
 /* ===== loop + ?t=&freeze=1 ===== */
 function run() {
@@ -353,6 +421,7 @@ function fit() {
   document.getElementById('scaleinfo').textContent = `320×180 native · ${k}×`;
 }
 ART = buildArt();
+heroInit();
 makeWX();
 buildWeather();
 const presetSel = document.getElementById('preset');

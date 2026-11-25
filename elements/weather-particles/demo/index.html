@@ -1175,7 +1175,7 @@ select { width: 100%; appearance: none; background: #0f0d17 url("data:image/svg+
     sword: { x: 13, y: 6, rows: ['.l.', '.l.', 'lm.', 'lm.', 'lm.', 'lm.', 'mM.', 'GgG', '.b.', '.B.'] },
     lance: { x: 14, y: 0, rows: ['.l.', 'llm', 'lmM', '.M.', '.b.', '.b.', '.b.', '.b.', '.b.', '.b.', '.b.', '.b.', '.b.', '.B.', '.B.', '.B.', '.B.', '.B.'] },
     axe: { x: 13, y: 3, rows: ['.Bll.', '.bllm', '.bmmM', '.bMM.', '.b...', '.b...', '.b...', '.b...', '.b...', '.b...', '.B...', '.B...'] },
-    bow: { x: 0, y: 9, rows: ['..b', '.bw', 'b.w', 'b.w', 'b.w', 'b.w', 'b.w', '.bw', '..b'] },
+    bow: { x: 15, y: 9, rows: ['b..', 'wb.', 'w.b', 'w.b', 'w.b', 'w.b', 'w.b', 'wb.', 'b..'] },
     staff: { x: 14, y: 3, rows: ['.g.', 'gwg', 'GgG', '.b.', '.b.', '.b.', '.b.', '.b.', '.b.', '.b.', '.b.', '.b.', '.B.', '.B.', '.B.', '.B.'] }
   };
   var KINDS = {
@@ -1237,7 +1237,8 @@ select { width: 100%; appearance: none; background: #0f0d17 url("data:image/svg+
  *   scene.kindAt(cx, cy), scene.blocked(cx, cy)
  *   prop(kind, opts) -> {frames:[canvas], ax, ay, fps}     one prop sprite, anchor = base centre
  *   actor(g, x, y, {pal, dir, frame})    16x20 villager/hero, feet centre at (x, y)
- *   fighter({pal, head, gear, robe, beard, shield}) -> {normal, white, grey, facing: 'left'}   24x32 side-view battle figure
+ *   fighter({pal, head, gear, robe, beard, shield}) -> {normal, white, grey, facing: 'left', variant('right')}   24x32 side-view battle figure;
+ *     variant('right') is a painted right-facing copy (gear in the same hands, light kept top-left) for figures that must not be mirrored
  *   flipX(asset, want), drawFighter(g, f, x, footY, want, mode)   mirror computed from the asset's facing, never typed per page
  *
  * Map chars: . grass  , lush grass  : dry grass  p dirt path  c cobbles  s sand  f tilled field  w water
@@ -1972,7 +1973,111 @@ select { width: 100%; appearance: none; background: #0f0d17 url("data:image/svg+
       A.outline(mode === 'white' ? '#ffffff' : OLN);
       return A.c;
     }
-    return { normal: mkm('normal'), white: mkm('white'), grey: mkm('grey'), w: 24, h: 32, facing: 'left' };
+    // right-facing variant (painted, not mirrored): body mirrored with the light kept on the top-left, the weapon stays in the
+    // same hand (now the far hand, drawn behind the body, its tip showing in front), the shield stays on the same arm (now the
+    // near arm, held across the torso over the body)
+    var SWAP = { B: 'd', d: 'B', H: 'x', x: 'H', p: 'P', P: 'p' };
+    function mkr(mode) {
+      var A = Art(24, 32), put = function (x, y, col) { if (mode === 'white') col = '#ffffff'; else if (mode === 'grey') { var c = rgb(col), v = Math.round((c[0] * 0.3 + c[1] * 0.5 + c[2] * 0.2) * 0.62) + 26; col = 'rgb(' + v + ',' + v + ',' + (v + 14) + ')'; } A.P(x, y, col); }, x, y, ch, n;
+      (FGEAR[o.gear] || []).forEach(function (r) { for (var yy = 0; yy < r[3]; yy++) for (var xx = 0; xx < r[2]; xx++) put(23 - (r[0] + xx), r[1] + yy, r[4]); });
+      if (FGEAR[o.gear]) { put(20, 21, pal.s); put(19, 21, pal.s); put(20, 22, pal.S); put(19, 22, pal.S); }
+      for (y = 0; y < rows.length; y++) for (x = 0; x < 24; x++) { ch = rows[y].charAt(23 - x); if (ch === '.' || !pal[ch]) continue; put(x, y + OY, pal[SWAP[ch] && pal[SWAP[ch]] ? SWAP[ch] : ch]); }
+      if (o.shield) { var sh = o.shield; for (y = 0; y < 11; y++) { n = y < 6 ? 0 : (y - 4) >> 1; for (x = 8 + n; x < 16 - n; x++) put(x, 16 + y, x === 8 + n || y === 0 ? sh[1] : x >= 14 - n ? sh[2] : sh[0]); } put(12, 19, sh[3] || pal.g); put(12, 20, sh[3] || pal.g); put(11, 20, sh[3] || pal.g); put(13, 20, sh[3] || pal.g); put(12, 21, sh[3] || pal.g); put(12, 22, sh[3] || pal.g); }
+      if (o.beard) { for (x = 5; x < 11; x++) { put(23 - x, 10 + OY, pal.x); put(22 - x, 11 + OY, pal.x); } put(16, 9 + OY, pal.x); put(15, 9 + OY, pal.x); }
+      A.outline(mode === 'white' ? '#ffffff' : OLN);
+      return A.c;
+    }
+    var out = { normal: mkm('normal'), white: mkm('white'), grey: mkm('grey'), w: 24, h: 32, facing: 'left' }, vr = null;
+    // variant('right') -> the same shape facing right (built on first use, so existing pages draw exactly what they drew before)
+    out.variant = function (side) { if (side !== 'right') return out; return vr || (vr = { normal: mkr('normal'), white: mkr('white'), grey: mkr('grey'), w: 24, h: 32, facing: 'right', variantOf: 'left' }); };
+    return out;
+  }
+  /* ---------- fighter poses (opt-in, additive: fighter() output is unchanged) ----------
+   * fighterPose(o, pose, side) -> canvas 48x48, the same figure as fighter(o) in an action pose, painted for `side`
+   *   ('left' = native, 'right' = painted like variant('right'): body mirrored with the light kept top-left, the weapon in the
+   *   same hand, now the far hand drawn behind the body). The 24x32 figure sits at offset (12, 16): feet centre at
+   *   canvas.footX = 23 or 24, canvas.footY = 48 (one below the last row), so frames line up when drawn by their foot point.
+   *   poses: idle, ready, windup, swing, follow, hurt, down (kneel), cast (weapon raised), aim (bow drawn, arrow nocked), release
+   *   The weapon layer is the fighter's own gear pixels, turned about the grip and moved to the new hand (nearest sample, no
+   *   smoothing); the front arm is redrawn from the shoulder to the hand. Cached per (opts, pose, side). */
+  var POSE = {   // hand position (24x32 art coords, left-facing), weapon "up" direction, body lean (+ = back), drop (kneel)
+    idle: { h: [3.5, 21.5], d: [0, -1], lean: 0 }, ready: { h: [2, 20], d: [-0.45, -0.89], lean: 1 },
+    windup: { h: [12, 12], d: [0.86, -0.5], lean: 1 }, swing: { h: [1, 15], d: [-0.97, -0.24], lean: -1 },
+    follow: { h: [2, 21], d: [-0.72, 0.69], lean: -1 }, hurt: { h: [5, 22], d: [0.5, 0.87], lean: 2, shut: 1 },
+    down: { h: [1, 27], d: [-0.96, 0.28], lean: 1, drop: 5, shut: 1 }, cast: { h: [4, 9], d: [0, -1], lean: 0 },
+    aim: { h: [0, 16], d: [0, -1], lean: 1, bow: 'draw' }, release: { h: [0, 16], d: [0, -1], lean: 0, bow: 'loose' } };
+  var POSEC = {};
+  function fighterPose(o, pose, side) {
+    o = o || {}; pose = POSE[pose] ? pose : 'idle'; side = side === 'right' ? 'right' : 'left';
+    if ((pose === 'aim' || pose === 'release') && o.gear !== 'bow') pose = 'cast';
+    var key = JSON.stringify(o) + '|' + pose + '|' + side; if (POSEC[key]) return POSEC[key];
+    var P = POSE[pose], pal = {}, kk, rows = [], i, hat = FHAT[o.head], OY = 2, W = 48, H = 48, OX = 12, OYC = 16, R = side === 'right';
+    for (kk in FBASE) pal[kk] = FBASE[kk]; for (kk in (o.pal || {})) pal[kk] = o.pal[kk];
+    if (!pal.t) { pal.t = pal.h; pal.T = pal.H; pal.u = pal.x; } pal.D = pal.d;
+    for (i = 0; i < FHEAD.length; i++) rows.push(hat && hat[i] ? hat[i] : FHEAD[i]);
+    rows = rows.concat(FBODY, o.robe ? FROBE : FLEGS);
+    var SWAP = { B: 'd', d: 'B', H: 'x', x: 'H', p: 'P', P: 'p' };
+    var A = Art(W, H), body = Art(W, H), gear = Art(W, H);
+    // where a 24x32 art pixel (x, y) lands on the 48x48 canvas for this side
+    var X = function (x) { return R ? OX + 23 - x : OX + x; }, Y = function (y) { return OYC + y; };
+    var drop = P.drop || 0, upper = 2 + FHEAD.length + FBODY.length;   // rows above the legs (art y < upper) lean and drop
+    var weaponArm = !!FGEAR[o.gear];
+    // body
+    for (var y = 0; y < rows.length; y++) {
+      var ay = y + OY, isUpper = ay < upper, legRow = ay - upper;
+      if (drop && !isUpper && legRow >= 2 && legRow < 2 + drop) continue;          // kneel: shorten the legs
+      var dy = drop && (isUpper || legRow < 2) ? drop : 0, dx = isUpper ? -P.lean : 0;
+      if (drop && !isUpper && legRow >= 2 + drop) dy = 0;
+      if (drop && !isUpper && legRow < 2) dy = drop;
+      for (var x = 0; x < 24; x++) {
+        var ch = rows[y].charAt(x); if (ch === '.' || !pal[ch]) continue;
+        if (weaponArm && pose !== 'idle' && ay >= 17 && ay <= 21 && x <= 4 && isUpper) continue;   // the resting front arm moves
+        var c = ch === 'e' && P.shut ? 'S' : ch;
+        if (R && SWAP[c] && pal[SWAP[c]]) c = SWAP[c];
+        body.P(X(x + dx), Y(ay + dy), pal[c] || pal[ch]);
+      }
+    }
+    if (o.beard) { var bdy = drop, bdx = -P.lean; for (var bx = 5; bx < 11; bx++) { body.P(X(bx + bdx), Y(10 + OY + bdy), pal.x); body.P(X(bx + 1 + bdx), Y(11 + OY + bdy), pal.x); } body.P(X(7 + bdx), Y(9 + OY + bdy), pal.x); body.P(X(8 + bdx), Y(9 + OY + bdy), pal.x); }
+    if (o.shield) { var sh = o.shield, n2, sx0 = R ? 8 : 11; for (y = 0; y < 11; y++) { n2 = y < 6 ? 0 : (y - 4) >> 1; for (x = sx0 + n2; x < sx0 + 8 - n2; x++) body.P(R ? OX + x : OX + x, Y(16 + y + drop), x === sx0 + n2 || y === 0 ? sh[1] : x >= sx0 + 6 - n2 ? sh[2] : sh[0]); } var cxs = R ? 12 : 14; [[0, 3], [0, 4], [-1, 4], [1, 4], [0, 5], [0, 6]].forEach(function (q) { body.P(OX + cxs + q[0], Y(16 + q[1] + drop), sh[3] || pal.g); }); }
+    // gear: drawn at rest in its own layer, then turned about the grip and moved to the pose's hand
+    var rest = o.gear === 'bow' ? [1.5, 17.5] : [3.5, 21.5], hand = [P.h[0], P.h[1] + drop];
+    var src = Art(W, H), statics = [];
+    (FGEAR[o.gear] || []).forEach(function (r) { if (r[0] >= 10) { statics.push(r); return; } src.R(OX + r[0], OYC + r[1], r[2], r[3], r[4]); });
+    if (P.bow === 'loose' || P.bow === 'draw') { src.g.clearRect(OX + 3, OYC + 10, 1, 15); }   // the bow string is redrawn below
+    var sd = src.g.getImageData(0, 0, W, H).data, gd = gear.g.getImageData(0, 0, W, H), gdd = gd.data;
+    var ang = Math.atan2(P.d[0], -P.d[1]), ca = Math.cos(ang), sa = Math.sin(ang);
+    var hx = OX + hand[0], hy = OYC + hand[1], rx0 = OX + rest[0], ry0 = OYC + rest[1];
+    for (y = 0; y < H; y++) for (x = 0; x < W; x++) {   // inverse map: target pixel centre -> rest-layer pixel
+      var vx = x + 0.5 - hx, vy = y + 0.5 - hy, ux = vx * ca + vy * sa, uy = -vx * sa + vy * ca, sxp = Math.floor(rx0 + ux), syp = Math.floor(ry0 + uy);
+      if (sxp < 0 || syp < 0 || sxp >= W || syp >= H) continue;
+      var q = (syp * W + sxp) * 4; if (sd[q + 3] < 128) continue;
+      var tx = R ? (2 * OX + 23 - x) : x, qq = (y * W + tx) * 4; if (tx < 0 || tx >= W) continue;
+      gdd[qq] = sd[q]; gdd[qq + 1] = sd[q + 1]; gdd[qq + 2] = sd[q + 2]; gdd[qq + 3] = 255;
+    }
+    gear.g.putImageData(gd, 0, 0);
+    statics.forEach(function (r) { for (var yy = 0; yy < r[3]; yy++) for (var xx = 0; xx < r[2]; xx++) gear.P(X(r[0] + xx), Y(r[1] + yy + drop), r[4]); });
+    // bow string / nocked arrow
+    if (P.bow) {
+      var top = [hand[0] + 0, hand[1] - 7], bot = [hand[0], hand[1] + 7], pull = P.bow === 'draw' ? [hand[0] + 7, hand[1]] : [hand[0] + 1, hand[1]];
+      var line = function (a, b, col) { var n = Math.max(Math.abs(b[0] - a[0]), Math.abs(b[1] - a[1])) | 0; for (var k = 0; k <= n; k++) { var t = n ? k / n : 0; gear.P(X(Math.round(a[0] + (b[0] - a[0]) * t)), Y(Math.round(a[1] + (b[1] - a[1]) * t)), col); } };
+      line([top[0] + 1, top[1]], pull, '#e8e0c8'); line(pull, [bot[0] + 1, bot[1]], '#e8e0c8');
+      if (P.bow === 'draw') { line([hand[0] - 4, hand[1]], [pull[0] + 1, hand[1]], '#c8a070'); gear.P(X(hand[0] - 5), Y(hand[1]), '#e8eef8'); gear.P(X(hand[0] - 4), Y(hand[1] - 1), '#e8eef8'); gear.P(X(hand[0] - 4), Y(hand[1] + 1), '#e8eef8'); gear.P(X(pull[0]), Y(hand[1] - 1), '#e04848'); gear.P(X(pull[0]), Y(hand[1] + 1), '#e04848'); }
+    }
+    // front arm: shoulder -> hand, 2 px of sleeve, then the hand
+    var arm = Art(W, H);
+    if (weaponArm && pose !== 'idle') {
+      var sh0 = [6 - P.lean, 16 + drop], sh1 = P.bow === 'draw' ? [hand[0] + 1, hand[1]] : hand, n3 = Math.max(Math.abs(sh1[0] - sh0[0]), Math.abs(sh1[1] - sh0[1])) | 0;
+      var sleeve = R ? pal.d : pal.B, dark = R ? pal.B : pal.d;
+      for (var k = 0; k <= n3; k++) { var t = n3 ? k / n3 : 0, ax = Math.round(sh0[0] + (sh1[0] - sh0[0]) * t), ayy = Math.round(sh0[1] + (sh1[1] - sh0[1]) * t); arm.P(X(ax), Y(ayy), t < 0.8 ? sleeve : pal.s); arm.P(X(ax), Y(ayy + 1), t < 0.8 ? dark : pal.S); }
+      arm.R(Math.min(X(Math.floor(hand[0])), X(Math.floor(hand[0]) + 1)), Y(Math.floor(hand[1])), 2, 2, pal.s); arm.P(X(Math.floor(hand[0]) + 1), Y(Math.floor(hand[1]) + 1), pal.S);
+      if (P.bow === 'draw') { arm.R(Math.min(X(hand[0] + 6), X(hand[0] + 7)), Y(hand[1]), 2, 2, pal.s); }
+    } else if (weaponArm) { arm.P(X(3), Y(21), pal.s); arm.P(X(4), Y(21), pal.s); arm.P(X(3), Y(22), pal.S); arm.P(X(4), Y(22), pal.S); }
+    // compose: right side keeps the weapon in the far hand, behind the body
+    if (R) { A.g.drawImage(gear.c, 0, 0); A.g.drawImage(arm.c, 0, 0); A.g.drawImage(body.c, 0, 0); }
+    else { A.g.drawImage(body.c, 0, 0); A.g.drawImage(gear.c, 0, 0); A.g.drawImage(arm.c, 0, 0); }
+    A.outline(OLN);
+    A.c.footX = R ? OX + 12 : OX + 12; A.c.footY = OYC + 32; A.c.facing = side; A.c.pose = pose;
+    return (POSEC[key] = A.c);
   }
   /* mirror rule: an asset records the side its art looks at (fighter: 'left', actor side frame: 'right');
      flipX(asset, want) = (want !== asset.facing), want = 'left' | 'right' | -1 | 1. Never type the mirror per page. */
@@ -1983,7 +2088,7 @@ select { width: 100%; appearance: none; background: #0f0d17 url("data:image/svg+
     if (flipX(f, want)) { g.save(); g.translate(X + 24 - 1, Y); g.scale(-1, 1); g.drawImage(im, 0, 0); g.restore(); } else g.drawImage(im, X, Y);
   }
 
-  var API = { T: T, PAL: PAL, scene: scene, room: room, prop: prop, glow: glow, actor: actor, actorSprite: actorSprite, fighter: fighter, flipX: flipX, drawFighter: drawFighter, sideGround: sideGround, rug: drawRug, strArt: function (rows, key) { return strArt(rows, key).c; }, hash: hsh, noise: vn,
+  var API = { T: T, PAL: PAL, scene: scene, room: room, prop: prop, glow: glow, actor: actor, actorSprite: actorSprite, fighter: fighter, fighterPose: fighterPose, poses: Object.keys(POSE), flipX: flipX, drawFighter: drawFighter, sideGround: sideGround, rug: drawRug, strArt: function (rows, key) { return strArt(rows, key).c; }, hash: hsh, noise: vn,
     // draw one prop at its base point
     drawProp: function (g, kind, x, y, o, t) { var p = prop(kind, o), f = p.frames[p.frames.length > 1 ? Math.floor((t || 0) / 1000 * (p.fps || 6)) % p.frames.length : 0]; if (p.glow) glow(g, x, y + p.glow.dy, p.glow.r, '#ffd070', 1); g.drawImage(f, Math.round(x - (p.left ? 0 : p.ax)), Math.round(y - p.ay)); } };
   root.GameDNA_PixelScene = API; root.PXS = API;
@@ -2672,13 +2777,44 @@ function buildArt() {
     A.props = {}; [['bush', 0], ['bush', 1], ['rock', 0], ['boulder', 1], ['stump', 0], ['log', 0], ['flowers', 1], ['flowers', 2]].forEach(([k, v]) => { const pr = PXS.prop(k, { v }); A.props[k + v] = { img: tinted(pr.frames[0]), ax: pr.ax, ay: pr.ay }; });
   }
   if (sk16 && sk16.unitToken) A.lord = [0, 1].map(f => { const c = document.createElement('canvas'); c.width = 18; c.height = 23; sk16.unitToken(c.getContext('2d'), { x: 0, y: 0, w: 18, h: 22 }, { team: 'a', kind: 'lord', facing: 1, noShadow: true }, f * 26 / 60 + 0.01); return tinted(c); });
+  if (A.lord) A.pose = heroPoses(A.lord[0]);
   A.flower = sprite(5, 5, ['.r.r.', 'rrYrr', '.rgr.', '..g..', '..g..'], { r: '#f0607a', Y: '#ffe070', g: '#3e8a3a' });
   return A;
 }
 
+/* ===== hero poses, drawn in code from the baked pixel16 lord (18x23, frontal, soles on row 21):
+   the body (rows 0-18) and the two legs (left cols 4-8, right cols 10-14, rows 19-21) are cut apart and put back
+   with per-pose offsets. walk = 4 frames (plant left / pass with the right leg up / plant right / pass with the
+   left leg up; body 1 px up on the passing frames), jump = both legs tucked, land = body 1 px down, legs wide.
+   A planted leg always ends on row 21, so feet sit on the ground line in every ground frame. ===== */
+const HERO_POSES = {
+  //        body dy, left leg [dx, dy], right leg [dx, dy]   (leg dy < 0 = lifted)
+  walk0: [0, [-1, 0], [0, -1]],
+  walk1: [-1, [0, 0], [0, -2]],
+  walk2: [0, [0, -1], [1, 0]],
+  walk3: [-1, [0, -2], [0, 0]],
+  stand: [0, [0, 0], [0, 0]],
+  jump: [0, [0, -3], [1, -2]],
+  land: [1, [-1, 0], [1, 0]]
+};
+const WALK_FRAMES = ['walk0', 'walk1', 'walk2', 'walk3'], STRIDE = 5;   // one walk frame per 5 px of ground covered: feet move with the ground
+function heroPoses(src) {
+  const out = {};
+  for (const [k, [bdy, L, R]] of Object.entries(HERO_POSES)) {
+    const c = document.createElement('canvas'); c.width = src.width; c.height = src.height; const x = c.getContext('2d');
+    for (const [lx, w, [dx, dy]] of [[4, 5, L], [10, 5, R]]) {
+      x.drawImage(src, lx, 19, w, 3, lx + dx, 19 + dy, w, 3);
+      for (let f = 19 + dy - 1; f >= 18 + bdy; f--) x.drawImage(src, lx, 19, w, 1, lx + dx, f, w, 1);   // stretch the shin up to the hips when the body rose or the leg is planted under a raised body
+    }
+    x.drawImage(src, 0, 0, src.width, 19, 0, bdy, src.width, 19);
+    out[k] = c;
+  }
+  return out;
+}
+
 /* ===== the integration: one instance; update in the fixed step; drawBack before the ground, drawFront after the sprites ===== */
 const cv = document.getElementById('cv'), g = cv.getContext('2d');
-const S = { t: 0, camX: 0, vx: 0, paused: false, keys: {}, tourIdx: -1, face: 1 };   // face: the side the hero looks at (manual camera: the last arrow pressed)
+const S = { t: 0, camX: 0, vx: 0, paused: false, keys: {}, tourIdx: -1, face: 1, hero: null };   // face: the side the hero looks at (manual camera: the last arrow pressed)
 if (Q.get('hold') === 'left' || Q.get('hold') === 'right') S.keys[Q.get('hold') === 'left' ? 'ArrowLeft' : 'ArrowRight'] = true;   // ?cam=manual&hold=left: a held arrow for ?t=&freeze=1 shots
 function camNow() { return CAM === 'static' ? 0 : CAM === 'manual' ? Math.round(S.camX) : Math.floor(S.t * 0.032); }
 function uiRects() { return UI_ON ? UI.map(u => u.r) : [{ x: 4, y: 3, w: 98, h: 14 }]; }
@@ -2700,21 +2836,58 @@ const TOUR_SEQ = [[0, 'rain'], [7000, 'snow'], [14000, 'leaves'], [21000, 'dust'
 function step() {
   if (S.paused) return;
   S.t += STEP;
-  if (CAM === 'manual') { const ax = (S.keys.ArrowRight ? 1 : 0) - (S.keys.ArrowLeft ? 1 : 0); if (ax) S.face = ax; S.vx = S.vx * 0.85 + ax * 0.45; S.camX += S.vx; }
+  if (CAM === 'manual') { const ax = (S.keys.ArrowRight ? 1 : 0) - (S.keys.ArrowLeft ? 1 : 0); if (ax) S.face = ax; S.vx = S.vx * 0.85 + ax * 0.3; S.camX += S.vx; }
   if (TOUR) {
     const tt = S.t % 35000; let idx = 0; TOUR_SEQ.forEach(([at], i) => { if (tt >= at) idx = i; });
     if (idx !== S.tourIdx) { S.tourIdx = idx; WEATHER = TOUR_SEQ[idx][1]; WX.setWeather(WEATHER, S.t < 100 ? 0 : P.fade); markWeather(); }
   }
+  heroStep();
   WX.update(STEP);
 }
 
-function heroPos(camX) {
-  const wx = camX + 104, foot = c => colTop(Math.floor((wx + c) / TS));
-  let top = Math.min(...[2, 9].map(c => foot(c) ?? 999));
-  let jy = 0;
-  for (let d = -20; d <= 26; d += 2) if (colTop(Math.floor((wx + 6 + d) / TS)) === null) { jy = Math.max(jy, Math.round(Math.cos(d / 26 * Math.PI / 2) * 20)); }
-  if (top === 999) top = 148;
-  return { x: 104, y: top - 16 - jy, jump: jy > 0 };
+/* ===== the hero: walks to keep near screen x 104, hops up steps, falls down them, jumps the pits on a parabola =====
+   hx = world x of the sprite box (feet span hx+1..hx+11), y = feet line. Air time of a pit jump: 2*JUMP_V/GRAV = 0.6 s. */
+const GRAV = 440, JUMP_V = 132, PIT_VX = 90, MAX_V = 130, ANCHOR = 104, LAND_MS = 120;
+function groundUnder(hx) { const a = colTop(Math.floor((hx + 2) / TS)), b = colTop(Math.floor((hx + 10) / TS)); return a === null ? b : b === null ? a : Math.min(a, b); }
+function heroInit() { const hx = camNow() + ANCHOR; S.hero = { hx, y: groundUnder(hx) ?? 148, vx: 0, vy: 0, air: false, dist: 0, land: 0, airMs: 0, prevCam: camNow(), camV: CAM === 'pan' ? 32 : 0 }; }
+function heroStep() {
+  const H = S.hero, dt = STEP / 1000, cam = camNow(); H.camV += ((cam - H.prevCam) / dt - H.camV) * 0.1; H.prevCam = cam; const camV = Math.abs(H.camV) < 1 ? 0 : H.camV;   // camera speed, smoothed (the pan moves in whole px)
+  if (H.air) {
+    H.vy += GRAV * dt; H.y += H.vy * dt; H.hx += H.vx * dt; H.airMs += STEP;
+    const gr = groundUnder(H.hx);
+    if (H.vy > 0 && gr !== null && H.y >= gr) { H.y = gr; H.air = false; H.vy = 0; H.land = LAND_MS; H.vx = 0; }
+    else if (H.y > 260) heroInit();   // safety: never lost in a pit
+    return;
+  }
+  H.airMs = 0; if (H.land > 0) H.land -= STEP;
+  const dx = cam + ANCHOR - H.hx; let v = camV + Math.max(-40, Math.min(40, dx * 1.5));
+  if (camV > 0) v = Math.max(v, camV * 0.5); else if (camV < 0) v = Math.min(v, camV * 0.5); else if (Math.abs(dx) < 2) v = 0;
+  v = Math.max(-MAX_V, Math.min(MAX_V, v));
+  if (v) {
+    const dir = Math.sign(v), front = H.hx + (dir > 0 ? 10 : 2);
+    const pitAhead = colTop(Math.floor((front + dir * 3) / TS)) === null;
+    const upAhead = colTop(Math.floor((front + dir * 6) / TS)), stepUp = upAhead !== null && upAhead < H.y - 2;
+    if (pitAhead) {
+      if (Math.abs(camV) > 10 || dx * dir > 24) { H.air = true; H.vy = -JUMP_V; H.vx = dir * PIT_VX; H.dist += Math.abs(v * dt); return; }   // a pit: jump it
+      v = 0;   // the camera parked over the pit: wait at the edge
+    } else if (stepUp) { H.air = true; H.vy = -JUMP_V; H.vx = dir * Math.max(30, Math.abs(v)); H.dist += Math.abs(v * dt); return; }   // a higher column: hop up
+  }
+  H.hx += v * dt; H.vx = v; H.dist += Math.abs(v * dt);
+  const gr = groundUnder(H.hx);
+  if (gr === null || gr > H.y + 0.5) { H.air = true; H.vy = 0; H.vx = v; }   // walked off a step: fall
+  else H.y = gr;
+  const sx = H.hx - cam; if (sx < 8) H.hx = cam + 8; else if (sx > 296) H.hx = cam + 296;   // fast manual camera: keep him on screen
+}
+function heroPose() {
+  const H = S.hero;
+  if (H.air) return 'jump';
+  if (H.land > 0) return 'land';
+  if (!H.vx) return 'stand';
+  return WALK_FRAMES[Math.floor(H.dist / STRIDE) % WALK_FRAMES.length];
+}
+
+function heroPos(camX) {   // screen box of the 12x16 fallback sprite; the lord is drawn at (x - 3, y - 6), soles at y + 15
+  const H = S.hero; return { x: Math.round(H.hx - camX), y: Math.round(H.y) - 16, jump: H.air, pose: heroPose() };
 }
 function drawScene(camX) {
   g.drawImage(ART.sky, 0, 0);
@@ -2744,11 +2917,11 @@ function drawSprites(camX) {
   const bob = Math.floor(S.t / 300) % 2;
   for (const base of [470, 470 + 768, 700, 700 + 768]) { const sx = base - (camX % 768); if (sx > -20 && sx < W) { const top = colTop(Math.floor((base) / TS)) ?? 148; g.drawImage(ART.slime[bob], sx, top - 11); } }
   const h = heroPos(camX);
-  const im = ART.lord ? ART.lord[h.jump ? 1 : Math.floor(S.t / 200) % 2] : ART.hero[h.jump ? 1 : Math.floor(S.t / 160) % 2], ix = ART.lord ? h.x - 3 : h.x, iy = ART.lord ? h.y - 6 : h.y;
+  const im = ART.pose ? ART.pose[h.pose] : ART.hero[h.jump ? 1 : Math.floor(S.hero.dist / 8) % 2], ix = ART.lord ? h.x - 3 : h.x, iy = ART.lord ? h.y - 6 : h.y;
   if (heroFace() !== HERO_ART_FACING) { g.save(); g.translate(ix + im.width, iy); g.scale(-1, 1); g.drawImage(im, 0, 0); g.restore(); } else g.drawImage(im, ix, iy);
 }
 const HERO_ART_FACING = 1;   // both hero pictures (the baked pixel16 lord, the fallback sprite) look right
-function heroFace() { return CAM === 'manual' ? S.face : 1; }   // auto-pan runs right
+function heroFace() { const v = S.hero ? S.hero.vx : 0; return v > 5 ? 1 : v < -5 ? -1 : CAM === 'manual' ? S.face : 1; }   // he looks the way he moves (auto-pan: right)
 function col(sk, path, alt) { const v = sk.lookup(path); return typeof v === 'string' && /^(#|rgb|hsl)/.test(v) ? v : alt ? col(sk, alt) : '#ffffff'; }
 function drawUI() {
   const sk = SK();
@@ -2780,9 +2953,9 @@ function draw() {
 
 /* text state for critics and tools/sprites/statecheck.py (canvas px, feet). One hero, drawn with heroFace(); the slimes are frontal blobs. */
 window.__state = () => { const camX = camNow(), h = heroPos(camX), actors = [{ id: 'hero', x: h.x + 6, y: h.y + 16, facing: heroFace() > 0 ? 'right' : 'left', target: null,
-    vx: CAM === 'pan' ? 0.75 : CAM === 'manual' && Math.abs(S.vx) > 0.2 ? Math.round(S.vx * 100) / 100 : 0, flipX: heroFace() !== HERO_ART_FACING }];
+    vx: Math.round(S.hero.vx / 60 * 100) / 100, pose: h.pose, air: S.hero.air, flipX: heroFace() !== HERO_ART_FACING }];
   for (const base of [470, 470 + 768, 700, 700 + 768]) { const sx = base - (camX % 768); if (sx > -20 && sx < W) actors.push({ id: 'slime-' + base, x: Math.round(sx + 7), y: (colTop(Math.floor(base / TS)) ?? 148), facing: null, target: null, noFace: 'frontal art' }); }
-  return { t: Math.round(S.t), cam: CAM, actors }; };
+  return { t: Math.round(S.t), cam: CAM, actors, hero: { pose: h.pose, air: S.hero.air, airMs: Math.round(S.hero.airMs), feetY: Math.round(S.hero.y), ground: groundUnder(S.hero.hx) } }; };
 
 /* ===== loop + ?t=&freeze=1 ===== */
 function run() {
@@ -2857,6 +3030,7 @@ function fit() {
   document.getElementById('scaleinfo').textContent = `320×180 native · ${k}×`;
 }
 ART = buildArt();
+heroInit();
 makeWX();
 buildWeather();
 const presetSel = document.getElementById('preset');

@@ -239,6 +239,7 @@
     "no image or audio files"
   ],
   "status": "draft",
+  "version": "1.0.1",
   "module": {
     "file": "module/weather-particles.js",
     "global": "GameDNA_Weather",

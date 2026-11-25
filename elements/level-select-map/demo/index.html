@@ -1169,7 +1169,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
     sword: { x: 13, y: 6, rows: ['.l.', '.l.', 'lm.', 'lm.', 'lm.', 'lm.', 'mM.', 'GgG', '.b.', '.B.'] },
     lance: { x: 14, y: 0, rows: ['.l.', 'llm', 'lmM', '.M.', '.b.', '.b.', '.b.', '.b.', '.b.', '.b.', '.b.', '.b.', '.b.', '.B.', '.B.', '.B.', '.B.', '.B.'] },
     axe: { x: 13, y: 3, rows: ['.Bll.', '.bllm', '.bmmM', '.bMM.', '.b...', '.b...', '.b...', '.b...', '.b...', '.b...', '.B...', '.B...'] },
-    bow: { x: 0, y: 9, rows: ['..b', '.bw', 'b.w', 'b.w', 'b.w', 'b.w', 'b.w', '.bw', '..b'] },
+    bow: { x: 15, y: 9, rows: ['b..', 'wb.', 'w.b', 'w.b', 'w.b', 'w.b', 'w.b', 'wb.', 'b..'] },
     staff: { x: 14, y: 3, rows: ['.g.', 'gwg', 'GgG', '.b.', '.b.', '.b.', '.b.', '.b.', '.b.', '.b.', '.b.', '.b.', '.B.', '.B.', '.B.', '.B.'] }
   };
   var KINDS = {
@@ -1217,7 +1217,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 
 </script>
 <script>
-/* GameDNA B-05 Level-select path reveal  (module v1, plain script, no dependencies, no exports, one global)
+/* GameDNA B-05 Level-select path reveal  (module v1.0.1, plain script, no dependencies, no exports, one global)
  *
  *   const map = GameDNA_LevelMap.create({
  *     nodes: [{id: 'start', x: 24, y: 120, kind: 'start', name: 'Trailhead'}, {id: 'l1', x: 70, y: 110, name: 'Gull Steps'}, ...],
@@ -1237,7 +1237,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
  */
 (function (root) {
   'use strict';
-  var VERSION = '1.0.0';
+  var VERSION = '1.0.1';
   var DEFAULTS = { walk: 1.25, reveal: 4, spacing: 6, terrain: 'coast', locked: 'faint', panel: 'auto', iris: 'on', camera: 'smooth', seed: 7 };
   var KINDS = { level: 'level', stage: 'level', lvl: 'level', normal: 'level', secret: 'secret', sec: 'secret', castle: 'castle', boss: 'castle',
     fort: 'castle', fortress: 'castle', tower: 'castle', keep: 'castle', hut: 'hut', save: 'hut', house: 'hut', inn: 'hut', shop: 'shop', store: 'shop',
@@ -1834,6 +1834,9 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
     /* ----- per-step update ----- */
     function update(inp) {
       try { step(inp); } catch (e) { warn('update', 'update failed: ' + (e && e.message)); }
+      // the camera moves here, one ease step per update, never in draw(): a ?t=&freeze=1 fast-forward (many updates, one draw)
+      // then shows exactly the camera of live play at the same step
+      try { /*cam-update*/ if (mode !== 'away') stepCam(viewOf()); } catch (e) { warn('update', 'camera failed: ' + (e && e.message)); }
     }
     function step(inp) {
       t++;
@@ -2016,12 +2019,10 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
       x = mx <= 0 ? mx / 2 : Math.max(0, Math.min(mx, x)); y = my <= 0 ? my / 2 : Math.max(0, Math.min(my, y));
       return [x, y];
     }
-    var camLast = -1;
-    function stepCam(V) {
+    function stepCam(V) {   // one 60 Hz step, called from update() only
       var tg = camTarget(V);
-      if (!cam.ready || P.camera === 'instant') { cam.x = tg[0]; cam.y = tg[1]; cam.ready = true; camLast = t; return; }
-      var n = Math.max(0, Math.min(4, t - camLast)); camLast = t;
-      for (var i = 0; i < n; i++) { cam.x += (tg[0] - cam.x) * 0.14; cam.y += (tg[1] - cam.y) * 0.14; }
+      if (!cam.ready || P.camera === 'instant') { cam.x = tg[0]; cam.y = tg[1]; cam.ready = true; return; }
+      cam.x += (tg[0] - cam.x) * 0.14; cam.y += (tg[1] - cam.y) * 0.14;
       if (Math.abs(tg[0] - cam.x) < 0.5) cam.x = tg[0]; if (Math.abs(tg[1] - cam.y) < 0.5) cam.y = tg[1];
     }
 
@@ -2034,7 +2035,8 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
       if (!g || !g.canvas) return;
       lastCanvas = g.canvas;
       if (mode === 'away') { if (++awayDraws === 30) { warn('away', 'draw() called for 30 frames while a level is open: call complete(id) or fail(id) when the level ends; showing the map'); show(); } }
-      var V = viewOf(); stepCam(V); buildArt();
+      var V = viewOf(); /*cam-draw*/ if (!cam.ready) { var q0 = camTarget(V); cam.x = q0[0]; cam.y = q0[1]; cam.ready = true; }   // drawn before any update: start on the target
+      buildArt();
       var cx = Math.round(cam.x), cy = Math.round(cam.y), ox = V.x - cx, oy = V.y - cy;
       enter(g, V);
       // ground

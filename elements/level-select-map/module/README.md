@@ -1,4 +1,4 @@
-# level-select-map.js (B-05, module v1.0.0)
+# level-select-map.js (B-05, module v1.0.1)
 
 A plain script with no dependencies and no `export`. It defines one global, `window.GameDNA_LevelMap`, and works pasted into a `<script>` tag or loaded with `<script src>`. It owns the whole overworld scene between levels:
 
@@ -83,6 +83,7 @@ function render() { if (scene === 'map') worldMap.draw(ctx); else drawLevel(); }
 ## Rules the module keeps
 
 - Same inputs and the same `update` calls give the same frames (`?t=&freeze=1` safe): no real time, no `Math.random`.
+- The camera moves only in `update` (one ease step per call), never in `draw`, so a `?t=&freeze=1` fast-forward shows the same scroll as live play at that step (v1.0.1; v1.0.0 eased the camera in `draw` and a frozen frame showed the target instead, so stepping through times made the map jump). `draw` before any `update` starts on the target. `checks/camera-determinism.py` checks it.
 - The reveal blocks walking until every queued path is drawn; the camera returns to the hero afterwards.
 - Paths beyond an uncleared level stay closed; a secret exit opens only `exit: 'secret'` edges; `both` opens both.
 - A hut saves once per visit; the panel never covers the hero or an `avoid` rect when the other edge is free.
