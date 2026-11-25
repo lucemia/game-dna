@@ -6,7 +6,9 @@ usage: python3 -I tools/showcase-deploy/build-staging.py [--repo .] [--crawl cra
 
 Default = the unlisted preview (noindex everywhere). --public = the indexable launch build: no robots meta, no
 X-Robots-Tag, robots.txt Allow + Sitemap, sitemap.xml (home, every element page, start, basket, styles, tests, about, the blog post), a public
-llms.txt and PROVENANCE.md at the root (linked from About), 404.html still noindex. Reports go to *-public.* files.
+llms.txt, llms-full.txt, catalog.json and PROVENANCE.md at the root (PROVENANCE linked from About), 404.html still noindex.
+Both builds: <link rel="canonical"> and JSON-LD URLs point at --canonical-origin (default the public site), so the
+unlisted preview names the public pages as canonical. Reports go to *-public.* files.
 
 What ships (the staging root mirrors the repo root, so every relative URL keeps working; `/` redirects to
 /site/preview/):
@@ -31,10 +33,11 @@ ap.add_argument('--crawl', nargs='*', default=[os.path.join(HERE, 'crawl-repo.js
 ap.add_argument('--out', default=None)
 ap.add_argument('--public', action='store_true', help='indexable launch build (see the docstring)')
 ap.add_argument('--origin', default='https://game-dna.pages.dev', help='public origin for sitemap / robots / llms.txt (placeholder until the project or domain is picked)')
+ap.add_argument('--canonical-origin', default='https://game-dna.pages.dev', help='origin of <link rel="canonical"> and JSON-LD URLs (both builds)')
 ap.add_argument('--basket-js', default=os.path.join(HERE, 'basketfiles.js'))
 A = ap.parse_args()
 REPO = os.path.realpath(A.repo)
-PUBLIC, ORIGIN = A.public, A.origin.rstrip('/')
+PUBLIC, ORIGIN, CANON = A.public, A.origin.rstrip('/'), A.canonical_origin.rstrip('/')
 if A.out is None:
     A.out = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(HERE))), 'game-dna-public-dist' if PUBLIC else 'game-dna-preview-dist')
 SUF = '-public' if PUBLIC else ''
@@ -42,7 +45,7 @@ if PUBLIC and subprocess.run(['git', '-C', REPO, 'status', '--porcelain', '--', 
     print('warning: uncommitted changes under site/ elements/ demo-kit/ are included in this build', file=sys.stderr)
 
 EXCL_DIR = re.compile(r'(^|/)(internal|site-review|coldtests|judge|review|checks|shots|node_modules|\.git|refs|tools)(/|$)')
-EXCL_FILE = re.compile(r'(^|/)(element\.md|element\.json|meta\.json|GEN\.md|PROMPT\.md|style-lock\.txt|prompt-pack\.md|coldtest[^/]*|build-manifest\.sh|SHARED-CHANGES\.md|CHANGES\.md|REPORT\.md)$|\.(py|sh|mjs|jsonl|log)$')
+EXCL_FILE = re.compile(r'(^|/)(element\.md|element\.json|meta\.json|GEN\.md|PROMPT\.md|style-lock\.txt|prompt-pack\.md|catalog-src\.json|coldtest[^/]*|build-manifest\.sh|SHARED-CHANGES\.md|CHANGES\.md|REPORT\.md)$|\.(py|sh|mjs|jsonl|log)$')
 ASSET_EXT = r'(?:js|css|html|md|json|png|webp|jpg|jpeg|gif|svg|mp3|ogg|wav|m4a|glb|gltf|bin|ttf|woff2?|otf|txt|wasm)'
 
 
@@ -120,6 +123,14 @@ for m in re.finditer(r'"file":"(skins/[^"]+)"', styles_src):
 # licence text for the bundled three.js (the .min.js banner alone is not the full MIT notice)
 add('vendor/three@0.149.0/LICENSE', 'licence')
 
+# catalog (public build): every page / prompt / module / demo it names must ship
+CATALOG = json.load(open(os.path.join(REPO, 'site/preview/catalog-src.json'), encoding='utf-8'))['elements']
+if PUBLIC:
+    for c in CATALOG:
+        for k, v in c['paths'].items():
+            if v and not add(v, 'catalog') and norm(v) not in need:
+                print(f'catalog: {c["id"]} {k} {v} cannot ship', file=sys.stderr)
+
 # 4. static references to a fixpoint
 ATTR = re.compile(r'''(?:src|href|data-copy-url|poster|data-src)\s*=\s*["']([^"'#][^"']*)["']''')
 CSSURL = re.compile(r'''url\(\s*["']?([^"')]+)["']?\s*\)''')
@@ -163,12 +174,15 @@ if os.path.exists(A.out):
 ROBOTS = '<meta name="robots" content="noindex, nofollow">'
 INTERNAL_A = re.compile(r'<a class="sc-internal-link" href="[^"]*internal/">[^<]*</a>')
 RECORDS = re.compile(r'<section class="sc-sec sc-tight"><div class="sc-wrap"><a class="sc-records" href="[^"]*internal/[^"]*">.*?</a></div></section>', re.S)
-edits = {'robots_meta': 0, 'internal_links_removed': 0, 'share_urls_rewritten': 0}
+edits = {'robots_meta': 0, 'internal_links_removed': 0, 'share_urls_rewritten': 0, 'canonical_urls_rewritten': 0}
 # share cards (og:url, og:image, twitter:image) carry absolute URLs from GAME_DNA_ORIGIN at site build time (default the
 # preview origin, tools/site-preview.mjs); the staging copy points them at this build's origin: --origin for --public,
 # the preview origin otherwise
 PREVIEW_ORIGIN = 'https://game-dna-preview.pages.dev'
 SHARE_ORIGIN = ORIGIN if PUBLIC else PREVIEW_ORIGIN
+CANON_URL = re.compile(r'(<link rel="canonical" href=")https?://[^/"]+(/site/preview/)')
+LDJSON = re.compile(r'(<script type="application/ld\+json">)(.*?)(</script>)', re.S)
+LD_URL = re.compile(r'(")https?://[^/"]+(/site/preview/)')
 SHARE_URL = re.compile(r'(<meta (?:property|name)="(?:og:url|og:image|twitter:image)" content=")https?://[^/"]+(/site/preview/)')
 PROV_LINK = ('<p>Where the AI pictures came from, element by element: <a href="../../../PROVENANCE.md">PROVENANCE.md</a>.</p>')
 for r in sorted(need):
@@ -181,6 +195,9 @@ for r in sorted(need):
         edits['internal_links_removed'] += n0
         s, n = SHARE_URL.subn(lambda m: m.group(1) + SHARE_ORIGIN + m.group(2), s)
         edits['share_urls_rewritten'] += n
+        s, n = CANON_URL.subn(lambda m: m.group(1) + CANON + m.group(2), s)
+        edits['canonical_urls_rewritten'] += n
+        s = LDJSON.sub(lambda m: m.group(1) + LD_URL.sub(lambda u: u.group(1) + CANON + u.group(2), m.group(2)) + m.group(3), s)
         if PUBLIC:
             s, n = re.subn(r'\s*<meta name="robots" content="[^"]*">', '', s)
             edits['robots_meta'] -= 1 - n   # counts removed metas in public mode
@@ -216,7 +233,7 @@ W('404.html', '<!doctype html><html lang="en"><head><meta charset="utf-8">' + RO
   'font:16px/1.5 system-ui,sans-serif;padding:16px;text-align:center}a{color:#ffb36b}</style></head>'
   '<body><main><h1>Page not found</h1><p><a href="/site/preview/">Back to Game DNA</a></p></main></body></html>\n')
 W('index.html', '<!doctype html><html lang="en"><head><meta charset="utf-8">' +
-  (f'<link rel="canonical" href="{ORIGIN}/site/preview/">' if PUBLIC else ROBOTS) +
+  f'<link rel="canonical" href="{CANON}/site/preview/">' + ('' if PUBLIC else ROBOTS) +
   '<meta http-equiv="refresh" content="0; url=site/preview/"><title>Game DNA</title></head>'
   '<body><a href="site/preview/">Game DNA</a></body></html>\n')
 # third-party notices next to the bundled copy already exist (vendor/three@0.149.0/LICENSE); add a site-level notice file
@@ -251,9 +268,35 @@ if PUBLIC:
       f'- Home: {ORIGIN}/site/preview/\n- Basket (combine elements): {ORIGIN}/site/preview/basket/\n'
       f'- Visual styles: {ORIGIN}/site/preview/styles/\n- How it is built and tested (blog): {ORIGIN}/site/preview/blog/how-game-dna-works/\n'
       f'- About, credits and licences: {ORIGIN}/site/preview/about/\n'
-      f'- Art provenance: {ORIGIN}/PROVENANCE.md\n\n## Elements (page and prompt)\n\n' +
+      f'- Art provenance: {ORIGIN}/PROVENANCE.md\n'
+      f'- Every element with its description, category, page, prompt, module and demo: {ORIGIN}/llms-full.txt\n'
+      f'- The same as JSON (catalog): {ORIGIN}/catalog.json\n\n## Elements (page and prompt)\n\n' +
       ''.join(f'- [{cards.get(e, (e,))[0]}]({ORIGIN}/site/preview/dna/{e}/): prompt {ORIGIN}/site/preview/dna/{e}/prompt.md\n'
               for e in dna if os.path.exists(os.path.join(A.out, 'site/preview/dna', e, 'prompt.md'))))
+    # full element list for agents (llms-full.txt) and the public catalog (catalog.json): from the generator's
+    # site/preview/catalog-src.json (public fields only), absolute URLs on --origin, every URL a shipped file
+    url = lambda rel: None if not rel else ORIGIN + '/' + (rel[:-len('index.html')] if rel.endswith('/index.html') and rel.startswith('site/preview/') else rel)
+    shipped = lambda rel: rel is None or os.path.isfile(os.path.join(A.out, rel[:-1] + '/index.html' if rel.endswith('/') else rel))
+    cat = []
+    for c in CATALOG:
+        if c['id'] not in dna:
+            continue
+        miss = [v for v in c['paths'].values() if not shipped(v)]
+        if miss:
+            sys.exit(f'catalog: {c["id"]} names files that do not ship: {miss}')
+        cat.append({'id': c['id'], 'name': c['name'], 'description': c['description'], 'category': c['category'], 'kind': c['kind'],
+                    'aiArt': bool(c['aiArt']), 'urls': {k: url(v) for k, v in c['paths'].items()}})
+    W('catalog.json', json.dumps({'name': 'Game DNA', 'url': f'{ORIGIN}/site/preview/', 'repository': 'https://github.com/lucemia/game-dna',
+                                  'license': 'MIT', 'count': len(cat), 'elements': cat}, ensure_ascii=False, indent=1) + '\n')
+    W('llms-full.txt', '# Game DNA: every element\n\n> Playable game elements for browser games built with an AI coding agent. For each element: '
+      'what it does, its category, whether it is an add-on (drops into any game) or a system (a starter game that replaces the '
+      'core loop), and the URLs of its page, its prompt (Markdown, give it to your coding agent), its module (JavaScript, MIT) and '
+      f'its playable demo. The same list as JSON: {ORIGIN}/catalog.json\n\n' +
+      ''.join(f'## {c["name"]}\n\n{next(x["line"] for x in CATALOG if x["id"] == c["id"])}\n\n'
+              f'- ID: `{c["id"]}`\n- Category: {c["category"]} ({c["kind"]}){" · uses AI-generated demo art" if c["aiArt"] else ""}\n'
+              f'- Page: {c["urls"]["page"]}\n- Prompt: {c["urls"]["prompt"]}\n' +
+              (f'- Module: {c["urls"]["module"]}\n' if c['urls']['module'] else '') +
+              (f'- Demo: {c["urls"]["demo"]}\n' if c['urls']['demo'] else '') + '\n' for c in cat))
     # which demos use the shared demo-kit cast, and which of those draw the rigged heroes (L-10 rig)
     kit_users, rig_users = set(), set()
     for e in dna:

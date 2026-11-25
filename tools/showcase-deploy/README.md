@@ -32,8 +32,11 @@ Check afterwards: `curl -sI https://game-dna-preview.pages.dev/ | grep -i x-robo
 Indexable launch build, written to `../game-dna-public-dist` (outside the repo). Same file selection and staging scrubs
 (model names, cold-test notes, Build records links) as the preview, plus: no robots meta in any page, `_headers` without
 `X-Robots-Tag` (security headers and asset cache headers only), `robots.txt` = `Allow: /` + `Sitemap:`, `sitemap.xml`
-(home, every element page, start, basket, styles, tests, about), a public `llms.txt` (the repo's `site/llms.txt` / `site/catalog.json`
-are not used by the showcase and are not shipped), `PROVENANCE.md` (which demos show AI art, the tool, and that the L-10
+(home, every element page, start, basket, styles, tests, about, the blog post), a public `llms.txt` that links
+`llms-full.txt` (one entry per element: name, one-line description, category, page, prompt, module and demo URLs) and
+`catalog.json` (id, name, description, category, kind, urls, aiArt; no scores, reviews, test runs, versions or notes),
+both made from the generator's `site/preview/catalog-src.json` (not shipped itself; the repo's `site/llms.txt` /
+`site/catalog.json` are internal and not shipped), `PROVENANCE.md` (which demos show AI art, the tool, and that the L-10
 cutout characters and the demo-kit heroes were generated with reference images; linked from About). `404.html` stays
 noindex. Share cards (`og:url`, `og:image`, `twitter:image`) are written with the preview origin at site build time;
 the staging copy rewrites them to `--origin` (the preview build keeps the preview origin). `--origin` is a placeholder (`https://game-dna.pages.dev`) until the project or domain is picked; rebuild with
@@ -51,6 +54,20 @@ Deploy (owner, own terminal):
 ```sh
 npx wrangler@4 pages project create game-dna --production-branch main   # once
 npx wrangler@4 pages deploy ../game-dna-public-dist --project-name game-dna --branch main
+```
+
+## SEO / GEO
+
+Every showcase page carries one `<link rel="canonical">` and JSON-LD (home: `WebSite`, `SoftwareSourceCode`, `ItemList`
+of the elements; element pages: `SoftwareSourceCode`; the blog post: `BlogPosting`), written by `tools/site-preview.mjs`
+on the public origin. Both staging builds point canonicals and JSON-LD URLs at `--canonical-origin` (default
+`https://game-dna.pages.dev`), so the unlisted preview names the public pages as canonical. `check-public.py` also fetches
+every URL in `llms.txt`, `llms-full.txt` and `catalog.json` from the build folder. Offline validator (Google's
+structured-data rules for the types used, canonicals against the sitemap):
+
+```sh
+python3 -I tools/showcase-deploy/check-seo.py ../game-dna-public-dist    # exit 0 = clean
+python3 -I tools/showcase-deploy/check-seo.py ../game-dna-preview-dist
 ```
 
 ## Visitor counts (Cloudflare Web Analytics, owner only)

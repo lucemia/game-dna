@@ -55,6 +55,19 @@ const DEMO_SOUND = { 'chip-music': '#soundState', 'beat-judge': '#soundState', '
 const SITE_ORIGIN = (process.env.GAME_DNA_ORIGIN || 'https://game-dna-preview.pages.dev').replace(/\/+$/, '');
 const SITE_BASE = SITE_ORIGIN + '/site/preview/';
 const OG_W = 1200, OG_H = 630;
+// SEO / GEO: <link rel="canonical"> and JSON-LD always name the PUBLIC site, also in the unlisted preview build
+// (env GAME_DNA_CANONICAL_ORIGIN overrides; tools/showcase-deploy/build-staging.py --canonical-origin rewrites the staged
+// copy). catalog-src.json (relative paths, public fields only) is what the --public staging build turns into /catalog.json
+// and /llms-full.txt; it is not shipped itself.
+const CANON_ORIGIN = (process.env.GAME_DNA_CANONICAL_ORIGIN || 'https://game-dna.pages.dev').replace(/\/+$/, '');
+const CANON_BASE = CANON_ORIGIN + '/site/preview/';
+const REPO_URL = 'https://github.com/lucemia/game-dna';
+const LICENSE_URL = 'https://opensource.org/licenses/MIT';
+const AUTHOR = { '@type': 'Person', name: 'David Chen', url: 'https://github.com/lucemia' };
+const HOME_TITLE = 'Game DNA – Drop-in game elements for AI coding agents';
+const HOME_DESC = 'Add game feel to your browser game: every element is a playable demo, a small JS module and a prompt your AI coding agent follows to wire it into your code.';
+const BLOG_PUBLISHED = '2026-11-24', BLOG_MODIFIED = '2026-11-24';   // the post went live with the site on 2026-11-24
+const ldJson = o => JSON.stringify(o).replace(/</g, '\\u003c');
 const DEMO_TIP_DEFAULT = { addon: 'Play with it: the controls sit beside or under the game.', system: 'A complete little game: play it, the controls sit beside or under it.' };
 
 // ✦ AI art (the user, 2026-11-20): every element whose showcase demo shows AI-generated pictures, derived from the
@@ -134,8 +147,11 @@ export function buildPreview(X) {
   const OG_IMG = new Set(fs.existsSync(OG_SRC) ? fs.readdirSync(OG_SRC).filter(f => f.endsWith('.jpg')).map(f => f.slice(0, -4)) : []);
   for (const f of OG_IMG) { fs.mkdirSync(path.join(OUT, 'og'), { recursive: true }); fs.copyFileSync(path.join(OG_SRC, f + '.jpg'), path.join(OUT, 'og', f + '.jpg')); }
   console.log(`showcase share cards: ${OG_IMG.size} images (${[...OG_IMG].filter(x => x !== 'home' && !x.startsWith('blog-')).length} elements, home, ${[...OG_IMG].filter(x => x.startsWith('blog-')).length} blog), origin ${SITE_ORIGIN}`);
+  const ogFile = ogId => 'og/' + (OG_IMG.has(ogId) ? ogId : 'home') + '.jpg';
+  const canonImg = ogId => CANON_BASE + ogFile(ogId);   // the share card on the public origin (JSON-LD image)
+  const WEBSITE_REF = { '@type': 'WebSite', '@id': CANON_BASE + '#website', name: 'Game DNA', url: CANON_BASE };
   const shareMeta = (rel, title, desc, ogId, ogType = 'website') => {
-    const img = SITE_BASE + 'og/' + (OG_IMG.has(ogId) ? ogId : 'home') + '.jpg', url = SITE_BASE + rel;
+    const img = SITE_BASE + ogFile(ogId), url = SITE_BASE + rel;
     return [['property', 'og:type', ogType], ['property', 'og:site_name', 'Game DNA'], ['property', 'og:title', title], ['property', 'og:description', desc],
       ['property', 'og:url', url], ['property', 'og:image', img], ['property', 'og:image:width', OG_W], ['property', 'og:image:height', OG_H],
       ['property', 'og:image:alt', title], ['name', 'twitter:card', 'summary_large_image'], ['name', 'twitter:title', title],
@@ -158,7 +174,7 @@ export function buildPreview(X) {
   const elHref = (id, P) => `${P}dna/${id}/`;
   const ARROW = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 8h10m-4-4 4 4-4 4"/></svg>';
 
-  function shell({ rel, title, desc, body, internal = false, head = '', scripts = [], og = 'home', ogType = 'website' }) {
+  function shell({ rel, title, desc, body, internal = false, head = '', scripts = [], og = 'home', ogType = 'website', jsonld = null }) {
     const P = depthOf(rel) ? '../'.repeat(depthOf(rel)) : './';
     return `<!doctype html>
 <html lang="en" data-theme="dark" class="sc${internal ? ' sc-internal' : ''}">
@@ -167,7 +183,7 @@ export function buildPreview(X) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}">
-${internal ? '<meta name="robots" content="noindex">\n' : shareMeta(rel, title, desc, og, ogType)}<link rel="stylesheet" href="${P}assets/fonts.css">
+${internal ? '<meta name="robots" content="noindex">\n' : `<link rel="canonical" href="${esc(CANON_BASE + rel)}">\n` + shareMeta(rel, title, desc, og, ogType)}${!internal && jsonld ? `<script type="application/ld+json">${ldJson({ '@context': 'https://schema.org', '@graph': [].concat(jsonld) })}</script>\n` : ''}<link rel="stylesheet" href="${P}assets/fonts.css">
 <link rel="stylesheet" href="${P}../assets/families.css">
 <link rel="stylesheet" href="${P}assets/showcase.css">
 ${head}</head>
@@ -227,6 +243,15 @@ ${thumb(e, P)}
     return n + sp; }).replace(/\s*\(\u0000 ?\)/g, '');
   // visitor-facing copy taken from specs (moments, what it does, genres): also no API names
   const say = t => plain(t).replace(/\buiRects\b/g, 'its HUD areas').replace(/\?t=\S*/g, '').replace(/\s{2,}/g, ' ');
+  // the one-liner in public wording (JSON-LD description, catalog) and its first sentence, at most 160 characters (meta
+  // description, llms-full.txt)
+  const oneLine = e => pub(e.json.oneLiner).replace(CODE_RE, '').replace(/\s{2,}/g, ' ').trim();
+  const metaDesc = e => { const o = oneLine(e); let t = (o.match(/^.*?[.!?](?=\s|$)/) || [o])[0].trim();
+    const bal = x => (x.match(/\(/g) || []).length === (x.match(/\)/g) || []).length && !/["“][^"”]*$/.test(x.replace(/"[^"]*"/g, ''));
+    if (t.length > 160) { let c = -1; for (let i = 158; i > 80; i--) if (/[,;:—–]/.test(t[i]) && bal(t.slice(0, i))) { c = i; break; }   // at a clause boundary, else a word
+      t = c > 80 ? t.slice(0, c).trim() + '.' : t.slice(0, t.lastIndexOf(' ', 157)).replace(/[,;:(\s]+$/, '').replace(/\s+(and|or|a|an|the|of|to|in|with|for|on)$/i, '') + '…'; }
+    return cap1(t); };
+  const CATALOG = [];
   // public test records (tests/ page and the "Tested" line on element pages): the same data as the internal records
   // (critic verdicts from checks/, cold-test rows from build-site.mjs STATUS / coldtests verdicts), in public wording
   const runsOf = e => { let p = 0, n = 0; for (const [, r] of e.status.cold) { const m = String(r).match(/^(\d+)\/(\d+)/); if (m) { p += +m[1]; n += +m[2]; } } return { p, n }; };
@@ -334,7 +359,14 @@ ${kitPanels}
 <p class="sc-sub"><a href="${P}start/">Start in 5 minutes</a> · <a href="${P}tests/">How we test</a>: every element's review score and its runs on unseen games, failures included. · <a href="${P}blog/how-game-dna-works/">How Game DNA works</a>: what an element is, how it is tested, and what went wrong on the way.</p>
 <div class="sc-cta rv"><div><h3>Start with one</h3><p class="sc-muted">${esc(chosen.name)}: ${esc(pitch(chosen).toLowerCase())}</p></div><a class="sc-btn sc-btn-hot lg" href="${elHref(chosen.id, P)}">${ICON.play}Play the demo</a></div>
 </div></section>`;
-    write('index.html', shell({ rel: '', title: 'Game DNA', desc: 'Playable game elements your AI coding agent can drop into your own browser game: a demo, a prompt and a module for each.', body }));
+    const homeLd = [
+      { ...WEBSITE_REF, description: HOME_DESC, inLanguage: 'en', publisher: AUTHOR },
+      { '@type': 'SoftwareSourceCode', '@id': CANON_BASE + '#code', name: 'Game DNA', description: HOME_DESC, url: CANON_BASE, codeRepository: REPO_URL,
+        license: LICENSE_URL, programmingLanguage: 'JavaScript', author: AUTHOR, image: canonImg('home'), isPartOf: { '@id': CANON_BASE + '#website' } },
+      { '@type': 'ItemList', '@id': CANON_BASE + '#elements', name: 'Game DNA elements', numberOfItems: E.length,
+        itemListElement: E.map((e, i) => ({ '@type': 'ListItem', position: i + 1, url: CANON_BASE + `dna/${e.id}/`, name: e.name })) }
+    ];
+    write('index.html', shell({ rel: '', title: HOME_TITLE, desc: HOME_DESC, body, jsonld: homeLd }));
   }
 
   // =====================================================================================================================
@@ -403,8 +435,19 @@ ${tries ? `<div class="sc-tries">${tries}</div>` : ''}
 ${pairs ? `<h3 class="sc-h3">Also pairs well with</h3><div class="sc-grid sc-grid-sm">${pairs}</div>` : ''}
 </div></section>
 `;
-    write(`dna/${id}/index.html`, shell({ rel, title: `${e.name} · Game DNA`, desc: pitch(e), body, og: id }));
+    const category = SFAM_NAME[e.sfam], url = CANON_BASE + rel;
+    const elLd = { '@type': 'SoftwareSourceCode', '@id': url + '#element', name: e.name, description: oneLine(e),
+      keywords: [...new Set([category, kindWord(e), ...J.fits.map(f => plain(f).replace(CODE_RE, ''))])].join(', '), url,
+      image: canonImg(id), isPartOf: WEBSITE_REF, codeRepository: REPO_URL, programmingLanguage: 'JavaScript', license: LICENSE_URL, author: AUTHOR };
+    write(`dna/${id}/index.html`, shell({ rel, title: `${e.name} · Game DNA`, desc: metaDesc(e), body, og: id, jsonld: elLd }));
+    const modOk = e.mod.file && fs.existsSync(path.join(e.dir, e.mod.file));
+    CATALOG.push({ id, name: e.name, description: oneLine(e), line: metaDesc(e), category, kind: e.kind === 'system' ? 'system' : 'add-on', aiArt: aiArt(e),
+      paths: { page: `site/preview/${rel}`, prompt: `site/preview/${rel}prompt.md`, module: modOk ? `elements/${id}/${e.mod.file}` : null,
+        demo: fs.existsSync(path.join(e.dir, 'demo', 'index.html')) ? `elements/${id}/demo/index.html` : null } });
   }
+  // public element catalog source (paths relative to the deploy root; staging adds the origin). No scores, reviews, test
+  // runs, versions or notes.
+  write('catalog-src.json', JSON.stringify({ name: 'Game DNA', elements: CATALOG }, null, 1) + '\n');
 
   // =====================================================================================================================
   // basket: pick elements, live fit check, one prompt (names instead of codes) + a zip of the modules. Same engine as the
@@ -543,12 +586,16 @@ ${pairs ? `<h3 class="sc-h3">Also pairs well with</h3><div class="sc-grid sc-gri
     const body = `<article class="sc-sec sc-tight sc-post"><div class="sc-wrap">
 <p class="sc-eyebrow"><a href="${P}#how">How it works</a> · Method</p>
 <h1 class="sc-post-h1">${esc(title)}</h1>
-<p class="sc-post-meta">Game DNA · about 6 minutes to read</p>
+<p class="sc-post-meta">David Chen · <time datetime="${BLOG_PUBLISHED}">${new Date(BLOG_PUBLISHED + 'T12:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}</time> · about 6 minutes to read</p>
 ${(() => { const h = 'kart-racer-3d', L = HERO_LOOPS[h]; return `<figure class="sc-post-hero"><a href="${P}dna/${h}/" aria-label="Play the ${esc(BY[h].name)} demo" style="background-image:url('${P}../assets/hero/${h}-poster.webp')">${L ? `<span class="sc-post-loop" style="background-image:url('${P}../assets/hero/${h}.webp');background-size:${L.n * 100}% 100%;animation-duration:${L.n * (L.step || 120)}ms;animation-timing-function:steps(${L.n}, jump-none)"></span>` : ''}</a><figcaption>${esc(BY[h].name)}, one of the 101 elements, running in its demo. <a href="${P}dna/${h}/">Play it</a>.</figcaption></figure>`; })()}
 <div class="sc-md sc-post-body">${md2html(src, '')}</div>
 <div class="sc-cta"><div><h3>Try it on your game</h3><p class="sc-muted">Pick one element, copy its prompt, hand it to your agent.</p></div><a class="sc-btn sc-btn-hot lg" href="${P}start/">${ICON.play}Start in 5 minutes</a></div>
 </div></article>`;
-    write(`${rel}index.html`, shell({ rel, title: "How Game DNA works · Game DNA", desc, body, og: `blog-${slug}`, ogType: 'article' }));
+    const postUrl = CANON_BASE + rel;
+    const postLd = { '@type': 'BlogPosting', '@id': postUrl + '#post', headline: title, description: desc, url: postUrl, inLanguage: 'en',
+      datePublished: BLOG_PUBLISHED, dateModified: BLOG_MODIFIED, author: AUTHOR, publisher: AUTHOR, image: [canonImg(`blog-${slug}`)],
+      mainEntityOfPage: { '@type': 'WebPage', '@id': postUrl }, isPartOf: WEBSITE_REF };
+    write(`${rel}index.html`, shell({ rel, title: "How Game DNA works · Game DNA", desc, body, og: `blog-${slug}`, ogType: 'article', jsonld: postLd }));
   }
 
   // =====================================================================================================================

@@ -2,7 +2,8 @@
 
 usage: python3 -I tools/showcase-deploy/check-public.py [OUT] [CRAWL.json]
 Checks: no noindex anywhere except 404.html (robots metas, _headers), robots.txt allows + names the sitemap, no internal
-pages or excluded folders shipped, every sitemap URL answers 200 when OUT is served as root, no model names in shipped
+pages or excluded folders shipped, every sitemap URL and every URL in llms.txt, llms-full.txt and catalog.json answers
+200 when OUT is served as root (and is on the sitemap's origin), no model names in shipped
 text files (rendered cold-test / reviewer wording is the crawl's visible check), and (with CRAWL.json) 0 non-200 requests, failed requests, page errors and visible-name hits.
 """
 import functools, json, os, re, sys, threading, urllib.request
@@ -58,9 +59,37 @@ for u in locs:
         add('sitemap', f'{u} {code}')
     if '/internal' in path or '/elements/' in path:
         add('sitemap', f'{u} not a showcase page')
+# GEO files: every URL they name ships (same origin as the sitemap)
+origin = locs[0].split('/site/preview/')[0] if locs else ''
+geo = {}
+for f in ('llms.txt', 'llms-full.txt', 'catalog.json'):
+    fp = os.path.join(OUT, f)
+    if not os.path.exists(fp):
+        add('geo', f'{f} missing'); continue
+    t = open(fp, encoding='utf-8').read()
+    if f.endswith('.json'):
+        try:
+            j = json.loads(t)
+        except ValueError as ex:
+            add('geo', f'{f} not JSON: {ex}'); continue
+        for el in j.get('elements', []):
+            extra = set(el) - {'id', 'name', 'description', 'category', 'kind', 'aiArt', 'urls'}
+            if extra: add('geo', f'{f} {el.get("id")}: unexpected fields {sorted(extra)}')
+            if el.get('kind') not in ('add-on', 'system'): add('geo', f'{f} {el.get("id")}: kind {el.get("kind")}')
+    urls = sorted(set(re.findall(r'https?://[^\s)"<>\]]+', t)))
+    for u in urls:
+        if not u.startswith(origin + '/'):
+            continue   # the public repository and licence links
+        try:
+            code = urllib.request.urlopen(base + '/' + u.split('/', 3)[3]).status
+        except Exception as ex:
+            code = str(ex)
+        if code != 200:
+            add('geo', f'{f}: {u} {code}')
+    geo[f] = len([u for u in urls if u.startswith(origin + '/')])
 srv.shutdown()
 
-summary = {'files': len(files), 'bytes': total, 'sitemap_urls': len(locs)}
+summary = {'files': len(files), 'bytes': total, 'sitemap_urls': len(locs), 'geo_urls_checked': geo}
 if CRAWL:
     c = json.load(open(CRAWL))
     non200 = {p: v for p, v in c['requests'].items() if any(x not in ('200', '304') for x in v)}

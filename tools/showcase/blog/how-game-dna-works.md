@@ -19,6 +19,7 @@ Each element is three things:
 1. **Cold test.** A separate coding agent gets a clean folder: a host game it has never seen, the prompt, the module. Nothing else. No hints, no browser of its own, one pinned model at one pinned reasoning effort. The six host games (turn-based battle, tactics map, side-scroller, top-down adventure, two HD games) were written by yet another agent that never saw the modules. Most elements run three times on each of two hosts and must work at least two times out of three on each.
 2. **A judge that plays.** A different agent opens the result in Playwright and plays it. Does the element show up where and when it should? Does the original game still work? Does the game's own autoplay still finish? Was the module file left untouched? The coding agent's own summary of what it did counts for nothing.
 3. **A strict visual critic.** Every demo is scored against commercial indie games, character by character at 2× zoom. Parts that don't connect, programmer art, debug leftovers or a style mismatch are each a major issue. Pass: 7.5 or higher, no majors.
+4. **Failures stay in the record.** Every failed run keeps its cause next to the fix. Each element's score and runs are on the [test records page](@/tests/), and the verdict files are in the repo: [github.com/lucemia/game-dna](https://github.com/lucemia/game-dna).
 
 ## Story 1: my prompt fixes made things worse
 
@@ -69,3 +70,4 @@ Real games don't get one feature. They get five. The [basket](@/basket/) checks 
 
 ## Try to break it
 
+The code is MIT: [github.com/lucemia/game-dna](https://github.com/lucemia/game-dna). If an element fails in your game, I want that failure more than a star. Open an issue with what your agent did, and it goes into the record like every other failure.

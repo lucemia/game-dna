@@ -1,0 +1,1520 @@
+{
+ "name": "Game DNA",
+ "elements": [
+  {
+   "id": "active-time-battle",
+   "name": "Active-time gauge battle",
+   "description": "Every combatant's gauge fills in real time at a speed-based rate; a full hero gauge opens that hero's command window, and in Active mode enemies keep acting while you choose.",
+   "line": "Every combatant's gauge fills in real time at a speed-based rate; a full hero gauge opens that hero's command window.",
+   "category": "Battle systems",
+   "kind": "system",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/active-time-battle/",
+    "prompt": "site/preview/dna/active-time-battle/prompt.md",
+    "module": "elements/active-time-battle/module/active-time-battle.js",
+    "demo": "elements/active-time-battle/demo/index.html"
+   }
+  },
+  {
+   "id": "four-move-battle",
+   "name": "Four-move menu battle with type matchups",
+   "description": "Turn-based creature battle, one on one (or two on two): each creature has up to four moves with uses left and a type; a type chart doubles, halves or cancels damage and says so in the message box; speed decides who moves first; switching to a bench creature costs the turn.",
+   "line": "Turn-based creature battle, one on one (or two on two): each creature has up to four moves with uses left and a type; a type chart doubles.",
+   "category": "Battle systems",
+   "kind": "system",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/four-move-battle/",
+    "prompt": "site/preview/dna/four-move-battle/prompt.md",
+    "module": "elements/four-move-battle/module/four-move-battle.js",
+    "demo": "elements/four-move-battle/demo/index.html"
+   }
+  },
+  {
+   "id": "combat-forecast",
+   "name": "Combat forecast window",
+   "description": "Before an attack is confirmed, a two-sided window shows what will happen: both units' HP now and after, damage, hit and critical chances, whether the target strikes back and for how much, an x2 badge for double attacks and arrows for weapon or type advantage, in team colours, updating live as the target or weapon changes and placed so it never covers the two units or the cursor. The game supplies every number; the module only shows them.",
+   "line": "Before an attack is confirmed, a two-sided window shows what will happen: both units' HP now and after, damage, hit and critical chances.",
+   "category": "Battle systems",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/combat-forecast/",
+    "prompt": "site/preview/dna/combat-forecast/prompt.md",
+    "module": "elements/combat-forecast/module/combat-forecast.js",
+    "demo": "elements/combat-forecast/demo/index.html"
+   }
+  },
+  {
+   "id": "clash-cutin",
+   "name": "Side-view clash cut-in",
+   "description": "When a turn or tactics battle confirms an attack, the game cuts to a staged side-view scene: both units on a ground strip in front of a backdrop that matches the terrain, the attacker leaps in, winds up and swings (or shoots, or casts), the hit lands with a freeze frame, sparks, a damage number and an HP bar that drains, misses are dodged, criticals get a gleam and a flash, the counter-attack follows, a fallen unit fades away, and both return before the scene closes. Skippable, with a x2 speed toggle. The game passes the outcome it already decided; the module only stages it, so what you see always equals the game's own numbers.",
+   "line": "When a turn or tactics battle confirms an attack, the game cuts to a staged side-view scene.",
+   "category": "Battle systems",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/clash-cutin/",
+    "prompt": "site/preview/dna/clash-cutin/prompt.md",
+    "module": "elements/clash-cutin/module/clash-cutin.js",
+    "demo": "elements/clash-cutin/demo/index.html"
+   }
+  },
+  {
+   "id": "sword-combat",
+   "name": "Real-time sword combat",
+   "description": "Top-down real-time melee on the map: a 4- or 8-way sword swing with anticipation, active and recovery frames and a sweeping arc hitbox, a 2-3 hit combo with buffered input, knockback with friction, translucent invulnerability flicker after a hit, enemies built from small reusable state machines (wander, chase, telegraphed charge, keep-distance shooter, a boss that mixes them), contact and projectile damage, hearts, and drops on defeat.",
+   "line": "Top-down real-time melee on the map: a 4- or 8-way sword swing with anticipation, active and recovery frames and a sweeping arc hitbox.",
+   "category": "Battle systems",
+   "kind": "system",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/sword-combat/",
+    "prompt": "site/preview/dna/sword-combat/prompt.md",
+    "module": "elements/sword-combat/module/sword-combat.js",
+    "demo": "elements/sword-combat/demo/index.html"
+   }
+  },
+  {
+   "id": "motion-inputs",
+   "name": "Motion-input special moves",
+   "description": "Reads the stick and buttons once per fixed step into a short input buffer and recognises special-move motions written relative to the way the hero faces: quarter circles (236, 214), the forward-down-diagonal (623, with the 3-2-3 shortcut), half circles, charge moves ([4]6: hold back, then forward) and an optional full turn (360), with leniency windows for gaps, late buttons and sloppy diagonals and a busy buffer that fires a special typed during the hero's recovery as soon as he can act. A recognised special calls the game's own attack through a callback and consumes the button so the normal attack does not also start. The notation mirrors when the hero turns. An input display in the game's style (pixel arrows and button coins on pixel games, smooth chips on HD games) lists the last inputs with how long each was held, lights the motion's rows gold, names the special in a callout (or says TOO SLOW), and can show a move list whose arrows mirror; it stays readable on phones (>= 10 CSS px) and keeps clear of the player and the HUD. Keyboard and gamepad (d-pad or stick).",
+   "line": "Reads the stick and buttons once per fixed step into a short input buffer and recognises special-move motions written relative to the way the hero faces.",
+   "category": "Battle systems",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/motion-inputs/",
+    "prompt": "site/preview/dna/motion-inputs/prompt.md",
+    "module": "elements/motion-inputs/module/motion-inputs.js",
+    "demo": "elements/motion-inputs/demo/index.html"
+   }
+  },
+  {
+   "id": "bullet-patterns",
+   "name": "Bullet-pattern emitter",
+   "description": "Enemies cast bullet patterns described as data: fans and aimed bursts, rings, spirals, flowers whose speed dips between petals, weaving waves, curtain walls with a moving gap, big orbs that burst into rings, curving and falling shots, each with speed, acceleration and turn curves. Every bullet comes from a fixed pool (no garbage per frame), is drawn in code with a bright white core, a coloured body and rim, a dark outline and a soft halo, readable on light and dark floors, crisp at any dpr or as whole game pixels, and hits with a circle far smaller than it looks (swept, so fast bullets never tunnel). Grazes are reported, walls stop bullets, a dying caster's bullets fade into sparks. The game keeps its rules: it gives the player's hit circle and applies damage in onHit. A safeGap() analysis sweeps the band the player can reach and reports whether a gap at least the player's hit circle stays open and reachable at every step.",
+   "line": "Enemies cast bullet patterns described as data: fans and aimed bursts, rings, spirals, flowers whose speed dips between petals, weaving waves.",
+   "category": "Battle systems",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/bullet-patterns/",
+    "prompt": "site/preview/dna/bullet-patterns/prompt.md",
+    "module": "elements/bullet-patterns/module/bullet-patterns.js",
+    "demo": "elements/bullet-patterns/demo/index.html"
+   }
+  },
+  {
+   "id": "card-battle",
+   "name": "Card battle with intents",
+   "description": "A turn-based card battle: draw a fanned hand each turn, drag a card onto a foe (a target arrow follows; keys and taps work too) and pay its cost from a small energy pool; draw and discard piles reshuffle when the draw runs out; every foe shows an intent tag with the real numbers of its next move before it acts, then does exactly that; ward absorbs hits until its owner's next turn, statuses (might, barbs, exposed, sapped, burn) change the numbers live on cards and tags; end the turn and the foes act one by one. Content is plain data (cards, foes, statuses), seeded and frame-stepped, with a bot that plays through the same input path.",
+   "line": "A turn-based card battle: draw a fanned hand each turn, drag a card onto a foe (a target arrow follows; keys and taps work too) and pay its cost from a small…",
+   "category": "Battle systems",
+   "kind": "system",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/card-battle/",
+    "prompt": "site/preview/dna/card-battle/prompt.md",
+    "module": "elements/card-battle/module/card-battle.js",
+    "demo": "elements/card-battle/demo/index.html"
+   }
+  },
+  {
+   "id": "horde-survival",
+   "name": "Horde survival auto-attacker",
+   "description": "The hero only walks (keys, WASD or a touch stick); weapons fire by themselves on timers: orbiting blades, a bolt at the nearest foe, a burning area pulse that throws foes back, a bow shaft of light that pierces a line where the hero faces. Foes spawn just outside the view in rising waves (rings, packs, elites) and swarm in (hopping, flying, drifting, gliding: no legged walkers; the boss stomps); kills drop XP gems that fly to the hero inside a pickup reach; each level pauses the world and offers 1 of 3 upgrades (new weapon, weapon level, passive). A timer and a kill count run; a boss arrives at the end; kill it, or hold out until dawn, to win; win and lose screens. Seeded and frame-stepped, fast with 300-900 foes (pooled typed arrays, a spatial hash rebuilt each step, cached sprite bitmaps), with a bot that plays through the same input as a player. Weapons, foes, upgrades and waves are plain data.",
+   "line": "The hero only walks (keys, WASD or a touch stick); weapons fire by themselves on timers: orbiting blades, a bolt at the nearest foe.",
+   "category": "Battle systems",
+   "kind": "system",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/horde-survival/",
+    "prompt": "site/preview/dna/horde-survival/prompt.md",
+    "module": "elements/horde-survival/module/horde-survival.js",
+    "demo": "elements/horde-survival/demo/index.html"
+   }
+  },
+  {
+   "id": "squad-formation",
+   "name": "Squad formation grid",
+   "description": "Each side fights as squads on a 2x3 grid: a front row that faces the enemy and a back row behind it. Melee can only reach the front row while anyone stands there; arrows and spells reach everyone and hit the back row harder; a melee fighter placed in the back strikes at half power. Before a fight a modal formation editor lets the player drag (mouse, touch) or key units between rows and squads, with the consequences spelled out per unit; the game's own battle calls targetsFor / pickTarget / hit for its target lists and damage. On a tactics map every unit token becomes a squad of members.",
+   "line": "Each side fights as squads on a 2x3 grid: a front row that faces the enemy and a back row behind it.",
+   "category": "Battle systems",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/squad-formation/",
+    "prompt": "site/preview/dna/squad-formation/prompt.md",
+    "module": "elements/squad-formation/module/squad-formation.js",
+    "demo": "elements/squad-formation/demo/index.html"
+   }
+  },
+  {
+   "id": "tactic-rules",
+   "name": "Conditional tactic rules",
+   "description": "Every unit decides with an ordered list of rules, \"condition → action (target)\": ally HP under a threshold, a flying or armoured foe, a back-row target, self HP or MP, foe count, first turn. The first rule that holds and whose action is usable with a valid target wins, else the unit's Otherwise action. The evaluator is pure, deterministic and explains itself (which rule fired, why, and why each rule above it did not); players edit the list in a compact modal editor with class presets and a live \"Now:\" line, and a plate beside the acting unit names the rule and the target. The game's own skills, costs, reach and damage stay the game's: it plugs them in through adapters.",
+   "line": "Every unit decides with an ordered list of rules, \"condition → action (target)\": ally HP under a threshold, a flying or armoured foe, a back-row target.",
+   "category": "Battle systems",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/tactic-rules/",
+    "prompt": "site/preview/dna/tactic-rules/prompt.md",
+    "module": "elements/tactic-rules/module/tactic-rules.js",
+    "demo": "elements/tactic-rules/demo/index.html"
+   }
+  },
+  {
+   "id": "squad-clash",
+   "name": "Auto-resolved squad clash with forecast",
+   "description": "Two squads on 2x3 grids (front row takes melee, back row is shielded from it while the front stands) meet; before committing, a forecast shows each unit's HP after, who falls and win / lose / draw, from the same seeded simulation the clash will run; on commit it plays out by itself in a staged side view with a readable turn order, units acting by their own condition -> action tactic rules, guards stepping in for weak allies, follow-up attacks, hit numbers and a result banner, and ends exactly as forecast.",
+   "line": "Two squads on 2x3 grids (front row takes melee, back row is shielded from it while the front stands) meet; before committing.",
+   "category": "Battle systems",
+   "kind": "system",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/squad-clash/",
+    "prompt": "site/preview/dna/squad-clash/prompt.md",
+    "module": "elements/squad-clash/module/squad-clash.js",
+    "demo": "elements/squad-clash/demo/index.html"
+   }
+  },
+  {
+   "id": "tower-defense",
+   "name": "Tower placement & wave spawner",
+   "description": "A tower-defense core: foes march along a fixed road through a grid (one or more paths from waypoint cells); towers go on the grass cells beside it, never on it, so the road can never be blocked. Pick a tower, see its range ring and a red warning on cells where it cannot stand, build, upgrade (three levels), sell (70% back), and give each tower a target priority (first, strong, near). Four built-in towers (single shot, splash, slow, chain), waves as plain data with the next wave previewed, gold, lives, speed x1 / x2, pause, win and lose. Seeded and frame-stepped, with a bot that builds and upgrades through the player's own input path.",
+   "line": "A tower-defense core: foes march along a fixed road through a grid (one or more paths from waypoint cells); towers go on the grass cells beside it.",
+   "category": "Battle systems",
+   "kind": "system",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/tower-defense/",
+    "prompt": "site/preview/dna/tower-defense/prompt.md",
+    "module": "elements/tower-defense/module/tower-defense.js",
+    "demo": "elements/tower-defense/demo/index.html"
+   }
+  },
+  {
+   "id": "match3-battle",
+   "name": "Match-3 battle board",
+   "description": "A puzzle battle on an 8 x 8 gem board: swap two neighbours to line up 3 or more; matches clear, gems fall and cascades chain (each step worth more); 4 in a row leaves a Row or Column shard, an L or T a Blast gem, 5 in a row a Prism that clears a colour. Every gem colour powers the hero of that colour (attack and skill charge), hearts heal the party, foes count down and strike at 0. Faceted gems with one silhouette per colour (readable without colour), boards that never start with a match and always have a move (or reshuffle), seeded cascades, swaps and falls that always animate, a bot that plays through the player's own input path.",
+   "line": "A puzzle battle on an 8 x 8 gem board: swap two neighbours to line up 3 or more; matches clear, gems fall and cascades chain (each step worth more).",
+   "category": "Battle systems",
+   "kind": "system",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/match3-battle/",
+    "prompt": "site/preview/dna/match3-battle/prompt.md",
+    "module": "elements/match3-battle/module/match3-battle.js",
+    "demo": "elements/match3-battle/demo/index.html"
+   }
+  },
+  {
+   "id": "grid-range-path",
+   "name": "Grid movement range + path arrow",
+   "description": "Select a unit on a tile map to see every tile it can reach (blue, terrain-cost aware) and every tile it can strike (red); a segmented arrow follows the cursor along the cheapest path and the unit walks it tile by tile on confirm.",
+   "line": "Select a unit on a tile map to see every tile it can reach (blue, terrain-cost aware) and every tile it can strike (red).",
+   "category": "Maps & movement",
+   "kind": "system",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/grid-range-path/",
+    "prompt": "site/preview/dna/grid-range-path/prompt.md",
+    "module": "elements/grid-range-path/module/grid-range-path.js",
+    "demo": "elements/grid-range-path/demo/index.html"
+   }
+  },
+  {
+   "id": "threat-range",
+   "name": "Enemy threat range",
+   "description": "One key or button paints every tile any enemy could move to or strike this turn as a red tinted zone with a crisp marching outline; pointing at one enemy shows just its reach, enemies can be pinned one by one, the zone follows units as they move, and it never covers the player's own blue range.",
+   "line": "One key or button paints every tile any enemy could move to or strike this turn as a red tinted zone with a crisp marching outline.",
+   "category": "Maps & movement",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/threat-range/",
+    "prompt": "site/preview/dna/threat-range/prompt.md",
+    "module": "elements/threat-range/module/threat-range.js",
+    "demo": "elements/threat-range/demo/index.html"
+   }
+  },
+  {
+   "id": "fog-of-war",
+   "name": "Fog of war",
+   "description": "On a tile map, everything outside your units' sight sinks under a slowly drifting, dithered fog with a soft one-tile edge; terrain stays faintly readable, hidden enemies are not drawn, the tile where you last saw one keeps a faint silhouette, a \"!\" pops when one comes into view, forests block sight and hills extend it, and tiles clear or fog over smoothly as units move.",
+   "line": "On a tile map, everything outside your units' sight sinks under a slowly drifting, dithered fog with a soft one-tile edge; terrain stays faintly readable.",
+   "category": "Maps & movement",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/fog-of-war/",
+    "prompt": "site/preview/dna/fog-of-war/prompt.md",
+    "module": "elements/fog-of-war/module/fog-of-war.js",
+    "demo": "elements/fog-of-war/demo/index.html"
+   }
+  },
+  {
+   "id": "iso-height-map",
+   "name": "Isometric height & jump",
+   "description": "A 2:1 isometric tactics map where every tile has a height: units climb at most their jump, shoot farther from high ground, hit harder from above or behind, choose a facing when done, and act in wait-time order; blocks in front hide units behind them, which get an outline.",
+   "line": "A 2:1 isometric tactics map where every tile has a height: units climb at most their jump, shoot farther from high ground, hit harder from above or behind.",
+   "category": "Maps & movement",
+   "kind": "system",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/iso-height-map/",
+    "prompt": "site/preview/dna/iso-height-map/prompt.md",
+    "module": "elements/iso-height-map/module/iso-height-map.js",
+    "demo": "elements/iso-height-map/demo/index.html"
+   }
+  },
+  {
+   "id": "level-select-map",
+   "name": "Level-select path reveal",
+   "description": "An overworld map between levels: level, secret, castle, save-hut, shop and bonus nodes joined by paths; the hero walks node to node along the paths; cleared levels change colour and fly a flag; clearing a level draws the next path stone by stone with a sound per stone while the camera follows, a secret exit opens a different path, locked paths show faint, an info panel names the node and its collected items, huts save through the game, and the map scrolls when it is bigger than the screen.",
+   "line": "An overworld map between levels: level, secret, castle, save-hut, shop and bonus nodes joined by paths; the hero walks node to node along the paths.",
+   "category": "Maps & movement",
+   "kind": "system",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/level-select-map/",
+    "prompt": "site/preview/dna/level-select-map/prompt.md",
+    "module": "elements/level-select-map/module/level-select-map.js",
+    "demo": "elements/level-select-map/demo/index.html"
+   }
+  },
+  {
+   "id": "pseudo3d-flight",
+   "name": "Pseudo-3D flight ground",
+   "description": "Call a mount on the top-down map and the ground zooms, turns and tilts into a perspective, scanline-scaled plane with a horizon sky band; fly (turn with a slight horizon tilt, speed up, slow down) over the wrapping world past distance-scaled billboards, with the mount's shadow below and a mini-map, then land only on flat ground and the view eases back to the walking map.",
+   "line": "Call a mount on the top-down map and the ground zooms, turns and tilts into a perspective, scanline-scaled plane with a horizon sky band.",
+   "category": "Maps & movement",
+   "kind": "system",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/pseudo3d-flight/",
+    "prompt": "site/preview/dna/pseudo3d-flight/prompt.md",
+    "module": "elements/pseudo3d-flight/module/pseudo3d-flight.js",
+    "demo": "elements/pseudo3d-flight/demo/index.html"
+   }
+  },
+  {
+   "id": "platformer-feel",
+   "name": "Platformer movement feel",
+   "description": "Side-view hero movement and tile collision that feels good: acceleration curves on the ground and in the air, variable jump height, coyote time, jump buffering, apex hang, terminal fall speed, an 8- or 4-way dash that refills on landing, wall slide and wall jump, one-way platforms, ceiling-corner and ledge-lip correction, and sub-pixel positions drawn on whole pixels; every number is a parameter with presets, and a live overlay shows the jump arc, the forgiveness windows and the velocity.",
+   "line": "Side-view hero movement and tile collision that feels good: acceleration curves on the ground and in the air, variable jump height, coyote time.",
+   "category": "Maps & movement",
+   "kind": "system",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/platformer-feel/",
+    "prompt": "site/preview/dna/platformer-feel/prompt.md",
+    "module": "elements/platformer-feel/module/platformer-feel.js",
+    "demo": "elements/platformer-feel/demo/index.html"
+   }
+  },
+  {
+   "id": "dungeon-floors",
+   "name": "Procedural dungeon floors",
+   "description": "A turn-based dungeon crawl on seeded floors: rooms placed at random, joined by a minimum spanning tree of corridors plus a few loops, doors and arches, autotiled walls and floors (faces, caps, edges, inner and outer corners), torches, decor per room type, chests, loose items and monsters placed by a per-room budget, stairs down in the room farthest from the start and a boss throne on the last floor. The hero steps in 8 directions without cutting corners, bumps monsters to fight, bumps doors and chests to open them; then every awake monster acts. Field of view by shadowcasting with a lantern and torch light, explored cells remembered, unknown cells black, a minimap and a full map. Seeded and frame-stepped (same seed = same run at any view size), with a bot that plays through the same rules.",
+   "line": "A turn-based dungeon crawl on seeded floors: rooms placed at random, joined by a minimum spanning tree of corridors plus a few loops, doors and arches.",
+   "category": "Maps & movement",
+   "kind": "system",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/dungeon-floors/",
+    "prompt": "site/preview/dna/dungeon-floors/prompt.md",
+    "module": "elements/dungeon-floors/module/dungeon-floors.js",
+    "demo": "elements/dungeon-floors/demo/index.html"
+   }
+  },
+  {
+   "id": "vision-cones",
+   "name": "Stealth vision cones",
+   "description": "Guards see through view cones clipped by walls (a ray-cast visibility polygon, the same rays that decide who is seen), each with a suspicion meter that fills faster when the player is close and in the middle of the cone and drains after the player slips out of sight; a '?' badge whose glyph fills with the meter, then a red '!' on alert, an alerted guard calls the guards within earshot, loses the player and searches. Tall grass hides the player completely, shade halves how far a guard can see them. Patrol routes with waits and look-around turns; guards face where their cone points (dir4 / side / facing for the sprite). Cones are drawn on the floor, soft and readable over any ground, crisp as whole pixels in a pixel game. The game keeps its rules: alerts come back as hooks (onAlert, onState, isAlert) for its own chase, call-for-help or fail rules.",
+   "line": "Guards see through view cones clipped by walls (a ray-cast visibility polygon, the same rays that decide who is seen).",
+   "category": "Maps & movement",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/vision-cones/",
+    "prompt": "site/preview/dna/vision-cones/prompt.md",
+    "module": "elements/vision-cones/module/vision-cones.js",
+    "demo": "elements/vision-cones/demo/index.html"
+   }
+  },
+  {
+   "id": "grapple-swing",
+   "name": "Grappling hook & swing",
+   "description": "Fire a hook at iron rings (aim assist) or any rock surface, hang on a rope of fixed length and swing like a pendulum, pump with left / right, reel in and out, jump off or let go keeping the swing's momentum; the rope wraps around corners and unwraps on the way back. The game keeps its own collision: the module only proposes the swing's velocity (capped under half a tile per step) and the game moves the hero with its own wall tests. Pixel braided rope or smooth rope, a claw hook, glowing rings, aim reticle, sparks. Deterministic, inert until the grapple button is pressed.",
+   "line": "Fire a hook at iron rings (aim assist) or any rock surface, hang on a rope of fixed length and swing like a pendulum, pump with left / right, reel in and out.",
+   "category": "Maps & movement",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/grapple-swing/",
+    "prompt": "site/preview/dna/grapple-swing/prompt.md",
+    "module": "elements/grapple-swing/module/grapple-swing.js",
+    "demo": "elements/grapple-swing/demo/index.html"
+   }
+  },
+  {
+   "id": "window-cursor",
+   "name": "Bevelled window + pointer cursor",
+   "description": "A drop-in replacement for plain text boxes and menus: bevelled gradient windows that grow from their centre when they open, a pointing glove that bobs beside the selected item and slides between items, greyed-out disabled items, a target pointer for picking units, and a placement helper that keeps every window on screen and off the sprites and HUD it must not cover.",
+   "line": "A drop-in replacement for plain text boxes and menus: bevelled gradient windows that grow from their centre when they open.",
+   "category": "UI & text",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/window-cursor/",
+    "prompt": "site/preview/dna/window-cursor/prompt.md",
+    "module": "elements/window-cursor/module/window-cursor.js",
+    "demo": "elements/window-cursor/demo/index.html"
+   }
+  },
+  {
+   "id": "turn-order-bar",
+   "name": "Turn-order bar",
+   "description": "A strip of small portraits showing who acts next: the current actor sits first in a gold frame and bounces, the next 6-10 units follow in team-coloured frames, the strip slides forward when a turn ends, new units pop in, fallen units crumble out, hovered or targeted units blink, and optional wait numbers show how soon each one acts. The game hands over the order; the strip never computes turn rules.",
+   "line": "A strip of small portraits showing who acts next: the current actor sits first in a gold frame and bounces, the next 6-10 units follow in team-coloured frames.",
+   "category": "UI & text",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/turn-order-bar/",
+    "prompt": "site/preview/dna/turn-order-bar/prompt.md",
+    "module": "elements/turn-order-bar/module/turn-order-bar.js",
+    "demo": "elements/turn-order-bar/demo/index.html"
+   }
+  },
+  {
+   "id": "pixel-font",
+   "name": "Pixel bitmap font",
+   "description": "Every letter on a low-res canvas drawn from an original 1-bit bitmap font at whole pixels, so text is as crisp as the sprites at any scale; inline colour codes, word wrap, drop shadow or outline, and a typewriter that reveals dialogue letter by letter with pauses and blips.",
+   "line": "Every letter on a low-res canvas drawn from an original 1-bit bitmap font at whole pixels, so text is as crisp as the sprites at any scale.",
+   "category": "UI & text",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/pixel-font/",
+    "prompt": "site/preview/dna/pixel-font/prompt.md",
+    "module": "elements/pixel-font/module/pixel-font.js",
+    "demo": "elements/pixel-font/demo/index.html"
+   }
+  },
+  {
+   "id": "big-banner",
+   "name": "Big banner text",
+   "description": "Phase, wave and result moments ('PLAYER PHASE', 'WAVE 2', 'STAGE CLEAR', 'VICTORY') get large chunky shaded letters that slide in over a translucent full-width band, hold, and wipe out in about 1.4 s; each kind has its own colours, banners queue so they never overlap, and the game can read a flag to hold input while one plays.",
+   "line": "Phase, wave and result moments ('PLAYER PHASE', 'WAVE 2', 'STAGE CLEAR', 'VICTORY') get large chunky shaded letters that slide in over a translucent…",
+   "category": "UI & text",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/big-banner/",
+    "prompt": "site/preview/dna/big-banner/prompt.md",
+    "module": "elements/big-banner/module/big-banner.js",
+    "demo": "elements/big-banner/demo/index.html"
+   }
+  },
+  {
+   "id": "minimap",
+   "name": "Minimap",
+   "description": "A corner map of the level that the player fills in by exploring: the tile grid (or collision boxes) baked once into a cached image per zoom, unexplored cells under a dark dither, an arrow on the player that points where they face, markers for the goal, enemies, items, people and exits, a rim arrow toward an off-map goal, zoom levels (the closest still shows 1.5x the screen) and a full-map view with a legend and the explored share. It places itself in a corner of the play area and never covers the HUD rects the game names, and dims its map image (never the frame or arrows) while the player sprite is under it. A warm parchment look for maps seen from above and dark rooms with bright walls for side-on levels; crisp whole pixels on native pixel canvases, smooth on HD. It can show what a fog-of-war module has explored instead of keeping its own.",
+   "line": "A corner map of the level that the player fills in by exploring: the tile grid (or collision boxes) baked once into a cached image per zoom.",
+   "category": "UI & text",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/minimap/",
+    "prompt": "site/preview/dna/minimap/prompt.md",
+    "module": "elements/minimap/module/minimap.js",
+    "demo": "elements/minimap/demo/index.html"
+   }
+  },
+  {
+   "id": "title-menu",
+   "name": "Title screen & menu flow",
+   "description": "A title screen built on the game's own art (its name as a bold pixel logo with a glint, a tagline, PRESS START), a menu (continue, new game, options, quit), an options screen that persists (three volumes, text speed, screen shake, flashing, reduce motion, large text, high contrast, a controls page), wipe transitions into the game and a pause menu in play (resume, options, restart, quit to title). Keyboard, mouse and touch; it draws on its own overlay canvas at a readable size on phones, consumes input only while a menu is open, and skips itself under ?auto=1, and freeze=1, so autoplay and stills are untouched.",
+   "line": "A title screen built on the game's own art (its name as a bold pixel logo with a glint, a tagline, PRESS START), a menu (continue, new game, options, quit).",
+   "category": "UI & text",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/title-menu/",
+    "prompt": "site/preview/dna/title-menu/prompt.md",
+    "module": "elements/title-menu/module/title-menu.js",
+    "demo": "elements/title-menu/demo/index.html"
+   }
+  },
+  {
+   "id": "draining-hp-bar",
+   "name": "Draining HP bar",
+   "description": "A hit drops the fill at once while a pale loss segment holds where the health was, then drains down; quick hits extend the hold and merge into one segment, a heal shows a mint gain segment before the fill rises, and low health pulses. One module draws the framed boss bar, the party HUD bars and the small over-head bars in world space, smooth on HD canvases and crisp whole-pixel bars on native pixel canvases. It watches the HP the game already has: set(id, hp, max) every step, the curves are parameters and readable from state().",
+   "line": "A hit drops the fill at once while a pale loss segment holds where the health was, then drains down; quick hits extend the hold and merge into one segment.",
+   "category": "UI & text",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/draining-hp-bar/",
+    "prompt": "site/preview/dna/draining-hp-bar/prompt.md",
+    "module": "elements/draining-hp-bar/module/draining-hp-bar.js",
+    "demo": "elements/draining-hp-bar/demo/index.html"
+   }
+  },
+  {
+   "id": "springy-ui",
+   "name": "Springy UI motion",
+   "description": "Motion design for the windows and menus a game already draws: panels open with an elastic pop, slide or unfold and close faster than they open, list rows stagger in, the selection highlight glides between rows on a damped spring and the chosen row lifts, numbers roll to their new value and a backdrop dim fades. The game keeps drawing every window at its final rect; the module only wraps those draw calls, never reads or delays input, and runs on its own step clock so frozen screenshots and autoplay stay deterministic.",
+   "line": "Motion design for the windows and menus a game already draws: panels open with an elastic pop, slide or unfold and close faster than they open.",
+   "category": "UI & text",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/springy-ui/",
+    "prompt": "site/preview/dna/springy-ui/prompt.md",
+    "module": "elements/springy-ui/module/springy-ui.js",
+    "demo": "elements/springy-ui/demo/index.html"
+   }
+  },
+  {
+   "id": "damage-pop",
+   "name": "Modern damage numbers",
+   "description": "2020s damage numbers: each hit arcs out of the target and lands, crits pop with a big overshoot, a burst and a short shake, rapid hits on one target roll into one punching total (12 → 47 → 83), every damage type has its own colour and a small procedural icon, misses and blocks are small words, big numbers stay on top, and nothing lands on another unit or the UI. Smooth bold sans on HD canvases, a crisp 1-bit raster on native pixel canvases. Replaces Bouncing damage numbers bouncing numbers (use one or the other).",
+   "line": "2020s damage numbers: each hit arcs out of the target and lands, crits pop with a big overshoot, a burst and a short shake.",
+   "category": "UI & text",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/damage-pop/",
+    "prompt": "site/preview/dna/damage-pop/prompt.md",
+    "module": "elements/damage-pop/module/damage-pop.js",
+    "demo": "elements/damage-pop/demo/index.html"
+   }
+  },
+  {
+   "id": "world-hud",
+   "name": "World-space HUD",
+   "description": "HUD pieces that live in the world and follow the camera: a ring under every unit's feet with an HP arc whose pale loss segment drains after a hit, name plates with level and HP above heads that step up or sideways (with a leader line) so they never overlap each other, the game's HUD rects or the view edge, a marker with the distance in metres above the current goal, and arrows on the screen edge that point exactly at off-screen targets, sliding inward along the same bearing past HUD boxes. Crisp whole pixels with a built-in bitmap font on native pixel canvases, smooth vector drawing on HD canvases.",
+   "line": "HUD pieces that live in the world and follow the camera: a ring under every unit's feet with an HP arc whose pale loss segment drains after a hit.",
+   "category": "UI & text",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/world-hud/",
+    "prompt": "site/preview/dna/world-hud/prompt.md",
+    "module": "elements/world-hud/module/world-hud.js",
+    "demo": "elements/world-hud/demo/index.html"
+   }
+  },
+  {
+   "id": "toasts",
+   "name": "Toasts & unlock pop-ups",
+   "description": "Achievement, quest-update and item-get notices slide in from a screen edge, stack and glide, leave on a visible timer line, merge duplicates into one card with a punching ×N badge (quest progress updates one card in place), and queue behind a \"+N more\" chip when more arrive than fit. They keep to a safe area, step around every HUD rect the game reports, hide while a window covers their place and come back after, and never pause the game or take input. Glassy cards on HD canvases, a crisp pixel card with its own bitmap fonts on native pixel canvases.",
+   "line": "Achievement, quest-update and item-get notices slide in from a screen edge, stack and glide, leave on a visible timer line.",
+   "category": "UI & text",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/toasts/",
+    "prompt": "site/preview/dna/toasts/prompt.md",
+    "module": "elements/toasts/module/toasts.js",
+    "demo": "elements/toasts/demo/index.html"
+   }
+  },
+  {
+   "id": "keyword-tooltips",
+   "name": "Keyword tooltips",
+   "description": "Rich text whose keywords (statuses, stats, terrain, rules) open a tooltip on mouse hover, touch long-press or tap and keyboard focus: icon, title, kind and text with its own keywords that open nested tooltips. Click, tap or a key pins a tooltip; placement keeps it inside the view, never over the word it explains, clear of the HUD and characters when possible; every move is a fade, glide or crossfade. Crisp bitmap fonts on pixel canvases, smooth text on HD canvases, readable on phones; the game's own font can draw the words.",
+   "line": "Rich text whose keywords (statuses, stats, terrain, rules) open a tooltip on mouse hover, touch long-press or tap and keyboard focus: icon, title.",
+   "category": "UI & text",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/keyword-tooltips/",
+    "prompt": "site/preview/dna/keyword-tooltips/prompt.md",
+    "module": "elements/keyword-tooltips/module/keyword-tooltips.js",
+    "demo": "elements/keyword-tooltips/demo/index.html"
+   }
+  },
+  {
+   "id": "palette-swap",
+   "name": "Palette-swap variants",
+   "description": "One sprite, many looks without new art: the module finds the sprite's colour ramps (clothing, body, skin, steel, outline) and maps them dark-to-light onto new ramps, giving team colours (blue, red, green, yellow), elite and rare foes, poison, stone, frozen, a pulsing low-HP tint and a greyed 'already acted' look, combinable with '+'. Every (sprite, variant) is built once and cached; the game only changes the image it passes to drawImage.",
+   "line": "One sprite, many looks without new art: the module finds the sprite's colour ramps (clothing, body, skin, steel, outline) and maps them dark-to-light onto…",
+   "category": "Generated art",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/palette-swap/",
+    "prompt": "site/preview/dna/palette-swap/prompt.md",
+    "module": "elements/palette-swap/module/palette-swap.js",
+    "demo": "elements/palette-swap/demo/index.html"
+   }
+  },
+  {
+   "id": "paper-doll",
+   "name": "Paper doll",
+   "description": "A layered pixel hero (body, hair, hat, top, legs, boots, weapon, shield) with swappable parts and palette tints, every part painted on one shared rig so any combination lines up in every frame of the 4-direction walk, the 3-frame attack and the jump; the weapon stays in the right hand when the hero turns (behind the body facing left); a small wardrobe window (keys, mouse, touch) shows a turning preview and the change on the walking hero.",
+   "line": "A layered pixel hero (body, hair, hat, top, legs, boots, weapon, shield) with swappable parts and palette tints.",
+   "category": "Generated art",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/paper-doll/",
+    "prompt": "site/preview/dna/paper-doll/prompt.md",
+    "module": "elements/paper-doll/module/paper-doll.js",
+    "demo": "elements/paper-doll/demo/index.html"
+   }
+  },
+  {
+   "id": "expressive-portraits",
+   "name": "Expressive portraits",
+   "description": "Hand-made-looking 16-bit bust portraits built from a small seeded spec (head, skin, eyes, brows, mouth, hair style and colour, ears, hood / helmet / circlet, scar or freckles, collar) at native 48x48 or 64x64 with shaded ramps and an outline. Seven expressions (neutral, happy, angry, sad, surprised, determined, hurt) change only the brows, eyes and mouth; the face blinks and its mouth moves while the dialogue box types. Beside the Typewriter dialogue box dialogue box the speaker's portrait slides in, switches expression per line and dims while someone else talks; on its own it draws framed panels for character select and status screens.",
+   "line": "Hand-made-looking 16-bit bust portraits built from a small seeded spec (head, skin, eyes, brows, mouth, hair style and colour, ears, hood / helmet / circlet…",
+   "category": "Generated art",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/expressive-portraits/",
+    "prompt": "site/preview/dna/expressive-portraits/prompt.md",
+    "module": "elements/expressive-portraits/module/expressive-portraits.js",
+    "demo": "elements/expressive-portraits/demo/index.html"
+   }
+  },
+  {
+   "id": "talking-portraits",
+   "name": "Talking portraits",
+   "description": "Portraits animated by the dialogue: a typewriter that owns the line (or follows the game's own), a mouth that moves only while a letter is typed and shuts on spaces, punctuation, pauses and when the line ends, seeded random blinks, 1 px idle breathing, and an emotion tag per line (or inside it) that changes the face through a short blink-through with a 1 px posture beat, never a one-frame jump. Faces are code-drawn 16-bit busts from the Expressive portraits generator (expressive-portraits.js, used through its API) or the game's own portrait through a draw callback; the speaker's framed panel sits in the game's dialogue box with a name plate, and any face can sit in a HUD and react to hits.",
+   "line": "Portraits animated by the dialogue: a typewriter that owns the line (or follows the game's own).",
+   "category": "Generated art",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/talking-portraits/",
+    "prompt": "site/preview/dna/talking-portraits/prompt.md",
+    "module": "elements/talking-portraits/module/talking-portraits.js",
+    "demo": "elements/talking-portraits/demo/index.html"
+   }
+  },
+  {
+   "id": "damage-numbers",
+   "name": "Bouncing damage numbers",
+   "description": "On the frame a hit lands, the amount pops above the target, each digit bouncing in turn with a small overshoot, holds, then fades; heals, criticals, misses, MP and status words each get their own look, and simultaneous pops never overlap.",
+   "line": "On the frame a hit lands, the amount pops above the target, each digit bouncing in turn with a small overshoot, holds, then fades; heals, criticals, misses.",
+   "category": "Effects & feel",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/damage-numbers/",
+    "prompt": "site/preview/dna/damage-numbers/prompt.md",
+    "module": "elements/damage-numbers/module/damage-numbers.js",
+    "demo": "elements/damage-numbers/demo/index.html"
+   }
+  },
+  {
+   "id": "hit-sparks",
+   "name": "Hit sparks & spell bursts",
+   "description": "On the frame a blow lands, a few frames of impact at the contact point (slash streak, star burst, cross spark or ring shockwave) with pooled pixel sparks that fall under gravity; spells get palette-cycled fire, ice, thunder and heal bursts; criticals are bigger, flash white for 3 frames and ask for hit-stop and shake. Deterministic with a seed.",
+   "line": "On the frame a blow lands, a few frames of impact at the contact point (slash streak, star burst, cross spark or ring shockwave) with pooled pixel sparks…",
+   "category": "Effects & feel",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/hit-sparks/",
+    "prompt": "site/preview/dna/hit-sparks/prompt.md",
+    "module": "elements/hit-sparks/module/hit-sparks.js",
+    "demo": "elements/hit-sparks/demo/index.html"
+   }
+  },
+  {
+   "id": "dissolve-defeat",
+   "name": "Dissolve-out defeat",
+   "description": "A defeated unit blinks white and dissolves from a snapshot of its sprite (dither-noise fade, horizontal slice wipe, pixel crumble with gravity, or flash-then-fade) in about 0.5-1 s, so the game can remove the unit at once and nothing waits for the effect.",
+   "line": "A defeated unit blinks white and dissolves from a snapshot of its sprite (dither-noise fade, horizontal slice wipe, pixel crumble with gravity,…",
+   "category": "Effects & feel",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/dissolve-defeat/",
+    "prompt": "site/preview/dna/dissolve-defeat/prompt.md",
+    "module": "elements/dissolve-defeat/module/dissolve-defeat.js",
+    "demo": "elements/dissolve-defeat/demo/index.html"
+   }
+  },
+  {
+   "id": "battle-transition",
+   "name": "Shatter battle transition",
+   "description": "When a battle starts, the current frame is captured, cracks from the point of contact and breaks into shards that spin and fall (or swirls, pixelates or irises closed); the game switches scenes at the midpoint under full cover, and the new scene is revealed. Input waits until it ends.",
+   "line": "When a battle starts, the current frame is captured, cracks from the point of contact and breaks into shards that spin and fall (or swirls, pixelates…",
+   "category": "Effects & feel",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/battle-transition/",
+    "prompt": "site/preview/dna/battle-transition/prompt.md",
+    "module": "elements/battle-transition/module/battle-transition.js",
+    "demo": "elements/battle-transition/demo/index.html"
+   }
+  },
+  {
+   "id": "hit-stop-shake",
+   "name": "Hit-stop, shake & flash",
+   "description": "On a hit the world freezes for a few frames (hit-stop), the play field shakes by whole pixels and decays, and the struck sprite turns white for a frame or two; a finisher freezes longer, shakes harder and flashes the field. Three strengths (light, heavy, finisher), a reduced-motion mode, and a step gate so autoplay and frozen screenshots stay deterministic.",
+   "line": "On a hit the world freezes for a few frames (hit-stop), the play field shakes by whole pixels and decays, and the struck sprite turns white for a frame or two.",
+   "category": "Effects & feel",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/hit-stop-shake/",
+    "prompt": "site/preview/dna/hit-stop-shake/prompt.md",
+    "module": "elements/hit-stop-shake/module/hit-stop-shake.js",
+    "demo": "elements/hit-stop-shake/demo/index.html"
+   }
+  },
+  {
+   "id": "weather-particles",
+   "name": "Weather & ambient particles",
+   "description": "Seeded weather drawn in three depth layers behind and in front of the sprites: rain that splashes on the game's own ground line, snow, drifting dust motes, fireflies that glow at night and fluttering leaves, pushed by a gusting wind, cross-fading from one weather to the next, coloured by the skin, capped by a particle budget, kept off the UI, and identical frame for frame at the same clock.",
+   "line": "Seeded weather drawn in three depth layers behind and in front of the sprites: rain that splashes on the game's own ground line, snow, drifting dust motes.",
+   "category": "Effects & feel",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/weather-particles/",
+    "prompt": "site/preview/dna/weather-particles/prompt.md",
+    "module": "elements/weather-particles/module/weather-particles.js",
+    "demo": "elements/weather-particles/demo/index.html"
+   }
+  },
+  {
+   "id": "squash-stretch",
+   "name": "Squash, stretch & anticipation",
+   "description": "Every sprite the game already draws gets procedural squash and stretch about its feet, with no new frames: a crouch before jumps, swings and spells, a stretch while rising and falling fast, a squash on landing and on taking a hit, a damped spring back with overshoot, a lean into movement and a slow breath at rest. Area is kept (sx*sy = 1); it is a canvas transform around the sprite draw only, so hit boxes, timing and rules never change. Deterministic from game time; whole-pixel snapping for pixel games, smooth for HD.",
+   "line": "Every sprite the game already draws gets procedural squash and stretch about its feet, with no new frames: a crouch before jumps, swings and spells.",
+   "category": "Effects & feel",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/squash-stretch/",
+    "prompt": "site/preview/dna/squash-stretch/prompt.md",
+    "module": "elements/squash-stretch/module/squash-stretch.js",
+    "demo": "elements/squash-stretch/demo/index.html"
+   }
+  },
+  {
+   "id": "modern-particles",
+   "name": "Modern particle system",
+   "description": "One pooled, seeded engine for thousands of smooth particles: emitter shapes (point, line, circle, rect, sprite outline), size / alpha / colour curves over life, additive glow that backs off on bright frames, gravity, drag, wind, ground bounce and orbiting motion, with presets for bursts, bouncing sparks, fountains, smoke, magic swirls, dust, pickups, embers and auras. Smooth soft sprites on HD canvases, whole-pixel particles on native pixel canvases; deterministic from a seed and game time.",
+   "line": "One pooled, seeded engine for thousands of smooth particles: emitter shapes (point, line, circle, rect, sprite outline).",
+   "category": "Effects & feel",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/modern-particles/",
+    "prompt": "site/preview/dna/modern-particles/prompt.md",
+    "module": "elements/modern-particles/module/modern-particles.js",
+    "demo": "elements/modern-particles/demo/index.html"
+   }
+  },
+  {
+   "id": "verlet-cloth",
+   "name": "Verlet rope & cloth",
+   "description": "Capes, scarves, ribbons, hair tufts, banners, hanging ropes and chains that swing with movement and wind: a small Verlet solver (points and distance constraints, a strand or a 2D grid) pinned to an anchor on an actor or a post, with gravity, damping, gusts from game time, a ground line, solid rects and a body circle to drape over. Drawn as smooth shaded strips and quads with an ink outline, or whole pixels with a 1 px outline on pixel games. It only reads anchors and only draws: hit boxes and rules never change. Fixed 1/120 s sub-steps, so is deterministic; a teleporting anchor re-poses its cloth hanging at rest instead of stretching it across the screen.",
+   "line": "Capes, scarves, ribbons, hair tufts, banners, hanging ropes and chains that swing with movement and wind.",
+   "category": "Effects & feel",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/verlet-cloth/",
+    "prompt": "site/preview/dna/verlet-cloth/prompt.md",
+    "module": "elements/verlet-cloth/module/verlet-cloth.js",
+    "demo": "elements/verlet-cloth/demo/index.html"
+   }
+  },
+  {
+   "id": "physics-debris",
+   "name": "Physics debris & breakables",
+   "description": "Breakable props, either the game's own art (painted or pixel) or built-in crates, barrels, pots, statues and crystals, that crack when hit and shatter into pieces cut from their own drawing; each piece is a rigid body (position, velocity, angle, spin) that tumbles, bounces off walls and floors, slides, settles flat on a low edge, rests and fades. Every move is swept along its path, so pieces never pass through walls. Loose pieces of a material (rock, wood, clay, crystal, leaf, bark, bone, shell, iron, spirit) for creatures that break apart, dust puffs, a screen-shake offset, and a wall bump for knocked-back foes: dust and chips at the contact point, a reflected velocity and a visual bounce. Side view (gravity) and top-down (fake height with shadows). Pooled, deterministic from a seed, never changes game state.",
+   "line": "Breakable props, either the game's own art (painted or pixel) or built-in crates, barrels, pots, statues and crystals.",
+   "category": "Effects & feel",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/physics-debris/",
+    "prompt": "site/preview/dna/physics-debris/prompt.md",
+    "module": "elements/physics-debris/module/physics-debris.js",
+    "demo": "elements/physics-debris/demo/index.html"
+   }
+  },
+  {
+   "id": "ik-creatures",
+   "name": "Procedural IK creatures",
+   "description": "The game's ground-walking foes become many-legged creatures (spider, crab, centipede) whose feet plant on the game's own ground with 2-bone IK and step when stretched, in two alternating groups so no two neighbouring legs ever lift together; a planted foot never slides, never floats and never sinks, a swinging foot lifts over any rise, the body rides on its feet, faces its path and turns its head to the target. Drawn per pixel (light, rim light, gloss, outline) at the screen's own resolution, or at native resolution with a fixed ramp for pixel games. The game keeps its foes' positions, AI and hit boxes.",
+   "line": "The game's ground-walking foes become many-legged creatures (spider, crab, centipede) whose feet plant on the game's own ground with 2-bone IK and step when…",
+   "category": "Effects & feel",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/ik-creatures/",
+    "prompt": "site/preview/dna/ik-creatures/prompt.md",
+    "module": "elements/ik-creatures/module/ik-creatures.js",
+    "demo": "elements/ik-creatures/demo/index.html"
+   }
+  },
+  {
+   "id": "ribbon-trails",
+   "name": "Ribbon trails",
+   "description": "Smooth tapered ribbons behind anything fast: a sword swing leaves a swept crescent from hilt to tip, a dash or lunge a soft body-wide ribbon, a projectile a thin curved trail with a bright additive core, a drifting wisp a faint wake. Each update samples the source once; a centripetal Catmull-Rom curve runs through the recent points and thins and fades with age. Teleports, scene switches, long gaps and a source going quiet start a new strip, and update(0) holds every ribbon still, so nothing is ever drawn across the screen. Seamless translucent bodies on HD canvases, whole pixels with three hard alpha steps on native pixel canvases. Drawing only: positions, hit boxes and rules never change.",
+   "line": "Smooth tapered ribbons behind anything fast: a sword swing leaves a swept crescent from hilt to tip, a dash or lunge a soft body-wide ribbon.",
+   "category": "Effects & feel",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/ribbon-trails/",
+    "prompt": "site/preview/dna/ribbon-trails/prompt.md",
+    "module": "elements/ribbon-trails/module/ribbon-trails.js",
+    "demo": "elements/ribbon-trails/demo/index.html"
+   }
+  },
+  {
+   "id": "time-rewind",
+   "name": "Time rewind",
+   "description": "Hold a key (or the touch button) and the world runs backwards: every fixed step the game's state is deep-copied into a ring buffer, and while the key is held older copies are restored at 1x-3x speed under a rewind filter (desaturate, tint, scanlines, ripple, rolling band) with a REWIND indicator and a history scrubber. On release play continues from that moment and the newer copies are dropped. An energy meter or charges limit it; nothing is recorded while paused or in menus. Characters keep their recorded facing, so they walk backwards in time instead of turning around. The module is a gate at the top of the step: without the key the game runs exactly as before.",
+   "line": "Hold a key (or the touch button) and the world runs backwards: every fixed step the game's state is deep-copied into a ring buffer.",
+   "category": "Effects & feel",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/time-rewind/",
+    "prompt": "site/preview/dna/time-rewind/prompt.md",
+    "module": "elements/time-rewind/module/time-rewind.js",
+    "demo": "elements/time-rewind/demo/index.html"
+   }
+  },
+  {
+   "id": "water-surface",
+   "name": "Spring water surface and splashes",
+   "description": "Pits, ponds and lakes of a side-view game get a surface made of springs: anything that falls in throws a crown of droplets and a curved splash sheet and sends waves to both banks that reflect and calm down (damped, clamped, fixed sub-steps: it never blows up). Bodies the game lists splash once per entry (tested along their path, so a fast arrow still splashes), drip when they leave and push a bow wave while wading; floaters bob, tilt and never overlap or sink; under the line the water tints what is in it, mirrors the bank, shows light shafts, foam and bubbles; an optional waterfall keeps feeding a pool. Pixel and HD renders, deterministic from the seed.",
+   "line": "Pits, ponds and lakes of a side-view game get a surface made of springs: anything that falls in throws a crown of droplets and a curved splash sheet…",
+   "category": "Effects & feel",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/water-surface/",
+    "prompt": "site/preview/dna/water-surface/prompt.md",
+    "module": "elements/water-surface/module/water-surface.js",
+    "demo": "elements/water-surface/demo/index.html"
+   }
+  },
+  {
+   "id": "loot-beams",
+   "name": "Loot drops with rarity beams",
+   "description": "Defeated foes and opened chests pop loot that arcs out with a ground shadow, lands with a bounce on free ground (landing spot and whole flight path tested against the game's walls, never off the map), then shows a light beam and glowing outline in its rarity colour and a small name tag; items in reach fly to the player on a clear line and are picked up exactly once with a flash. Rarities, items and drop tables are plain data; name tags never overlap each other, the HUD or open windows and glide or crossfade instead of jumping. Crisp pixel icons and a bitmap font on pixel canvases, shaded icons and soft beams on HD canvases (or a painted icon atlas).",
+   "line": "Defeated foes and opened chests pop loot that arcs out with a ground shadow, lands with a bounce on free ground (landing spot and whole flight path tested…",
+   "category": "Effects & feel",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/loot-beams/",
+    "prompt": "site/preview/dna/loot-beams/prompt.md",
+    "module": "elements/loot-beams/module/loot-beams.js",
+    "demo": "elements/loot-beams/demo/index.html"
+   }
+  },
+  {
+   "id": "timing-bar",
+   "name": "Timing-bar minigame",
+   "description": "Any 'skill check' moment (picking a lock, a timed attack bonus, forging, reeling in a fish) opens a small window with a bar: a marker sweeps across bevelled miss / good / great / perfect zones and the player stops it with one press; a grade word pops, the window closes, and the game gets {grade, offset} back. Optional multi-press sequences, difficulty presets, an assist mode, and an autoplay hook that resolves at a fixed grade so ?auto=1 runs end the same.",
+   "line": "Any 'skill check' moment (picking a lock, a timed attack bonus, forging, reeling in a fish) opens a small window with a bar.",
+   "category": "Audio & rhythm",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/timing-bar/",
+    "prompt": "site/preview/dna/timing-bar/prompt.md",
+    "module": "elements/timing-bar/module/timing-bar.js",
+    "demo": "elements/timing-bar/demo/index.html"
+   }
+  },
+  {
+   "id": "procedural-sfx",
+   "name": "Procedural sound effects",
+   "description": "Fourteen game sounds (hit, crit, coin, jump, land, footstep, menu move / confirm / cancel, explosion, laser, power-up, heal, hurt) synthesized live with Web Audio: oscillators, seeded noise, envelopes with attack and release ramps, pitch slides, filters and light FM. Every call is a seeded variation, so repeats never sound copy-pasted; a small mixer caps voices, merges same-frame duplicates, ducks the rest under big sounds and keeps peaks under a soft ceiling. Silent until the player's first click or key, a no-op without Web Audio, and it never touches game state or input. No audio files.",
+   "line": "Fourteen game sounds (hit, crit, coin, jump, land, footstep, menu move / confirm / cancel, explosion, laser, power-up, heal, hurt) synthesized live with Web…",
+   "category": "Audio & rhythm",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/procedural-sfx/",
+    "prompt": "site/preview/dna/procedural-sfx/prompt.md",
+    "module": "elements/procedural-sfx/module/procedural-sfx.js",
+    "demo": "elements/procedural-sfx/demo/index.html"
+   }
+  },
+  {
+   "id": "chip-music",
+   "name": "Chip music",
+   "description": "A four-channel chip band synthesized in Web Audio from pattern data: two pulse leads with duty cycle, a stepped triangle bass and a noise drum kit, with arpeggio, vibrato and slide effects. Loops (title, field, battle) wrap without a seam; jingles (victory, defeat, item) pause the loop and bring it back on the next beat, or hand over to another track. Switches land on the beat, play() of the current track is a no-op so the game can name its track every step, and a small badge shows four channel meters and mutes. Silent until the first click, deterministic under fast-forward, no audio files.",
+   "line": "A four-channel chip band synthesized in Web Audio from pattern data: two pulse leads with duty cycle, a stepped triangle bass and a noise drum kit.",
+   "category": "Audio & rhythm",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/chip-music/",
+    "prompt": "site/preview/dna/chip-music/prompt.md",
+    "module": "elements/chip-music/module/chip-music.js",
+    "demo": "elements/chip-music/demo/index.html"
+   }
+  },
+  {
+   "id": "beat-judge",
+   "name": "Beat judge",
+   "description": "A beat clock and an input reviewer for rhythm actions: every press the game accepts is rated Perfect, Good or Miss against the nearest beat, measured at the moment of the key or tap event (never the frame that handles it), minus audio output latency and the player's calibration offset. Beats follow Chip music chip-music tracks when present (tempo, switches, no beats during a pausing jingle, back on the beat), otherwise its own beat clock with a woodblock click track. A beat track shows markers sliding to a reviewer ring with the windows, EARLY / LATE and the combo; a calibration window measures the player's offset from 8 taps. The game decides what a rating does.",
+   "line": "A beat clock and an input reviewer for rhythm actions: every press the game accepts is rated Perfect, Good or Miss against the nearest beat.",
+   "category": "Audio & rhythm",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/beat-judge/",
+    "prompt": "site/preview/dna/beat-judge/prompt.md",
+    "module": "elements/beat-judge/module/beat-judge.js",
+    "demo": "elements/beat-judge/demo/index.html"
+   }
+  },
+  {
+   "id": "adaptive-music",
+   "name": "Adaptive music",
+   "description": "Layered music that follows the game's state over chip music: each chip channel is a stem (bass, drums, melody, a tense danger line), drums come in for fights, the danger line at low health, the boss gets its own track. The game only reports active / combat / boss / hp each step; the module debounces flickers (0.5 s to start, 3 s to calm down, HP hysteresis), lands every change on the next bar line with a one-bar stinger when the mood changes, never overlaps two changes, and steps aside for the game's own jingles. Deterministic on the music clock, silent until the first click.",
+   "line": "Layered music that follows the game's state over chip music: each chip channel is a stem (bass, drums, melody, a tense danger line), drums come in for fights.",
+   "category": "Audio & rhythm",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/adaptive-music/",
+    "prompt": "site/preview/dna/adaptive-music/prompt.md",
+    "module": "elements/adaptive-music/module/adaptive-music.js",
+    "demo": "elements/adaptive-music/demo/index.html"
+   }
+  },
+  {
+   "id": "shop-inventory",
+   "name": "Shop & inventory grid",
+   "description": "A modal shop window: buy and sell lists with icons, prices and an amount picker, a bag grid with stacks, a max stack and a capacity, tooltips, and green up / red down arrows comparing gear against what each party member wears. \"Not enough gold.\" and \"Your bag is full.\" are refused with a message, never with negative gold; items sell back at a ratio; Use and Equip call the game's own callbacks. Items and stock are plain objects the designer edits; gold, equipment and stats stay in the game. 16x16 item icons are drawn procedurally. Under autoplay it buys one deterministic upgrade and leaves.",
+   "line": "A modal shop window: buy and sell lists with icons, prices and an amount picker, a bag grid with stacks, a max stack and a capacity, tooltips.",
+   "category": "Economy & growth",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/shop-inventory/",
+    "prompt": "site/preview/dna/shop-inventory/prompt.md",
+    "module": "elements/shop-inventory/module/shop-inventory.js",
+    "demo": "elements/shop-inventory/demo/index.html"
+   }
+  },
+  {
+   "id": "level-up-growth",
+   "name": "Level-up stat growth",
+   "description": "Experience and levels for a party: after a fight a results window counts EXP and gold up, each unit's gauge fills and wraps with LV UP! at every level, then a panel per levelled unit lists its stat gains row by row (+1 rows slide in with a highlight). Growth is a percent chance per stat per level from plain per-class tables, rolled with the module's own seeded RNG, with a guaranteed minimum so a level is never empty. The game supplies stat getters and setters and calls award(exp, gold) where the fight is won; stats change only through its setter. Save / load helpers for the EXP state.",
+   "line": "Experience and levels for a party: after a fight a results window counts EXP and gold up, each unit's gauge fills and wraps with LV UP!",
+   "category": "Economy & growth",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/level-up-growth/",
+    "prompt": "site/preview/dna/level-up-growth/prompt.md",
+    "module": "elements/level-up-growth/module/level-up-growth.js",
+    "demo": "elements/level-up-growth/demo/index.html"
+   }
+  },
+  {
+   "id": "farming-plots",
+   "name": "Farming plots",
+   "description": "A farm loop on a tile grid: till, plant, water, crops grow one stage-step per watered night with every stage drawn, harvest once, ship produce in a bin that pays at night, buy the season's seeds at a stall; seasons repaint the farm and wither out-of-season crops, seeded rain waters everything, a 6:00-to-midnight clock with dusk, night and lamp light. The farmer walks tile by tile with a 4-frame walk and arm swing that follow the distance walked, turns before he steps, faces the tile he works and swings each tool (raise, strike). Crops and tools are plain data; a bot farms through the player's own key path.",
+   "line": "A farm loop on a tile grid: till, plant, water, crops grow one stage-step per watered night with every stage drawn, harvest once.",
+   "category": "Economy & growth",
+   "kind": "system",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/farming-plots/",
+    "prompt": "site/preview/dna/farming-plots/prompt.md",
+    "module": "elements/farming-plots/module/farming-plots.js",
+    "demo": "elements/farming-plots/demo/index.html"
+   }
+  },
+  {
+   "id": "crafting-recipes",
+   "name": "Crafting recipes",
+   "description": "A recipe book with discovery and a slot bench over the game's own inventory: learned recipes in colour (a green dot when craftable now, a sparkle when new), unknown ones as dark silhouettes with a hint; pick one and craft it, or put ingredients from the pouch on the bench and try a mix (a matching mix discovers the recipe). Slots show have / need, the result slot previews the result (? for an unknown mix). Crafting takes each ingredient exactly once and gives the result exactly once at the end of a short work bar, re-checking every count (never below 0); a failed try shakes the bench, says why and costs nothing. Recipes are learned by holding their ingredients, by crafting another recipe, by experiment or by the game's own unlock, each with one toast that slides in at a free spot and stays put. The window opens beside the player and never over the HUD; text never under 10 CSS px. Crisp bitmap text and pixel icons on native pixel canvases, smooth text and shaded icons on HD canvases (or the game's own icon sheet and painted frames).",
+   "line": "A recipe book with discovery and a slot bench over the game's own inventory: learned recipes in colour (a green dot when craftable now, a sparkle when new).",
+   "category": "Economy & growth",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/crafting-recipes/",
+    "prompt": "site/preview/dna/crafting-recipes/prompt.md",
+    "module": "elements/crafting-recipes/module/crafting-recipes.js",
+    "demo": "elements/crafting-recipes/demo/index.html"
+   }
+  },
+  {
+   "id": "upgrade-draft",
+   "name": "Upgrade draft (pick 1 of 3)",
+   "description": "The roguelite level-up choice: at a moment the game chooses (level-up, chest, wave clear) the world pauses and three upgrade cards deal in with a fan, flip face up and glow by rarity (common, rare, epic); the player moves between them and takes one, cards that share a tag with the build show a synergy hint, a reroll and a skip are optional, and the picked card flies into an owned-upgrades strip. Upgrades are a plain table the designer edits (name, rarity, tags with drawn icons, text with {value}, max stacks, a stat delta or a small apply function); hands are seeded by the module, weighted by rarity, never repeat a card and never offer a maxed upgrade. Picks reach the game only through its own applyDelta / apply / onPick, synchronously inside update(). Smooth HD cards or crisp pixel cards (readable at 256x224).",
+   "line": "The roguelite level-up choice: at a moment the game chooses (level-up, chest, wave clear) the world pauses and three upgrade cards deal in with a fan.",
+   "category": "Economy & growth",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/upgrade-draft/",
+    "prompt": "site/preview/dna/upgrade-draft/prompt.md",
+    "module": "elements/upgrade-draft/module/upgrade-draft.js",
+    "demo": "elements/upgrade-draft/demo/index.html"
+   }
+  },
+  {
+   "id": "run-map",
+   "name": "Branching run map",
+   "description": "The roguelite route between fights: a seeded map of floors whose battle, elite, event, shop and rest nodes are joined by paths that never cross, rising to a boss. The player picks one of the nodes connected to where they stand (arrows, mouse or touch), a token travels there and the game plays that node: fight nodes start the game's own fight or room and come back through finish(), rest, shop and event nodes are small panels whose choices are the game's own callbacks. The visited route is drawn in gold, the current node carries the token, unreachable branches fade. Framed HD map sheet or crisp pixel map (readable at 256x224); autoplay picks routes by itself so ?auto=1 still ends.",
+   "line": "The roguelite route between fights: a seeded map of floors whose battle, elite, event, shop and rest nodes are joined by paths that never cross.",
+   "category": "Economy & growth",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/run-map/",
+    "prompt": "site/preview/dna/run-map/prompt.md",
+    "module": "elements/run-map/module/run-map.js",
+    "demo": "elements/run-map/demo/index.html"
+   }
+  },
+  {
+   "id": "stamina-rest",
+   "name": "Stamina & outpost rest",
+   "description": "Squads (or a hero) spend stamina on every march and every attack; at zero they are exhausted, so attacks are refused (or they move and swing slower) until they recover. Resting inside a camp, outpost or shrine their side holds refills the pips per phase (turn clock) or per second (real-time clock), with a warm glow, rising embers and a REST +N tag; standing alone in an empty or enemy site claims it. Pips above every unit (crisp segment strips on native pixel canvases, glassy capsules on HD), a TIRED tag, a sweat drop and a blinking strip when exhausted, a TOO TIRED shake on a refused attack, and campfire, banner and shrine markers with a capture ring. The game asks engage(id) before each attack; the module never moves units, deals damage or pauses.",
+   "line": "Squads (or a hero) spend stamina on every march and every attack; at zero they are exhausted.",
+   "category": "Economy & growth",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/stamina-rest/",
+    "prompt": "site/preview/dna/stamina-rest/prompt.md",
+    "module": "elements/stamina-rest/module/stamina-rest.js",
+    "demo": "elements/stamina-rest/demo/index.html"
+   }
+  },
+  {
+   "id": "shaped-inventory",
+   "name": "Shaped inventory packing",
+   "description": "A grid bag where every item takes its real shape (1x1 potions, 1x3 staves, a 5-cell axe, L, T, S and plus pieces). The player drags items with mouse or touch, or carries them with keys, and turns them a quarter turn (a real rotation; squares and plus shapes never turn). Where an item would land shows green (free), blue (stacks), amber (swaps: the item you get stays visible, outlined and labelled) or red (blocked, with the blockers glowing). Auto-sort packs largest first and never loses an item. Stacks show counts, a tooltip sits where it covers the fewest items, and a ground tray holds loot and drops. Use and Drop go through the game's callbacks; quest items refuse to drop. Phones get one grid at a time with tabs and the tooltip as a strip. Every item is a panel that follows its footprint exactly with its icon upright on the largest block (the game's own icons or sprites, else a bold glyph), in a 16-bit pixel look or an HD look.",
+   "line": "A grid bag where every item takes its real shape (1x1 potions, 1x3 staves, a 5-cell axe, L, T, S and plus pieces).",
+   "category": "Economy & growth",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/shaped-inventory/",
+    "prompt": "site/preview/dna/shaped-inventory/prompt.md",
+    "module": "elements/shaped-inventory/module/shaped-inventory.js",
+    "demo": "elements/shaped-inventory/demo/index.html"
+   }
+  },
+  {
+   "id": "dialogue-box",
+   "name": "Typewriter dialogue box",
+   "description": "Story text in a framed box at the bottom (or top) of the screen: each line types out letter by letter with small pauses at punctuation, a name tag sits on the speaker's side, a blinking arrow waits for Z / Enter / tap, which first finishes the page and then advances; holding fast-forwards. Long lines wrap and page at native resolution, the box moves to the top when the speaker stands under it and never covers the HUD. Lines are a plain array of {speaker, text} the designer edits; the world pauses while it is open and the game gets onEnd back.",
+   "line": "Story text in a framed box at the bottom (or top) of the screen: each line types out letter by letter with small pauses at punctuation.",
+   "category": "Dialogue & story",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/dialogue-box/",
+    "prompt": "site/preview/dna/dialogue-box/prompt.md",
+    "module": "elements/dialogue-box/module/dialogue-box.js",
+    "demo": "elements/dialogue-box/demo/index.html"
+   }
+  },
+  {
+   "id": "dialogue-choices",
+   "name": "Branching choices with flags",
+   "description": "After a line of dialogue, a small window of 2 to 4 options opens beside the text box: arrows move a hand cursor, Z / tap picks, an option the player cannot take yet is grey and says why (\"Need 10 gold\"), and an optional countdown picks a default. Picks set flags (gold, metElder, plan) that later lines check with conditions like gold>=10 && !metElder, jump to labels and rejoin; once-only lines and options are remembered. The script is plain data the designer edits, a validator reports unreachable labels and unknown flags, and flags save as plain JSON. Drives the Typewriter dialogue box dialogue box, or the game's own text box through a three-function adapter.",
+   "line": "After a line of dialogue, a small window of 2 to 4 options opens beside the text box: arrows move a hand cursor, Z / tap picks.",
+   "category": "Dialogue & story",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/dialogue-choices/",
+    "prompt": "site/preview/dna/dialogue-choices/prompt.md",
+    "module": "elements/dialogue-choices/module/dialogue-choices.js",
+    "demo": "elements/dialogue-choices/demo/index.html"
+   }
+  },
+  {
+   "id": "quest-log",
+   "name": "Quest log & objectives",
+   "description": "Quests as data with ordered steps and counters: the game only reports what happened (kill, collect, talk, reach) and the module advances the right step, clamps every counter to its target, ignores events for later steps and after completion, and shows it all: a tracker card per quest in a HUD corner (current objective, 2/3 counter that punches, a bar, a finished step that checks off, strikes through and collapses), NEW QUEST / QUEST COMPLETE banners (or Toasts & unlock pop-ups toasts), a full log panel with active and done tabs, descriptions, steps and rewards, and optional world markers with edge arrows. Never covers the HUD rects the game names; text never overlaps. Glass cards on HD canvases, crisp pixel cards with bitmap fonts on native pixel canvases.",
+   "line": "Quests as data with ordered steps and counters: the game only reports what happened (kill, collect, talk, reach) and the module advances the right step.",
+   "category": "Dialogue & story",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/quest-log/",
+    "prompt": "site/preview/dna/quest-log/prompt.md",
+    "module": "elements/quest-log/module/quest-log.js",
+    "demo": "elements/quest-log/demo/index.html"
+   }
+  },
+  {
+   "id": "scripted-cutscenes",
+   "name": "Scripted cutscenes",
+   "description": "A small script plays a scene in the game's own world: characters walk to points with real walk frames that advance with the distance they cover and always face their path, turn, speak (through the game's own dialogue box when it has one, else a typewriter box with a speaker plate and a tail that keeps off the cast), wait, emote, while the camera pans, cuts and zooms (clamped to the map) and letterbox bars slide in. Hold to skip: a quick fade lands on exactly the state playing through would reach (positions, facings, game flags), and control comes back exactly once.",
+   "line": "A small script plays a scene in the game's own world: characters walk to points with real walk frames that advance with the distance they cover and always…",
+   "category": "Dialogue & story",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/scripted-cutscenes/",
+    "prompt": "site/preview/dna/scripted-cutscenes/prompt.md",
+    "module": "elements/scripted-cutscenes/module/scripted-cutscenes.js",
+    "demo": "elements/scripted-cutscenes/demo/index.html"
+   }
+  },
+  {
+   "id": "bark-bubbles",
+   "name": "World-space bark bubbles",
+   "description": "Short lines in speech bubbles above characters, in the world, while the game keeps running: guards shout \"Halt!\" in a yellow alarm bubble when they spot you, monsters grunt when hit, villagers chat when idle. Each bubble pops out of its speaker, types its line, follows the speaker as it walks, keeps clear of other bubbles, characters and the HUD, stays on screen with a pointer when the speaker walks off the edge, and fades after a reading time. Six tones (talk, shout, alarm, hurt, whisper, think); smooth vector bubbles on HD canvases, crisp pixel bubbles with a built-in bitmap font on native pixel canvases.",
+   "line": "Short lines in speech bubbles above characters, in the world, while the game keeps running: guards shout \"Halt!\" in a yellow alarm bubble when they spot you.",
+   "category": "Dialogue & story",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/bark-bubbles/",
+    "prompt": "site/preview/dna/bark-bubbles/prompt.md",
+    "module": "elements/bark-bubbles/module/bark-bubbles.js",
+    "demo": "elements/bark-bubbles/demo/index.html"
+   }
+  },
+  {
+   "id": "pixel-scaler",
+   "name": "Native resolution + integer scaling",
+   "description": "A game that stretches its small canvas with CSS (blurry, uneven pixels) becomes pixel-perfect: the canvas keeps drawing at its native size, is shown at the largest whole number of device pixels per game pixel that fits (any devicePixelRatio), centred in a themed border on the same pixel grid, with toGame() mapping taps back to game pixels, an optional fit step for small phones, an optional CRT overlay and a fullscreen toggle. No game logic or timing changes.",
+   "line": "A game that stretches its small canvas with CSS (blurry, uneven pixels) becomes pixel-perfect: the canvas keeps drawing at its native size.",
+   "category": "Foundations",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/pixel-scaler/",
+    "prompt": "site/preview/dna/pixel-scaler/prompt.md",
+    "module": "elements/pixel-scaler/module/pixel-scaler.js",
+    "demo": "elements/pixel-scaler/demo/index.html"
+   }
+  },
+  {
+   "id": "parallax-layers",
+   "name": "Multi-layer parallax backdrop",
+   "description": "A flat single background becomes 3-6 generated, original pixel-art layers (dithered sky, clouds or a cave ceiling, far range, back range, a tree / cliff / building line, dark near foliage) that scroll at their own fraction of the camera, tile seamlessly, move by whole pixels, and carry small ambient motion (drifting clouds, twinkling stars, swaying grass, fireflies, sea glints, drips, window lights) in four themes and three times of day.",
+   "line": "A flat single background becomes 3-6 generated, original pixel-art layers (dithered sky, clouds or a cave ceiling, far range, back range, a tree / cliff /…",
+   "category": "Foundations",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/parallax-layers/",
+    "prompt": "site/preview/dna/parallax-layers/prompt.md",
+    "module": "elements/parallax-layers/module/parallax-layers.js",
+    "demo": "elements/parallax-layers/demo/index.html"
+   }
+  },
+  {
+   "id": "touch-controls",
+   "name": "Touch controls with edge-latched input",
+   "description": "A pixel-style D-pad or virtual stick with A/B buttons and a START pill appears on phones, below the game canvas, in its side gutters or over its bottom corners (never on the HUD); every finger is tracked (hold a direction while pressing A, slide from B to A), presses sink and light up, and every input (keyboard, touch, gamepad) is edge-latched so a tap shorter than one game step still counts exactly once. Touches become the game's own key events, so its logic stays as it is.",
+   "line": "A pixel-style D-pad or virtual stick with A/B buttons and a START pill appears on phones, below the game canvas.",
+   "category": "Foundations",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/touch-controls/",
+    "prompt": "site/preview/dna/touch-controls/prompt.md",
+    "module": "elements/touch-controls/module/touch-controls.js",
+    "demo": "elements/touch-controls/demo/index.html"
+   }
+  },
+  {
+   "id": "save-slots",
+   "name": "Save & load slots",
+   "description": "A save/load screen with three slots (plus an autosave slot): each shows a tiny thumbnail point-sampled from the game's own screen at native resolution, the place, level and play time the game supplies. Save, load and delete with confirm; a version number with a migrate hook; a checksum, so a corrupted slot reads \"Damaged data\" instead of crashing; save codes to copy and paste. The game supplies serialize()/deserialize(); storage is a namespaced localStorage key with an in-memory fallback. Autoplay and are untouched, and a load continues to the same end as an uninterrupted run.",
+   "line": "A save/load screen with three slots (plus an autosave slot): each shows a tiny thumbnail point-sampled from the game's own screen at native resolution.",
+   "category": "Foundations",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/save-slots/",
+    "prompt": "site/preview/dna/save-slots/prompt.md",
+    "module": "elements/save-slots/module/save-slots.js",
+    "demo": "elements/save-slots/demo/index.html"
+   }
+  },
+  {
+   "id": "seeded-replay",
+   "name": "Seeded replay & ghost",
+   "description": "Records every run as its seed plus the player's raw input on each fixed step, and plays it back through the game's own step function to the identical end state: the game's state is hashed every second and at the end, so a replay that drifts says DESYNC at the first second it differs, and one that holds says END STATE MATCH with the hash. The best run comes back as a translucent ghost drawn with the hero's own frames and facing that races the player, with a time-trial panel (time, best, live split) and a NEW BEST banner. Replays get a HUD: REPLAY / PAUSED tag, play-pause, speed x.25-x4, a scrubber with checkpoint ticks, the time and a verdict card. Runs save and load as one compact line of text with a checksum. It also counts Math.random calls inside recorded steps, the usual reason a replay drifts.",
+   "line": "Records every run as its seed plus the player's raw input on each fixed step, and plays it back through the game's own step function to the identical end…",
+   "category": "Foundations",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/seeded-replay/",
+    "prompt": "site/preview/dna/seeded-replay/prompt.md",
+    "module": "elements/seeded-replay/module/seeded-replay.js",
+    "demo": "elements/seeded-replay/demo/index.html"
+   }
+  },
+  {
+   "id": "webgl-post",
+   "name": "WebGL post-process pipeline",
+   "description": "The game keeps drawing on its own 2D canvas; each frame that canvas becomes a texture on a WebGL layer laid exactly over it, and a chain of fragment-shader passes runs at device resolution: a filmic grade with split toning and vignette, and a chromatic hit-pulse on hits. A pass registry lets later elements (bloom, colour LUT, 2D lights, depth of field) add their own passes and extra input textures. Without WebGL, or with ?webgl=0, nothing changes: the 2D canvas shows exactly as before.",
+   "line": "The game keeps drawing on its own 2D canvas; each frame that canvas becomes a texture on a WebGL layer laid exactly over it.",
+   "category": "Foundations",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/webgl-post/",
+    "prompt": "site/preview/dna/webgl-post/prompt.md",
+    "module": "elements/webgl-post/module/webgl-post.js",
+    "demo": "elements/webgl-post/demo/index.html"
+   }
+  },
+  {
+   "id": "dynamic-lights",
+   "name": "Dynamic 2D lights & soft shadows",
+   "description": "Point lights and spotlights with soft falloff, colour and deterministic flicker; lights that ride on actors (a torch on the hero, glowing projectiles) and short flashes on impacts; walls and obstacles the game supplies (a solid-tile callback or rects) cast soft real-time shadows with a penumbra. A light map is built every frame and composited in an WebGL post-process pipeline WebGL pass, so the HUD stays unlit. Without WebGL, or with ?webgl=0 / ?lights=0, the game looks exactly as before.",
+   "line": "Point lights and spotlights with soft falloff, colour and deterministic flicker; lights that ride on actors (a torch on the hero, glowing projectiles)…",
+   "category": "Light & post-processing",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/dynamic-lights/",
+    "prompt": "site/preview/dna/dynamic-lights/prompt.md",
+    "module": "elements/dynamic-lights/module/dynamic-lights.js",
+    "demo": "elements/dynamic-lights/demo/index.html"
+   }
+  },
+  {
+   "id": "normal-lighting",
+   "name": "Normal-mapped sprite lighting",
+   "description": "Sprites catch the light: every sprite drawn through the module writes its normals (from an Material & normal maps normal map, or derived from the drawn shape) into a buffer, and one WebGL post-process pipeline WebGL pass relights only those pixels from a key light, point lights and short flashes (and Dynamic 2D lights & soft shadows's lights when present), with glints on curved edges and a rim light on silhouettes. Energy-neutral: a face turned to the viewer keeps its colour, faces toward the sun or a lamp brighten and warm, faces turned away darken and cool, so a sprite keeps its mean brightness and saturation; a 'daylight' preset gives visible form with no lamps at all. Without WebGL, or without a normal map, the sprite draws exactly as before.",
+   "line": "Sprites catch the light: every sprite drawn through the module writes its normals (from an Material & normal maps normal map, or derived from the drawn…",
+   "category": "Light & post-processing",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/normal-lighting/",
+    "prompt": "site/preview/dna/normal-lighting/prompt.md",
+    "module": "elements/normal-lighting/module/normal-lighting.js",
+    "demo": "elements/normal-lighting/demo/index.html"
+   }
+  },
+  {
+   "id": "bloom-glow",
+   "name": "Bloom & glow",
+   "description": "Bright areas bleed soft light: a soft-knee threshold (0..1) picks the bright pixels, an emissive layer the game draws into adds glow to exactly the things it marks (spells, lanterns, crystals, coins, a selected button), a dual-filter blur chain at 1/2 to 1/16 resolution spreads it, and a tinted additive or screen composite lays it back. A short flash of bloom on big hits. HUD rectangles never glow and never get washed. Six passes on the WebGL post-process pipeline WebGL pipeline; without WebGL, or with ?webgl=0, the game looks exactly as before.",
+   "line": "Bright areas bleed soft light: a soft-knee threshold (0..1) picks the bright pixels.",
+   "category": "Light & post-processing",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/bloom-glow/",
+    "prompt": "site/preview/dna/bloom-glow/prompt.md",
+    "module": "elements/bloom-glow/module/bloom-glow.js",
+    "demo": "elements/bloom-glow/demo/index.html"
+   }
+  },
+  {
+   "id": "color-grade-lut",
+   "name": "Colour grading LUT",
+   "description": "The whole picture is graded through a 32x32x32 colour lookup table (a 1024x32 strip texture) on the WebGL post-process pipeline WebGL post layer. Five original moods are generated in code (dusk, cold night, faded memory, high-contrast combat, toxic swamp), designers can load a .cube file or a PNG strip, and zones or story beats blend between tables over game time with grade.to('night', 1200). A lens pass adds a vignette and deterministic film grain. The HUD stays exactly as drawn (uiMask). Without WebGL, or with ?webgl=0, the game shows as plain 2D.",
+   "line": "The whole picture is graded through a 32x32x32 colour lookup table (a 1024x32 strip texture) on the WebGL post-process pipeline WebGL post layer.",
+   "category": "Light & post-processing",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/color-grade-lut/",
+    "prompt": "site/preview/dna/color-grade-lut/prompt.md",
+    "module": "elements/color-grade-lut/module/color-grade-lut.js",
+    "demo": "elements/color-grade-lut/demo/index.html"
+   }
+  },
+  {
+   "id": "screen-distortion",
+   "name": "Screen-space distortion",
+   "description": "The finished picture bends like hot air, water and lenses: heat haze rising over fires, a slow wobble under water, a portal that swirls and pulls in what is behind it, and shockwave rings that refract the whole scene outward from an explosion, slam or kill. One WebGL pass on the WebGL post-process pipeline pipeline that only moves where each pixel is read from; HUD rects never bend. Without WebGL, or with ?webgl=0, the game looks exactly as before.",
+   "line": "The finished picture bends like hot air, water and lenses: heat haze rising over fires, a slow wobble under water.",
+   "category": "Light & post-processing",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/screen-distortion/",
+    "prompt": "site/preview/dna/screen-distortion/prompt.md",
+    "module": "elements/screen-distortion/module/screen-distortion.js",
+    "demo": "elements/screen-distortion/demo/index.html"
+   }
+  },
+  {
+   "id": "camera-director",
+   "name": "Camera director",
+   "description": "Replaces a hard-follow camera with a directed one: a critically damped spring with a dead zone, eased look-ahead in the facing or moving direction, vertical re-framing only on landing for side-scrollers, the hero and a boss kept in frame together (blended in by distance, zoom out without shrinking the hero, or a lean when the game cannot zoom), zoom punches and trauma shake (noise from game time, translation plus a small roll, capped) on big hits, level and room edges without jitter, and clean cuts on teleports. Sub-pixel for HD games, whole pixels for pixel games. View only: the game keeps its own camera for gameplay, so rules and autoplay endings never change.",
+   "line": "Replaces a hard-follow camera with a directed one: a critically damped spring with a dead zone, eased look-ahead in the facing or moving direction.",
+   "category": "3D & 2.5D",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/camera-director/",
+    "prompt": "site/preview/dna/camera-director/prompt.md",
+    "module": "elements/camera-director/module/camera-director.js",
+    "demo": "elements/camera-director/demo/index.html"
+   }
+  },
+  {
+   "id": "sprite-stacking",
+   "name": "Sprite stacking (pseudo-3D props from pixel slices)",
+   "description": "Turns props (crates, barrels, trees, rocks, houses, wells, stalls, carts, a vehicle, lamps, fences) into pseudo-3D objects made of stacked pixel slices, built in code from small voxel / slice data: each object is drawn as its slices one screen row above the other (no gap at any slice height), shaded per face with one light, outlined, with a cast shadow, and can turn to any angle (single objects by their own angle, or the whole world under a turning camera). Objects are drawn in one sorted list with the game's own flat sprites, ordered by ground footprints in camera space, so characters pass behind and in front of them correctly from every side.",
+   "line": "Turns props (crates, barrels, trees, rocks, houses, wells, stalls, carts, a vehicle, lamps, fences) into pseudo-3D objects made of stacked pixel slices.",
+   "category": "3D & 2.5D",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/sprite-stacking/",
+    "prompt": "site/preview/dna/sprite-stacking/prompt.md",
+    "module": "elements/sprite-stacking/module/sprite-stacking.js",
+    "demo": "elements/sprite-stacking/demo/index.html"
+   }
+  },
+  {
+   "id": "raycast-dungeon",
+   "name": "Raycast dungeon",
+   "description": "A first-person grid dungeon crawler drawn by raycasting: one DDA ray per screen column with the perpendicular distance (no fisheye, no gaps), 64 x 64 code-drawn wall textures per theme (brick cellars, mossy halls, a basalt vault with glowing seams), torch walls with animated flames that light the cells around them, banners, doors that slide open in the middle of their cell, a stair arch, cast floors and ceilings, distance fog and a lantern; monsters and items are billboards drawn column by column against the wall depth, with idle, wind-up, strike and hurt frames, a solid white hit flash and a sidestep on a miss. The hero steps one cell and turns 90 degrees with smooth tweens, strikes what stands in front with a first-person sword, opens doors, drinks tonics, takes the stairs; every step, strike or wait is a turn after which every awake monster moves or attacks. Seeded floors (rooms, maze corridors, loops, doors, torches) or floors from data, a minimap and a full map, a HUD, a message log, combat labels that never cover a character or the HUD, and a bot that plays through the same rules.",
+   "line": "A first-person grid dungeon crawler drawn by raycasting: one DDA ray per screen column with the perpendicular distance (no fisheye, no gaps).",
+   "category": "3D & 2.5D",
+   "kind": "system",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/raycast-dungeon/",
+    "prompt": "site/preview/dna/raycast-dungeon/prompt.md",
+    "module": "elements/raycast-dungeon/module/raycast-dungeon.js",
+    "demo": "elements/raycast-dungeon/demo/index.html"
+   }
+  },
+  {
+   "id": "belt-depth",
+   "name": "Belt depth (beat-'em-up lanes)",
+   "description": "Gives every character in a side-view game a depth z on a walkable floor band, as in classic street brawlers: characters walk left / right and up / down the floor, a jump is drawn as height above the floor while a contact shadow stays on the ground under the feet (narrower and lighter the higher, none over a pit), characters are drawn sorted by their floor contact line (floor + z, never the airborne y) so nearer ones overlap farther ones, and hits or touches connect only between characters within a depth tolerance. Ships the floor band drawing (several palettes, read from the game's tile grid), lane helpers for the player, the autopilot and foes (walk, steer, chase, seeded lanes), and a camera helper that keeps the active band in view. The game keeps its own x / y physics.",
+   "line": "Gives every character in a side-view game a depth z on a walkable floor band, as in classic street brawlers.",
+   "category": "3D & 2.5D",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/belt-depth/",
+    "prompt": "site/preview/dna/belt-depth/prompt.md",
+    "module": "elements/belt-depth/module/belt-depth.js",
+    "demo": "elements/belt-depth/demo/index.html"
+   }
+  },
+  {
+   "id": "art-direction-lock",
+   "name": "Art-direction lock",
+   "description": "Generate one style-reference sheet for the game (a character, a prop, a floor patch and an item), lock it, and pass it as a reference image to every later generation, so all generated bitmaps share one light, outline, palette and proportions; the game loads the saved files once at boot and draws them synchronously, falling back to its old art when one is missing.",
+   "line": "Generate one style-reference sheet for the game (a character, a prop, a floor patch and an item), lock it.",
+   "category": "Generated art",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/art-direction-lock/",
+    "prompt": "site/preview/dna/art-direction-lock/prompt.md",
+    "module": "elements/art-direction-lock/module/art-direction-lock.js",
+    "demo": "elements/art-direction-lock/demo/index.html"
+   }
+  },
+  {
+   "id": "painted-parallax",
+   "name": "Painted parallax layers",
+   "description": "The flat background of a side-view HD game becomes 3-5 hand-painted layers (far sky and ridges, drifting clouds, mid hills, near silhouettes, and an opaque under-strip of forest floor that fills pits when the game's ground is higher than the painted one) generated once at build time in one locked style, post-processed so each repeats sideways without a seam (best-cut search + premultiplied cross-fade; mid and near are two panels joined into a strip about 3 screens wide), scrolled at their own depth with an atmospheric tint per layer; the game loads the files once and keeps its old flat layer as the fallback for any missing image.",
+   "line": "The flat background of a side-view HD game becomes 3-5 hand-painted layers (far sky and ridges, drifting clouds, mid hills, near silhouettes, and an opaque…",
+   "category": "Generated art",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/painted-parallax/",
+    "prompt": "site/preview/dna/painted-parallax/prompt.md",
+    "module": "elements/painted-parallax/module/painted-parallax.js",
+    "demo": "elements/painted-parallax/demo/index.html"
+   }
+  },
+  {
+   "id": "painted-portraits",
+   "name": "Portrait set with expressions",
+   "description": "Painted bust portraits for dialogue, generated once: a neutral base per character and each expression made as an edit of that base with the base as the reference image, aligned onto one canvas so only the face changes. Beside the dialogue box the speaker slides in, cross-fades to each line's expr tag, breathes, blinks and dims while someone else talks. Same presenter hooks as Expressive portraits, so the Typewriter dialogue box dialogue box drives either; the game's own text box works through a two-line adapter.",
+   "line": "Painted bust portraits for dialogue, generated once: a neutral base per character and each expression made as an edit of that base with the base as…",
+   "category": "Generated art",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/painted-portraits/",
+    "prompt": "site/preview/dna/painted-portraits/prompt.md",
+    "module": "elements/painted-portraits/module/painted-portraits.js",
+    "demo": "elements/painted-portraits/demo/index.html"
+   }
+  },
+  {
+   "id": "normal-maps",
+   "name": "Material & normal maps",
+   "description": "A script turns every generated bitmap with alpha into a height map (alpha distance field rounded into a dome, plus the painting's own local light and dark as relief), a normal map (Sobel), ambient occlusion and a gloss mask, packed into one lossless file next to the picture with sha256 and the derive settings in the manifest (re-derived and compared by assetcheck); a small module then lights the sprite on a plain 2D canvas from wherever the game's lights are (lantern on the hero, lamps, glowing pickups), sharp at any scale and capped so it never washes out, and Normal-mapped sprite lighting lights the same maps in WebGL.",
+   "line": "A script turns every generated bitmap with alpha into a height map (alpha distance field rounded into a dome, plus the painting's own local light and dark as…",
+   "category": "Generated art",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/normal-maps/",
+    "prompt": "site/preview/dna/normal-maps/prompt.md",
+    "module": "elements/normal-maps/module/normal-maps.js",
+    "demo": "elements/normal-maps/demo/index.html"
+   }
+  },
+  {
+   "id": "painted-ui",
+   "name": "UI frames & icon sheet",
+   "description": "A generated, style-locked UI kit (nine-slice window and small frames, a selection frame, an item slot, a pointer and a 24-icon sheet), cut into game-ready files and drawn by a small helper that keeps corners unstretched at any size, centres icons at one scale and falls back to the game's old panels and shapes when a file is missing; it also registers into the skin bitmap roles so the shop and window modules pick it up.",
+   "line": "A generated, style-locked UI kit (nine-slice window and small frames, a selection frame, an item slot, a pointer and a 24-icon sheet).",
+   "category": "Generated art",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/painted-ui/",
+    "prompt": "site/preview/dna/painted-ui/prompt.md",
+    "module": "elements/painted-ui/module/painted-ui.js",
+    "demo": "elements/painted-ui/demo/index.html"
+   }
+  },
+  {
+   "id": "card-art",
+   "name": "Card illustrations",
+   "description": "Painted 2:3 card illustrations generated once and locked to one style (light from the top-left, the subject in the upper safe area, a calm darker lower half, no text), plus a card frame drawn in code that renders title, cost, type line and rules text as live text. drawDraft(ctx, draft) replaces Upgrade draft (pick 1 of 3)'s draft.draw and paints each upgrade card's illustration full-bleed inside Upgrade draft (pick 1 of 3)'s own card (under its chip, name, tags and text, following deal, flip, tilt, dim and fly-out) without changing Upgrade draft (pick 1 of 3); drawCard draws framed cards for card-battle hands, shops and rewards.",
+   "line": "Painted 2:3 card illustrations generated once and locked to one style (light from the top-left, the subject in the upper safe area, a calm darker lower half…",
+   "category": "Generated art",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/card-art/",
+    "prompt": "site/preview/dna/card-art/prompt.md",
+    "module": "elements/card-art/module/card-art.js",
+    "demo": "elements/card-art/demo/index.html"
+   }
+  },
+  {
+   "id": "cutout-characters",
+   "name": "Layered cutout characters",
+   "description": "HD painted characters built from cut-out parts and moved by a small bone rig in code instead of frame-by-frame drawing: each original character is generated once as a full body and then as a parts sheet (head, torso, hips, upper / lower arms, thighs, shins, weapon, shield, cape or coat skirt), cut and packed into one atlas + rig by a script; the module gives a breathing idle, a walk cycle with planted feet, an overhead attack and a forward slash with anticipation, strike and recover, a blade swoosh, a crisp hit flash, hurt recoil, guard, cheer, cast, jump and fall, feet planted by IK, a spring cape, a code key light with a warm rim, and draws at device resolution. The game's own timers drive it; its rules never change.",
+   "line": "HD painted characters built from cut-out parts and moved by a small bone rig in code instead of frame-by-frame drawing.",
+   "category": "Generated art",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/cutout-characters/",
+    "prompt": "site/preview/dna/cutout-characters/prompt.md",
+    "module": "elements/cutout-characters/module/cutout-characters.js",
+    "demo": "elements/cutout-characters/demo/index.html"
+   }
+  },
+  {
+   "id": "third-person-3d",
+   "name": "Third-person 3D character and camera",
+   "description": "A low-poly adventurer on a small 3D island seen from a smooth follow camera: camera-relative movement (keys or touch stick), idle / walk / run animated from the distance travelled so feet never slide, models auto-scaled by bounding box with feet on the ground in every pose, a facing rule (yaw = atan2(v.x, v.z) + facingOffset) checked against the model's real forward vector, a camera that pulls in when a prop blocks the view, pickups, NPCs that turn to face the hero, world-to-screen anchors and a 2D overlay layer for addons.",
+   "line": "A low-poly adventurer on a small 3D island seen from a smooth follow camera: camera-relative movement (keys or touch stick).",
+   "category": "3D & 2.5D",
+   "kind": "system",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/third-person-3d/",
+    "prompt": "site/preview/dna/third-person-3d/prompt.md",
+    "module": "elements/third-person-3d/module/third-person-3d.js",
+    "demo": "elements/third-person-3d/demo/index.html"
+   }
+  },
+  {
+   "id": "billboard-sprites-3d",
+   "name": "Painted billboard sprites in a 3D diorama",
+   "description": "Painted 2D characters stand in a three.js world as camera-facing billboards: yaw-only quads with their feet on the floor or tile top, the side they look at chosen on screen from the camera (target first, then move direction) with painted left / right variants and no mirror for art that must not be mirrored, walk frames advanced by distance (a hop for single pictures), attack / hurt / down motion, a hit flash inside the material, soft blob shadows, depth-correct alpha and screen anchors for 2D overlays.",
+   "line": "Painted 2D characters stand in a three.js world as camera-facing billboards: yaw-only quads with their feet on the floor or tile top.",
+   "category": "3D & 2.5D",
+   "kind": "add-on",
+   "aiArt": true,
+   "paths": {
+    "page": "site/preview/dna/billboard-sprites-3d/",
+    "prompt": "site/preview/dna/billboard-sprites-3d/prompt.md",
+    "module": "elements/billboard-sprites-3d/module/billboard-sprites-3d.js",
+    "demo": "elements/billboard-sprites-3d/demo/index.html"
+   }
+  },
+  {
+   "id": "tactics-grid-3d",
+   "name": "3D tactics battlefield on a heightmap grid",
+   "description": "A small three.js battlefield of terraced tiles (grass, stone, sand, water) with trees, rocks and ruins: select a unit to see its move range (height cost, jump limit, water), a path arrow over the terraces, attack and enemy threat ranges; turn the camera in 90-degree steps and zoom; low-poly units walk tile by tile, hop up terraces, lunge, cast, flinch and fall, always facing where they go or whom they hit.",
+   "line": "A small three.js battlefield of terraced tiles (grass, stone, sand, water) with trees, rocks and ruins.",
+   "category": "3D & 2.5D",
+   "kind": "system",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/tactics-grid-3d/",
+    "prompt": "site/preview/dna/tactics-grid-3d/prompt.md",
+    "module": "elements/tactics-grid-3d/module/tactics-grid-3d.js",
+    "demo": "elements/tactics-grid-3d/demo/index.html"
+   }
+  },
+  {
+   "id": "toon-outlines-3d",
+   "name": "Toon outlines and cel shading for a three.js scene",
+   "description": "One call turns an existing three.js scene cel-shaded: every lit material becomes a toon copy with 2-4 light bands, a cool shadow tint, rim light and hard glints, and every solid mesh gets an inverted-hull ink outline that shares its buffers, keeps a steady screen width and thins out on small or far objects; the game's scene graph, rules and material changes keep working and remove() restores the original materials exactly.",
+   "line": "One call turns an existing three.js scene cel-shaded: every lit material becomes a toon copy with 2-4 light bands, a cool shadow tint.",
+   "category": "3D & 2.5D",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/toon-outlines-3d/",
+    "prompt": "site/preview/dna/toon-outlines-3d/prompt.md",
+    "module": "elements/toon-outlines-3d/module/toon-outlines-3d.js",
+    "demo": "elements/toon-outlines-3d/demo/index.html"
+   }
+  },
+  {
+   "id": "kart-racer-3d",
+   "name": "Arcade kart racer (3D)",
+   "description": "A low-poly 3D kart race: a track built from a closed spline (road, kerbs, barriers, ramps, boost pads, start gantry with countdown lamps), karts with drivers auto-scaled so the wheels sit on the ground, arcade physics with grip, a hop-drift that charges a three-level boost, jumps and boost pads, checkpoint gates that only count in order, AI racers on a racing line with rubber-banding, a 3-2-1-GO countdown, race clock, lap splits, places, minimap and a finish screen. Karts face their velocity (yaw = atan2(dir.x, dir.z) + facingOffset). Seeded and fixed-step, with an autoplay driver.",
+   "line": "A low-poly 3D kart race: a track built from a closed spline (road, kerbs, barriers, ramps, boost pads, start gantry with countdown lamps).",
+   "category": "3D & 2.5D",
+   "kind": "system",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/kart-racer-3d/",
+    "prompt": "site/preview/dna/kart-racer-3d/prompt.md",
+    "module": "elements/kart-racer-3d/module/kart-racer-3d.js",
+    "demo": "elements/kart-racer-3d/demo/index.html"
+   }
+  },
+  {
+   "id": "wfc-town-3d",
+   "name": "Wave-collapse town builder (3D)",
+   "description": "A cosy three.js town builder on a grid: click a cell to raise it (sea, land, a house, more storeys) and wave function collapse resolves every wall, door, window, balcony, lane, gable / hip / terrace / turret roof, stair and gate arch from its neighbours by socket rules, re-solving only around the edit. Orbit camera, hover ghost, pop and dust on each edit, exact undo / redo, four palettes, soft shadows, gulls; an exhaustive verifier proves no broken adjacency anywhere.",
+   "line": "A cosy three.js town builder on a grid: click a cell to raise it (sea, land, a house, more storeys) and wave function collapse resolves every wall, door.",
+   "category": "3D & 2.5D",
+   "kind": "system",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/wfc-town-3d/",
+    "prompt": "site/preview/dna/wfc-town-3d/prompt.md",
+    "module": "elements/wfc-town-3d/module/wfc-town-3d.js",
+    "demo": "elements/wfc-town-3d/demo/index.html"
+   }
+  }
+ ]
+}
