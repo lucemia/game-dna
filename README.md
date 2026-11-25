@@ -29,6 +29,13 @@ Every element also has a playable demo. 81 are add-ons that drop into any game (
 lighting); 20 are systems (battles, map flows, a kart racer) that come as a starter game your agent extends.
 All art is original; most of it is drawn in code.
 
+## Mix several elements
+
+The [Basket](https://game-dna.pages.dev/site/preview/basket/) on the site lets you pick several elements, checks that they work together, and writes one
+combined prompt plus a zip of the modules for your agent.
+
+<a href="https://game-dna.pages.dev/site/preview/basket/"><img src="docs/media/basket.png" width="720" alt="The Basket: three elements picked and the combined prompt"></a>
+
 ## The elements
 
 All 101, by category. Click **play** for the element's page with its live demo and prompt. ✦ = the demo uses AI-generated art.
@@ -250,9 +257,6 @@ Only wire it in. Add code; never replace or rename existing functions.
 
 …
 ```
-
-Want several? The [Basket](https://game-dna.pages.dev/site/preview/basket/) checks which elements fit together, puts them in order and gives you one prompt
-plus a zip of the modules.
 
 ## How it's tested
 
