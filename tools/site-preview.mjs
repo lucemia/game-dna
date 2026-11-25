@@ -52,7 +52,7 @@ const DEMO_SOUND = { 'chip-music': '#soundState', 'beat-judge': '#soundState', '
 // Share cards (Open Graph + Twitter): absolute URLs from SITE_ORIGIN (env GAME_DNA_ORIGIN overrides); the showcase is
 // served under /site/preview/ there (tools/showcase-deploy/). Images: tools/showcase/og/<id>.jpg and home.jpg (1200x630,
 // made by tools/showcase/launch_media.py og), copied to site/preview/og/; pages without their own card use home.jpg.
-const SITE_ORIGIN = (process.env.GAME_DNA_ORIGIN || 'https://game-dna-preview.pages.dev').replace(/\/+$/, '');
+const SITE_ORIGIN = (process.env.GAME_DNA_ORIGIN || 'https://game-dna.pages.dev').replace(/\/+$/, '');
 const SITE_BASE = SITE_ORIGIN + '/site/preview/';
 const OG_W = 1200, OG_H = 630;
 // SEO / GEO: <link rel="canonical"> and JSON-LD always name the PUBLIC site, also in the unlisted preview build
