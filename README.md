@@ -1,3 +1,5 @@
+English | [繁體中文](README.zh-TW.md)
+
 # Game DNA
 
 **101 game elements for your coding agent. Pick one, bring your browser game, and the agent wires it into your code,

@@ -4,6 +4,7 @@
   "kind": "addon",
   "name": "Side-view clash cut-in",
   "family": "battle-cutin",
+  "alternativeTo": ["on-map-skirmish"],
   "oneLiner": "When a turn or tactics battle confirms an attack, the game cuts to a staged side-view scene: both units on a ground strip in front of a backdrop that matches the terrain, the attacker leaps in, winds up and swings (or shoots, or casts), the hit lands with a freeze frame, sparks, a damage number and an HP bar that drains, misses are dodged, criticals get a gleam and a flash, the counter-attack follows, a fallen unit fades away, and both return before the scene closes. Skippable, with a x2 speed toggle. The game passes the outcome it already decided; the module only stages it, so what you see always equals the game's own numbers.",
   "fits": [
     "tactics / strategy RPG (grid map, attack + counter exchanges)",
@@ -14,7 +15,8 @@
   "notFor": [
     "real-time action games (no confirm step; the cut-in would pause the action)",
     "attacks that hit many units at once (stage one pair per cut-in)",
-    "games whose combat is already shown in a side view (the cut-in would repeat it)"
+    "games whose combat is already shown in a side view (the cut-in would repeat it)",
+    "games that want the exchange to stay on the map: use A-18 on-map-skirmish instead (same family, pick one)"
   ],
   "interfaces": {
     "time": "turn",

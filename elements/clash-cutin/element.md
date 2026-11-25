@@ -8,6 +8,9 @@ Each strike is acted out on one clock, with the unit's own pose frames when the 
 
 The game passes the whole outcome (who strikes, hit / miss / crit, damage, HP before and after); the module only stages it, so the picture always equals the game's numbers. Z skips to the end tableau, X toggles x2 (a lit badge in the caption bar), taps work too. Units are the game's own sprites, scaled by whole steps on pixel canvases; the art's native facing is recorded once and the module decides the mirror (or picks a painted variant for art that must not be mirrored).
 
+The alternative is **A-18 on-map-skirmish**: the same exchange staged on the map itself (small units lunge, flash and drain
+HP plates at the screen edge) without leaving it. Both are in family `battle-cutin`; a basket takes one or the other.
+
 ## Default parameters
 
 | key | default | meaning |
