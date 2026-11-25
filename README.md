@@ -1,7 +1,9 @@
 # Game DNA
 
-**101 playable game elements your AI coding agent can add to any browser game: damage numbers, bullet patterns,
-dynamic lights, card battles, a 3D kart racer. Each one ships a module, a prompt and a way to check the result.**
+**101 game elements for your coding agent. Pick one, bring your browser game, and the agent wires it into your code,
+from damage numbers to dynamic lights.**
+
+### ▶ [Open the gallery](https://game-dna.pages.dev)
 
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![elements](https://img.shields.io/badge/elements-101-orange)](https://game-dna.pages.dev/site/preview/) [![cold-tested](https://img.shields.io/badge/cold--tested-on_unseen_games-brightgreen)](https://game-dna.pages.dev/site/preview/tests/) [![live demo](https://img.shields.io/badge/live_demo-game--dna.pages.dev-ff69b4)](https://game-dna.pages.dev/site/preview/)
 
@@ -15,7 +17,17 @@ dynamic lights, card battles, a 3D kart racer. Each one ships a module, a prompt
 <a href="https://game-dna.pages.dev/site/preview/dna/kart-racer-3d/"><img src="docs/media/kart-drift.gif" width="32%" alt="Arcade kart racer (3D starter game)"></a>
 </p>
 
-### ▶ [Play the live demos](https://game-dna.pages.dev/site/preview/) · [How it is built and tested](https://game-dna.pages.dev/site/preview/blog/how-game-dna-works/) · [Start in 5 minutes](https://game-dna.pages.dev/site/preview/start/)
+## How it works
+
+1. **Pick an element** in the [gallery](https://game-dna.pages.dev).
+2. **Play its demo** to see what it adds.
+3. **Tell your agent one sentence** in your game's folder:
+
+```text
+Add Game DNA's damage-pop element to my game: follow https://github.com/lucemia/game-dna/blob/main/elements/damage-pop/prompt.md and use the module in https://github.com/lucemia/game-dna/tree/main/elements/damage-pop/module.
+```
+
+More: [How it is built and tested](https://game-dna.pages.dev/site/preview/blog/how-game-dna-works/) · [Start in 5 minutes](https://game-dna.pages.dev/site/preview/start/) · [step by step](#give-one-to-your-agent)
 
 ## Why
 
