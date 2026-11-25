@@ -1,0 +1,49 @@
+name: Element broke my game
+description: An element did not work, or broke something, when your coding agent added it to your game.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: input
+    id: element
+    attributes:
+      label: Which element?
+      description: "The element id is the last part of its page URL. Catalog: https://game-dna.pages.dev/site/preview/"
+      placeholder: damage-pop
+    validations:
+      required: true
+  - type: input
+    id: engine
+    attributes:
+      label: Your game's engine or framework
+      placeholder: plain canvas, Phaser 3, PixiJS, three.js...
+    validations:
+      required: true
+  - type: input
+    id: agent
+    attributes:
+      label: Which coding agent did you use?
+      placeholder: Claude Code, Codex, Cursor... (and the model, if you know it)
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened, and what did you expect?
+      description: Console errors help a lot.
+    validations:
+      required: true
+  - type: textarea
+    id: prompt
+    attributes:
+      label: The prompt you gave, and anything you changed
+      description: The prompt or COMBO.md you used, and any edits to the module or prompt.
+      render: markdown
+    validations:
+      required: false
+  - type: textarea
+    id: media
+    attributes:
+      label: Screenshot or clip
+      description: Drag an image or video here.
+    validations:
+      required: false

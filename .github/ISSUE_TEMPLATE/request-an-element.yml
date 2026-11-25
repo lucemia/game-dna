@@ -1,0 +1,39 @@
+name: Request an element
+description: Ask for an effect or game system that Game DNA does not have yet.
+title: "[Request] "
+labels: ["element-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe what you want in words. Genre words are enough (platformer, tactics RPG, shooter...);
+        you do not need to name any real game.
+  - type: textarea
+    id: what
+    attributes:
+      label: What effect or system do you want?
+      description: What the player sees and does, and what should happen on screen.
+      placeholder: e.g. enemies flash and get knocked back a little when hit, with a short screen pause
+    validations:
+      required: true
+  - type: input
+    id: genre
+    attributes:
+      label: What kind of game is it for?
+      description: Genre words only, e.g. "top-down action", "turn-based card battler". Real game names are not needed.
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: Where would you use it?
+      description: Engine or framework (Phaser, PixiJS, three.js...) or plain browser canvas.
+    validations:
+      required: false
+  - type: textarea
+    id: reference
+    attributes:
+      label: Reference behaviour
+      description: How it should feel, described in words (timings, order of events, what makes it satisfying).
+    validations:
+      required: false

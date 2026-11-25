@@ -284,8 +284,12 @@ No screenshots, sprites, logos or names from existing games; not affiliated with
 
 ## Feedback
 
-An element broke in your game? [Open an issue](https://github.com/lucemia/game-dna/issues) saying which element and what kind of game.
-Ideas for new elements are welcome too. Building the site or combining from the command line:
-[`CONTRIBUTING.md`](CONTRIBUTING.md).
+Issues and pull requests are welcome, from one-line bug reports to whole new elements.
+
+- An element broke in your game? **[Tell us what happened](https://github.com/lucemia/game-dna/issues/new?template=element-broke-my-game.yml)**:
+  which element, your engine and which coding agent you used.
+- Want an effect or system that isn't here? **[Request an element](https://github.com/lucemia/game-dna/issues/new?template=request-an-element.yml)**:
+  describe it in words; genre words are enough, no game names needed.
+- Want to build one yourself? Read [`CONTRIBUTING.md`](CONTRIBUTING.md#propose-or-add-an-element) and open a pull request.
 
 **If Game DNA saved your agent a few rounds, a ⭐ helps others find it.**
