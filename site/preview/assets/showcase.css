@@ -490,3 +490,10 @@ button.sc-demo-open { background: none; border: 0; padding: 0; font: inherit; fo
 .sc-post-body code { font-size: .88em; background: var(--surface-2); padding: 1px 6px; border-radius: 6px; }
 @media (max-width: 600px) { .sc-post-body { font-size: 16.5px; } }
 .sc-post-body h2 { scroll-margin-top: 80px; }
+
+/* promo video under the hero (#video): poster, click to play, starts muted; 16:9 at any width */
+.sc-promo { padding-top: 8px; }
+.sc-promo .sc-eyebrow { text-align: center; }
+.sc-promo-frame { max-width: 960px; margin: 0 auto; aspect-ratio: 16 / 9; border-radius: 18px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px rgba(255,255,255,.12), 0 30px 80px -30px #000; }
+.sc-promo-frame video { display: block; width: 100%; height: 100%; object-fit: contain; background: #000; }
+@media (max-width: 600px) { .sc-promo-frame { border-radius: 12px; } }

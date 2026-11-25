@@ -6,6 +6,10 @@ dynamic lights, card battles, a 3D kart racer. Each one ships a module, a prompt
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![elements](https://img.shields.io/badge/elements-101-orange)](https://game-dna.pages.dev/site/preview/) [![cold-tested](https://img.shields.io/badge/cold--tested-on_unseen_games-brightgreen)](https://game-dna.pages.dev/site/preview/tests/) [![live demo](https://img.shields.io/badge/live_demo-game--dna.pages.dev-ff69b4)](https://game-dna.pages.dev/site/preview/)
 
 <p align="center">
+<a href="https://game-dna.pages.dev/site/preview/#video"><img src="docs/media/promo-cover.jpg" width="720" alt="Watch the Game DNA promo video (31 s)"></a>
+</p>
+
+<p align="center">
 <a href="https://game-dna.pages.dev/site/preview/dna/damage-numbers/"><img src="docs/media/damage-numbers.gif" width="32%" alt="Bouncing damage numbers"></a>
 <a href="https://game-dna.pages.dev/site/preview/dna/bullet-patterns/"><img src="docs/media/bullet-patterns.gif" width="32%" alt="Bullet-pattern emitter"></a>
 <a href="https://game-dna.pages.dev/site/preview/dna/kart-racer-3d/"><img src="docs/media/kart-drift.gif" width="32%" alt="Arcade kart racer (3D starter game)"></a>
