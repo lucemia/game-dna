@@ -221,6 +221,8 @@ if PUBLIC:
       '/demo-kit/*\n  Cache-Control: public, max-age=86400\n/vendor/*\n  Cache-Control: public, max-age=604800\n'
       '/*.md\n  Content-Type: text/markdown; charset=utf-8\n')
     W('robots.txt', f'User-agent: *\nAllow: /\nSitemap: {ORIGIN}/sitemap.xml\n')
+    # Google Search Console ownership file for game-dna.pages.dev: must stay at the root of every public upload
+    W('google18a8ae3ff3abdb23.html', 'google-site-verification: google18a8ae3ff3abdb23.html')
 else:
     W('_headers', '/*\n  X-Robots-Tag: noindex, nofollow\n')
     W('robots.txt', 'User-agent: *\nDisallow: /\n')
