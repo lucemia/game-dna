@@ -497,3 +497,16 @@ button.sc-demo-open { background: none; border: 0; padding: 0; font: inherit; fo
 .sc-promo-frame { max-width: 960px; margin: 0 auto; aspect-ratio: 16 / 9; border-radius: 18px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px rgba(255,255,255,.12), 0 30px 80px -30px #000; }
 .sc-promo-frame video { display: block; width: 100%; height: 100%; object-fit: contain; background: #000; }
 @media (max-width: 600px) { .sc-promo-frame { border-radius: 12px; } }
+
+/* GitHub links (header, footer, element page) */
+.sc-gh { width: 16px; height: 16px; flex: none; }
+.sc-gh-link { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); padding: 7px 10px; border-radius: 8px; font-size: 13.5px; font-weight: 500; white-space: nowrap; transition: color .2s, background .2s; }
+.sc-gh-link:hover { color: var(--fg); background: rgba(255,255,255,.06); }
+.sc-btn .sc-gh { width: 16px; height: 16px; }
+.sc-foot-gh { margin-top: 10px; }
+.sc-foot-gh a, .sc-el-gh a { display: inline-flex; align-items: center; gap: 6px; }
+.sc-el-gh { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 0 0 16px; font-size: 14.5px; }
+.sc-el-gh a { color: var(--muted); }
+.sc-el-gh a:hover { color: var(--fg); }
+@media (max-width: 1000px) { .sc-gh-link span { display: none; } .sc-gh-link { padding: 7px; } }
+@media (max-width: 720px) { .sc-gh-link { margin-left: auto; } .sc-gh-link + .sc-top-cta { margin-left: 0; } }

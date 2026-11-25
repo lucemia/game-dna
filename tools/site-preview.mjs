@@ -62,6 +62,10 @@ const OG_W = 1200, OG_H = 630;
 const CANON_ORIGIN = (process.env.GAME_DNA_CANONICAL_ORIGIN || 'https://game-dna.pages.dev').replace(/\/+$/, '');
 const CANON_BASE = CANON_ORIGIN + '/site/preview/';
 const REPO_URL = 'https://github.com/lucemia/game-dna';
+const ISSUE_REQUEST = REPO_URL + '/issues/new?template=request-an-element.yml';
+const ISSUE_BROKE = REPO_URL + '/issues/new?template=element-broke-my-game.yml';
+// GitHub mark (octicon mark-github, inline path only; no brand image file)
+const GH_MARK = '<svg class="sc-gh" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>';
 const LICENSE_URL = 'https://opensource.org/licenses/MIT';
 const AUTHOR = { '@type': 'Person', name: 'David Chen', url: 'https://github.com/lucemia' };
 const HOME_TITLE = 'Game DNA – Drop-in game elements for AI coding agents';
@@ -194,6 +198,7 @@ ${head}</head>
 <header class="sc-top"><div class="sc-wrap">
 <a class="sc-brand" href="${P}">${LOGO}<span>Game DNA</span></a>
 <nav class="sc-nav" aria-label="Main">${internal ? `<a href="${P}internal/">Build records</a><a href="${P}">Showcase</a>` : `<a href="${P}#gallery">Elements</a><a href="${P}styles/">Styles</a><a href="${P}#how">How it works</a><a href="${P}start/">Start</a><a class="sc-bk-link" href="${P}basket/">Basket<b data-bk-count hidden></b></a>`}</nav>
+${internal ? '' : `<a class="sc-gh-link" href="${REPO_URL}" rel="noopener" aria-label="Star Game DNA on GitHub">${GH_MARK}<span>★ Star on GitHub</span></a>`}
 ${internal ? '' : `<a class="sc-btn sc-btn-hot sm sc-top-cta" href="${P}dna/${CHOSEN}/">${ICON.play}<span>Play a demo</span></a>`}
 </div></header>
 <main id="main">
@@ -203,6 +208,7 @@ ${body}
 <div class="sc-foot-brand">${LOGO}<span>Game DNA</span></div>
 <p>Playable game elements for games you make with an AI coding agent. Original art only; not affiliated with any game company.</p>
 <nav class="sc-foot-links" aria-label="More"><a href="${P}#gallery">All elements</a><a href="${P}basket/">Basket</a><a href="${P}styles/">Art styles</a><a href="${P}start/">Start in 5 minutes</a><a href="${P}tests/">How we test</a><a href="${P}blog/how-game-dna-works/">How Game DNA works (blog)</a><a href="${P}about/">About &amp; credits</a></nav>
+<nav class="sc-foot-links sc-foot-gh" aria-label="GitHub"><a href="${REPO_URL}" rel="noopener">${GH_MARK}GitHub</a><a href="${ISSUE_REQUEST}" rel="noopener">Request an element</a><a href="${ISSUE_BROKE}" rel="noopener">Report a problem</a></nav>
 </div></footer>
 ${scripts.map(x => `<script src="${x.replace('@', P)}"></script>`).join('\n')}${scripts.length ? '\n' : ''}<script src="${P}assets/showcase.js"></script>
 </body>
@@ -321,7 +327,7 @@ pops.spawn(<span class="s">'imp'</span>, <span class="n">47</span>, <span class=
 <p class="sc-eyebrow">For games you build with an AI coding agent</p>
 <h1>Drop game feel into <span class="sc-grad">your own game.</span></h1>
 <p class="sc-lede">Game DNA is a library of ${E.length} playable game elements: hit effects, battle systems, lights, menus, 3D scenes. Play one, copy its prompt, and your coding agent adds it to your browser game.</p>
-<div class="sc-btns"><a class="sc-btn sc-btn-hot lg" href="${elHref(chosen.id, P)}">${ICON.play}Play a demo</a><a class="sc-btn lg ghost" href="#gallery">See all ${E.length} elements ${ARROW}</a></div>
+<div class="sc-btns"><a class="sc-btn sc-btn-hot lg" href="${elHref(chosen.id, P)}">${ICON.play}Play a demo</a><a class="sc-btn lg ghost" href="#gallery">See all ${E.length} elements ${ARROW}</a><a class="sc-btn lg ghost" href="${REPO_URL}" rel="noopener">${GH_MARK}View on GitHub</a></div>
 </div>
 <div class="sc-hero-stage">
 <div class="sc-screen"><div class="sc-loop on" style="background-image:url('${P}../assets/hero/${h0.id}-poster.webp')"></div><div class="sc-loop"></div><div class="sc-scan" aria-hidden="true"></div></div>
@@ -440,7 +446,7 @@ ${moments ? `<section class="sc-sec" id="moments"><div class="sc-wrap">
 ${tries ? `<div class="sc-tries">${tries}</div>` : ''}
 ${pairs ? `<h3 class="sc-h3">Also pairs well with</h3><div class="sc-grid sc-grid-sm">${pairs}</div>` : ''}
 </div></section>
-`;
+<section class="sc-sec sc-tight"><div class="sc-wrap"><p class="sc-el-gh"><a href="${REPO_URL}/tree/main/elements/${id}" rel="noopener">${GH_MARK}Source on GitHub</a><a href="${ISSUE_REQUEST}" rel="noopener">Request an element</a></p></div></section>`;
     const category = SFAM_NAME[e.sfam], url = CANON_BASE + rel;
     const elLd = { '@type': 'SoftwareSourceCode', '@id': url + '#element', name: e.name, description: oneLine(e),
       keywords: [...new Set([category, kindWord(e), ...J.fits.map(f => plain(f).replace(CODE_RE, ''))])].join(', '), url,
