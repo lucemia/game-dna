@@ -1,8 +1,1098 @@
 {
- "base": "http://127.0.0.1:55807",
+ "base": "http://127.0.0.1:59719",
  "visited": [
   {
-   "url": "/elements/active-time-battle/demo/index.html",
+   "url": "/site/preview/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/about/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/about/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/styles/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/styles/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/basket/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/start/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/basket/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/start/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/tests/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/tests/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/blog/how-game-dna-works/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/blog/how-game-dna-works/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/active-time-battle/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/active-time-battle/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/adaptive-music/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/adaptive-music/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/art-direction-lock/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/bark-bubbles/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/bark-bubbles/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/battle-transition/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/art-direction-lock/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/battle-transition/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/beat-judge/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/beat-judge/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/belt-depth/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/belt-depth/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/big-banner/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/big-banner/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/billboard-sprites-3d/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/billboard-sprites-3d/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/bloom-glow/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/bloom-glow/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/bullet-patterns/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/bullet-patterns/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/camera-director/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/camera-director/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/card-art/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/card-art/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/card-battle/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/chip-music/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/card-battle/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/chip-music/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/clash-cutin/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/clash-cutin/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/color-grade-lut/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/color-grade-lut/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/combat-forecast/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/crafting-recipes/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/combat-forecast/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/crafting-recipes/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/cutout-characters/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/cutout-characters/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/damage-numbers/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/damage-numbers/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/damage-pop/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/dialogue-box/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/damage-pop/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/dialogue-choices/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/dialogue-box/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/dissolve-defeat/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/dialogue-choices/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/dissolve-defeat/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/draining-hp-bar/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/dungeon-floors/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/draining-hp-bar/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/dungeon-floors/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/dynamic-lights/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/dynamic-lights/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/expressive-portraits/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/expressive-portraits/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/farming-plots/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/farming-plots/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/fog-of-war/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/fog-of-war/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/four-move-battle/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/grapple-swing/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/four-move-battle/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/grapple-swing/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/grid-range-path/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/grid-range-path/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/hit-sparks/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/hit-stop-shake/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/hit-sparks/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/horde-survival/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/hit-stop-shake/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/ik-creatures/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/horde-survival/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/ik-creatures/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/iso-height-map/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/iso-height-map/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/kart-racer-3d/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/keyword-tooltips/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/kart-racer-3d/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/keyword-tooltips/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/level-select-map/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/level-select-map/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/level-up-growth/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/loot-beams/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/level-up-growth/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/loot-beams/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/match3-battle/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/minimap/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/match3-battle/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/minimap/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/modern-particles/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/modern-particles/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/motion-inputs/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/motion-inputs/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/normal-lighting/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/normal-lighting/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/normal-maps/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/npc-generator/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/npc-generator/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/normal-maps/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/on-map-skirmish/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/on-map-skirmish/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/painted-parallax/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/painted-parallax/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/painted-portraits/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/painted-portraits/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/painted-ui/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/palette-swap/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/palette-swap/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/painted-ui/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/paper-doll/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/paper-doll/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/parallax-layers/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/parallax-layers/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/physics-debris/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/physics-debris/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/pixel-font/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/pixel-font/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/pixel-scaler/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/pixel-scaler/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/platformer-feel/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/platformer-feel/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/procedural-sfx/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/procedural-sfx/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/pseudo3d-flight/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/quest-log/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/pseudo3d-flight/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/quest-log/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/raycast-dungeon/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/raycast-dungeon/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/ribbon-trails/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/run-map/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/ribbon-trails/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/save-slots/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/run-map/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/screen-distortion/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/save-slots/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/screen-distortion/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/scripted-cutscenes/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/scripted-cutscenes/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/seeded-replay/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/seeded-replay/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/shaped-inventory/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/shaped-inventory/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/shop-inventory/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/shop-inventory/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/springy-ui/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/springy-ui/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/sprite-stacking/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/squad-clash/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/sprite-stacking/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/squad-clash/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/squad-formation/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/squash-stretch/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/squad-formation/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/squash-stretch/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/stamina-rest/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/stamina-rest/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/sword-combat/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/sword-combat/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/tactic-rules/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/tactic-rules/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/tactics-grid-3d/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/talking-portraits/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/tactics-grid-3d/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/talking-portraits/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/third-person-3d/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/third-person-3d/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/threat-range/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/time-rewind/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/threat-range/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/time-rewind/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/timing-bar/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/title-menu/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/timing-bar/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/title-menu/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/toasts/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/toasts/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/toon-outlines-3d/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/touch-controls/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/toon-outlines-3d/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/touch-controls/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/tower-defense/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/tower-defense/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/turn-order-bar/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/turn-order-bar/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/upgrade-draft/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/upgrade-draft/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/verlet-cloth/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/verlet-cloth/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/vision-cones/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/vision-cones/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/water-surface/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/weather-particles/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/water-surface/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/weather-particles/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/webgl-post/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/webgl-post/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/wfc-town-3d/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/wfc-town-3d/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/window-cursor/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/world-hud/",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/site/preview/dna/window-cursor/",
    "w": 390,
    "ok": true
   },
@@ -12,13 +1102,23 @@
    "ok": true
   },
   {
-   "url": "/elements/adaptive-music/demo/index.html",
+   "url": "/site/preview/dna/world-hud/",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/active-time-battle/demo/index.html",
    "w": 390,
    "ok": true
   },
   {
    "url": "/elements/adaptive-music/demo/index.html",
    "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/adaptive-music/demo/index.html",
+   "w": 390,
    "ok": true
   },
   {
@@ -237,17 +1337,17 @@
    "ok": true
   },
   {
+   "url": "/elements/dissolve-defeat/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
    "url": "/elements/dialogue-choices/demo/index.html",
    "w": 390,
    "ok": true
   },
   {
    "url": "/elements/dissolve-defeat/demo/index.html",
-   "w": 1280,
-   "ok": true
-  },
-  {
-   "url": "/elements/dissolve-defeat/demo/index.html",
    "w": 390,
    "ok": true
   },
@@ -284,16 +1384,16 @@
   {
    "url": "/elements/expressive-portraits/demo/index.html",
    "w": 1280,
-   "ok": true
-  },
-  {
-   "url": "/elements/expressive-portraits/demo/index.html",
-   "w": 390,
    "ok": true
   },
   {
    "url": "/elements/farming-plots/demo/index.html",
    "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/expressive-portraits/demo/index.html",
+   "w": 390,
    "ok": true
   },
   {
@@ -397,17 +1497,17 @@
    "ok": true
   },
   {
-   "url": "/elements/keyword-tooltips/demo/index.html",
-   "w": 1280,
-   "ok": true
-  },
-  {
    "url": "/elements/kart-racer-3d/demo/index.html",
    "w": 390,
    "ok": true
   },
   {
    "url": "/elements/keyword-tooltips/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/keyword-tooltips/demo/index.html",
    "w": 390,
    "ok": true
   },
@@ -427,33 +1527,33 @@
    "ok": true
   },
   {
-   "url": "/elements/loot-beams/demo/index.html",
-   "w": 1280,
-   "ok": true
-  },
-  {
    "url": "/elements/level-up-growth/demo/index.html",
    "w": 390,
    "ok": true
   },
   {
    "url": "/elements/loot-beams/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/loot-beams/demo/index.html",
    "w": 390,
    "ok": true
   },
   {
    "url": "/elements/match3-battle/demo/index.html",
    "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/match3-battle/demo/index.html",
+   "w": 390,
    "ok": true
   },
   {
    "url": "/elements/minimap/demo/index.html",
    "w": 1280,
-   "ok": true
-  },
-  {
-   "url": "/elements/match3-battle/demo/index.html",
-   "w": 390,
    "ok": true
   },
   {
@@ -467,22 +1567,27 @@
    "ok": true
   },
   {
-   "url": "/elements/motion-inputs/demo/index.html",
-   "w": 1280,
-   "ok": true
-  },
-  {
    "url": "/elements/modern-particles/demo/index.html",
    "w": 390,
    "ok": true
   },
   {
    "url": "/elements/motion-inputs/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/motion-inputs/demo/index.html",
    "w": 390,
    "ok": true
   },
   {
    "url": "/elements/normal-lighting/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/normal-maps/demo/index.html",
    "w": 1280,
    "ok": true
   },
@@ -493,11 +1598,26 @@
   },
   {
    "url": "/elements/normal-maps/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/npc-generator/demo/index.html",
    "w": 1280,
    "ok": true
   },
   {
-   "url": "/elements/normal-maps/demo/index.html",
+   "url": "/elements/npc-generator/demo/index.html",
+   "w": 390,
+   "ok": true
+  },
+  {
+   "url": "/elements/on-map-skirmish/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/on-map-skirmish/demo/index.html",
    "w": 390,
    "ok": true
   },
@@ -532,12 +1652,12 @@
    "ok": true
   },
   {
-   "url": "/elements/painted-ui/demo/index.html",
+   "url": "/elements/palette-swap/demo/index.html",
    "w": 390,
    "ok": true
   },
   {
-   "url": "/elements/palette-swap/demo/index.html",
+   "url": "/elements/painted-ui/demo/index.html",
    "w": 390,
    "ok": true
   },
@@ -697,17 +1817,17 @@
    "ok": true
   },
   {
-   "url": "/elements/shaped-inventory/demo/index.html",
-   "w": 1280,
-   "ok": true
-  },
-  {
    "url": "/elements/seeded-replay/demo/index.html",
    "w": 390,
    "ok": true
   },
   {
    "url": "/elements/shaped-inventory/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/shaped-inventory/demo/index.html",
    "w": 390,
    "ok": true
   },
@@ -737,17 +1857,17 @@
    "ok": true
   },
   {
-   "url": "/elements/squad-clash/demo/index.html",
-   "w": 1280,
-   "ok": true
-  },
-  {
    "url": "/elements/sprite-stacking/demo/index.html",
    "w": 390,
    "ok": true
   },
   {
    "url": "/elements/squad-clash/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/squad-clash/demo/index.html",
    "w": 390,
    "ok": true
   },
@@ -767,23 +1887,23 @@
    "ok": true
   },
   {
-   "url": "/elements/squash-stretch/demo/index.html",
-   "w": 390,
-   "ok": true
-  },
-  {
    "url": "/elements/stamina-rest/demo/index.html",
    "w": 1280,
    "ok": true
   },
   {
-   "url": "/elements/stamina-rest/demo/index.html",
+   "url": "/elements/squash-stretch/demo/index.html",
    "w": 390,
    "ok": true
   },
   {
    "url": "/elements/sword-combat/demo/index.html",
    "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/stamina-rest/demo/index.html",
+   "w": 390,
    "ok": true
   },
   {
@@ -827,12 +1947,17 @@
    "ok": true
   },
   {
+   "url": "/elements/threat-range/demo/index.html",
+   "w": 1280,
+   "ok": true
+  },
+  {
    "url": "/elements/third-person-3d/demo/index.html",
    "w": 390,
    "ok": true
   },
   {
-   "url": "/elements/threat-range/demo/index.html",
+   "url": "/elements/time-rewind/demo/index.html",
    "w": 1280,
    "ok": true
   },
@@ -843,27 +1968,22 @@
   },
   {
    "url": "/elements/time-rewind/demo/index.html",
-   "w": 1280,
-   "ok": true
-  },
-  {
-   "url": "/elements/time-rewind/demo/index.html",
    "w": 390,
    "ok": true
   },
   {
    "url": "/elements/timing-bar/demo/index.html",
    "w": 1280,
-   "ok": true
-  },
-  {
-   "url": "/elements/timing-bar/demo/index.html",
-   "w": 390,
    "ok": true
   },
   {
    "url": "/elements/title-menu/demo/index.html",
    "w": 1280,
+   "ok": true
+  },
+  {
+   "url": "/elements/timing-bar/demo/index.html",
+   "w": 390,
    "ok": true
   },
   {
@@ -1577,6 +2697,18 @@
   "/elements/normal-maps/module/normal-maps.js": [
    "200"
   ],
+  "/elements/npc-generator/demo/index.html": [
+   "200"
+  ],
+  "/elements/npc-generator/demo/scene.js": [
+   "200"
+  ],
+  "/elements/npc-generator/module/npc-generator.js": [
+   "200"
+  ],
+  "/elements/on-map-skirmish/demo/index.html": [
+   "200"
+  ],
   "/elements/painted-parallax/assets/dusk/clouds.webp": [
    "200"
   ],
@@ -2096,6 +3228,2145 @@
   "/pixel-kit/pixel-scene.js": [
    "200"
   ],
+  "/site/assets/basket-data.js": [
+   "200"
+  ],
+  "/site/assets/combine-core.js": [
+   "200"
+  ],
+  "/site/assets/families.css": [
+   "200"
+  ],
+  "/site/assets/frames/active-time-battle-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/active-time-battle.webp": [
+   "200"
+  ],
+  "/site/assets/frames/adaptive-music-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/art-direction-lock-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/art-direction-lock.webp": [
+   "200"
+  ],
+  "/site/assets/frames/bark-bubbles-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/battle-transition-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/beat-judge-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/belt-depth-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/big-banner-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/big-banner.webp": [
+   "200"
+  ],
+  "/site/assets/frames/billboard-sprites-3d-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/bloom-glow-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/bloom-glow.webp": [
+   "200"
+  ],
+  "/site/assets/frames/bullet-patterns-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/camera-director-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/camera-director.webp": [
+   "200"
+  ],
+  "/site/assets/frames/card-art-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/card-art.webp": [
+   "200"
+  ],
+  "/site/assets/frames/card-battle-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/card-battle.webp": [
+   "200"
+  ],
+  "/site/assets/frames/chip-music-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/clash-cutin-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/color-grade-lut-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/color-grade-lut.webp": [
+   "200"
+  ],
+  "/site/assets/frames/combat-forecast-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/combat-forecast.webp": [
+   "200"
+  ],
+  "/site/assets/frames/crafting-recipes-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/cutout-characters-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/cutout-characters.webp": [
+   "200"
+  ],
+  "/site/assets/frames/damage-numbers-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/damage-numbers.webp": [
+   "200"
+  ],
+  "/site/assets/frames/damage-pop-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/damage-pop.webp": [
+   "200"
+  ],
+  "/site/assets/frames/dialogue-box-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/dialogue-box.webp": [
+   "200"
+  ],
+  "/site/assets/frames/dialogue-choices-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/dialogue-choices.webp": [
+   "200"
+  ],
+  "/site/assets/frames/dissolve-defeat-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/dissolve-defeat.webp": [
+   "200"
+  ],
+  "/site/assets/frames/draining-hp-bar-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/dungeon-floors-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/dynamic-lights-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/dynamic-lights.webp": [
+   "200"
+  ],
+  "/site/assets/frames/expressive-portraits-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/expressive-portraits.webp": [
+   "200"
+  ],
+  "/site/assets/frames/farming-plots-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/fog-of-war-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/four-move-battle-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/grapple-swing-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/grid-range-path-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/grid-range-path.webp": [
+   "200"
+  ],
+  "/site/assets/frames/hit-sparks-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/hit-sparks.webp": [
+   "200"
+  ],
+  "/site/assets/frames/hit-stop-shake-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/hit-stop-shake.webp": [
+   "200"
+  ],
+  "/site/assets/frames/horde-survival-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/horde-survival.webp": [
+   "200"
+  ],
+  "/site/assets/frames/ik-creatures-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/iso-height-map-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/kart-racer-3d-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/keyword-tooltips-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/level-select-map-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/level-select-map.webp": [
+   "200"
+  ],
+  "/site/assets/frames/level-up-growth-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/level-up-growth.webp": [
+   "200"
+  ],
+  "/site/assets/frames/loot-beams-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/match3-battle-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/minimap-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/modern-particles-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/modern-particles.webp": [
+   "200"
+  ],
+  "/site/assets/frames/motion-inputs-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/normal-lighting-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/normal-lighting.webp": [
+   "200"
+  ],
+  "/site/assets/frames/normal-maps-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/npc-generator-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/on-map-skirmish-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/painted-parallax-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/painted-parallax.webp": [
+   "200"
+  ],
+  "/site/assets/frames/painted-portraits-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/painted-portraits.webp": [
+   "200"
+  ],
+  "/site/assets/frames/painted-ui-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/painted-ui.webp": [
+   "200"
+  ],
+  "/site/assets/frames/palette-swap-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/paper-doll-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/parallax-layers-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/parallax-layers.webp": [
+   "200"
+  ],
+  "/site/assets/frames/physics-debris-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/pixel-font-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/pixel-scaler-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/platformer-feel-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/procedural-sfx-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/pseudo3d-flight-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/quest-log-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/raycast-dungeon-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/ribbon-trails-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/ribbon-trails.webp": [
+   "200"
+  ],
+  "/site/assets/frames/run-map-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/run-map.webp": [
+   "200"
+  ],
+  "/site/assets/frames/save-slots-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/save-slots.webp": [
+   "200"
+  ],
+  "/site/assets/frames/screen-distortion-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/screen-distortion.webp": [
+   "200"
+  ],
+  "/site/assets/frames/scripted-cutscenes-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/seeded-replay-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/shaped-inventory-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/shop-inventory-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/shop-inventory.webp": [
+   "200"
+  ],
+  "/site/assets/frames/springy-ui-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/sprite-stacking-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/squad-clash-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/squad-clash.webp": [
+   "200"
+  ],
+  "/site/assets/frames/squad-formation-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/squad-formation.webp": [
+   "200"
+  ],
+  "/site/assets/frames/squash-stretch-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/squash-stretch.webp": [
+   "200"
+  ],
+  "/site/assets/frames/stamina-rest-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/stamina-rest.webp": [
+   "200"
+  ],
+  "/site/assets/frames/sword-combat-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/sword-combat.webp": [
+   "200"
+  ],
+  "/site/assets/frames/tactic-rules-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/tactic-rules.webp": [
+   "200"
+  ],
+  "/site/assets/frames/tactics-grid-3d-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/talking-portraits-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/third-person-3d-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/threat-range-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/threat-range.webp": [
+   "200"
+  ],
+  "/site/assets/frames/time-rewind-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/timing-bar-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/title-menu-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/toasts-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/toasts.webp": [
+   "200"
+  ],
+  "/site/assets/frames/toon-outlines-3d-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/touch-controls-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/tower-defense-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/turn-order-bar-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/upgrade-draft-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/upgrade-draft.webp": [
+   "200"
+  ],
+  "/site/assets/frames/verlet-cloth-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/vision-cones-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/water-surface-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/weather-particles-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/webgl-post-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/webgl-post.webp": [
+   "200"
+  ],
+  "/site/assets/frames/wfc-town-3d-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/window-cursor-poster.webp": [
+   "200"
+  ],
+  "/site/assets/frames/window-cursor.webp": [
+   "200"
+  ],
+  "/site/assets/frames/world-hud-poster.webp": [
+   "200"
+  ],
+  "/site/assets/hero/damage-pop-poster.webp": [
+   "200"
+  ],
+  "/site/assets/hero/damage-pop.webp": [
+   "200"
+  ],
+  "/site/assets/hero/kart-racer-3d-poster.webp": [
+   "200"
+  ],
+  "/site/assets/hero/kart-racer-3d.webp": [
+   "200"
+  ],
+  "/site/assets/moments/active-time-battle-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/active-time-battle-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/active-time-battle-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/active-time-battle-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/adaptive-music-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/adaptive-music-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/adaptive-music-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/adaptive-music-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/art-direction-lock-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/art-direction-lock-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/art-direction-lock-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/art-direction-lock-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/bark-bubbles-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/bark-bubbles-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/bark-bubbles-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/bark-bubbles-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/battle-transition-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/battle-transition-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/battle-transition-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/battle-transition-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/beat-judge-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/beat-judge-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/beat-judge-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/beat-judge-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/belt-depth-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/belt-depth-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/belt-depth-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/belt-depth-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/big-banner-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/big-banner-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/big-banner-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/big-banner-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/billboard-sprites-3d-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/billboard-sprites-3d-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/billboard-sprites-3d-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/billboard-sprites-3d-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/bloom-glow-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/bloom-glow-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/bloom-glow-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/bloom-glow-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/bullet-patterns-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/bullet-patterns-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/bullet-patterns-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/bullet-patterns-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/camera-director-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/camera-director-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/camera-director-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/camera-director-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/card-art-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/card-art-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/card-art-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/card-art-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/card-battle-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/card-battle-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/card-battle-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/card-battle-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/chip-music-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/chip-music-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/chip-music-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/chip-music-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/clash-cutin-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/clash-cutin-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/clash-cutin-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/clash-cutin-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/color-grade-lut-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/color-grade-lut-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/color-grade-lut-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/color-grade-lut-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/combat-forecast-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/combat-forecast-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/combat-forecast-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/combat-forecast-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/crafting-recipes-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/crafting-recipes-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/crafting-recipes-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/crafting-recipes-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/cutout-characters-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/cutout-characters-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/cutout-characters-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/cutout-characters-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/damage-numbers-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/damage-numbers-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/damage-numbers-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/damage-numbers-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/damage-pop-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/damage-pop-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/damage-pop-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/damage-pop-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/dialogue-box-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/dialogue-box-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/dialogue-box-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/dialogue-box-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/dialogue-choices-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/dialogue-choices-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/dialogue-choices-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/dialogue-choices-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/dissolve-defeat-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/dissolve-defeat-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/dissolve-defeat-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/dissolve-defeat-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/draining-hp-bar-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/draining-hp-bar-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/draining-hp-bar-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/draining-hp-bar-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/dungeon-floors-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/dungeon-floors-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/dungeon-floors-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/dungeon-floors-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/dynamic-lights-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/dynamic-lights-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/dynamic-lights-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/dynamic-lights-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/expressive-portraits-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/expressive-portraits-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/expressive-portraits-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/expressive-portraits-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/farming-plots-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/farming-plots-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/farming-plots-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/farming-plots-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/fog-of-war-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/fog-of-war-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/fog-of-war-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/fog-of-war-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/four-move-battle-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/four-move-battle-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/four-move-battle-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/four-move-battle-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/grapple-swing-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/grapple-swing-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/grapple-swing-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/grapple-swing-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/grid-range-path-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/grid-range-path-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/grid-range-path-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/grid-range-path-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/hit-sparks-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/hit-sparks-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/hit-sparks-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/hit-sparks-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/hit-stop-shake-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/hit-stop-shake-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/hit-stop-shake-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/hit-stop-shake-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/horde-survival-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/horde-survival-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/horde-survival-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/horde-survival-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/ik-creatures-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/ik-creatures-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/ik-creatures-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/ik-creatures-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/iso-height-map-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/iso-height-map-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/iso-height-map-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/iso-height-map-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/kart-racer-3d-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/kart-racer-3d-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/kart-racer-3d-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/kart-racer-3d-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/keyword-tooltips-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/keyword-tooltips-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/keyword-tooltips-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/keyword-tooltips-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/level-select-map-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/level-select-map-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/level-select-map-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/level-select-map-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/level-up-growth-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/level-up-growth-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/level-up-growth-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/level-up-growth-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/loot-beams-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/loot-beams-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/loot-beams-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/loot-beams-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/match3-battle-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/match3-battle-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/match3-battle-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/match3-battle-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/minimap-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/minimap-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/minimap-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/minimap-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/modern-particles-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/modern-particles-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/modern-particles-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/modern-particles-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/motion-inputs-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/motion-inputs-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/motion-inputs-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/motion-inputs-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/normal-lighting-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/normal-lighting-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/normal-lighting-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/normal-lighting-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/normal-maps-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/normal-maps-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/normal-maps-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/normal-maps-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/npc-generator-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/npc-generator-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/npc-generator-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/npc-generator-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/on-map-skirmish-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/on-map-skirmish-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/on-map-skirmish-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/on-map-skirmish-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/painted-parallax-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/painted-parallax-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/painted-parallax-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/painted-parallax-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/painted-portraits-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/painted-portraits-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/painted-portraits-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/painted-portraits-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/painted-ui-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/painted-ui-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/painted-ui-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/painted-ui-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/palette-swap-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/palette-swap-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/palette-swap-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/palette-swap-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/paper-doll-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/paper-doll-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/paper-doll-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/paper-doll-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/parallax-layers-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/parallax-layers-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/parallax-layers-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/parallax-layers-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/physics-debris-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/physics-debris-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/physics-debris-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/physics-debris-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/pixel-font-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/pixel-font-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/pixel-font-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/pixel-font-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/pixel-scaler-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/pixel-scaler-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/pixel-scaler-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/pixel-scaler-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/platformer-feel-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/platformer-feel-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/platformer-feel-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/platformer-feel-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/procedural-sfx-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/procedural-sfx-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/procedural-sfx-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/procedural-sfx-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/pseudo3d-flight-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/pseudo3d-flight-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/pseudo3d-flight-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/pseudo3d-flight-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/quest-log-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/quest-log-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/quest-log-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/quest-log-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/raycast-dungeon-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/raycast-dungeon-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/raycast-dungeon-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/raycast-dungeon-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/ribbon-trails-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/ribbon-trails-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/ribbon-trails-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/ribbon-trails-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/run-map-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/run-map-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/run-map-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/run-map-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/save-slots-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/save-slots-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/save-slots-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/save-slots-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/screen-distortion-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/screen-distortion-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/screen-distortion-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/screen-distortion-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/scripted-cutscenes-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/scripted-cutscenes-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/scripted-cutscenes-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/scripted-cutscenes-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/seeded-replay-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/seeded-replay-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/seeded-replay-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/seeded-replay-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/shaped-inventory-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/shaped-inventory-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/shaped-inventory-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/shaped-inventory-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/shop-inventory-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/shop-inventory-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/shop-inventory-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/shop-inventory-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/springy-ui-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/springy-ui-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/springy-ui-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/springy-ui-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/sprite-stacking-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/sprite-stacking-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/sprite-stacking-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/sprite-stacking-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/squad-clash-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/squad-clash-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/squad-clash-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/squad-clash-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/squad-formation-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/squad-formation-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/squad-formation-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/squad-formation-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/squash-stretch-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/squash-stretch-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/squash-stretch-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/squash-stretch-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/stamina-rest-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/stamina-rest-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/stamina-rest-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/stamina-rest-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/sword-combat-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/sword-combat-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/sword-combat-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/sword-combat-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/tactic-rules-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/tactic-rules-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/tactic-rules-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/tactic-rules-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/tactics-grid-3d-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/tactics-grid-3d-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/tactics-grid-3d-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/tactics-grid-3d-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/talking-portraits-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/talking-portraits-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/talking-portraits-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/talking-portraits-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/third-person-3d-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/third-person-3d-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/third-person-3d-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/third-person-3d-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/threat-range-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/threat-range-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/threat-range-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/threat-range-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/time-rewind-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/time-rewind-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/time-rewind-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/time-rewind-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/timing-bar-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/timing-bar-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/timing-bar-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/timing-bar-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/title-menu-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/title-menu-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/title-menu-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/title-menu-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/toasts-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/toasts-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/toasts-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/toasts-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/toon-outlines-3d-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/toon-outlines-3d-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/toon-outlines-3d-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/toon-outlines-3d-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/touch-controls-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/touch-controls-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/touch-controls-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/touch-controls-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/tower-defense-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/tower-defense-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/tower-defense-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/tower-defense-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/turn-order-bar-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/turn-order-bar-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/turn-order-bar-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/turn-order-bar-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/upgrade-draft-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/upgrade-draft-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/upgrade-draft-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/upgrade-draft-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/verlet-cloth-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/verlet-cloth-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/verlet-cloth-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/verlet-cloth-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/vision-cones-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/vision-cones-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/vision-cones-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/vision-cones-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/water-surface-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/water-surface-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/water-surface-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/water-surface-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/weather-particles-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/weather-particles-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/weather-particles-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/weather-particles-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/webgl-post-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/webgl-post-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/webgl-post-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/webgl-post-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/wfc-town-3d-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/wfc-town-3d-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/wfc-town-3d-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/wfc-town-3d-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/window-cursor-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/window-cursor-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/window-cursor-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/window-cursor-D.webp": [
+   "200"
+  ],
+  "/site/assets/moments/world-hud-A.webp": [
+   "200"
+  ],
+  "/site/assets/moments/world-hud-B.webp": [
+   "200"
+  ],
+  "/site/assets/moments/world-hud-C.webp": [
+   "200"
+  ],
+  "/site/assets/moments/world-hud-D.webp": [
+   "200"
+  ],
+  "/site/assets/styles/cel-a.webp": [
+   "200"
+  ],
+  "/site/assets/styles/cel-b.webp": [
+   "200"
+  ],
+  "/site/assets/styles/flat-a.webp": [
+   "200"
+  ],
+  "/site/assets/styles/flat-b.webp": [
+   "200"
+  ],
+  "/site/assets/styles/glass-ui-a.webp": [
+   "200"
+  ],
+  "/site/assets/styles/glass-ui-b.webp": [
+   "200"
+  ],
+  "/site/assets/styles/gothic-a.webp": [
+   "200"
+  ],
+  "/site/assets/styles/gothic-b.webp": [
+   "200"
+  ],
+  "/site/assets/styles/handheld4-a.webp": [
+   "200"
+  ],
+  "/site/assets/styles/handheld4-b.webp": [
+   "200"
+  ],
+  "/site/assets/styles/hd-diorama-a.webp": [
+   "200"
+  ],
+  "/site/assets/styles/hd-diorama-b.webp": [
+   "200"
+  ],
+  "/site/assets/styles/lit-hd-a.webp": [
+   "200"
+  ],
+  "/site/assets/styles/lit-hd-b.webp": [
+   "200"
+  ],
+  "/site/assets/styles/lowpoly-a.webp": [
+   "200"
+  ],
+  "/site/assets/styles/lowpoly-b.webp": [
+   "200"
+  ],
+  "/site/assets/styles/neon-vector-a.webp": [
+   "200"
+  ],
+  "/site/assets/styles/neon-vector-b.webp": [
+   "200"
+  ],
+  "/site/assets/styles/painted-impasto-a.webp": [
+   "200"
+  ],
+  "/site/assets/styles/painted-impasto-b.webp": [
+   "200"
+  ],
+  "/site/assets/styles/pixel16-a.webp": [
+   "200"
+  ],
+  "/site/assets/styles/pixel16-b.webp": [
+   "200"
+  ],
+  "/site/assets/styles/pixel8-a.webp": [
+   "200"
+  ],
+  "/site/assets/styles/pixel8-b.webp": [
+   "200"
+  ],
+  "/site/assets/styles/rubber-hose-a.webp": [
+   "200"
+  ],
+  "/site/assets/styles/rubber-hose-b.webp": [
+   "200"
+  ],
+  "/site/assets/styles/watercolor-a.webp": [
+   "200"
+  ],
+  "/site/assets/styles/watercolor-b.webp": [
+   "200"
+  ],
+  "/site/assets/zip.js": [
+   "200"
+  ],
+  "/site/preview/": [
+   "200"
+  ],
+  "/site/preview/about/": [
+   "200"
+  ],
+  "/site/preview/assets/fonts.css": [
+   "200"
+  ],
+  "/site/preview/assets/fonts/inter-latin.woff2": [
+   "200"
+  ],
+  "/site/preview/assets/fonts/jetbrains-mono-latin.woff2": [
+   "200"
+  ],
+  "/site/preview/assets/showcase.css": [
+   "200"
+  ],
+  "/site/preview/assets/showcase.js": [
+   "200"
+  ],
+  "/site/preview/basket/": [
+   "200"
+  ],
+  "/site/preview/blog/how-game-dna-works/": [
+   "200"
+  ],
+  "/site/preview/dna/active-time-battle/": [
+   "200"
+  ],
+  "/site/preview/dna/adaptive-music/": [
+   "200"
+  ],
+  "/site/preview/dna/art-direction-lock/": [
+   "200"
+  ],
+  "/site/preview/dna/bark-bubbles/": [
+   "200"
+  ],
+  "/site/preview/dna/battle-transition/": [
+   "200"
+  ],
+  "/site/preview/dna/beat-judge/": [
+   "200"
+  ],
+  "/site/preview/dna/belt-depth/": [
+   "200"
+  ],
+  "/site/preview/dna/big-banner/": [
+   "200"
+  ],
+  "/site/preview/dna/billboard-sprites-3d/": [
+   "200"
+  ],
+  "/site/preview/dna/bloom-glow/": [
+   "200"
+  ],
+  "/site/preview/dna/bullet-patterns/": [
+   "200"
+  ],
+  "/site/preview/dna/camera-director/": [
+   "200"
+  ],
+  "/site/preview/dna/card-art/": [
+   "200"
+  ],
+  "/site/preview/dna/card-battle/": [
+   "200"
+  ],
+  "/site/preview/dna/chip-music/": [
+   "200"
+  ],
+  "/site/preview/dna/clash-cutin/": [
+   "200"
+  ],
+  "/site/preview/dna/color-grade-lut/": [
+   "200"
+  ],
+  "/site/preview/dna/combat-forecast/": [
+   "200"
+  ],
+  "/site/preview/dna/crafting-recipes/": [
+   "200"
+  ],
+  "/site/preview/dna/cutout-characters/": [
+   "200"
+  ],
+  "/site/preview/dna/damage-numbers/": [
+   "200"
+  ],
+  "/site/preview/dna/damage-pop/": [
+   "200"
+  ],
+  "/site/preview/dna/dialogue-box/": [
+   "200"
+  ],
+  "/site/preview/dna/dialogue-choices/": [
+   "200"
+  ],
+  "/site/preview/dna/dissolve-defeat/": [
+   "200"
+  ],
+  "/site/preview/dna/draining-hp-bar/": [
+   "200"
+  ],
+  "/site/preview/dna/dungeon-floors/": [
+   "200"
+  ],
+  "/site/preview/dna/dynamic-lights/": [
+   "200"
+  ],
+  "/site/preview/dna/expressive-portraits/": [
+   "200"
+  ],
+  "/site/preview/dna/farming-plots/": [
+   "200"
+  ],
+  "/site/preview/dna/fog-of-war/": [
+   "200"
+  ],
+  "/site/preview/dna/four-move-battle/": [
+   "200"
+  ],
+  "/site/preview/dna/grapple-swing/": [
+   "200"
+  ],
+  "/site/preview/dna/grid-range-path/": [
+   "200"
+  ],
+  "/site/preview/dna/hit-sparks/": [
+   "200"
+  ],
+  "/site/preview/dna/hit-stop-shake/": [
+   "200"
+  ],
+  "/site/preview/dna/horde-survival/": [
+   "200"
+  ],
+  "/site/preview/dna/ik-creatures/": [
+   "200"
+  ],
+  "/site/preview/dna/iso-height-map/": [
+   "200"
+  ],
+  "/site/preview/dna/kart-racer-3d/": [
+   "200"
+  ],
+  "/site/preview/dna/keyword-tooltips/": [
+   "200"
+  ],
+  "/site/preview/dna/level-select-map/": [
+   "200"
+  ],
+  "/site/preview/dna/level-up-growth/": [
+   "200"
+  ],
+  "/site/preview/dna/loot-beams/": [
+   "200"
+  ],
+  "/site/preview/dna/match3-battle/": [
+   "200"
+  ],
+  "/site/preview/dna/minimap/": [
+   "200"
+  ],
+  "/site/preview/dna/modern-particles/": [
+   "200"
+  ],
+  "/site/preview/dna/motion-inputs/": [
+   "200"
+  ],
+  "/site/preview/dna/normal-lighting/": [
+   "200"
+  ],
+  "/site/preview/dna/normal-maps/": [
+   "200"
+  ],
+  "/site/preview/dna/npc-generator/": [
+   "200"
+  ],
+  "/site/preview/dna/on-map-skirmish/": [
+   "200"
+  ],
+  "/site/preview/dna/painted-parallax/": [
+   "200"
+  ],
+  "/site/preview/dna/painted-portraits/": [
+   "200"
+  ],
+  "/site/preview/dna/painted-ui/": [
+   "200"
+  ],
+  "/site/preview/dna/palette-swap/": [
+   "200"
+  ],
+  "/site/preview/dna/paper-doll/": [
+   "200"
+  ],
+  "/site/preview/dna/parallax-layers/": [
+   "200"
+  ],
+  "/site/preview/dna/physics-debris/": [
+   "200"
+  ],
+  "/site/preview/dna/pixel-font/": [
+   "200"
+  ],
+  "/site/preview/dna/pixel-scaler/": [
+   "200"
+  ],
+  "/site/preview/dna/platformer-feel/": [
+   "200"
+  ],
+  "/site/preview/dna/procedural-sfx/": [
+   "200"
+  ],
+  "/site/preview/dna/pseudo3d-flight/": [
+   "200"
+  ],
+  "/site/preview/dna/quest-log/": [
+   "200"
+  ],
+  "/site/preview/dna/raycast-dungeon/": [
+   "200"
+  ],
+  "/site/preview/dna/ribbon-trails/": [
+   "200"
+  ],
+  "/site/preview/dna/run-map/": [
+   "200"
+  ],
+  "/site/preview/dna/save-slots/": [
+   "200"
+  ],
+  "/site/preview/dna/screen-distortion/": [
+   "200"
+  ],
+  "/site/preview/dna/scripted-cutscenes/": [
+   "200"
+  ],
+  "/site/preview/dna/seeded-replay/": [
+   "200"
+  ],
+  "/site/preview/dna/shaped-inventory/": [
+   "200"
+  ],
+  "/site/preview/dna/shop-inventory/": [
+   "200"
+  ],
+  "/site/preview/dna/springy-ui/": [
+   "200"
+  ],
+  "/site/preview/dna/sprite-stacking/": [
+   "200"
+  ],
+  "/site/preview/dna/squad-clash/": [
+   "200"
+  ],
+  "/site/preview/dna/squad-formation/": [
+   "200"
+  ],
+  "/site/preview/dna/squash-stretch/": [
+   "200"
+  ],
+  "/site/preview/dna/stamina-rest/": [
+   "200"
+  ],
+  "/site/preview/dna/sword-combat/": [
+   "200"
+  ],
+  "/site/preview/dna/tactic-rules/": [
+   "200"
+  ],
+  "/site/preview/dna/tactics-grid-3d/": [
+   "200"
+  ],
+  "/site/preview/dna/talking-portraits/": [
+   "200"
+  ],
+  "/site/preview/dna/third-person-3d/": [
+   "200"
+  ],
+  "/site/preview/dna/threat-range/": [
+   "200"
+  ],
+  "/site/preview/dna/time-rewind/": [
+   "200"
+  ],
+  "/site/preview/dna/timing-bar/": [
+   "200"
+  ],
+  "/site/preview/dna/title-menu/": [
+   "200"
+  ],
+  "/site/preview/dna/toasts/": [
+   "200"
+  ],
+  "/site/preview/dna/toon-outlines-3d/": [
+   "200"
+  ],
+  "/site/preview/dna/touch-controls/": [
+   "200"
+  ],
+  "/site/preview/dna/tower-defense/": [
+   "200"
+  ],
+  "/site/preview/dna/turn-order-bar/": [
+   "200"
+  ],
+  "/site/preview/dna/upgrade-draft/": [
+   "200"
+  ],
+  "/site/preview/dna/verlet-cloth/": [
+   "200"
+  ],
+  "/site/preview/dna/vision-cones/": [
+   "200"
+  ],
+  "/site/preview/dna/water-surface/": [
+   "200"
+  ],
+  "/site/preview/dna/weather-particles/": [
+   "200"
+  ],
+  "/site/preview/dna/webgl-post/": [
+   "200"
+  ],
+  "/site/preview/dna/wfc-town-3d/": [
+   "200"
+  ],
+  "/site/preview/dna/window-cursor/": [
+   "200"
+  ],
+  "/site/preview/dna/world-hud/": [
+   "200"
+  ],
+  "/site/preview/media/promo-poster.jpg": [
+   "200"
+  ],
+  "/site/preview/media/promo.mp4": [
+   "200"
+  ],
+  "/site/preview/start/": [
+   "200"
+  ],
+  "/site/preview/styles/": [
+   "200"
+  ],
+  "/site/preview/tests/": [
+   "200"
+  ],
   "/skins/flat/flat.js": [
    "200"
   ],
@@ -2121,6 +5392,708 @@
    "200"
   ]
  },
+ "visible": [
+  {
+   "page": "/site/preview/",
+   "w": 1280,
+   "frame": "/site/preview/",
+   "hit": "Codex",
+   "ctx": "glish, written for a game your agent has never seen. Paste it into Claude Code, Codex, Cursor or any coding agent.  JS damage-pop.js 56 KB · one file · no dependenci"
+  },
+  {
+   "page": "/site/preview/",
+   "w": 390,
+   "frame": "/site/preview/",
+   "hit": "Codex",
+   "ctx": "glish, written for a game your agent has never seen. Paste it into Claude Code, Codex, Cursor or any coding agent.  JS damage-pop.js 56 KB · one file · no dependenci"
+  },
+  {
+   "page": "/site/preview/basket/",
+   "w": 1280,
+   "frame": "/site/preview/basket/",
+   "hit": "judge",
+   "ctx": "ming-bar minigame Add-on Procedural sound effects Add-on Chip music Add-on Beat judge Add-on Adaptive music Add-on Shop & inventory grid Add-on Level-up stat growth "
+  },
+  {
+   "page": "/site/preview/start/",
+   "w": 1280,
+   "frame": "/site/preview/start/",
+   "hit": "Codex",
+   "ctx": " need a browser game (one HTML file is enough) and a coding agent: Claude Code, Codex, Cursor or similar.  1 Pick an element  Play a few demos and choose one that fi"
+  },
+  {
+   "page": "/site/preview/basket/",
+   "w": 390,
+   "frame": "/site/preview/basket/",
+   "hit": "judge",
+   "ctx": "ming-bar minigame Add-on Procedural sound effects Add-on Chip music Add-on Beat judge Add-on Adaptive music Add-on Shop & inventory grid Add-on Level-up stat growth "
+  },
+  {
+   "page": "/site/preview/start/",
+   "w": 390,
+   "frame": "/site/preview/start/",
+   "hit": "Codex",
+   "ctx": " need a browser game (one HTML file is enough) and a coding agent: Claude Code, Codex, Cursor or similar.  1 Pick an element  Play a few demos and choose one that fi"
+  },
+  {
+   "page": "/site/preview/tests/",
+   "w": 1280,
+   "frame": "/site/preview/tests/",
+   "hit": "judge",
+   "ctx": " effects\t7.8 1 round\t6/6\t 2 rounds  Chip music\t7.6 4 rounds\t6/9\t 2 rounds  Beat judge\t7.7 2 rounds\t6/6\t 1 round  Adaptive music\t7.8 2 rounds\t6/9\t 2 rounds  Shop & in"
+  },
+  {
+   "page": "/site/preview/tests/",
+   "w": 390,
+   "frame": "/site/preview/tests/",
+   "hit": "judge",
+   "ctx": " effects\t7.8 1 round\t6/6\t 2 rounds  Chip music\t7.6 4 rounds\t6/9\t 2 rounds  Beat judge\t7.7 2 rounds\t6/6\t 1 round  Adaptive music\t7.8 2 rounds\t6/9\t 2 rounds  Shop & in"
+  },
+  {
+   "page": "/site/preview/blog/how-game-dna-works/",
+   "w": 1280,
+   "frame": "/site/preview/blog/how-game-dna-works/",
+   "hit": "Cold test",
+   "ctx": "t that merges several elements into one prompt.  How an element earns its place Cold test. A separate coding agent gets a clean folder: a host game it has never seen, th"
+  },
+  {
+   "page": "/site/preview/blog/how-game-dna-works/",
+   "w": 1280,
+   "frame": "/site/preview/blog/how-game-dna-works/",
+   "hit": "judge",
+   "ctx": "s on each of two hosts and must work at least two times out of three on each. A judge that plays. A different agent opens the result in Playwright and plays it. Does"
+  },
+  {
+   "page": "/site/preview/blog/how-game-dna-works/",
+   "w": 1280,
+   "frame": "/site/preview/blog/how-game-dna-works/",
+   "hit": "critic",
+   "ctx": "e coding agent's own summary of what it did counts for nothing. A strict visual critic. Every demo is scored against commercial indie games, character by character at"
+  },
+  {
+   "page": "/site/preview/blog/how-game-dna-works/",
+   "w": 1280,
+   "frame": "/site/preview/blog/how-game-dna-works/",
+   "hit": "cold test",
+   "ctx": "ame 6 of 6 clean integrations. Starter games went from requirement to option. A cold test without a pinned model and effort is not a measurement.  Story 3: five agents, "
+  },
+  {
+   "page": "/site/preview/blog/how-game-dna-works/",
+   "w": 1280,
+   "frame": "/site/preview/blog/how-game-dna-works/",
+   "hit": "cold-test",
+   "ctx": "  Story 3: five agents, five pink enemies  A match-3 battle starter has a small cold-test task: add a new enemy. The first five runs all failed identically. Every new en"
+  },
+  {
+   "page": "/site/preview/blog/how-game-dna-works/",
+   "w": 1280,
+   "frame": "/site/preview/blog/how-game-dna-works/",
+   "hit": "critic",
+   "ctx": "rd for word. A wrong sample is not a hint; it is a guaranteed bug.  Story 4: my critic was too nice  Three demos passed the first visual critic with 7.5 to 8.0. Then "
+  },
+  {
+   "page": "/site/preview/blog/how-game-dna-works/",
+   "w": 1280,
+   "frame": "/site/preview/blog/how-game-dna-works/",
+   "hit": "critic",
+   "ctx": "teed bug.  Story 4: my critic was too nice  Three demos passed the first visual critic with 7.5 to 8.0. Then I actually looked. Cut-out characters with shields floati"
+  },
+  {
+   "page": "/site/preview/blog/how-game-dna-works/",
+   "w": 1280,
+   "frame": "/site/preview/blog/how-game-dna-works/",
+   "hit": "cold-test",
+   "ctx": "ogether), merges the prompts, and drops the module files in one zip. Combos are cold-tested too: damage numbers went into an unseen battle, an unseen tactics game and tw"
+  },
+  {
+   "page": "/site/preview/blog/how-game-dna-works/",
+   "w": 390,
+   "frame": "/site/preview/blog/how-game-dna-works/",
+   "hit": "Cold test",
+   "ctx": "t that merges several elements into one prompt.  How an element earns its place Cold test. A separate coding agent gets a clean folder: a host game it has never seen, th"
+  },
+  {
+   "page": "/site/preview/blog/how-game-dna-works/",
+   "w": 390,
+   "frame": "/site/preview/blog/how-game-dna-works/",
+   "hit": "judge",
+   "ctx": "s on each of two hosts and must work at least two times out of three on each. A judge that plays. A different agent opens the result in Playwright and plays it. Does"
+  },
+  {
+   "page": "/site/preview/blog/how-game-dna-works/",
+   "w": 390,
+   "frame": "/site/preview/blog/how-game-dna-works/",
+   "hit": "critic",
+   "ctx": "e coding agent's own summary of what it did counts for nothing. A strict visual critic. Every demo is scored against commercial indie games, character by character at"
+  },
+  {
+   "page": "/site/preview/blog/how-game-dna-works/",
+   "w": 390,
+   "frame": "/site/preview/blog/how-game-dna-works/",
+   "hit": "cold test",
+   "ctx": "ame 6 of 6 clean integrations. Starter games went from requirement to option. A cold test without a pinned model and effort is not a measurement.  Story 3: five agents, "
+  },
+  {
+   "page": "/site/preview/blog/how-game-dna-works/",
+   "w": 390,
+   "frame": "/site/preview/blog/how-game-dna-works/",
+   "hit": "cold-test",
+   "ctx": "  Story 3: five agents, five pink enemies  A match-3 battle starter has a small cold-test task: add a new enemy. The first five runs all failed identically. Every new en"
+  },
+  {
+   "page": "/site/preview/blog/how-game-dna-works/",
+   "w": 390,
+   "frame": "/site/preview/blog/how-game-dna-works/",
+   "hit": "critic",
+   "ctx": "rd for word. A wrong sample is not a hint; it is a guaranteed bug.  Story 4: my critic was too nice  Three demos passed the first visual critic with 7.5 to 8.0. Then "
+  },
+  {
+   "page": "/site/preview/blog/how-game-dna-works/",
+   "w": 390,
+   "frame": "/site/preview/blog/how-game-dna-works/",
+   "hit": "critic",
+   "ctx": "teed bug.  Story 4: my critic was too nice  Three demos passed the first visual critic with 7.5 to 8.0. Then I actually looked. Cut-out characters with shields floati"
+  },
+  {
+   "page": "/site/preview/blog/how-game-dna-works/",
+   "w": 390,
+   "frame": "/site/preview/blog/how-game-dna-works/",
+   "hit": "cold-test",
+   "ctx": "ogether), merges the prompts, and drops the module files in one zip. Combos are cold-tested too: damage numbers went into an unseen battle, an unseen tactics game and tw"
+  },
+  {
+   "page": "/site/preview/dna/beat-judge/",
+   "w": 1280,
+   "frame": "/site/preview/dna/beat-judge/",
+   "hit": "judge",
+   "ctx": " works Start Basket ★ Star on GitHub Play a demo Game DNA / Audio & rhythm Beat judge  A beat judge that rates every press Perfect, Good or Miss, with a calibration "
+  },
+  {
+   "page": "/site/preview/dna/beat-judge/",
+   "w": 1280,
+   "frame": "/site/preview/dna/beat-judge/",
+   "hit": "judge",
+   "ctx": "asket ★ Star on GitHub Play a demo Game DNA / Audio & rhythm Beat judge  A beat judge that rates every press Perfect, Good or Miss, with a calibration for audio lag."
+  },
+  {
+   "page": "/site/preview/dna/beat-judge/",
+   "w": 1280,
+   "frame": "/site/preview/dna/beat-judge/",
+   "hit": "judge",
+   "ctx": "on the beat. Turn sound on Full screen  WHAT IT DOES  A beat clock and an input judge for rhythm actions: every press the game accepts is rated Perfect, Good or Miss"
+  },
+  {
+   "page": "/site/preview/dna/beat-judge/",
+   "w": 1280,
+   "frame": "/site/preview/dna/beat-judge/",
+   "hit": "judge",
+   "ctx": "t. It is written for a game your agent has never seen. Give it the module (beat-judge.js) and its README. Play your game. The prompt ends with checks your agent can "
+  },
+  {
+   "page": "/site/preview/dna/beat-judge/",
+   "w": 390,
+   "frame": "/site/preview/dna/beat-judge/",
+   "hit": "judge",
+   "ctx": "Skip to content Game DNA Play a demo Game DNA / Audio & rhythm Beat judge  A beat judge that rates every press Perfect, Good or Miss, with a calibration "
+  },
+  {
+   "page": "/site/preview/dna/beat-judge/",
+   "w": 390,
+   "frame": "/site/preview/dna/beat-judge/",
+   "hit": "judge",
+   "ctx": "ip to content Game DNA Play a demo Game DNA / Audio & rhythm Beat judge  A beat judge that rates every press Perfect, Good or Miss, with a calibration for audio lag."
+  },
+  {
+   "page": "/site/preview/dna/beat-judge/",
+   "w": 390,
+   "frame": "/site/preview/dna/beat-judge/",
+   "hit": "judge",
+   "ctx": "on the beat. Turn sound on Full screen  WHAT IT DOES  A beat clock and an input judge for rhythm actions: every press the game accepts is rated Perfect, Good or Miss"
+  },
+  {
+   "page": "/site/preview/dna/beat-judge/",
+   "w": 390,
+   "frame": "/site/preview/dna/beat-judge/",
+   "hit": "judge",
+   "ctx": "t. It is written for a game your agent has never seen. Give it the module (beat-judge.js) and its README. Play your game. The prompt ends with checks your agent can "
+  },
+  {
+   "page": "/site/preview/dna/normal-maps/",
+   "w": 390,
+   "frame": "/elements/normal-maps/demo/index.html",
+   "hit": "Codex",
+   "ctx": "ame post with its lantern out, so a game can show an inactive lamp) is a single Codex edit of the lamppost. Regenerating means: make your own sprite with the style l"
+  },
+  {
+   "page": "/site/preview/dna/normal-maps/",
+   "w": 1280,
+   "frame": "/elements/normal-maps/demo/index.html",
+   "hit": "Codex",
+   "ctx": "ame post with its lantern out, so a game can show an inactive lamp) is a single Codex edit of the lamppost. Regenerating means: make your own sprite with the style l"
+  },
+  {
+   "page": "/elements/art-direction-lock/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/art-direction-lock/demo/index.html",
+   "hit": "Codex",
+   "ctx": "tions. The game only loads the saved files, so every frame stays reproducible.  AI image generator generated 2026-11-16 sample pack 271 KB · 18 fil"
+  },
+  {
+   "page": "/elements/art-direction-lock/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/art-direction-lock/demo/index.html",
+   "hit": "image_gen",
+   "ctx": " The game only loads the saved files, so every frame stays reproducible.  AI image generator generated 2026-11-16 sample pack 271 KB · 18 files module:"
+  },
+  {
+   "page": "/elements/art-direction-lock/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/art-direction-lock/demo/index.html",
+   "hit": "gpt-",
+   "ctx": "ly loads the saved files, so every frame stays reproducible.  AI image generator generated 2026-11-16 sample pack 271 KB · 18 files module: GameDN"
+  },
+  {
+   "page": "/elements/art-direction-lock/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/art-direction-lock/demo/index.html",
+   "hit": "Judge",
+   "ctx": "ch: there the sheet gives nothing measurable (locked 0.501 vs paragraph 0.482). Judge the floor in the scene instead.  3 · Where the sheet matters: new characters ne"
+  },
+  {
+   "page": "/elements/art-direction-lock/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/art-direction-lock/demo/index.html",
+   "hit": "Codex",
+   "ctx": "role, drawn size, bytes and sha256 (from assets/assets.json). Each comes from a Codex run whose prompt, GEN.md and verified model are stored next"
+  },
+  {
+   "page": "/elements/art-direction-lock/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/art-direction-lock/demo/index.html",
+   "hit": "gpt-",
+   "ctx": "ets.json). Each comes from a Codex run whose prompt, GEN.md and verified model are stored next to it.  key\trole\tsize\tbytes\tsha256\trun sheet\trefe"
+  },
+  {
+   "page": "/elements/art-direction-lock/demo/index.html",
+   "w": 390,
+   "frame": "/elements/art-direction-lock/demo/index.html",
+   "hit": "Codex",
+   "ctx": "tions. The game only loads the saved files, so every frame stays reproducible.  AI image generator generated 2026-11-16 sample pack 271 KB · 18 fil"
+  },
+  {
+   "page": "/elements/art-direction-lock/demo/index.html",
+   "w": 390,
+   "frame": "/elements/art-direction-lock/demo/index.html",
+   "hit": "image_gen",
+   "ctx": " The game only loads the saved files, so every frame stays reproducible.  AI image generator generated 2026-11-16 sample pack 271 KB · 18 files module:"
+  },
+  {
+   "page": "/elements/art-direction-lock/demo/index.html",
+   "w": 390,
+   "frame": "/elements/art-direction-lock/demo/index.html",
+   "hit": "gpt-",
+   "ctx": "ly loads the saved files, so every frame stays reproducible.  AI image generator generated 2026-11-16 sample pack 271 KB · 18 files module: GameDN"
+  },
+  {
+   "page": "/elements/art-direction-lock/demo/index.html",
+   "w": 390,
+   "frame": "/elements/art-direction-lock/demo/index.html",
+   "hit": "Judge",
+   "ctx": "ch: there the sheet gives nothing measurable (locked 0.501 vs paragraph 0.482). Judge the floor in the scene instead.  3 · Where the sheet matters: new characters ne"
+  },
+  {
+   "page": "/elements/art-direction-lock/demo/index.html",
+   "w": 390,
+   "frame": "/elements/art-direction-lock/demo/index.html",
+   "hit": "Codex",
+   "ctx": "role, drawn size, bytes and sha256 (from assets/assets.json). Each comes from a Codex run whose prompt, GEN.md and verified model are stored next"
+  },
+  {
+   "page": "/elements/art-direction-lock/demo/index.html",
+   "w": 390,
+   "frame": "/elements/art-direction-lock/demo/index.html",
+   "hit": "gpt-",
+   "ctx": "ets.json). Each comes from a Codex run whose prompt, GEN.md and verified model are stored next to it.  key\trole\tsize\tbytes\tsha256\trun sheet\trefe"
+  },
+  {
+   "page": "/elements/beat-judge/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/beat-judge/demo/index.html",
+   "hit": "judge",
+   "ctx": "F-04 Beat judge  A beat clock and an input judge: every press is rated Perfect, Good or Miss ag"
+  },
+  {
+   "page": "/elements/beat-judge/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/beat-judge/demo/index.html",
+   "hit": "judge",
+   "ctx": "F-04 Beat judge  A beat clock and an input judge: every press is rated Perfect, Good or Miss against the beat, measured at the m"
+  },
+  {
+   "page": "/elements/beat-judge/demo/index.html",
+   "w": 390,
+   "frame": "/elements/beat-judge/demo/index.html",
+   "hit": "judge",
+   "ctx": "F-04 Beat judge  A beat clock and an input judge: every press is rated Perfect, Good or Miss ag"
+  },
+  {
+   "page": "/elements/beat-judge/demo/index.html",
+   "w": 390,
+   "frame": "/elements/beat-judge/demo/index.html",
+   "hit": "judge",
+   "ctx": "F-04 Beat judge  A beat clock and an input judge: every press is rated Perfect, Good or Miss against the beat, measured at the m"
+  },
+  {
+   "page": "/elements/normal-maps/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/normal-maps/demo/index.html",
+   "hit": "Codex",
+   "ctx": "ite from any direction: here on a plain 2D canvas, in J-02 with WebGL.  albedo: AI image generator (L-00, L-02, L-06) maps: tools/assets/normalmap."
+  },
+  {
+   "page": "/elements/normal-maps/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/normal-maps/demo/index.html",
+   "hit": "image_gen",
+   "ctx": "om any direction: here on a plain 2D canvas, in J-02 with WebGL.  albedo: AI image generator (L-00, L-02, L-06) maps: tools/assets/normalmap.py 9 sprit"
+  },
+  {
+   "page": "/elements/normal-maps/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/normal-maps/demo/index.html",
+   "hit": "gpt-",
+   "ctx": "tion: here on a plain 2D canvas, in J-02 with WebGL.  albedo: AI image generator (L-00, L-02, L-06) maps: tools/assets/normalmap.py 9 sprites · 47"
+  },
+  {
+   "page": "/elements/normal-maps/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/normal-maps/demo/index.html",
+   "hit": "Codex",
+   "ctx": "ame post with its lantern out, so a game can show an inactive lamp) is a single Codex edit of the L-00 lamppost. Regenerating means: make your own sprite with the L-"
+  },
+  {
+   "page": "/elements/normal-maps/demo/index.html",
+   "w": 390,
+   "frame": "/elements/normal-maps/demo/index.html",
+   "hit": "Codex",
+   "ctx": "ite from any direction: here on a plain 2D canvas, in J-02 with WebGL.  albedo: AI image generator (L-00, L-02, L-06) maps: tools/assets/normalmap."
+  },
+  {
+   "page": "/elements/normal-maps/demo/index.html",
+   "w": 390,
+   "frame": "/elements/normal-maps/demo/index.html",
+   "hit": "image_gen",
+   "ctx": "om any direction: here on a plain 2D canvas, in J-02 with WebGL.  albedo: AI image generator (L-00, L-02, L-06) maps: tools/assets/normalmap.py 9 sprit"
+  },
+  {
+   "page": "/elements/normal-maps/demo/index.html",
+   "w": 390,
+   "frame": "/elements/normal-maps/demo/index.html",
+   "hit": "gpt-",
+   "ctx": "tion: here on a plain 2D canvas, in J-02 with WebGL.  albedo: AI image generator (L-00, L-02, L-06) maps: tools/assets/normalmap.py 9 sprites · 47"
+  },
+  {
+   "page": "/elements/normal-maps/demo/index.html",
+   "w": 390,
+   "frame": "/elements/normal-maps/demo/index.html",
+   "hit": "Codex",
+   "ctx": "ame post with its lantern out, so a game can show an inactive lamp) is a single Codex edit of the L-00 lamppost. Regenerating means: make your own sprite with the L-"
+  },
+  {
+   "page": "/elements/painted-parallax/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/painted-parallax/demo/index.html",
+   "hit": "Codex",
+   "ctx": "allax layers  Five hand-painted background layers generated once at build time (Codex image_gen, one locked style), post-processed to repeat without a seam, scrolled"
+  },
+  {
+   "page": "/elements/painted-parallax/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/painted-parallax/demo/index.html",
+   "hit": "image_gen",
+   "ctx": "layers  Five hand-painted background layers generated once at build time (Codex image_gen, one locked style), post-processed to repeat without a seam, scrolled at their "
+  },
+  {
+   "page": "/elements/painted-parallax/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/painted-parallax/demo/index.html",
+   "hit": "gpt-",
+   "ctx": "termark. key\tsize\tbytes\tseam\tgenerated by\tsha256 dusk-key\t480×240\t9.8 KB\t-\tkey\t8cb9f44ccf36 dusk-far\t1418×540\t20.3 KB\t1\tfar\t"
+  },
+  {
+   "page": "/elements/painted-parallax/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/painted-parallax/demo/index.html",
+   "hit": "gpt-",
+   "ctx": "\t9.8 KB\t-\tkey\t8cb9f44ccf36 dusk-far\t1418×540\t20.3 KB\t1\tfar\t38ee5b869079 dusk-clouds\t712×360\t30.0 KB\t0\tclouds2 (a fixed model, "
+  },
+  {
+   "page": "/elements/painted-parallax/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/painted-parallax/demo/index.html",
+   "hit": "gpt-",
+   "ctx": "B\t1\tfar\t38ee5b869079 dusk-clouds\t712×360\t30.0 KB\t0\tclouds2\t607cfa66124d dusk-mid\t3048×540\t73.7 KB\t1.24\tmid-a + mid-b (a fixed model."
+  },
+  {
+   "page": "/elements/painted-parallax/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/painted-parallax/demo/index.html",
+   "hit": "gpt-",
+   "ctx": "\t607cfa66124d dusk-mid\t3048×540\t73.7 KB\t1.24\tmid-a + mid-b\t8ff301cb0728 dusk-under\t1400×270\t34.8 KB\t1.34\tunder + under (gpt-"
+  },
+  {
+   "page": "/elements/painted-parallax/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/painted-parallax/demo/index.html",
+   "hit": "gpt-",
+   "ctx": "a fixed model, high)\t8ff301cb0728 dusk-under\t1400×270\t34.8 KB\t1.34\tunder + under\te279d4da1d3e dusk-near\t2988×540\t83.5 KB\t0.82\tnear-a + near-b2 (gp"
+  },
+  {
+   "page": "/elements/painted-parallax/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/painted-parallax/demo/index.html",
+   "hit": "gpt-",
+   "ctx": "t-6.1-sol, high)\te279d4da1d3e dusk-near\t2988×540\t83.5 KB\t0.82\tnear-a + near-b2\t88e9af7cf18b night-key\t480×240\t10.2 KB\t-\tkey-night (a fixed model, "
+  },
+  {
+   "page": "/elements/painted-parallax/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/painted-parallax/demo/index.html",
+   "hit": "gpt-",
+   "ctx": "near-b2\t88e9af7cf18b night-key\t480×240\t10.2 KB\t-\tkey-night\t91337ec4e55f night-far\t1418×540\t28.1 KB\t1.44\tnight-far2 (a fixed model-"
+  },
+  {
+   "page": "/elements/painted-parallax/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/painted-parallax/demo/index.html",
+   "hit": "gpt-",
+   "ctx": "ht\t91337ec4e55f night-far\t1418×540\t28.1 KB\t1.44\tnight-far2\t3268ea660e9f night-clouds\t712×360\t28.1 KB\t0\tnight-clouds2 (a fixed model."
+  },
+  {
+   "page": "/elements/painted-parallax/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/painted-parallax/demo/index.html",
+   "hit": "gpt-",
+   "ctx": "\t3268ea660e9f night-clouds\t712×360\t28.1 KB\t0\tnight-clouds2\t380f9c64aac7 night-mid\t3048×540\t88.1 KB\t1.18\tnight-mid-a + night-"
+  },
+  {
+   "page": "/elements/painted-parallax/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/painted-parallax/demo/index.html",
+   "hit": "gpt-",
+   "ctx": ", high)\t380f9c64aac7 night-mid\t3048×540\t88.1 KB\t1.18\tnight-mid-a + night-mid-b\tcfd3f74601a6 night-under\t1400×270\t59.5 KB\t1.15\tnight-under-a + ni"
+  },
+  {
+   "page": "/elements/painted-parallax/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/painted-parallax/demo/index.html",
+   "hit": "gpt-",
+   "ctx": ")\tcfd3f74601a6 night-under\t1400×270\t59.5 KB\t1.15\tnight-under-a + night-under-b\tc19b58f08add night-near\t2988×540\t96.7 KB\t0.35\tnight-near-a + nigh"
+  },
+  {
+   "page": "/elements/painted-parallax/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/painted-parallax/demo/index.html",
+   "hit": "gpt-",
+   "ctx": "gh)\tc19b58f08add night-near\t2988×540\t96.7 KB\t0.35\tnight-near-a + night-near-b2\t83a7607f8d59"
+  },
+  {
+   "page": "/elements/painted-parallax/demo/index.html",
+   "w": 390,
+   "frame": "/elements/painted-parallax/demo/index.html",
+   "hit": "Codex",
+   "ctx": "allax layers  Five hand-painted background layers generated once at build time (Codex image_gen, one locked style), post-processed to repeat without a seam, scrolled"
+  },
+  {
+   "page": "/elements/painted-parallax/demo/index.html",
+   "w": 390,
+   "frame": "/elements/painted-parallax/demo/index.html",
+   "hit": "image_gen",
+   "ctx": "layers  Five hand-painted background layers generated once at build time (Codex image_gen, one locked style), post-processed to repeat without a seam, scrolled at their "
+  },
+  {
+   "page": "/elements/painted-parallax/demo/index.html",
+   "w": 390,
+   "frame": "/elements/painted-parallax/demo/index.html",
+   "hit": "gpt-",
+   "ctx": "termark. key\tsize\tbytes\tseam\tgenerated by\tsha256 dusk-key\t480×240\t9.8 KB\t-\tkey\t8cb9f44ccf36 dusk-far\t1418×540\t20.3 KB\t1\tfar\t"
+  },
+  {
+   "page": "/elements/painted-parallax/demo/index.html",
+   "w": 390,
+   "frame": "/elements/painted-parallax/demo/index.html",
+   "hit": "gpt-",
+   "ctx": "\t9.8 KB\t-\tkey\t8cb9f44ccf36 dusk-far\t1418×540\t20.3 KB\t1\tfar\t38ee5b869079 dusk-clouds\t712×360\t30.0 KB\t0\tclouds2 (a fixed model, "
+  },
+  {
+   "page": "/elements/painted-parallax/demo/index.html",
+   "w": 390,
+   "frame": "/elements/painted-parallax/demo/index.html",
+   "hit": "gpt-",
+   "ctx": "B\t1\tfar\t38ee5b869079 dusk-clouds\t712×360\t30.0 KB\t0\tclouds2\t607cfa66124d dusk-mid\t3048×540\t73.7 KB\t1.24\tmid-a + mid-b (a fixed model."
+  },
+  {
+   "page": "/elements/painted-parallax/demo/index.html",
+   "w": 390,
+   "frame": "/elements/painted-parallax/demo/index.html",
+   "hit": "gpt-",
+   "ctx": "\t607cfa66124d dusk-mid\t3048×540\t73.7 KB\t1.24\tmid-a + mid-b\t8ff301cb0728 dusk-under\t1400×270\t34.8 KB\t1.34\tunder + under (gpt-"
+  },
+  {
+   "page": "/elements/painted-parallax/demo/index.html",
+   "w": 390,
+   "frame": "/elements/painted-parallax/demo/index.html",
+   "hit": "gpt-",
+   "ctx": "a fixed model, high)\t8ff301cb0728 dusk-under\t1400×270\t34.8 KB\t1.34\tunder + under\te279d4da1d3e dusk-near\t2988×540\t83.5 KB\t0.82\tnear-a + near-b2 (gp"
+  },
+  {
+   "page": "/elements/painted-parallax/demo/index.html",
+   "w": 390,
+   "frame": "/elements/painted-parallax/demo/index.html",
+   "hit": "gpt-",
+   "ctx": "t-6.1-sol, high)\te279d4da1d3e dusk-near\t2988×540\t83.5 KB\t0.82\tnear-a + near-b2\t88e9af7cf18b night-key\t480×240\t10.2 KB\t-\tkey-night (a fixed model, "
+  },
+  {
+   "page": "/elements/painted-parallax/demo/index.html",
+   "w": 390,
+   "frame": "/elements/painted-parallax/demo/index.html",
+   "hit": "gpt-",
+   "ctx": "near-b2\t88e9af7cf18b night-key\t480×240\t10.2 KB\t-\tkey-night\t91337ec4e55f night-far\t1418×540\t28.1 KB\t1.44\tnight-far2 (a fixed model-"
+  },
+  {
+   "page": "/elements/painted-parallax/demo/index.html",
+   "w": 390,
+   "frame": "/elements/painted-parallax/demo/index.html",
+   "hit": "gpt-",
+   "ctx": "ht\t91337ec4e55f night-far\t1418×540\t28.1 KB\t1.44\tnight-far2\t3268ea660e9f night-clouds\t712×360\t28.1 KB\t0\tnight-clouds2 (a fixed model."
+  },
+  {
+   "page": "/elements/painted-parallax/demo/index.html",
+   "w": 390,
+   "frame": "/elements/painted-parallax/demo/index.html",
+   "hit": "gpt-",
+   "ctx": "\t3268ea660e9f night-clouds\t712×360\t28.1 KB\t0\tnight-clouds2\t380f9c64aac7 night-mid\t3048×540\t88.1 KB\t1.18\tnight-mid-a + night-"
+  },
+  {
+   "page": "/elements/painted-parallax/demo/index.html",
+   "w": 390,
+   "frame": "/elements/painted-parallax/demo/index.html",
+   "hit": "gpt-",
+   "ctx": ", high)\t380f9c64aac7 night-mid\t3048×540\t88.1 KB\t1.18\tnight-mid-a + night-mid-b\tcfd3f74601a6 night-under\t1400×270\t59.5 KB\t1.15\tnight-under-a + ni"
+  },
+  {
+   "page": "/elements/painted-parallax/demo/index.html",
+   "w": 390,
+   "frame": "/elements/painted-parallax/demo/index.html",
+   "hit": "gpt-",
+   "ctx": ")\tcfd3f74601a6 night-under\t1400×270\t59.5 KB\t1.15\tnight-under-a + night-under-b\tc19b58f08add night-near\t2988×540\t96.7 KB\t0.35\tnight-near-a + nigh"
+  },
+  {
+   "page": "/elements/painted-parallax/demo/index.html",
+   "w": 390,
+   "frame": "/elements/painted-parallax/demo/index.html",
+   "hit": "gpt-",
+   "ctx": "gh)\tc19b58f08add night-near\t2988×540\t96.7 KB\t0.35\tnight-near-a + night-near-b2\t83a7607f8d59"
+  },
+  {
+   "page": "/elements/painted-portraits/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/painted-portraits/demo/index.html",
+   "hit": "Codex",
+   "ctx": "ame hooks as the D-04 pixel portraits, so the H-01 dialogue box drives either.  AI image generator generated 2026-11-16 28 files · 509 KB module: G"
+  },
+  {
+   "page": "/elements/painted-portraits/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/painted-portraits/demo/index.html",
+   "hit": "image_gen",
+   "ctx": "oks as the D-04 pixel portraits, so the H-01 dialogue box drives either.  AI image generator generated 2026-11-16 28 files · 509 KB module: GameDNA_Pai"
+  },
+  {
+   "page": "/elements/painted-portraits/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/painted-portraits/demo/index.html",
+   "hit": "gpt-",
+   "ctx": "-04 pixel portraits, so the H-01 dialogue box drives either.  AI image generator generated 2026-11-16 28 files · 509 KB module: GameDNA_PaintedPor"
+  },
+  {
+   "page": "/elements/painted-portraits/demo/index.html",
+   "w": 390,
+   "frame": "/elements/painted-portraits/demo/index.html",
+   "hit": "Codex",
+   "ctx": "ame hooks as the D-04 pixel portraits, so the H-01 dialogue box drives either.  AI image generator generated 2026-11-16 28 files · 509 KB module: G"
+  },
+  {
+   "page": "/elements/painted-portraits/demo/index.html",
+   "w": 390,
+   "frame": "/elements/painted-portraits/demo/index.html",
+   "hit": "image_gen",
+   "ctx": "oks as the D-04 pixel portraits, so the H-01 dialogue box drives either.  AI image generator generated 2026-11-16 28 files · 509 KB module: GameDNA_Pai"
+  },
+  {
+   "page": "/elements/painted-portraits/demo/index.html",
+   "w": 390,
+   "frame": "/elements/painted-portraits/demo/index.html",
+   "hit": "gpt-",
+   "ctx": "-04 pixel portraits, so the H-01 dialogue box drives either.  AI image generator generated 2026-11-16 28 files · 509 KB module: GameDNA_PaintedPor"
+  },
+  {
+   "page": "/elements/painted-ui/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/painted-ui/demo/index.html",
+   "hit": "Codex",
+   "ctx": "s back to the game's old drawing when a file is missing.  6 files · 113 KB WebP AI image generator assetcheck ok · frame9 symmetry ≥ 0.95 no text i"
+  },
+  {
+   "page": "/elements/painted-ui/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/painted-ui/demo/index.html",
+   "hit": "image_gen",
+   "ctx": " to the game's old drawing when a file is missing.  6 files · 113 KB WebP AI image generator assetcheck ok · frame9 symmetry ≥ 0.95 no text in any imag"
+  },
+  {
+   "page": "/elements/painted-ui/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/painted-ui/demo/index.html",
+   "hit": "gpt-",
+   "ctx": "'s old drawing when a file is missing.  6 files · 113 KB WebP AI image generator assetcheck ok · frame9 symmetry ≥ 0.95 no text in any image (OCR)"
+  },
+  {
+   "page": "/elements/painted-ui/demo/index.html",
+   "w": 1280,
+   "frame": "/elements/painted-ui/demo/index.html",
+   "hit": "Codex",
+   "ctx": "+ painted kit attached What ships: files and their record  Every file lists the Codex run it came from (prompt, GEN.md, model and effort read back from the session, "
+  },
+  {
+   "page": "/elements/painted-ui/demo/index.html",
+   "w": 390,
+   "frame": "/elements/painted-ui/demo/index.html",
+   "hit": "Codex",
+   "ctx": "s back to the game's old drawing when a file is missing.  6 files · 113 KB WebP AI image generator assetcheck ok · frame9 symmetry ≥ 0.95 no text i"
+  },
+  {
+   "page": "/elements/painted-ui/demo/index.html",
+   "w": 390,
+   "frame": "/elements/painted-ui/demo/index.html",
+   "hit": "image_gen",
+   "ctx": " to the game's old drawing when a file is missing.  6 files · 113 KB WebP AI image generator assetcheck ok · frame9 symmetry ≥ 0.95 no text in any imag"
+  },
+  {
+   "page": "/elements/painted-ui/demo/index.html",
+   "w": 390,
+   "frame": "/elements/painted-ui/demo/index.html",
+   "hit": "gpt-",
+   "ctx": "'s old drawing when a file is missing.  6 files · 113 KB WebP AI image generator assetcheck ok · frame9 symmetry ≥ 0.95 no text in any image (OCR)"
+  },
+  {
+   "page": "/elements/painted-ui/demo/index.html",
+   "w": 390,
+   "frame": "/elements/painted-ui/demo/index.html",
+   "hit": "Codex",
+   "ctx": "+ painted kit attached What ships: files and their record  Every file lists the Codex run it came from (prompt, GEN.md, model and effort read back from the session, "
+  }
+ ],
  "external": [],
  "failed": [],
  "console": [],

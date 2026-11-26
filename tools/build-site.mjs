@@ -76,13 +76,14 @@ const RELEASE = {
   M13: ['horde-survival', 'vision-cones', 'tower-defense', 'minimap', 'physics-debris'],
   M14: ['grapple-swing', 'clash-cutin', 'title-menu', 'quest-log', 'world-hud', 'wfc-town-3d'],
   M15: ['seeded-replay', 'water-surface', 'loot-beams', 'keyword-tooltips', 'kart-racer-3d', 'match3-battle', 'ik-creatures', 'dungeon-floors', 'motion-inputs', 'crafting-recipes', 'shaped-inventory', 'farming-plots', 'scripted-cutscenes'],
-  M17: ['on-map-skirmish'],
+  M17: ['on-map-skirmish', 'npc-generator'],
   M16: ['chip-music', 'beat-judge', 'adaptive-music', 'paper-doll', 'talking-portraits', 'sprite-stacking', 'belt-depth', 'raycast-dungeon'],
   M10: ['modern-particles', 'ribbon-trails', 'toasts', 'bark-bubbles', 'screen-distortion', 'squad-formation', 'tactic-rules', 'stamina-rest', 'squad-clash', 'normal-maps', 'normal-lighting', 'run-map', 'card-art', 'card-battle', 'cutout-characters']   // L-10 joined M10 later the same day (own What's new entry)
 };
 const STYLE_RELEASE = { 'painted-impasto': 'M10', 'glass-ui': 'M10' };   // styles added after M7 that carry a "New" mark
 const STYLE_GEN = { 'painted-impasto': true };   // styles whose look ships generated bitmaps (an L-00-locked pack)
 const CHANGELOG = [   // short, dated entries for the top of the home page (newest first); [release, date, text, label shown instead of the release]
+  ['M17', '2026-11-26', 'New element D-03 NPC generator: seeded townsfolk hand-pixelled from parts (body, skin, hair, clothes, hats, glasses, beards) with a four-direction walk, a name and a trade; they wander round the walls and props, turn to face you when you talk, and what they say opens a dialogue panel with their own pixel portrait.', 'D-03'],
   ['M17', '2026-11-26', 'One element: on-map skirmish exchanges for tactics games. The small map units fight where they stand: the attacker lunges, the target flashes white and is knocked back, counters and follow-ups play in turn and both HP bars drain at the edge of the screen. It is the alternative to the side-view clash cut-in.'],
   ['M16', '2026-11-20', 'Eight elements: chip music synthesized in the browser with loops and jingles, a beat judge that rates each press Perfect, Good or Miss after a calibration, adaptive music whose layers follow the game state, a layered paper doll with a wardrobe, talking portraits whose mouths move with the text, sprite-stacked props that keep their depth as the camera turns, street depth for brawlers, and a first-person raycast dungeon crawler with a starter game.'],
   ['M15', '2026-11-19', 'Thirteen elements: four new systems with starter games (a 3D kart racer with drifts and a two-race cup, a match-3 board whose combos drive a party battle, dungeon floors generated room by room, and a farm through the seasons), plus seeded replays with a ghost, water that splashes, loot with rarity beams, keyword tooltips, creatures that walk on procedural legs, motion-input special moves, crafting with recipe discovery, a bag where items have shapes, and scripted cutscenes that walk the game\'s own characters through a scene.'],
@@ -192,6 +193,9 @@ const STATUS = {
   // M17: hand-written from coldtests/sol/judge-m17-on-map-skirmish-r1.json (v1.0.2) and -r2.json (v1.0.3 reruns after the fix)
   'on-map-skirmish': { cold: [['Module v1.0.2 into unseen tactics and top-down games', '4/6; tactics 3/3, top-down 1/3: a module bug, not the integrations (the top-down game starts a fight when the two units already overlap, and the module spaced the fighters apart only for a boss, so the hero covered the slime on the hit)', 'solH'], ['Shipped module v1.0.3 (every exchange spaces the pair along the attack axis), 3 runs', '3/3 integrated (tactics 1/1, top-down 2/2)', 'solH']],
     coldNote: 'The top-down failures came from the module; v1.0.3 spaces every pair itself and was cold-tested again on both games.', issues: [] },
+  // M17: hand-written from elements/npc-generator/checks/cold-v2/summary.json (v2.0.0) and summary-v201.json (v2.0.1)
+  'npc-generator': { cold: [['Module v2.0.0 into unseen top-down and HD top-down games', '3/6; top-down 3/3, HD top-down 0/3: a module bug, not the integrations (all six wired it in correctly; on a canvas scaled by 1.5 the talk panel was laid out at the art scale but drawn at the rounded device scale, so it ran 15 px past the bottom edge)', 'solH'], ['Shipped module v2.0.1 (the panel laid out at the size it is drawn) into the HD top-down game, 3 runs', '3/3 integrated', 'solH']],
+    coldNote: 'Version 2 replaced the first design (a name card floating in the world, which never passed review) with a dialogue panel and a portrait; the review rounds of both designs are listed. The top-down game draws at scale 1, where v2.0.1 lays out exactly as v2.0.0, so its 3/3 carries over.', issues: [] },
   'belt-depth': { cold: [['Shipped module v1.0.3 into unseen side-scroller and HD side-scroller games', '6/6 integrated', 'solH']], issues: [] },
   'scripted-cutscenes': { cold: [['Module v1.0.0 into unseen top-down and HD top-down games', '6/6 integrated', 'solH'], ['Module v1.1.0, both hosts', '4/4 integrated', 'solH'], ['Shipped module v1.2.0, both hosts', '4/4 integrated', 'solH']],
     coldNote: 'Every run sent the lines through the game\'s own dialogue box, and a held skip landed on the play-through positions, facings and calls. The repo judge read its manual check as failed on the HD top-down runs because its scripted walker opens menus while the scene still holds control; a walker that waits for the scene to end passed all of them.', issues: [] },
@@ -270,6 +274,7 @@ const FOCAL = {   // [x, y] or [x, y, scale]: scale 1 keeps a whole game window 
   // site critic r2: cards whose UI text was cut at the edges show the whole frame, letterboxed ('contain', site.js)
   'keyword-tooltips': [192, 108, 'contain'], 'motion-inputs': [160, 90, 'contain'], 'shaped-inventory': [240, 135, 'contain'], 'crafting-recipes': [240, 135, 'contain'], 'farming-plots': [240, 158, 'contain'], 'scripted-cutscenes': [240, 135, 'contain'],
   // M16: the music panels whole; beat-judge low enough to keep the beat track, talking-portraits on the dialogue box
+  'npc-generator': [160, 90, 1],   // M17 D-03: the whole frame, so the talk panel at the bottom stays in the card
   'chip-music': [240, 143, 'contain'], 'adaptive-music': [240, 146, 'contain'], 'beat-judge': [128, 100, 'contain'], 'talking-portraits': [128, 112, 'contain'], 'paper-doll': [160, 90, 'contain'], 'raycast-dungeon': [240, 144, 'contain'],   // site critic m16 r1: posters whole (no cut UI text) 'water-surface': [160, 140]
 };
 
@@ -290,8 +295,9 @@ function critic(dir) {
   const plain = all.filter(f => /^critic-r\d+\.json$/.test(f));   // N-02 has only strict-critic-r*.json: use those
   // M16: a narrow re-check after a round (strict-critic-r3-patch.json) counts as the next round, sorted right after rN
   // and a re-check of a later version (strict-critic-r3-v130.json, K-03)
-  const key = f => +f.match(/\d+/)[0] + (/-(patch|v\d+)\.json$/.test(f) ? 0.5 : 0);
-  const files = (plain.length ? plain : all.filter(f => /^strict-critic-r\d+(-patch|-v\d+)?\.json$/.test(f))).sort((a, b) => key(a) - key(b));
+  // M17: a redesign reviewed afresh (strict-critic-v2-r1.json, D-03) sorts after every round of the first design
+  const key = f => (/^strict-critic-v2-/.test(f) ? 100 : 0) + +f.match(/r(\d+)/)[1] + (/-(patch|v\d+)\.json$/.test(f) ? 0.5 : 0);
+  const files = (plain.length ? plain : all.filter(f => /^strict-critic-(v2-)?r\d+(-patch|-v\d+)?\.json$/.test(f))).sort((a, b) => key(a) - key(b));
   const rounds = files.map(f => { const j = JSON.parse(read(path.join(dir, 'checks', f))); return { demo: j.demo ? j.demo.score : j.score, starter: j.starter ? j.starter.score : null, pass: j.demo ? !!(j.demo.pass && (!j.starter || j.starter.pass)) : !!j.pass }; });
   return rounds;
 }
@@ -704,6 +710,7 @@ const PITCH = {   // the one-sentence template: 'Add <element> to <your game>: <
   'minimap': "a corner map that fills in as you explore, with an arrow, markers and a full-map view",
   'physics-debris': "crates, barrels and rocks that shatter into pieces that tumble, bounce off walls and settle",
   'grapple-swing': "a hook you fire at rings and rock, swing from with real momentum, and wrap around corners",
+  'npc-generator': "seeded townsfolk who wander, turn to face you and talk in a dialogue panel with their own pixel portrait",
   'on-map-skirmish': "attack exchanges that play on the map itself: lunge, white flash, knock-back, counters and draining HP plates",
   'clash-cutin': "a side-view cut-in where both fighters leap, strike, counter and land criticals",
   'title-menu': "a title screen, start menu, options and pause menu with screen wipes",

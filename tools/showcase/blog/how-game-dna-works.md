@@ -1,6 +1,6 @@
 You ask your coding agent for "damage numbers that pop out of the enemy". It says done. Then the numbers float next to the wrong unit, the turn loop freezes, or the game's own autoplay can't finish a run anymore. The request was one sentence. The fix takes an afternoon.
 
-I wanted that one sentence to be reliable. So I built Game DNA: 102 browser-game elements, from [hit-stop and screen shake](@/dna/hit-stop-shake/) to [card battles](@/dna/card-battle/), [tactics grids](@/dna/tactics-grid-3d/) and a [3D kart racer](@/dna/kart-racer-3d/), and tested every one of them the hard way: an agent with no hints adds it to a game it has never seen, and another agent plays the result. More than 700 judged runs later, the most useful finding is uncomfortable. When the agents failed, the cause was surprisingly often in my own docs.
+I wanted that one sentence to be reliable. So I built Game DNA: 103 browser-game elements, from [hit-stop and screen shake](@/dna/hit-stop-shake/) to [card battles](@/dna/card-battle/), [tactics grids](@/dna/tactics-grid-3d/) and a [3D kart racer](@/dna/kart-racer-3d/), and tested every one of them the hard way: an agent with no hints adds it to a game it has never seen, and another agent plays the result. More than 700 judged runs later, the most useful finding is uncomfortable. When the agents failed, the cause was surprisingly often in my own docs.
 
 Here is what's in the library, how the testing works, and the four stories that changed how I build it.
 

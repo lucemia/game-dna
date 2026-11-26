@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NPC Generator</title>
+<style>
+  :root { --bg: #0f0c16; --panel: #1b1626; --line: #352b47; --ink: #efe9f7; --dim: #a397b8; --acc: #ffc76a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; overflow-x: hidden; }
+  main { max-width: 1000px; margin: 0 auto; padding: 14px 16px 28px; }
+  h1 { font-size: 20px; margin: 0 0 2px; }
+  .sub { color: var(--dim); margin: 0 0 12px; font-size: 13.5px; }
+  #stage { position: relative; background: #000; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; display: flex; justify-content: center; }
+  @media (max-width: 560px) { #stage { margin: 0 -16px; border-radius: 0; border-left: 0; border-right: 0; } }
+  canvas#game { display: block; touch-action: none; image-rendering: pixelated; image-rendering: crisp-edges; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0 6px; }
+  .bar input[type=range] { flex: 1 1 180px; min-width: 120px; accent-color: var(--acc); }
+  .time { font-variant-numeric: tabular-nums; color: var(--dim); min-width: 56px; }
+  button { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 7px; padding: 6px 12px; font: inherit; cursor: pointer; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 12px; }
+  .grid label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--dim); }
+  .grid input { font: inherit; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 5px; padding: 3px; accent-color: var(--acc); }
+  .note { color: var(--dim); font-size: 12.5px; margin: 8px 0 0; }
+  kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; font: 12px ui-monospace, monospace; color: var(--ink); }
+</style>
+</head>
+<body>
+<main>
+  <h1>NPC generator</h1>
+  <p class="sub">Townsfolk made from a seed: body type, age, skin, hair, clothes, hats, glasses and beards, a name and a trade, all hand-pixelled in one style with a four-step walk in every direction. The same seed always gives the same person; a crowd keeps look-alikes apart. They wander the square, step round the stalls and each other, and turn to face you when you talk; what they say shows in a dialogue panel with their own portrait.</p>
+  <div id="stage"><canvas id="game" width="320" height="180"></canvas></div>
+  <div class="bar">
+    <button id="reg">Register</button><button id="newtown">New town</button><button id="play">Pause</button><button id="again">Replay</button>
+    <input id="scrub" type="range" min="0" max="33000" step="50" value="0"><span class="time" id="time">0.0 s</span><span class="time" id="status"></span>
+  </div>
+  <div class="grid" id="ctl"></div>
+  <p class="note">Arrow keys take over the mapmaker &middot; <kbd>Z</kbd> talk to the person in front &middot; <kbd>R</kbd> town register &middot; tap a person to talk. <code>?seed=&lt;n&gt;</code> picks the town, <code>?t=&lt;ms&gt;&amp;freeze=1</code> gives the same still every time.</p>
+</main>
+<script src="../../../pixel-kit/pixel-scene.js"></script>
+<script src="../module/npc-generator.js"></script>
+<script src="scene.js"></script>
+<script>
+/* D-03 npc-generator demo. One clock: sim.step() (scene.js). The world is drawn at native resolution into the canvas, which CSS
+   scales by a whole number (pixelated): 320x180 x3 on desktops, a narrower native view x2 on phones. */
+(function () {
+  'use strict';
+  var Q = new URLSearchParams(location.search), NG = GameDNA_NpcGen, D = GameDNA_NpcGenDemo, PXS = GameDNA_PixelScene, T = D.T, STEP = D.STEP, END = D.END;
+  var T0 = Q.has('t') ? Math.max(0, +Q.get('t') || 0) : null, FREEZE = Q.get('freeze') === '1';
+  var stage = document.getElementById('stage'), cv = document.getElementById('game'), g = cv.getContext('2d');
+  var W = 320, H = 180, K = 3;
+  function fit() {
+    var avail = Math.min(stage.clientWidth || 320, 1000), k = Math.max(2, Math.floor(avail / 320)), w = Math.min(320, Math.floor(avail / k));
+    if (w < 180) { k = 1; w = Math.min(320, avail); }
+    var h = w < 280 ? 240 : 180;
+    if (w !== W || h !== H) { W = w; H = h; cv.width = W; cv.height = H; }
+    K = k; cv.style.width = W * K + 'px'; cv.style.height = H * K + 'px';
+  }
+  fit();
+  var params = { seed: Q.has('seed') ? (+Q.get('seed') >>> 0) : 7, count: Q.has('count') ? +Q.get('count') : 10, speed: Q.has('speed') ? +Q.get('speed') : 20, live: Q.has('live') ? +Q.get('live') : null };
+  var SC = PXS.scene({ seed: 41, map: D.rows, props: D.props });
+  var sim = null, clock = 0;
+  function build() { sim = D.make(NG, { seed: params.seed, count: params.count, speed: params.speed, live: params.live }); clock = 0; }
+  function simTo(ms) { build(); sim.runTo(ms); clock = sim.clock; }
+
+  /* ---------- camera (scene.js, shared with the checks) and the HUD: a location plate, top left ---------- */
+  function camera() { return D.camera(sim, W, H); }
+  function ease(k) { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); }
+  function plate() {
+    var r = D.hud(NG)[0], x = r.x, y = r.y, w = r.w, h = r.h;
+    g.fillStyle = '#0c0814'; g.fillRect(x + 1, y, w - 2, h); g.fillRect(x, y + 1, w, h - 2);
+    g.fillStyle = '#2a2046'; g.fillRect(x + 1, y + 1, w - 2, h - 2); g.fillStyle = '#41346a'; g.fillRect(x + 2, y + 1, w - 4, 1);
+    // a little map pin
+    g.fillStyle = '#0c0814'; g.fillRect(x + 4, y + 2, 7, 6); g.fillRect(x + 5, y + 8, 5, 1); g.fillRect(x + 6, y + 9, 3, 1); g.fillRect(x + 7, y + 10, 1, 1);
+    g.fillStyle = '#ffc76a'; g.fillRect(x + 5, y + 3, 5, 4); g.fillRect(x + 6, y + 7, 3, 1); g.fillRect(x + 7, y + 8, 1, 1);
+    g.fillStyle = '#fff2c8'; g.fillRect(x + 6, y + 3, 2, 1); g.fillStyle = '#2a2046'; g.fillRect(x + 7, y + 4, 1, 2);
+    NG.text(g, D.PLACE, x + 15, y + 3, '#e4dcf0', '#0c0814');
+    return r;
+  }
+
+  /* ---------- the town register: everyone in town, name and trade (demo UI drawn with the module's pixel font) ---------- */
+  function register(k) {
+    var folk = sim.town.folk, n = folk.length, a = ease(k);
+    g.fillStyle = 'rgba(8,5,18,' + (0.6 * a).toFixed(3) + ')'; g.fillRect(0, 0, W, H);
+    var pw = W - 8, cw = 58, cols = Math.max(2, Math.floor((pw - 6) / cw)), rows = Math.ceil(n / cols), ch = 50, ph = 18 + rows * ch + 4;
+    if (ph > H - 6) { ch = Math.floor((H - 6 - 22) / rows); ph = 18 + rows * ch + 4; }
+    cw = Math.floor((pw - 6) / cols);
+    var px = 4, py = Math.round((H - ph) / 2 + (1 - a) * 18);
+    g.globalAlpha = a;
+    g.fillStyle = '#0c0814'; g.fillRect(px + 1, py, pw - 2, ph); g.fillRect(px, py + 1, pw, ph - 2);
+    g.fillStyle = '#f1e2c0'; g.fillRect(px + 2, py + 1, pw - 4, 1); g.fillRect(px + 1, py + 2, 1, ph - 4); g.fillStyle = '#8a7a9c'; g.fillRect(px + 2, py + ph - 2, pw - 4, 1); g.fillRect(px + pw - 2, py + 2, 1, ph - 4);
+    g.fillStyle = '#1d1631'; g.fillRect(px + 2, py + 2, pw - 4, ph - 4); g.fillStyle = '#251c3e'; g.fillRect(px + 2, py + 2, pw - 4, 13);
+    var title = W >= 260 ? 'TOWN REGISTER  -  SEED ' + sim.seed : 'REGISTER  SEED ' + sim.seed;
+    NG.text(g, title, px + Math.round((pw - NG.textWidth(title)) / 2), py + 5, '#ffe7a0', '#0c0814');
+    var x0 = px + 3 + Math.round((pw - 6 - cols * cw) / 2), y0 = py + 18, dirs = ['down', 'right', 'down', 'left'];
+    folk.forEach(function (f, i) {
+      var cx = x0 + (i % cols) * cw, cy = y0 + Math.floor(i / cols) * ch;
+      g.fillStyle = (i + Math.floor(i / cols)) % 2 ? '#221a38' : '#271e40'; g.fillRect(cx + 1, cy, cw - 2, ch - 2);
+      var turn = Math.floor((clock - sim.register.t0) / 1600 + i * 0.5) % 4, dir = dirs[turn];
+      var feet = cy + Math.min(31, ch - 19);
+      f.npc.draw(g, cx + Math.round(cw / 2), feet, { dir: dir, moving: true, walk: (clock / 1000) * 18, shadow: true });
+      var given = f.spec.name.split(' ')[0], role = f.spec.title;
+      if (NG.textWidth(role) > cw - 4) role = role.split(' ')[0];
+      NG.text(g, given, cx + Math.round((cw - NG.textWidth(given)) / 2), feet + 2, '#ffe7a0', '#0c0814');
+      g.fillStyle = '#a8e0c8'; NG.text(g, role, cx + Math.round((cw - NG.textWidth(role)) / 2), feet + 10, '#a8e0c8', '#0c0814');
+    });
+    g.globalAlpha = 1;
+    return { x: px, y: py, w: pw, h: ph };
+  }
+
+  /* ---------- drawing ---------- */
+  var lastPanel = null, lastMarker = null, regRect = null, hudRects = [];
+  function render() {
+    fit();
+    var cam = camera(), ox = -cam.x, oy = -cam.y, ex = [], tr = sim.trav;
+    g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = false; g.fillStyle = '#0c0a14'; g.fillRect(0, 0, W, H);
+    lastMarker = null;
+    sim.town.drawables(cam.x, cam.y).forEach(function (d) { ex.push(d); });
+    ex.push({ y: tr.y, draw: function (gg) { tr.npc.draw(gg, tr.x + ox, tr.y + oy, sim.trOpts()); } });
+    SC.draw(g, clock, ex, ox, oy);
+    var vg = g.createRadialGradient(W / 2, H / 2, H * 0.45, W / 2, H / 2, W * 0.75); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(14,8,26,0.3)'); g.fillStyle = vg; g.fillRect(0, 0, W, H);
+    var regK = sim.register.open ? (clock - sim.register.t0) / 300 : sim.register.t1 ? 1 - (clock - sim.register.t1) / 300 : 0;
+    lastPanel = null; hudRects = [];
+    if (regK <= 0) {
+      document.getElementById('status').textContent = 'Town seed ' + sim.seed + (sim.auto ? ' \u00b7 demo playing, arrow keys take over' : ' \u00b7 you play');
+      hudRects = [plate()];
+      lastMarker = sim.talking ? sim.town.marker(sim.talking, cam.x, cam.y) : null;
+      lastPanel = sim.town.panel(g, cam.x, cam.y, { view: { x: 0, y: 0, w: W, h: H }, avoid: hudRects });
+    }
+    regRect = regK > 0 ? register(Math.min(1, regK)) : null;
+    document.getElementById('time').textContent = (clock / 1000).toFixed(1) + ' s';
+    if (!dragging) document.getElementById('scrub').value = Math.min(END, clock);
+  }
+
+  /* ---------- text state for checks and critics ---------- */
+  window.__state = function () { var s = sim.state(), cm = camera(); s.camera = cm; s.view = { w: W, h: H, k: K };
+    s.boxes = sim.town.rects(cm.x, cm.y).concat([Object.assign(sim.trav.npc.rect(sim.trav.x - cm.x, sim.trav.y - cm.y, { dir: sim.trav.dir }), { id: 'traveller' })]);
+    s.panel = lastPanel; s.panelState = sim.town.panelState(); s.marker = lastMarker; s.hud = hudRects; s.registerRect = regRect; s.events = sim.events.slice(-6); return s; };
+  window.__sim = function () { return sim; };
+
+  /* ---------- controls ---------- */
+  var ctl = document.getElementById('ctl');
+  function addRange(label, min, max, step, val, fn) { var l = document.createElement('label'); l.textContent = label; var i = document.createElement('input'); i.type = 'range'; i.min = min; i.max = max; i.step = step; i.value = val; i.oninput = function () { fn(+i.value); }; l.appendChild(i); ctl.appendChild(l); return i; }
+  (function () { var l = document.createElement('label'); l.textContent = 'Town seed'; var i = document.createElement('input'); i.type = 'number'; i.min = 0; i.value = params.seed; i.onchange = function () { params.seed = (+i.value >>> 0); simTo(0); }; l.appendChild(i); ctl.appendChild(l); window.__seedInput = i; })();
+  addRange('Townsfolk', 4, 14, 1, params.count, function (v) { params.count = v; simTo(0); });
+  addRange('Walk speed (px/s)', 10, 36, 1, params.speed, function (v) { params.speed = v; sim.town.folk.forEach(function () { }); simTo(clock); });
+  var running = true, dragging = false;
+  document.getElementById('reg').onclick = function () { sim.takeOver(); sim.toggleRegister(); };
+  document.getElementById('newtown').onclick = function () { params.seed = (params.seed * 1103515245 + 12345) % 100000; window.__seedInput.value = params.seed; simTo(0); };
+  document.getElementById('play').onclick = function () { running = !running; this.textContent = running ? 'Pause' : 'Play'; };
+  document.getElementById('again').onclick = function () { simTo(0); running = true; document.getElementById('play').textContent = 'Pause'; };
+  var scrub = document.getElementById('scrub');
+  scrub.oninput = function () { dragging = true; simTo(+scrub.value); render(); };
+  scrub.onchange = function () { dragging = false; };
+
+  /* ---------- input ---------- */
+  var KEYS = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' };
+  addEventListener('keydown', function (e) {
+    var k = KEYS[e.key];
+    if (k) { e.preventDefault(); sim.takeOver(); if (sim.goto) { sim.goto = null; if (sim.trav.target && !sim.talking) { sim.town.release(sim.trav.target); sim.trav.target = null; } } sim.keys[k] = true; return; }
+    if (e.key === 'z' || e.key === 'Z' || e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sim.takeOver(); sim.talkKey(); }
+    else if (e.key === 'r' || e.key === 'R') { e.preventDefault(); sim.takeOver(); sim.toggleRegister(); }
+    else if (e.key === 'x' || e.key === 'X' || e.key === 'Escape') { e.preventDefault(); if (sim.register.open) sim.toggleRegister(); else if (sim.talking) sim.talkKey(); }
+  });
+  addEventListener('keyup', function (e) { if (KEYS[e.key]) sim.keys[KEYS[e.key]] = false; });
+  cv.addEventListener('pointerdown', function (e) {
+    var r = cv.getBoundingClientRect(), x = (e.clientX - r.left) * W / r.width, y = (e.clientY - r.top) * H / r.height, cam = camera();
+    sim.takeOver();
+    if (sim.register.open) { sim.toggleRegister(); return; }
+    var f = sim.town.nearest(x + cam.x, y + cam.y + 8, 14);
+    if (f) sim.tap(f);
+    else if (sim.talking) sim.talkKey();
+  });
+
+  /* ---------- run ---------- */
+  build();
+  if (T0 != null) { sim.runTo(T0); clock = sim.clock; render(); if (FREEZE) { window.__frozen = true; return; } }
+  else render();
+  var acc = 0, prev = null;
+  function frame(now) {
+    if (prev === null) prev = now;
+    var dt = Math.min(250, now - prev); prev = now;
+    if (running && !dragging) { acc += dt; while (acc >= STEP) { sim.step(); clock = sim.clock; acc -= STEP; } if (sim.auto && clock > END && (!sim.register.open || clock > END + 12000)) simTo(0); }
+    render();
+    requestAnimationFrame(frame);
+  }
+  addEventListener('resize', render);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

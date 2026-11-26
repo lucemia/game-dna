@@ -2062,6 +2062,44 @@
    "h": 360
   }
  ],
+ "npc-generator": [
+  {
+   "t": 2400,
+   "params": [],
+   "state": "Ten seeded townsfolk wander the market square, each one built from parts.",
+   "query": "t=2400&freeze=1",
+   "img": "npc-generator-A.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 6400,
+   "params": [],
+   "state": "Corsu the old sailor talks: his own portrait, name, trade and line in the panel.",
+   "query": "t=6400&freeze=1",
+   "img": "npc-generator-B.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 15600,
+   "params": [],
+   "state": "The second talk, Perith the fisher: the two face each other, a marker overhead.",
+   "query": "t=15600&freeze=1",
+   "img": "npc-generator-C.webp",
+   "w": 640,
+   "h": 360
+  },
+  {
+   "t": 26000,
+   "params": [],
+   "state": "The town register: ten people from seed 7, each with a name and a trade.",
+   "query": "t=26000&freeze=1",
+   "img": "npc-generator-D.webp",
+   "w": 640,
+   "h": 360
+  }
+ ],
  "on-map-skirmish": [
   {
    "t": 2650,

@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en" data-theme="dark" class="sc">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NPC generator · Game DNA</title>
+<meta name="description" content="Seeded townsfolk built from parts (age, body type, skin, hair style and colour, clothes, hats, glasses or beards, satchels and scarves).">
+<link rel="canonical" href="https://game-dna.pages.dev/site/preview/dna/npc-generator/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Game DNA">
+<meta property="og:title" content="NPC generator · Game DNA">
+<meta property="og:description" content="Seeded townsfolk built from parts (age, body type, skin, hair style and colour, clothes, hats, glasses or beards, satchels and scarves).">
+<meta property="og:url" content="https://game-dna.pages.dev/site/preview/dna/npc-generator/">
+<meta property="og:image" content="https://game-dna.pages.dev/site/preview/og/home.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="NPC generator · Game DNA">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="NPC generator · Game DNA">
+<meta name="twitter:description" content="Seeded townsfolk built from parts (age, body type, skin, hair style and colour, clothes, hats, glasses or beards, satchels and scarves).">
+<meta name="twitter:image" content="https://game-dna.pages.dev/site/preview/og/home.jpg">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"SoftwareSourceCode","@id":"https://game-dna.pages.dev/site/preview/dna/npc-generator/#element","name":"NPC generator","description":"Seeded townsfolk built from parts (age, body type, skin, hair style and colour, clothes, hats, glasses or beards, satchels and scarves), hand-pixelled in code in one style with a 4-frame walk in four directions, a name and a one-line trade; the same seed always gives the same person, a crowd keeps look-alikes apart, an optional town helper makes them wander round the game's walls and props and step round each other and the hero, and talking to one turns them to face you, puts a small speech marker over their head and opens a dialogue panel with their own pixel portrait, name, trade and line.","keywords":"Generated art, Add-on, top-down RPGs, adventures and life sims with towns, markets and villages, any 16-bit style game that needs many background people that do not all look alike, games with procedural towns that need people to match their seed","url":"https://game-dna.pages.dev/site/preview/dna/npc-generator/","image":"https://game-dna.pages.dev/site/preview/og/home.jpg","isPartOf":{"@type":"WebSite","@id":"https://game-dna.pages.dev/site/preview/#website","name":"Game DNA","url":"https://game-dna.pages.dev/site/preview/"},"codeRepository":"https://github.com/lucemia/game-dna","programmingLanguage":"JavaScript","license":"https://opensource.org/licenses/MIT","author":{"@type":"Person","name":"David Chen","url":"https://github.com/lucemia"}}]}</script>
+<link rel="stylesheet" href="../../assets/fonts.css">
+<link rel="stylesheet" href="../../../assets/families.css">
+<link rel="stylesheet" href="../../assets/showcase.css">
+</head>
+<body>
+<a class="sc-skip" href="#main">Skip to content</a>
+<header class="sc-top"><div class="sc-wrap">
+<a class="sc-brand" href="../../"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 2c0 6 12 6 12 10S6 16 6 22" stroke="var(--fam-C)" stroke-width="2.2" stroke-linecap="round"/><path d="M18 2c0 6-12 6-12 10s12 4 12 10" stroke="var(--fam-A)" stroke-width="2.2" stroke-linecap="round"/><path d="M8 5h8M9 9h6M9 15h6M8 19h8" stroke="var(--fg)" stroke-width="1.6" stroke-linecap="round"/></svg><span>Game DNA</span></a>
+<nav class="sc-nav" aria-label="Main"><a href="../../#gallery">Elements</a><a href="../../styles/">Styles</a><a href="../../#how">How it works</a><a href="../../start/">Start</a><a class="sc-bk-link" href="../../basket/">Basket<b data-bk-count hidden></b></a></nav>
+<a class="sc-gh-link" href="https://github.com/lucemia/game-dna" rel="noopener" aria-label="Star Game DNA on GitHub"><svg class="sc-gh" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span>★ Star on GitHub</span></a>
+<a class="sc-btn sc-btn-hot sm sc-top-cta" href="../../dna/damage-pop/"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5v11l9-5.5z"/></svg><span>Play a demo</span></a>
+</div></header>
+<main id="main">
+<section class="sc-el-top" data-fam="L" style="--glow:var(--fam-L)">
+<div class="sc-aurora" aria-hidden="true"></div>
+<div class="sc-wrap">
+<nav class="sc-crumbs" aria-label="Breadcrumb"><a href="../../">Game DNA</a><span>/</span><a href="../../#gallery">Generated art</a></nav>
+<div class="sc-el-head">
+<div><h1>NPC generator</h1><p class="sc-lede">Seeded townsfolk who wander, turn to face you and talk in a dialogue panel with their own pixel portrait. An add-on for any game.</p></div>
+<div class="sc-btns"><button type="button" class="sc-btn sc-btn-hot" data-copy-url="prompt.md" data-label="Prompt"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="5" width="9" height="9" rx="1.5"/><path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2h-6A1.5 1.5 0 0 0 2 3.5v6A1.5 1.5 0 0 0 3.5 11H5"/></svg>Copy prompt</button><button type="button" class="sc-btn" data-sc-add="npc-generator"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg><span class="lab">Add to basket</span></button></div>
+</div>
+<div class="sc-demo">
+<div class="sc-demo-bar"><span class="sc-live"><i></i>Live demo</span><span class="sc-demo-tip">Play with it: the controls sit beside or under the game.</span><button type="button" class="sc-demo-open" data-fullscreen>Full screen <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 8h10m-4-4 4 4-4 4"/></svg></button></div>
+<iframe class="sc-demo-frame" data-embed="body > header" data-name="NPC generator" src="../../../../elements/npc-generator/demo/index.html" title="NPC generator: interactive demo" loading="eager" allow="autoplay; fullscreen"></iframe>
+</div>
+
+</div>
+</section>
+<section class="sc-sec sc-tight"><div class="sc-wrap">
+<p class="sc-eyebrow">What it does</p>
+<p class="sc-what">Seeded townsfolk built from parts (age, body type, skin, hair style and colour, clothes, hats, glasses or beards, satchels and scarves), hand-pixelled in code in one style with a 4-frame walk in four directions.</p>
+<div class="sc-fits"><span class="sc-fits-lab">Made for</span><span class="sc-fit">top-down RPGs, adventures and life sims with towns, markets and villages</span><span class="sc-fit">any 16-bit style game that needs many background people that do not all look alike</span><span class="sc-fit">games with procedural towns that need people to match their seed</span></div>
+<p class="sc-muted sc-tested"><a href="../../tests/#npc-generator">Tested: 6/9 runs on unseen games passed · visual review 7.7</a></p>
+</div></section>
+<section class="sc-sec" id="moments"><div class="sc-wrap">
+<p class="sc-eyebrow">Moments</p>
+<h2>Four moments from the demo</h2>
+<div class="sc-moments"><figure class="sc-moment rv" style="--i:0" data-ratio="1.778"><a href="../../../../elements/npc-generator/demo/index.html?t=2400" data-moment title="Play the demo above from this moment"><img src="../../../assets/moments/npc-generator-A.webp" width="640" height="360" alt="Ten seeded townsfolk wander the market square, each one built from parts." loading="lazy" class="px"><span class="sc-moment-go"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5v11l9-5.5z"/></svg>Play from here</span></a><figcaption>Ten seeded townsfolk wander the market square, each one built from parts.</figcaption></figure><figure class="sc-moment rv" style="--i:1" data-ratio="1.778"><a href="../../../../elements/npc-generator/demo/index.html?t=6400" data-moment title="Play the demo above from this moment"><img src="../../../assets/moments/npc-generator-B.webp" width="640" height="360" alt="Corsu the old sailor talks: his own portrait, name, trade and line in the panel." loading="lazy" class="px"><span class="sc-moment-go"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5v11l9-5.5z"/></svg>Play from here</span></a><figcaption>Corsu the old sailor talks: his own portrait, name, trade and line in the panel.</figcaption></figure><figure class="sc-moment rv" style="--i:2" data-ratio="1.778"><a href="../../../../elements/npc-generator/demo/index.html?t=15600" data-moment title="Play the demo above from this moment"><img src="../../../assets/moments/npc-generator-C.webp" width="640" height="360" alt="The second talk, Perith the fisher: the two face each other, a marker overhead." loading="lazy" class="px"><span class="sc-moment-go"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5v11l9-5.5z"/></svg>Play from here</span></a><figcaption>The second talk, Perith the fisher: the two face each other, a marker overhead.</figcaption></figure><figure class="sc-moment rv" style="--i:3" data-ratio="1.778"><a href="../../../../elements/npc-generator/demo/index.html?t=26000" data-moment title="Play the demo above from this moment"><img src="../../../assets/moments/npc-generator-D.webp" width="640" height="360" alt="The town register: ten people from seed 7, each with a name and a trade." loading="lazy" class="px"><span class="sc-moment-go"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5v11l9-5.5z"/></svg>Play from here</span></a><figcaption>The town register: ten people from seed 7, each with a name and a trade.</figcaption></figure></div>
+</div></section>
+<section class="sc-sec" id="prompt"><div class="sc-wrap sc-prompt-grid">
+<div>
+<p class="sc-eyebrow">Take it home</p>
+<h2>Hand it to <span class="sc-grad">your agent</span></h2>
+<ol class="sc-mini-steps"><li><b>Copy the prompt.</b> It is written for a game your agent has never seen.</li><li><b>Give it the module</b> (<code>npc-generator.js</code>) and its README.</li><li><b>Play your game.</b> The prompt ends with checks your agent can run.</li></ol>
+<div class="sc-btns"><button type="button" class="sc-btn sc-btn-hot lg" data-copy-url="prompt.md" data-label="Prompt"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="5" width="9" height="9" rx="1.5"/><path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2h-6A1.5 1.5 0 0 0 2 3.5v6A1.5 1.5 0 0 0 3.5 11H5"/></svg>Copy prompt</button><a class="sc-btn lg" href="../../../../elements/npc-generator/module/npc-generator.js" download><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 2v8m-3.5-3.5L8 10l3.5-3.5M3 13.5h10"/></svg>Module</a><a class="sc-btn lg ghost" href="../../../../elements/npc-generator/module/README.md" download="npc-generator.README.md"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 2v8m-3.5-3.5L8 10l3.5-3.5M3 13.5h10"/></svg>README</a></div>
+</div>
+<div class="sc-term sc-prompt-card"><div class="sc-term-bar"><i></i><i></i><i></i><span>prompt.md · 72 lines</span></div><pre tabindex="0"># Add NPC generator to my game
+
+Add the game element below to MY existing game, which you have not seen. It is a finished module file given with this prompt:
+
+- `npc-generator.js` (one global, `GameDNA_NpcGen`), API reference `npc-generator.README.md`
+
+README example names are placeholders.
+
+## Shared premises
+
+1. **Include each module file verbatim; never edit it.** Load it with its own `&lt;script src&gt;` before the game's script, or paste it unchanged into its own `&lt;script&gt;` tag. If a module seems to need a change, adapt my game around it and tell me.
+2. **Resolution:** keep my game's native resolution and integer scaling as they are. Call module draw functions on my 2D context inside the same transform as my sprites (one module pixel = one game pixel), and keep my game's own image-smoothing setting (off for pixel art, on for smooth or HD games; never switch it).
+3. **Time:** drive every module from one fixed 60 Hz step (1000 / 60 ms). If my loop uses variable delta time, accumulate it and run whole steps (at most 250 ms per frame).
+4. **Coordinates:** native screen pixels (world minus camera) unless a section says tiles.
+5. **Art and names:** anything new you draw or name is original (no real game, character, place or brand names); English UI text; do not restyle my game.
+6. **Hook, don't replace:** add calls or change bodies; never delete or rename a function.</pre><a class="sc-fold-btn" href="prompt.md" target="_blank" rel="noopener">Open the whole prompt</a></div>
+</div></section>
+<section class="sc-sec" id="works-with"><div class="sc-wrap">
+<p class="sc-eyebrow">Works well with</p>
+<h2>Combine it</h2>
+
+<h3 class="sc-h3">Also pairs well with</h3><div class="sc-grid sc-grid-sm"><a class="sc-card rv" href="../../dna/active-time-battle/" data-fam="A" data-cat="A">
+<div class="sc-thumb px" data-k="1" data-strip="../../../assets/frames/active-time-battle.webp" data-poster="../../../assets/frames/active-time-battle-poster.webp" data-n="12" data-w="256" data-h="224" data-fx="128" data-fy="112"><div class="frame"></div></div>
+<span class="sc-card-body"><span class="sc-card-name">Active-time gauge battle</span><span class="sc-card-line">Gauges fill in real time, so every turn feels urgent.</span><span class="sc-card-meta"><span class="sc-dot"></span>Starter game</span></span>
+</a>
+<a class="sc-card rv" href="../../dna/motion-inputs/" data-fam="A" data-cat="A">
+<div class="sc-thumb px" data-k="contain" data-strip="../../../assets/frames/motion-inputs.webp" data-poster="../../../assets/frames/motion-inputs-poster.webp" data-n="12" data-w="320" data-h="180" data-fx="160" data-fy="90"><div class="frame"></div></div>
+<span class="sc-card-body"><span class="sc-card-name">Motion-input special moves</span><span class="sc-card-line">Special moves from quarter circles, charges and full circles, with an input display.</span><span class="sc-card-meta"><span class="sc-dot"></span>Add-on</span></span>
+</a>
+<a class="sc-card rv" href="../../dna/bullet-patterns/" data-fam="A" data-cat="A" data-feat="10">
+<div class="sc-thumb px" data-strip="../../../assets/frames/bullet-patterns.webp" data-poster="../../../assets/frames/bullet-patterns-poster.webp" data-n="12" data-w="320" data-h="180" data-fx="160" data-fy="100"><div class="frame"></div></div>
+<span class="sc-card-body"><span class="sc-card-name">Bullet-pattern emitter</span><span class="sc-card-line">Enemies cast fans, rings, spirals and flowers of bullets, always with a gap to slip through.</span><span class="sc-card-meta"><span class="sc-dot"></span>Add-on</span></span>
+</a>
+<a class="sc-card rv" href="../../dna/tactic-rules/" data-fam="A" data-cat="A">
+<div class="sc-thumb hd" data-hd data-strip="../../../assets/frames/tactic-rules.webp" data-poster="../../../assets/frames/tactic-rules-poster.webp" data-n="12" data-w="480" data-h="270" data-fx="240" data-fy="135"><div class="frame"></div></div>
+<span class="sc-card-body"><span class="sc-card-name">Conditional tactic rules</span><span class="sc-card-line">Units that act by your rules, and say which rule fired.</span><span class="sc-card-meta"><span class="sc-dot"></span>Add-on<span class="sc-gen" title="The demo shows pictures made with an AI image generator">✦ AI art</span></span></span>
+</a>
+<a class="sc-card rv" href="../../dna/fog-of-war/" data-fam="B" data-cat="B">
+<div class="sc-thumb px" data-strip="../../../assets/frames/fog-of-war.webp" data-poster="../../../assets/frames/fog-of-war-poster.webp" data-n="12" data-w="256" data-h="224" data-fx="128" data-fy="100"><div class="frame"></div></div>
+<span class="sc-card-body"><span class="sc-card-name">Fog of war</span><span class="sc-card-line">Hide what your units cannot see.</span><span class="sc-card-meta"><span class="sc-dot"></span>Add-on</span></span>
+</a>
+<a class="sc-card rv" href="../../dna/level-select-map/" data-fam="B" data-cat="B">
+<div class="sc-thumb px" data-strip="../../../assets/frames/level-select-map.webp" data-poster="../../../assets/frames/level-select-map-poster.webp" data-n="12" data-w="256" data-h="224" data-fx="128" data-fy="100"><div class="frame"></div></div>
+<span class="sc-card-body"><span class="sc-card-name">Level-select path reveal</span><span class="sc-card-line">A world map whose path draws itself to the next level.</span><span class="sc-card-meta"><span class="sc-dot"></span>Starter game</span></span>
+</a></div>
+</div></section>
+<section class="sc-sec sc-tight"><div class="sc-wrap"><p class="sc-el-gh"><a href="https://github.com/lucemia/game-dna/tree/main/elements/npc-generator" rel="noopener"><svg class="sc-gh" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>Source on GitHub</a><a href="https://github.com/lucemia/game-dna/issues/new?template=request-an-element.yml" rel="noopener">Request an element</a></p></div></section>
+</main>
+<footer class="sc-foot"><div class="sc-wrap">
+<div class="sc-foot-brand"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 2c0 6 12 6 12 10S6 16 6 22" stroke="var(--fam-C)" stroke-width="2.2" stroke-linecap="round"/><path d="M18 2c0 6-12 6-12 10s12 4 12 10" stroke="var(--fam-A)" stroke-width="2.2" stroke-linecap="round"/><path d="M8 5h8M9 9h6M9 15h6M8 19h8" stroke="var(--fg)" stroke-width="1.6" stroke-linecap="round"/></svg><span>Game DNA</span></div>
+<p>Playable game elements for games you make with an AI coding agent. Original art only; not affiliated with any game company.</p>
+<nav class="sc-foot-links" aria-label="More"><a href="../../#gallery">All elements</a><a href="../../basket/">Basket</a><a href="../../styles/">Art styles</a><a href="../../start/">Start in 5 minutes</a><a href="../../tests/">How we test</a><a href="../../blog/how-game-dna-works/">How Game DNA works (blog)</a><a href="../../about/">About &amp; credits</a></nav>
+<nav class="sc-foot-links sc-foot-gh" aria-label="GitHub"><a href="https://github.com/lucemia/game-dna" rel="noopener"><svg class="sc-gh" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a><a href="https://github.com/lucemia/game-dna/issues/new?template=request-an-element.yml" rel="noopener">Request an element</a><a href="https://github.com/lucemia/game-dna/issues/new?template=element-broke-my-game.yml" rel="noopener">Report a problem</a></nav>
+</div></footer>
+<script src="../../assets/showcase.js"></script>
+</body>
+</html>

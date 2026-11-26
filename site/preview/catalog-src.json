@@ -587,6 +587,21 @@
    }
   },
   {
+   "id": "npc-generator",
+   "name": "NPC generator",
+   "description": "Seeded townsfolk built from parts (age, body type, skin, hair style and colour, clothes, hats, glasses or beards, satchels and scarves), hand-pixelled in code in one style with a 4-frame walk in four directions, a name and a one-line trade; the same seed always gives the same person, a crowd keeps look-alikes apart, an optional town helper makes them wander round the game's walls and props and step round each other and the hero, and talking to one turns them to face you, puts a small speech marker over their head and opens a dialogue panel with their own pixel portrait, name, trade and line.",
+   "line": "Seeded townsfolk built from parts (age, body type, skin, hair style and colour, clothes, hats, glasses or beards, satchels and scarves).",
+   "category": "Generated art",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/npc-generator/",
+    "prompt": "site/preview/dna/npc-generator/prompt.md",
+    "module": "elements/npc-generator/module/npc-generator.js",
+    "demo": "elements/npc-generator/demo/index.html"
+   }
+  },
+  {
    "id": "expressive-portraits",
    "name": "Expressive portraits",
    "description": "Hand-made-looking 16-bit bust portraits built from a small seeded spec (head, skin, eyes, brows, mouth, hair style and colour, ears, hood / helmet / circlet, scar or freckles, collar) at native 48x48 or 64x64 with shaded ramps and an outline. Seven expressions (neutral, happy, angry, sad, surprised, determined, hurt) change only the brows, eyes and mouth; the face blinks and its mouth moves while the dialogue box types. Beside the Typewriter dialogue box dialogue box the speaker's portrait slides in, switches expression per line and dims while someone else talks; on its own it draws framed panels for character select and status screens.",

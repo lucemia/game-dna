@@ -1,0 +1,110 @@
+{
+ "id": "npc-generator",
+ "code": "D-03",
+ "kind": "addon",
+ "name": "NPC generator",
+ "family": "npc-generator",
+ "oneLiner": "Seeded townsfolk built from parts (age, body type, skin, hair style and colour, clothes, hats, glasses or beards, satchels and scarves), hand-pixelled in code in one style with a 4-frame walk in four directions, a name and a one-line trade; the same seed always gives the same person, a crowd keeps look-alikes apart, an optional town helper makes them wander round the game's walls and props and step round each other and the hero, and talking to one turns them to face you, puts a small speech marker over their head and opens a dialogue panel with their own pixel portrait, name, trade and line.",
+ "fits": [
+  "top-down RPGs, adventures and life sims with towns, markets and villages",
+  "any 16-bit style game that needs many background people that do not all look alike",
+  "games with procedural towns that need people to match their seed"
+ ],
+ "notFor": [
+  "side-view platformers (the art is top-down: down, up, left, right)",
+  "HD painted or 3D characters (this is pixel art about 24 px tall; scale 2 for 40 px tiles)",
+  "hand-designed main characters with their own story art"
+ ],
+ "interfaces": {
+  "time": "realtime",
+  "coords": "side",
+  "layer": "actor",
+  "needs": [
+   "a walkable area and the game's own solid test for one world point",
+   "the fixed update step (also the ?t= fast-forward) for town.update(dt, hero feet)",
+   "the game's depth sort for drawing (feet y in world px) and its camera offset",
+   "the talk key, checked after the game's own targets",
+   "the always-on HUD boxes on screen, so the talk panel keeps clear of them"
+  ],
+  "provides": [
+   "make(seed, over) -> a person spec (plain data: parts, colours, name, trade, line); crowd(n, seed) with no look-alikes",
+   "create(seedOrSpec) -> draw(ctx, feetX, feetY, {dir, moving, walk, scale}), rect, headTop, info, check",
+   "town({seed, count, area, blocked, scale}) -> update, drawables (the talker's speech marker included), nearest, talk, release, talking, panel, marker, panelState, state",
+   "panel(ctx, camX, camY, {view, avoid}): a screen-space dialogue panel at the bottom (or top) of the view with the talker's own pixel portrait, name, trade and a typed line, clear of the HUD and the speakers",
+   "portrait(spec), verify(spec), raster(spec, dir, frame), lookalike(a, b), panelLayout(info, o) for checks"
+  ]
+ },
+ "params": [
+  {
+   "key": "seed",
+   "label": "Town seed",
+   "type": "range",
+   "min": 0,
+   "max": 99999,
+   "step": 1,
+   "default": 7
+  },
+  {
+   "key": "count",
+   "label": "Townsfolk",
+   "type": "range",
+   "min": 1,
+   "max": 24,
+   "step": 1,
+   "default": 6
+  },
+  {
+   "key": "speed",
+   "label": "Walk speed (px/s)",
+   "type": "range",
+   "min": 8,
+   "max": 40,
+   "step": 1,
+   "default": 22
+  },
+  {
+   "key": "scale",
+   "label": "Pixel scale",
+   "type": "select",
+   "options": [
+    "1",
+    "2",
+    "3"
+   ],
+   "default": "1"
+  }
+ ],
+ "variants": [
+  {
+   "name": "Village (default)",
+   "params": {
+    "count": 6,
+    "speed": 22
+   }
+  },
+  {
+   "name": "Busy market",
+   "params": {
+    "count": 14,
+    "speed": 26
+   }
+  },
+  {
+   "name": "HD world (40 px tiles)",
+   "params": {
+    "scale": "2"
+   }
+  }
+ ],
+ "assets": [
+  "module/npc-generator.js: the element as one dependency-free script (global GameDNA_NpcGen): 5 builds x 3 ages, 7 skins, 9 hair styles x 11 colours, 7 tops, 3 bottoms, 6 headwear, 4 face extras, 3 accessories, 16 cloth colours with derived 5-tone ramps, 27 trades with one-liners, invented names; every frame hand-pixelled in code (32 x 44, 4 directions x stand + 4 walk frames) and cached as canvases; the town helper, the talk panel with a portrait cut from the person's own front frame, the speech marker and the 5 x 7 pixel font",
+  "demo only: pixel-kit market square scenery"
+ ],
+ "status": "draft",
+ "module": {
+  "file": "module/npc-generator.js",
+  "global": "GameDNA_NpcGen",
+  "version": "2.0.1",
+  "docs": "module/README.md"
+ }
+}
