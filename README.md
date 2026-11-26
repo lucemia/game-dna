@@ -10,7 +10,7 @@ from damage numbers to dynamic lights.**
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![elements](https://img.shields.io/badge/elements-102-orange)](https://game-dna.pages.dev/site/preview/) [![cold-tested](https://img.shields.io/badge/cold--tested-on_unseen_games-brightgreen)](https://game-dna.pages.dev/site/preview/tests/) [![live demo](https://img.shields.io/badge/live_demo-game--dna.pages.dev-ff69b4)](https://game-dna.pages.dev/site/preview/)
 
 <p align="center">
-<a href="https://game-dna.pages.dev/site/preview/#video"><img src="docs/media/promo-cover.jpg" width="720" alt="Watch the Game DNA promo video (31 s)"></a>
+<a href="https://game-dna.pages.dev/site/preview/#video"><img src="docs/media/promo-cover.jpg" width="720" alt="Watch the Game DNA promo video (35 s)"></a>
 </p>
 
 <p align="center">

@@ -1,0 +1,778 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Caravan Ambush + Game DNA mix</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #140d09; overflow: hidden; touch-action: none; }
+  body { display: flex; align-items: center; justify-content: center; }
+  canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
+</style>
+</head>
+<body>
+<canvas id="screen" width="256" height="224"></canvas>
+<script src="damage-pop.js"></script>
+<script src="hit-stop-shake.js"></script>
+<script src="hit-sparks.js"></script>
+<script>
+"use strict";
+(() => {
+  // ---------- boot & parameters ----------
+  const W = 256, H = 224, STEP = 1000 / 60, PANEL_Y = 152;
+  const qs = new URLSearchParams(location.search);
+  const FREEZE_AT = qs.has("t") ? Math.max(0, Number(qs.get("t")) || 0) : null;
+  const FROZEN = FREEZE_AT !== null && qs.get("freeze") === "1";
+  const AUTO = qs.get("auto") === "1" || (FROZEN && qs.get("auto") !== "0");
+
+  const canvas = document.getElementById("screen");
+  const g = canvas.getContext("2d");
+  g.imageSmoothingEnabled = false;
+  function fitCanvas() {
+    const k = Math.max(1, Math.floor(Math.min(innerWidth / W, innerHeight / H)));
+    canvas.style.width = W * k + "px";
+    canvas.style.height = H * k + "px";
+  }
+  addEventListener("resize", fitCanvas);
+  fitCanvas();
+
+  function seeded(seed) {
+    let s = seed >>> 0;
+    return () => {
+      s = (s + 0x6d2b79f5) >>> 0;
+      let t = s;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  let rand = seeded(20261114);
+  const roll = (lo, hi) => lo + Math.floor(rand() * (hi - lo + 1));
+
+  // ---------- 3x5 bitmap font ----------
+  const GLYPHS = {
+    A: "25755", B: "65656", C: "34443", D: "65556", E: "74647", F: "74644", G: "34553", H: "55755",
+    I: "72227", J: "11152", K: "55655", L: "44447", M: "57555", N: "65555", O: "25552", P: "65644",
+    Q: "25573", R: "65655", S: "34216", T: "72222", U: "55557", V: "55552", W: "55575", X: "55255",
+    Y: "55222", Z: "71247", 0: "75557", 1: "26227", 2: "61247", 3: "61216", 4: "55711", 5: "74616",
+    6: "34757", 7: "71222", 8: "75757", 9: "75716", "!": "22202", ".": "00002", ":": "02020",
+    "/": "11244", "-": "00700", "?": "61202", "'": "22000", ",": "00024", ">": "42124", "+": "02720",
+  };
+  function glyphs(str, x, y, col, sc) {
+    g.fillStyle = col;
+    for (const ch of String(str).toUpperCase()) {
+      const gl = GLYPHS[ch];
+      if (gl) for (let r = 0; r < 5; r++) {
+        const bits = gl.charCodeAt(r) - 48;
+        for (let c = 0; c < 3; c++) if (bits & (4 >> c)) g.fillRect(x + c * sc, y + r * sc, sc, sc);
+      }
+      x += 4 * sc;
+    }
+  }
+  function say(str, x, y, col = "#fff", sc = 1, shade = "#1a1020") {
+    if (shade) glyphs(str, x + sc, y + sc, shade, sc);
+    glyphs(str, x, y, col, sc);
+  }
+  const textW = (s, sc = 1) => String(s).length * 4 * sc - sc;
+  const sayMid = (s, y, col, sc) => say(s, Math.round((W - textW(s, sc)) / 2), y, col, sc);
+
+  // ---------- pixel art ----------
+  function bake(rows, pal, extra) {
+    const w = Math.max(...rows.map(r => r.length));
+    const mk = (mode) => {
+      const c = document.createElement("canvas");
+      c.width = w; c.height = rows.length;
+      const cg = c.getContext("2d");
+      rows.forEach((row, y) => {
+        for (let x = 0; x < row.length; x++) {
+          const col = pal[row[x]];
+          if (!col) continue;
+          cg.fillStyle = mode === "white" ? "#fff" : mode === "grey" ? greyOf(col) : col;
+          cg.fillRect(x, y, 1, 1);
+        }
+      });
+      if (extra) extra(cg, mode);
+      return c;
+    };
+    return { normal: mk("normal"), white: mk("white"), grey: mk("grey"), w, h: rows.length };
+  }
+  function greyOf(hex) {
+    const n = parseInt(hex.slice(1), 16);
+    const v = Math.round((((n >> 16) & 255) * 0.3 + ((n >> 8) & 255) * 0.5 + (n & 255) * 0.2) * 0.6);
+    return `rgb(${v},${v},${v + 8})`;
+  }
+
+  const HUMAN = [
+    "......oooo......",
+    ".....ohhhhoo....",
+    "....ohhhhhhho...",
+    "....ohsshhhho...",
+    "....osesshhho...",
+    "....osssshho....",
+    ".....ossso......",
+    "....obbllbbo....",
+    "...obbblbbbdo...",
+    "..osobbbbbbdo...",
+    "..osobbbbbddo...",
+    "..oo.obbbbddo...",
+    "....oddddddo....",
+    "....oppppppo....",
+    "....opppoppo....",
+    "....oppo.oppo...",
+    "....oppo.oppo...",
+    "...okkko.okkko..",
+    "...oooo..oooo...",
+  ];
+  const ARMS = {
+    sword(cg, mode) {
+      cg.fillStyle = mode === "white" ? "#fff" : mode === "grey" ? "#777" : "#dfe6f0";
+      cg.fillRect(1, 1, 1, 8);
+      cg.fillStyle = mode === "white" ? "#fff" : mode === "grey" ? "#555" : "#8b5a2b";
+      cg.fillRect(0, 9, 3, 1); cg.fillRect(1, 10, 1, 2);
+    },
+    staff(cg, mode) {
+      cg.fillStyle = mode === "white" ? "#fff" : mode === "grey" ? "#555" : "#7a4a24";
+      cg.fillRect(1, 2, 1, 16);
+      cg.fillStyle = mode === "white" ? "#fff" : mode === "grey" ? "#888" : "#7fe3ff";
+      cg.fillRect(0, 0, 3, 3);
+      cg.fillStyle = mode === "normal" ? "#e6fbff" : cg.fillStyle;
+      cg.fillRect(0, 0, 1, 1);
+    },
+    blade(cg, mode) {
+      cg.fillStyle = mode === "white" ? "#fff" : mode === "grey" ? "#777" : "#c9d2dc";
+      cg.fillRect(0, 6, 1, 4); cg.fillRect(1, 5, 1, 1);
+      cg.fillStyle = mode === "white" ? "#fff" : mode === "grey" ? "#555" : "#5a3a1e";
+      cg.fillRect(0, 10, 2, 1);
+    },
+  };
+  const BASE_PAL = { o: "#1a1020", s: "#eab58c", e: "#1a1020", p: "#5a4632", k: "#2e2218" };
+
+  const HEROES = [
+    { name: "Bram", hp: 104, mp: 10, atk: 15, mag: 5, def: 10, agi: 7, arm: "sword", spells: ["mend"],
+      pal: { h: "#9aa0ad", b: "#3d63b8", l: "#86a8ec", d: "#25407a" } },
+    { name: "Ivy", hp: 66, mp: 34, atk: 7, mag: 14, def: 5, agi: 9, arm: "staff", spells: ["ember", "gale", "mend"],
+      pal: { h: "#d8a83c", b: "#7b3e9a", l: "#b67ad2", d: "#4a2060" } },
+    { name: "Rusk", hp: 80, mp: 12, atk: 13, mag: 7, def: 7, agi: 13, arm: "blade", spells: ["ember"],
+      pal: { h: "#6a3a1e", b: "#3f8a4a", l: "#78c47e", d: "#24582c" } },
+  ];
+  HEROES.forEach(h => { h.art = bake(HUMAN, Object.assign({}, BASE_PAL, h.pal), ARMS[h.arm]); });
+
+  const SAND_EDGE = "#2a160c";
+  const FOES = {
+    beetle: { name: "Dune Beetle", hp: 62, atk: 13, def: 8, agi: 5, pal: { o: SAND_EDGE, c: "#3c7a78", l: "#7cc8b8", d: "#21464a", m: "#7a5a3a", s: "#5a3a2a", e: "#ffdf5a" }, rows: [
+      "..........oooooo..........",
+      ".......oooccccccooo.......",
+      ".....oocclllcccccccoo.....",
+      "....occllllcccccccccco....",
+      "...occlllcccccccccccccoo..",
+      "..occcllcccccccccccccddo..",
+      "..occccccccccccccccccddoooo",
+      ".occcccccccccccccccccddosso",
+      ".ocddcccccccccccccccdddoseso",
+      ".odddddcccccccccccddddoossso",
+      ".oddddddddddddddddddddooooo.",
+      "..oommmmmmmmmmmmmmmmmo.....",
+      "...o.oo..oo..oo..oo.o......",
+      "..oo.o..oo..oo..oo..oo.....",
+      ".oo..o..o...o...o....o.....",
+    ] },
+    scorp: { name: "Dust Scorpion", hp: 48, atk: 15, def: 5, agi: 11, pal: { o: SAND_EDGE, t: "#c0603a", w: "#ffe0a0", b: "#d88a48", l: "#f6c27a", d: "#8a4a26", p: "#a84a2a", e: "#1a0808" }, rows: [
+      "...ooo......................",
+      "..ottto.....................",
+      "..otwtoo....................",
+      "...oottto...................",
+      ".....ootto..................",
+      "......otto..................",
+      "......otto..................",
+      ".......otto.................",
+      "....ooooottooooooo.......oo.",
+      "...obbbbbbbbbbbbbbo....ooppo",
+      "..obblbbblbbblbbbbbo..oppppo",
+      "..obbbbbbbbbbbbbbbbboooppoo.",
+      "..odbbbbbbbbbbbbbbbebbbbo...",
+      "...oddddddddddddddddddboooo.",
+      "....ooooooooooooooooooo.oppo",
+      "....o.o..o.o..o.o..o.o..ooo.",
+      "...o..o.o..o.o..o.o...o.....",
+      "..o...o.....................",
+    ] },
+    wyrm: { name: "Sand Wyrm", hp: 84, atk: 13, def: 6, agi: 8, breath: true, pal: { o: SAND_EDGE, c: "#b06a3a", l: "#e8a868", d: "#6e3a1e", e: "#fff27a", m: "#5a1010", w: "#f0e8d0", s: "#c89656" }, rows: [
+      "........oooooo........",
+      "......oocccccco.......",
+      ".....occcccccccoo.....",
+      ".....occceoccccmmo....",
+      ".....occcccccccmwmo...",
+      ".....oclllccccooooo...",
+      "......oclllcco........",
+      ".......ocllco.........",
+      "........ocllco........",
+      "........occllco.......",
+      ".........occllco......",
+      ".........occclco......",
+      "........occcclco......",
+      ".......occcccdco......",
+      "......occcccddo.......",
+      ".....occcccddo........",
+      "...ooccccddddo........",
+      "..occccdddddo.........",
+      ".ossssssssssssoo......",
+      "ossssssssssssssssoo...",
+      ".ooooooooooooooooo....",
+    ] },
+    wisp: { name: "Glass Wisp", hp: 36, atk: 11, def: 3, agi: 14, drain: true, pal: { o: "#1d2a40", l: "#a8e8f0", w: "#ffffff", g: "#5aa8c8", e: "#1d2a40" }, rows: [
+      "......oooo......",
+      "....oolwwloo....",
+      "...olwwwlllgo...",
+      "..olwwlllllggo..",
+      "..olwlllllllgo..",
+      ".olllleollelggo.",
+      ".olllllllllllgo.",
+      ".ollllllllllggo.",
+      "..olllllllllgo..",
+      "..ogllllllllgo..",
+      "...oggllllggo...",
+      "....ooglgggo....",
+      ".....olgo.oo....",
+      "......oglo......",
+      ".....ol.go......",
+      "....o....o......",
+    ] },
+  };
+  for (const k in FOES) FOES[k].art = bake(FOES[k].rows, FOES[k].pal);
+
+  const WAVES = [["beetle", "scorp"], ["wisp", "beetle", "wyrm"], ["scorp", "wyrm", "wisp", "beetle"]];
+  const SPELLS = {
+    ember: { label: "Ember", cost: 3, aim: "foe" },
+    gale: { label: "Gale", cost: 7, aim: "allFoes" },
+    mend: { label: "Mend", cost: 4, aim: "hero" },
+  };
+  const FOE_SPOTS = [[80, 92], [40, 108], [86, 130], [44, 146]];
+
+  // ---------- combatants ----------
+  class Combatant {
+    constructor(spec, side, slot) {
+      this.spec = spec; this.side = side; this.slot = slot; this.name = spec.name;
+      this.maxHp = this.hp = this.barHp = spec.hp;
+      this.maxMp = this.mp = spec.mp || 0;
+      this.atk = spec.atk; this.mag = spec.mag || 0; this.guard = spec.def; this.agi = spec.agi;
+      this.braced = false; this.flash = 0; this.shove = 0; this.fade = 0;
+    }
+    get up() { return this.hp > 0; }
+    get art() { return this.spec.art; }
+    get x() { return this.side === "hero" ? 198 + this.slot * 8 : FOE_SPOTS[this.slot][0]; }
+    get y() { return this.side === "hero" ? 82 + this.slot * 26 : FOE_SPOTS[this.slot][1]; }
+    get id() { return this.side + this.slot; }
+    centre() { return [this.x, this.y - this.art.h / 2]; }
+    box() { const a = this.art; return [this.x - a.w / 2 - 3, this.y - a.h - 3, a.w + 6, a.h + 6]; }
+  }
+
+  // ---------- the battle ----------
+  class Skirmish {
+    constructor() {
+      this.party = HEROES.map((h, i) => new Combatant(h, "hero", i));
+      this.bag = { tonic: 4, ether: 2 };
+      this.waveNo = 0;
+      this.beginWave();
+    }
+    beginWave() {
+      this.foes = WAVES[this.waveNo].map((k, i) => new Combatant(FOES[k], "foe", i));
+      this.queue = []; this.actor = null; this.fx = null; this.caption = "";
+      this.setPhase("banner");
+    }
+    setPhase(p) { this.phase = p; this.clock = 0; }
+    everyone() { return [...this.party, ...this.foes]; }
+    roundOrder() {
+      return this.everyone().filter(c => c.up).sort((a, b) =>
+        b.agi - a.agi || (a.side === b.side ? a.slot - b.slot : a.side === "hero" ? -1 : 1));
+    }
+    passTurn() {
+      let next = null;
+      while (!next) {
+        if (!this.queue.length) this.queue = this.roundOrder();
+        const c = this.queue.shift();
+        if (c.up) next = c;
+      }
+      this.actor = next;
+      next.braced = false;
+      if (next.side === "hero") { this.menu = { stage: "root", idx: 0, sub: 0 }; this.setPhase("command"); }
+      else this.setPhase("foeTurn");
+    }
+    update(input) {
+      this.clock++;
+      for (const c of this.everyone()) {
+        if (c.flash > 0) c.flash--;
+        if (c.barHp !== c.hp) c.barHp += Math.sign(c.hp - c.barHp) * Math.max(0.5, Math.abs(c.hp - c.barHp) / 8);
+        if (Math.abs(c.barHp - c.hp) < 0.5) c.barHp = c.hp;
+        if (!c.up && c.side === "foe" && c.fade < 30) c.fade++;
+      }
+      switch (this.phase) {
+        case "banner": if (this.clock > 70) this.passTurn(); break;
+        case "command": for (const ev of input) this.onCommandInput(ev); break;
+        case "foeTurn": if (this.clock > 22) this.foeChooses(); break;
+        case "act": this.stepAction(); break;
+        case "cleared":
+          if (input.some(e => e.k === "ok" || e.k === "tap")) {
+            this.waveNo++;
+            for (const h of this.party) {
+              h.hp = h.up ? Math.min(h.maxHp, h.hp + 24) : Math.round(h.maxHp / 4);
+              h.mp = Math.min(h.maxMp, h.mp + 6);
+            }
+            this.beginWave();
+          }
+          break;
+      }
+    }
+    // --- player commands ---
+    rootOptions() { return ["Strike", "Spell", "Brace", "Item"]; }
+    listFor(stage) {
+      if (stage === "spell") return this.actor.spec.spells.map(k => ({ key: k, label: SPELLS[k].label, note: String(SPELLS[k].cost), ok: this.actor.mp >= SPELLS[k].cost }));
+      if (stage === "item") return [
+        { key: "tonic", label: "Tonic", note: "x" + this.bag.tonic, ok: this.bag.tonic > 0 },
+        { key: "ether", label: "Ether", note: "x" + this.bag.ether, ok: this.bag.ether > 0 },
+      ];
+      return this.rootOptions().map(l => ({ key: l.toLowerCase(), label: l, ok: true }));
+    }
+    targetsFor(aim) {
+      if (aim === "foe" || aim === "allFoes") return this.foes.filter(f => f.up);
+      return this.party.filter(h => h.up);
+    }
+    onCommandInput(ev) {
+      const m = this.menu;
+      if (ev.k === "tap") return this.onCommandTap(ev.x, ev.y);
+      if (m.stage === "target") {
+        const pool = this.targetsFor(m.aim);
+        if (ev.k === "up" || ev.k === "left") m.sub = (m.sub + pool.length - 1) % pool.length;
+        if (ev.k === "down" || ev.k === "right") m.sub = (m.sub + 1) % pool.length;
+        if (ev.k === "ok") this.commit(m.order, m.aim === "allFoes" ? pool : [pool[m.sub]]);
+        if (ev.k === "back") { m.stage = m.from; }
+        return;
+      }
+      const list = this.listFor(m.stage);
+      if (ev.k === "up") m.idx = (m.idx + list.length - 1) % list.length;
+      if (ev.k === "down") m.idx = (m.idx + 1) % list.length;
+      if (ev.k === "back" && m.stage !== "root") { m.stage = "root"; m.idx = m.stage === "root" ? m.rootIdx || 0 : 0; }
+      if (ev.k === "ok") this.pick(list[m.idx]);
+    }
+    pick(opt) {
+      const m = this.menu;
+      if (!opt || !opt.ok) return;
+      if (m.stage === "root") {
+        m.rootIdx = m.idx;
+        if (opt.key === "strike") return this.aim({ kind: "strike" }, "foe");
+        if (opt.key === "brace") return this.commit({ kind: "brace" }, [this.actor]);
+        m.stage = opt.key; m.idx = 0; return;
+      }
+      if (m.stage === "spell") return this.aim({ kind: "spell", spell: opt.key }, SPELLS[opt.key].aim);
+      if (m.stage === "item") return this.aim({ kind: "item", item: opt.key }, "hero");
+    }
+    aim(order, aim) {
+      const m = this.menu;
+      m.from = m.stage; m.stage = "target"; m.order = order; m.aim = aim;
+      const pool = this.targetsFor(aim);
+      m.sub = aim === "hero" ? Math.max(0, pool.indexOf(this.actor)) : 0;
+    }
+    menuRowAt(x, y) {
+      if (x < 6 || x > 66) return -1;
+      const i = Math.floor((y - (PANEL_Y + 8)) / 11);
+      return i >= 0 && i < this.listFor(this.menu.stage).length ? i : -1;
+    }
+    onCommandTap(x, y) {
+      const m = this.menu;
+      if (m.stage === "target") {
+        const pool = this.targetsFor(m.aim);
+        const hit = pool.findIndex(c => { const [bx, by, bw, bh] = c.box(); return x >= bx && x < bx + bw && y >= by && y < by + bh; });
+        if (hit >= 0) { m.sub = hit; this.commit(m.order, m.aim === "allFoes" ? pool : [pool[hit]]); }
+        else if (y >= PANEL_Y) m.stage = m.from;
+        return;
+      }
+      const row = this.menuRowAt(x, y);
+      if (row >= 0) { m.idx = row; this.pick(this.listFor(m.stage)[row]); }
+      else if (y >= PANEL_Y && m.stage !== "root") m.stage = "root";
+    }
+    // --- enemy choice ---
+    foeChooses() {
+      const f = this.actor, living = this.party.filter(h => h.up);
+      if (f.spec.breath && rand() < 0.34) return this.commit({ kind: "breath" }, living);
+      const prey = living.slice().sort((a, b) => (a.hp / a.maxHp) - (b.hp / b.maxHp))[rand() < 0.6 ? 0 : roll(0, living.length - 1)];
+      this.commit({ kind: f.spec.drain && prey.mp > 0 && rand() < 0.4 ? "drain" : "bite" }, [prey]);
+    }
+    // --- resolving actions ---
+    commit(order, targets) {
+      const a = this.actor;
+      order.targets = targets;
+      if (order.kind === "spell") a.mp -= SPELLS[order.spell].cost;
+      if (order.kind === "item") this.bag[order.item]--;
+      this.caption = {
+        strike: "Strike", brace: "Brace", bite: "Attack", breath: "Sand Breath", drain: "Mind Leech",
+        spell: order.spell && SPELLS[order.spell].label, item: order.item && (order.item === "tonic" ? "Tonic" : "Ether"),
+      }[order.kind];
+      this.order = order;
+      this.fx = { kind: order.kind === "spell" ? order.spell : order.kind === "item" ? order.item : order.kind, from: a, targets, t: 0 };
+      this.setPhase("act");
+    }
+    stepAction() {
+      const a = this.actor, t = this.clock;
+      this.fx.t = t;
+      const reach = ["strike", "bite"].includes(this.order.kind) ? 14 : 4;
+      a.shove = t < 12 ? (t / 12) * reach : t < 30 ? reach : Math.max(0, reach * (1 - (t - 30) / 10));
+      if (t === 20) this.landEffect(a, this.order);
+      if (t >= 46) {
+        a.shove = 0; this.fx = null; this.caption = "";
+        if (this.foes.every(f => !f.up)) this.setPhase(this.waveNo + 1 >= WAVES.length ? "victory" : "cleared");
+        else if (this.party.every(h => !h.up)) this.setPhase("defeat");
+        else this.passTurn();
+      }
+    }
+    landEffect(a, order) {
+      const T = order.targets;
+      switch (order.kind) {
+        case "strike": case "bite": T.forEach(t => this.wound(t, a.atk * 2 - t.guard + roll(0, a.atk >> 1), a, "physical")); break;
+        case "breath": T.forEach(t => this.wound(t, a.atk + roll(0, 6) - (t.guard >> 1), a, "physical", "fire")); break;
+        case "drain": T.forEach(t => { const mp0 = t.mp; t.mp = Math.max(0, t.mp - roll(4, 8)); if (mp0 - t.mp > 0) dp.spawn(t.id, mp0 - t.mp, "mp", { type: "mana" }); this.wound(t, a.atk - (t.guard >> 1), a, "arcane"); }); break;
+        case "brace": a.braced = true; break;
+        case "spell":
+          if (order.spell === "ember") T.forEach(t => this.wound(t, a.mag * 3 - (t.guard >> 1) + roll(0, 6), a, "fire", "fire"));
+          if (order.spell === "gale") T.forEach(t => this.wound(t, a.mag * 2 - (t.guard >> 1) + roll(0, 4), a, "shock", "thunder"));
+          if (order.spell === "mend") T.forEach(t => this.restore(t, a.mag * 3 + roll(10, 16)));
+          break;
+        case "item":
+          if (order.item === "tonic") T.forEach(t => this.restore(t, 45));
+          if (order.item === "ether") T.forEach(t => { const mp0 = t.mp; t.mp = Math.min(t.maxMp, t.mp + 15); t.flash = 10; if (t.mp > mp0) dp.spawn(t.id, t.mp - mp0, "heal", { type: "mana" }); });
+          break;
+      }
+    }
+    wound(target, amount, from, type, spell) {
+      let dmg = Math.max(1, Math.round(amount));
+      if (target.braced) dmg = Math.max(1, dmg >> 1);
+      const hp0 = target.hp;
+      target.hp = Math.max(0, target.hp - dmg);
+      target.flash = 12;
+      // Game DNA mix: one accepted hit -> number, hit-stop/shake/flash, sparks (one call each)
+      const real = hp0 - target.hp, [cx, cy] = target.centre(), dir = target.side === "hero" ? 1 : -1;
+      const kill = hp0 > 0 && target.hp === 0;
+      if (real > 0) dp.spawn(target.id, real, kill ? "crit" : "damage", { type: type || "physical", crit: kill });
+      juice.hit({ strength: kill ? "finisher" : spell ? "light" : "heavy", at: { x: cx, y: cy }, target: target.id, dir });
+      if (spell) { fx.burst(cx, cy, spell, { target: target.id, from: from && from.id }); fx.hit(cx, cy, { kind: "spark", element: spell, target: target.id }); }
+      else fx.hit(cx - dir * 4, cy, { dir, crit: kill, target: target.id, from: from && from.id });
+    }
+    restore(target, amount) {
+      const hp0 = target.hp;
+      target.hp = Math.min(target.maxHp, target.hp + amount); target.flash = 8;
+      if (target.hp > hp0) { dp.spawn(target.id, target.hp - hp0, "heal", { type: "heal" }); const [cx, cy] = target.centre(); fx.burst(cx, cy, "heal", { target: target.id }); }
+    }
+  }
+
+  // ---------- autopilot ----------
+  function autopilot(game) {
+    if (game.scene === "title" && game.clock === 40) return [{ k: "ok" }];
+    const b = game.battle;
+    if (!b) return [];
+    if (b.phase === "cleared" && b.clock === 60) return [{ k: "ok" }];
+    if (b.phase !== "command" || b.clock !== 26) return [];
+    const me = b.actor, foes = b.foes.filter(f => f.up), party = b.party.filter(h => h.up);
+    const weakest = party.slice().sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp)[0];
+    const softest = foes.slice().sort((x, y) => x.hp - y.hp)[0];
+    if (weakest.hp < weakest.maxHp * 0.4) {
+      if (me.spec.spells.includes("mend") && me.mp >= 4) { b.commit({ kind: "spell", spell: "mend" }, [weakest]); return []; }
+      if (b.bag.tonic > 0) { b.commit({ kind: "item", item: "tonic" }, [weakest]); return []; }
+    }
+    if (me.spec.spells.includes("gale") && foes.length >= 3 && me.mp >= 7) b.commit({ kind: "spell", spell: "gale" }, foes);
+    else if (me.mag > 10 && me.mp >= 3) b.commit({ kind: "spell", spell: "ember" }, [softest]);
+    else if (me.mag > 10 && b.bag.ether > 0) b.commit({ kind: "item", item: "ether" }, [me]);
+    else if (me.hp < me.maxHp * 0.25 && foes.length > 1) b.commit({ kind: "brace" }, [me]);
+    else b.commit({ kind: "strike" }, [softest]);
+    return [];
+  }
+
+  // ---------- scenery (baked once) ----------
+  const scenery = (() => {
+    const c = document.createElement("canvas");
+    c.width = W; c.height = PANEL_Y;
+    const s = c.getContext("2d");
+    const sky = ["#2c2f5e", "#4a3a6e", "#7a4a72", "#b45e5e", "#e08a5a", "#f4b46a", "#fbd690"];
+    for (let y = 0; y < 56; y++) {
+      const f = (y / 56) * (sky.length - 1), i = Math.floor(f), mix = f - i;
+      for (let x = 0; x < W; x++) {
+        const thresh = ((x & 1) * 2 + (y & 1)) / 4 + 0.125;
+        s.fillStyle = sky[mix > thresh ? Math.min(i + 1, sky.length - 1) : i];
+        s.fillRect(x, y, 1, 1);
+      }
+    }
+    s.fillStyle = "#ffe8b0"; for (let y = -9; y <= 9; y++) { const hw = Math.floor(Math.sqrt(81 - y * y)); s.fillRect(54 - hw, 30 + y, hw * 2, 1); }
+    s.fillStyle = "#fff6d8"; for (let y = -5; y <= 5; y++) { const hw = Math.floor(Math.sqrt(25 - y * y)); s.fillRect(52 - hw, 28 + y, hw * 2, 1); }
+    const ridge = (base, amp, freq, phase, col, shade) => {
+      for (let x = 0; x < W; x++) {
+        const top = Math.round(base - Math.abs(Math.sin(x * freq + phase)) * amp - Math.max(0, Math.sin(x * freq * 2.7 + phase)) * amp * 0.35);
+        s.fillStyle = col; s.fillRect(x, top, 1, PANEL_Y - top);
+        s.fillStyle = shade; s.fillRect(x, top, 1, 1);
+      }
+    };
+    ridge(52, 14, 0.035, 1.3, "#7a3e40", "#a85a4a");
+    ridge(56, 7, 0.06, 0.2, "#9a5a42", "#c87a52");
+    for (let y = 56; y < PANEL_Y; y++) {
+      for (let x = 0; x < W; x++) {
+        const dune = Math.sin(x * 0.045 + y * 0.21) + Math.sin(x * 0.013 - y * 0.08) * 0.8;
+        const band = dune > 0.9 ? "#f0c27c" : dune < -0.9 ? "#b8804a" : "#d9a35c";
+        s.fillStyle = band; s.fillRect(x, y, 1, 1);
+      }
+    }
+    // the road
+    for (let x = 0; x < W; x++) {
+      const mid = Math.round(100 + Math.sin(x * 0.02) * 4);
+      s.fillStyle = "#c08a52"; s.fillRect(x, mid - 10, 1, 21);
+      s.fillStyle = "#9a6a3c"; s.fillRect(x, mid - 5, 1, 1); s.fillRect(x, mid + 5, 1, 1);
+      s.fillStyle = "#e0b070"; s.fillRect(x, mid - 11, 1, 1);
+      if ((x * 37) % 23 === 0) { s.fillStyle = "#7a5a3a"; s.fillRect(x, mid + ((x * 13) % 15) - 7, 2, 1); }
+    }
+    // stones and scrub
+    const r2 = seeded(77);
+    for (let i = 0; i < 26; i++) {
+      const x = Math.floor(r2() * W), y = 60 + Math.floor(r2() * 88);
+      s.fillStyle = "#6a4a30"; s.fillRect(x, y, 3, 2);
+      s.fillStyle = "#a07850"; s.fillRect(x, y, 2, 1);
+    }
+    // the caravan wagon on the horizon
+    const wx = 190, wy = 40;
+    s.fillStyle = "#3a2414"; s.fillRect(wx + 2, wy + 14, 50, 3);
+    s.fillStyle = "#7a4a2a"; s.fillRect(wx, wy + 8, 54, 8);
+    s.fillStyle = "#a06a3a"; s.fillRect(wx, wy + 8, 54, 2);
+    for (let i = 0; i < 46; i++) {
+      const arch = Math.round(Math.sqrt(Math.max(0, 1 - ((i - 23) / 24) ** 2)) * 10);
+      s.fillStyle = "#3a2a24"; s.fillRect(wx + 4 + i, wy + 8 - arch - 1, 1, 1);
+      s.fillStyle = i % 8 === 0 ? "#bfae8c" : i < 30 ? "#efe2c2" : "#cdbd98"; s.fillRect(wx + 4 + i, wy + 8 - arch, 1, arch);
+    }
+    for (const cx of [wx + 10, wx + 42]) {
+      for (let a = 0; a < 28; a++) { s.fillStyle = "#2a1a10"; s.fillRect(Math.round(cx + Math.cos(a / 4.45) * 5), Math.round(wy + 18 + Math.sin(a / 4.45) * 5), 1, 1); }
+      s.fillStyle = "#6a4a2a"; s.fillRect(cx - 4, wy + 18, 9, 1); s.fillRect(cx, wy + 14, 1, 9);
+    }
+    return c;
+  })();
+
+  // ---------- drawing ----------
+  function frame(g2, x, y, w, h) {
+    g2.fillStyle = "#0e1430"; g2.fillRect(x, y, w, h);
+    g2.fillStyle = "#1e2c66"; g2.fillRect(x + 2, y + 2, w - 4, h - 4);
+    g2.fillStyle = "#24357a"; g2.fillRect(x + 2, y + 2, w - 4, (h - 4) >> 1);
+    g2.fillStyle = "#cfd6f0"; g2.fillRect(x + 1, y, w - 2, 1); g2.fillRect(x + 1, y + h - 1, w - 2, 1); g2.fillRect(x, y + 1, 1, h - 2); g2.fillRect(x + w - 1, y + 1, 1, h - 2);
+  }
+  function bar(x, y, w, h, frac, col, back = "#1a1020") {
+    g.fillStyle = back; g.fillRect(x - 1, y - 1, w + 2, h + 2);
+    g.fillStyle = "#3a2a3a"; g.fillRect(x, y, w, h);
+    g.fillStyle = col; g.fillRect(x, y, Math.round(w * Math.max(0, Math.min(1, frac))), h);
+    g.fillStyle = "rgba(255,255,255,0.35)"; g.fillRect(x, y, Math.round(w * Math.max(0, Math.min(1, frac))), 1);
+  }
+  function drawCombatant(c, tick, b) {
+    if (c.side === "foe" && !c.up && c.fade >= 30) return;
+    const a = c.art, dir = c.side === "hero" ? -1 : 1;
+    let x = Math.round(c.x - a.w / 2 + dir * c.shove), y = c.y - a.h;
+    if (c.spec.drain) y += Math.round(Math.sin(tick / 12 + c.slot) * 2) - 6;
+    g.fillStyle = "rgba(60,30,10,0.35)"; g.fillRect(c.x - a.w / 2 + 2, c.y - 1, a.w - 4, 2);
+    if (c.flash > 0 && c.flash % 4 >= 2) x += c.side === "hero" ? 1 : -1;
+    let img = !c.up ? a.grey : (c.flash > 0 && (c.flash >> 1) % 2) || juice.flashing(c.id) ? a.white : a.normal;
+    if (c.side === "foe" && !c.up) { g.globalAlpha = 1 - c.fade / 30; img = (c.fade >> 1) % 2 ? a.white : a.normal; }
+    if (c.side === "hero" && !c.up) { g.save(); g.translate(x + a.w / 2, c.y - 3); g.rotate(-Math.PI / 2); g.drawImage(img, -a.h / 2, -a.w / 2); g.restore(); }
+    else g.drawImage(img, x, y);
+    g.globalAlpha = 1;
+    if (c.braced && c.up) { g.fillStyle = "#9fd8ff"; for (let i = 0; i < 6; i++) g.fillRect(x - 2, y + 2 + i * 3, 1, 2); }
+    if (c.side === "foe" && c.up) bar(c.x - 12, c.y + 3, 24, 2, c.barHp / c.maxHp, "#e84a3a");
+    if (b.actor === c && b.phase !== "banner") {
+      const bob = (tick >> 3) % 2;
+      g.fillStyle = "#fff"; g.fillRect(c.x - 1, y - 7 + bob, 3, 1); g.fillRect(c.x, y - 6 + bob, 1, 1);
+    }
+  }
+  function drawFx(fx, tick) {
+    const t = fx.t, [ox, oy] = fx.from.centre();
+    for (const tg of fx.targets) {
+      const [tx, ty] = tg.centre();
+      if ((fx.kind === "strike" || fx.kind === "bite") && t >= 16 && t < 28) {
+        g.fillStyle = fx.kind === "bite" ? "#ff8a6a" : "#ffffff";
+        const k = t - 16;
+        for (let i = 0; i < 3; i++) for (let j = -6; j <= 6; j++) if (Math.abs(j) < k) g.fillRect(tx + j + i * 3 - 3, ty + j * (fx.kind === "bite" ? -1 : 1) + i * 2 - 2, 1, 1);
+      }
+      if (fx.kind === "ember") {
+        if (t < 20) { const f = t / 20; g.fillStyle = "#ffd25a"; g.fillRect(Math.round(ox + (tx - ox) * f) - 1, Math.round(oy + (ty - oy) * f - Math.sin(f * Math.PI) * 18) - 1, 3, 3); }
+        else if (t < 38) for (let i = 0; i < 14; i++) {
+          const ang = i * 0.45, r = (t - 20) * 0.9;
+          g.fillStyle = i % 3 ? "#ff7a2a" : "#fff0a0";
+          g.fillRect(Math.round(tx + Math.cos(ang) * r), Math.round(ty + Math.sin(ang) * r), 2, 2);
+        }
+      }
+      if (fx.kind === "gale" || fx.kind === "breath") {
+        if (t > 6 && t < 40) for (let i = 0; i < 10; i++) {
+          const ang = t * 0.35 + i * 0.63, r = 4 + (i % 4) * 3;
+          g.fillStyle = fx.kind === "gale" ? (i % 2 ? "#d8f0ff" : "#8fc8e8") : (i % 2 ? "#f0c27c" : "#a8743e");
+          g.fillRect(Math.round(tx + Math.cos(ang) * r * 1.4), Math.round(ty + Math.sin(ang) * r * 0.7), 2, 1);
+        }
+      }
+      if (["mend", "tonic", "ether", "drain", "brace"].includes(fx.kind) && t > 8 && t < 40) {
+        const col = { mend: "#8af07a", tonic: "#7ae8d8", ether: "#8aa8ff", drain: "#c87aff", brace: "#9fd8ff" }[fx.kind];
+        for (let i = 0; i < 8; i++) {
+          const rise = ((t * 1.2 + i * 7) % 26);
+          g.fillStyle = i % 2 ? "#ffffff" : col;
+          g.fillRect(Math.round(tx - 8 + ((i * 5) % 17)), Math.round(ty + 10 - rise), 1, 2);
+        }
+      }
+    }
+  }
+  function drawPanel(b, tick) {
+    frame(g, 0, PANEL_Y, 68, H - PANEL_Y);
+    frame(g, 68, PANEL_Y, W - 68, H - PANEL_Y);
+    if (b.phase === "command") {
+      const m = b.menu, stage = m.stage === "target" ? m.from : m.stage;
+      const list = b.listFor(stage);
+      if (stage !== "root") say(stage === "spell" ? "SPELL" : "ITEM", 8, PANEL_Y + 62, "#9aa8d8");
+      list.forEach((o, i) => {
+        const y = PANEL_Y + 9 + i * 11;
+        say(o.label, 14, y, o.ok ? "#ffffff" : "#6a7090");
+        if (o.note) say(o.note, 62 - textW(o.note), y, o.ok ? "#ffe08a" : "#6a7090");
+        if (i === (m.stage === "target" ? (stage === "root" ? m.rootIdx : m.idx) : m.idx)) {
+          const nudge = m.stage === "target" ? 0 : (tick >> 4) % 2;
+          g.fillStyle = "#fff"; g.fillRect(6 + nudge, y, 1, 5); g.fillRect(7 + nudge, y + 1, 1, 3); g.fillRect(8 + nudge, y + 2, 1, 1);
+        }
+      });
+    } else {
+      say(b.actor && b.actor.side === "foe" ? "FOE" : "WAIT", 10, PANEL_Y + 10, "#9aa8d8");
+      say("WAVE " + (b.waveNo + 1) + "/" + WAVES.length, 10, PANEL_Y + 58, "#9aa8d8");
+    }
+    b.party.forEach((h, i) => {
+      const y = PANEL_Y + 7 + i * 22, active = b.actor === h && b.phase === "command";
+      if (active) { g.fillStyle = "rgba(255,255,255,0.12)"; g.fillRect(72, y - 3, W - 76, 20); }
+      say(h.name, 76, y, !h.up ? "#c05050" : active ? "#ffe08a" : "#ffffff");
+      say("HP " + h.hp + "/" + h.maxHp, 112, y, h.up && h.hp < h.maxHp / 4 ? "#ffb04a" : "#e8ecff");
+      say("MP " + h.mp + "/" + h.maxMp, 194, y, "#c8d4ff");
+      bar(77, y + 9, 110, 3, h.barHp / h.maxHp, h.hp < h.maxHp / 4 ? "#ffb04a" : "#5ad86a");
+      bar(195, y + 9, 52, 3, h.mp / Math.max(1, h.maxMp), "#5a9aff");
+    });
+  }
+  function overlay(lines) {
+    g.fillStyle = "rgba(10,6,20,0.55)"; g.fillRect(0, 56, W, 50);
+    lines.forEach(([txt, y, col, sc]) => sayMid(txt, y, col, sc));
+  }
+  function render(game) {
+    const tick = game.tick;
+    juice.begin(g);
+    g.drawImage(scenery, 0, 0);
+    // drifting sand
+    for (let i = 0; i < 18; i++) {
+      const x = (i * 53 + tick * (0.6 + (i % 3) * 0.3)) % (W + 20) - 10, y = 60 + ((i * 37) % 86) + Math.sin(tick / 20 + i) * 2;
+      g.fillStyle = i % 2 ? "#fbe2a8" : "#e8c088"; g.fillRect(Math.round(x), Math.round(y), 2, 1);
+    }
+    if (game.scene === "title") {
+      g.fillStyle = "rgba(10,6,20,0.45)"; g.fillRect(0, 0, W, PANEL_Y);
+      sayMid("CARAVAN", 40, "#ffe08a", 4); sayMid("AMBUSH", 66, "#ff9a5a", 4);
+      sayMid("THREE GUARDS. ONE DESERT ROAD.", 100, "#f0e0c0", 1);
+      if ((tick >> 5) % 2 === 0) sayMid("PRESS Z / ENTER OR TAP", 120, "#ffffff", 1);
+      frame(g, 0, PANEL_Y, W, H - PANEL_Y);
+      say("ARROWS: CHOOSE   Z: CONFIRM   X: BACK", 18, PANEL_Y + 18, "#c8d4ff");
+      say("STRIKE  SPELL  BRACE  ITEM", 18, PANEL_Y + 34, "#ffe08a");
+      say("HOLD THE ROAD FOR THREE WAVES", 18, PANEL_Y + 50, "#c8d4ff");
+      juice.end(g);
+      return;
+    }
+    const b = game.battle;
+    const cast = b.everyone().slice().sort((p, q) => p.y - q.y);
+    for (const c of cast) drawCombatant(c, tick, b);
+    if (b.phase === "command" && b.menu.stage === "target") {
+      const pool = b.targetsFor(b.menu.aim), chosen = b.menu.aim === "allFoes" ? pool : [pool[b.menu.sub]];
+      for (const c of chosen) {
+        const [bx, by] = c.box(), bob = (tick >> 3) % 2;
+        const px = c.side === "foe" ? bx - 6 - bob : bx + c.art.w + 8 + bob, py = by + (c.art.h >> 1);
+        g.fillStyle = "#fff";
+        for (let i = 0; i < 4; i++) g.fillRect(c.side === "foe" ? px + i : px - i, py - 3 + i, 1, 7 - i * 2);
+      }
+    }
+    if (b.fx) drawFx(b.fx, tick);
+    fx.draw(g, 0, 0);
+    dp.draw(g);
+    juice.end(g);
+    juice.draw(g, 0, 0);
+    if (b.caption) { const w = textW(b.caption) + 12; frame(g, (W - w) >> 1, 4, w, 13); sayMid(b.caption, 8, "#ffffff", 1); }
+    drawPanel(b, tick);
+    if (b.phase === "banner") overlay([["WAVE " + (b.waveNo + 1), 64, "#ffe08a", 3], ["SAND CREATURES BLOCK THE ROAD", 90, "#ffffff", 1]]);
+    if (b.phase === "cleared") overlay([["WAVE CLEARED", 64, "#8af07a", 3], ["Z / TAP: MARCH ON", 90, "#ffffff", 1]]);
+    if (b.phase === "victory") overlay([["VICTORY", 62, "#ffe08a", 3], ["THE CARAVAN REACHES THE OASIS", 84, "#ffffff", 1], ["Z / TAP: RIDE AGAIN", 95, "#c8d4ff", 1]]);
+    if (b.phase === "defeat") overlay([["DEFEAT", 62, "#ff6a5a", 3], ["THE CARAVAN IS LOST TO THE SANDS", 84, "#ffffff", 1], ["Z / TAP: TRY AGAIN", 95, "#c8d4ff", 1]]);
+  }
+
+  // ---------- game shell ----------
+  const game = { scene: "title", clock: 0, tick: 0, battle: null };
+  // ---------- Game DNA mix: damage-pop + hit-stop-shake + hit-sparks ----------
+  const unitById = id => game.battle && game.battle.everyone().find(c => c.id === id);
+  const hudRects = () => {
+    const r = [{ x: 0, y: PANEL_Y, w: W, h: H - PANEL_Y }];
+    const b = game.battle;
+    if (b && b.caption) { const w = textW(b.caption) + 12; r.push({ x: (W - w) >> 1, y: 4, w, h: 13 }); }
+    if (b && ["banner", "cleared", "victory", "defeat"].includes(b.phase)) r.push({ x: 0, y: 56, w: W, h: 50 });
+    return r;
+  };
+  const unitRects = () => {
+    const out = [], b = game.battle; if (!b) return out;
+    for (const c of b.everyone()) {
+      if (!c.up) continue;
+      const [x, y, w, h] = c.box(); out.push({ x, y, w, h, id: c.id });
+      if (c.side === "foe") out.push({ x: c.x - 12, y: c.y + 3, w: 24, h: 2, id: c.id });
+    }
+    return out;
+  };
+  // ?mix=dp,hs,fx turns elements on one by one for side-by-side showcase captures (default: all three on)
+  const MIX = (qs.get("mix") || "dp,hs,fx").split(","), on = k => MIX.includes(k);
+  const NOOP = new Proxy({}, { get: (t, k) => k === "step" ? () => true : k === "flashing" ? () => false : () => {} });
+  const juice = !on("hs") ? NOOP : GameDNA_HitStop.create({ view: { x: 0, y: 0, w: W, h: PANEL_Y }, seed: 1, params: { strength: "heavy", stop: 6, shake: 4, flash: "on", reduced: "system" }, uiRects: hudRects });
+  const dp = !on("dp") ? NOOP : GameDNA_DamagePop.create({
+    bounds: { x: 0, y: 0, w: W, h: PANEL_Y },
+    params: { size: 0, duration: 1100, arc: 1, punch: 0.6, merge: 600, hitstop: 50, palette: "vivid", icons: "on", crit: "burst", render: "auto", stack: "on" },
+    getAnchor: id => { const c = unitById(id); if (!c) return null; return { x: c.x, top: c.y - c.art.h - (c.spec.drain ? 6 : 0), w: c.art.w, h: c.art.h }; },
+    getObstacles: () => [...unitRects(), ...hudRects()],
+    onHitStop: ms => juice.freeze(ms), onShake: (px, ms) => juice.shake(px, ms), onFlash: () => {}
+  });
+  const fx = !on("fx") ? NOOP : GameDNA_HitSparks.create({
+    view: { x: 0, y: 0, w: W, h: PANEL_Y }, seed: 1,
+    params: { size: 1, life: 14, sparks: 8, gravity: 0.15, hitstop: 50, shake: 2, critFlash: "screen", style: "auto", cycle: 2, cap: 192 },
+    getObstacles: () => unitRects().filter(r => r.h > 2), uiRects: hudRects,
+    onHitStop: ms => juice.freeze(ms), onShake: (px, ms) => juice.shake(px, ms)
+  });
+  let pending = [];
+  function step() {
+    if (!juice.step(STEP)) { dp.update(0); fx.update(0); return; }
+    dp.update(STEP); fx.update(STEP);
+    const input = pending; pending = [];
+    if (AUTO) input.push(...autopilot(game));
+    game.tick++; game.clock++;
+    if (game.scene === "title") {
+      if (input.some(e => e.k === "ok" || e.k === "tap")) { rand = seeded(20261114); game.battle = new Skirmish(); game.scene = "battle"; game.clock = 0; dp.clear(); juice.clear(); fx.clear(); }
+      return;
+    }
+    const b = game.battle;
+    if ((b.phase === "victory" || b.phase === "defeat") && b.clock > 30 && input.some(e => e.k === "ok" || e.k === "tap")) {
+      game.scene = "title"; game.clock = 0; game.battle = null; return;
+    }
+    b.update(input);
+  }
+  window.__caravan = () => ({ scene: game.scene, tick: game.tick, phase: game.battle && game.battle.phase, wave: game.battle && game.battle.waveNo + 1 });
+
+  const KEYS = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right", z: "ok", Z: "ok", Enter: "ok", " ": "ok", x: "back", X: "back", Escape: "back" };
+  addEventListener("keydown", e => { const k = KEYS[e.key]; if (k) { e.preventDefault(); if (!e.repeat) pending.push({ k }); } });
+  canvas.addEventListener("pointerdown", e => {
+    const r = canvas.getBoundingClientRect();
+    pending.push({ k: "tap", x: Math.floor((e.clientX - r.left) * W / r.width), y: Math.floor((e.clientY - r.top) * H / r.height) });
+    e.preventDefault();
+  });
+
+  if (FROZEN) {
+    const n = Math.floor(FREEZE_AT / STEP);
+    for (let i = 0; i < n; i++) step();
+    render(game);
+  } else {
+    let last = performance.now(), acc = 0;
+    const loop = now => {
+      acc += Math.min(250, now - last); last = now;
+      while (acc >= STEP) { step(); acc -= STEP; }
+      render(game);
+      requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+  }
+})();
+</script>
+</body>
+</html>

@@ -148,7 +148,7 @@ export function buildPreview(X) {
   // self-hosted fonts (Inter, JetBrains Mono; SIL OFL 1.1, licence texts beside them): tools/showcase/fonts.css + fonts/
   write('assets/fonts.css', fs.readFileSync(path.join(ROOT, 'tools', 'showcase', 'fonts.css'), 'utf8'));
   for (const f of fs.readdirSync(path.join(ROOT, 'tools', 'showcase', 'fonts'))) { fs.mkdirSync(path.join(OUT, 'assets', 'fonts'), { recursive: true }); fs.copyFileSync(path.join(ROOT, 'tools', 'showcase', 'fonts', f), path.join(OUT, 'assets', 'fonts', f)); }
-  // promo video (web re-encode of launch-media/video/game-dna-promo-16x9-en-v2.mp4): tools/showcase/media/ -> preview/media/
+  // promo video (web re-encode of launch-media/video/game-dna-promo-16x9-en-v5.mp4): tools/showcase/media/ -> preview/media/
   for (const f of fs.readdirSync(path.join(ROOT, 'tools', 'showcase', 'media'))) { fs.mkdirSync(path.join(OUT, 'media'), { recursive: true }); fs.copyFileSync(path.join(ROOT, 'tools', 'showcase', 'media', f), path.join(OUT, 'media', f)); }
   const OG_SRC = path.join(ROOT, 'tools', 'showcase', 'og');
   const OG_IMG = new Set(fs.existsSync(OG_SRC) ? fs.readdirSync(OG_SRC).filter(f => f.endsWith('.jpg')).map(f => f.slice(0, -4)) : []);
@@ -348,7 +348,7 @@ pops.spawn(<span class="s">'imp'</span>, <span class="n">47</span>, <span class=
 </section>
 <section class="sc-sec sc-tight sc-promo" id="video"><div class="sc-wrap">
 <p class="sc-eyebrow">Watch the 30-second tour</p>
-<div class="sc-promo-frame"><video controls muted playsinline preload="metadata" poster="${P}media/promo-poster.jpg" aria-label="Game DNA promo video (31 seconds)"><source src="${P}media/promo.mp4" type="video/mp4"><a href="${P}media/promo.mp4">Download the promo video (MP4)</a></video></div>
+<div class="sc-promo-frame"><video controls muted playsinline preload="metadata" poster="${P}media/promo-poster.jpg" aria-label="Game DNA promo video (35 seconds)"><source src="${P}media/promo.mp4" type="video/mp4"><a href="${P}media/promo.mp4">Download the promo video (MP4)</a></video></div>
 </div></section>
 <section class="sc-wall" aria-label="What Game DNA can make">${marq(rowA, false)}${marq(rowB, true)}</section>
 <section class="sc-sec" id="what"><div class="sc-wrap">
