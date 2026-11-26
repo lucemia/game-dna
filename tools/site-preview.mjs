@@ -148,7 +148,7 @@ export function buildPreview(X) {
   // self-hosted fonts (Inter, JetBrains Mono; SIL OFL 1.1, licence texts beside them): tools/showcase/fonts.css + fonts/
   write('assets/fonts.css', fs.readFileSync(path.join(ROOT, 'tools', 'showcase', 'fonts.css'), 'utf8'));
   for (const f of fs.readdirSync(path.join(ROOT, 'tools', 'showcase', 'fonts'))) { fs.mkdirSync(path.join(OUT, 'assets', 'fonts'), { recursive: true }); fs.copyFileSync(path.join(ROOT, 'tools', 'showcase', 'fonts', f), path.join(OUT, 'assets', 'fonts', f)); }
-  // promo video (web re-encode of launch-media/video/game-dna-promo-16x9-en-v5.mp4): tools/showcase/media/ -> preview/media/
+  // promo video (web re-encode of launch-media/video/game-dna-promo-16x9-en-v5.1.mp4): tools/showcase/media/ -> preview/media/
   for (const f of fs.readdirSync(path.join(ROOT, 'tools', 'showcase', 'media'))) { fs.mkdirSync(path.join(OUT, 'media'), { recursive: true }); fs.copyFileSync(path.join(ROOT, 'tools', 'showcase', 'media', f), path.join(OUT, 'media', f)); }
   const OG_SRC = path.join(ROOT, 'tools', 'showcase', 'og');
   const OG_IMG = new Set(fs.existsSync(OG_SRC) ? fs.readdirSync(OG_SRC).filter(f => f.endsWith('.jpg')).map(f => f.slice(0, -4)) : []);
@@ -600,7 +600,7 @@ ${pairs ? `<h3 class="sc-h3">Also pairs well with</h3><div class="sc-grid sc-gri
   // blog: the method post (source tools/showcase/blog/<slug>.md; links written as @/<path> resolve to this showcase)
   {
     const slug = 'how-game-dna-works', rel = `blog/${slug}/`, P = '../../';
-    const title = "I let AI agents add 101 game features to games they'd never seen. A lot of the bugs were mine.";
+    const title = "I let AI agents add 102 game features to games they'd never seen. A lot of the bugs were mine.";
     const desc = 'How Game DNA elements are built and tested: cold tests by a fresh agent on unseen games, a judge that plays, a strict visual critic, and four failures that changed the method.';
     const src = fs.readFileSync(path.join(ROOT, 'tools', 'showcase', 'blog', slug + '.md'), 'utf8').replace(/\(@\//g, '(' + P);
     const missing = [...src.matchAll(/\]\((\.\.\/\.\.\/[^)]*)\)/g)].map(m => m[1].slice(P.length)).filter(u => !/^(tests|start|basket|styles|about)\/$/.test(u) && !(u.startsWith('dna/') && BY[u.split('/')[1]]));
@@ -609,7 +609,7 @@ ${pairs ? `<h3 class="sc-h3">Also pairs well with</h3><div class="sc-grid sc-gri
 <p class="sc-eyebrow"><a href="${P}#how">How it works</a> · Method</p>
 <h1 class="sc-post-h1">${esc(title)}</h1>
 <p class="sc-post-meta">David Chen · <time datetime="${BLOG_PUBLISHED}">${new Date(BLOG_PUBLISHED + 'T12:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}</time> · about 6 minutes to read</p>
-${(() => { const h = 'kart-racer-3d', L = HERO_LOOPS[h]; return `<figure class="sc-post-hero"><a href="${P}dna/${h}/" aria-label="Play the ${esc(BY[h].name)} demo" style="background-image:url('${P}../assets/hero/${h}-poster.webp')">${L ? `<span class="sc-post-loop" style="background-image:url('${P}../assets/hero/${h}.webp');background-size:${L.n * 100}% 100%;animation-duration:${L.n * (L.step || 120)}ms;animation-timing-function:steps(${L.n}, jump-none)"></span>` : ''}</a><figcaption>${esc(BY[h].name)}, one of the 101 elements, running in its demo. <a href="${P}dna/${h}/">Play it</a>.</figcaption></figure>`; })()}
+${(() => { const h = 'kart-racer-3d', L = HERO_LOOPS[h]; return `<figure class="sc-post-hero"><a href="${P}dna/${h}/" aria-label="Play the ${esc(BY[h].name)} demo" style="background-image:url('${P}../assets/hero/${h}-poster.webp')">${L ? `<span class="sc-post-loop" style="background-image:url('${P}../assets/hero/${h}.webp');background-size:${L.n * 100}% 100%;animation-duration:${L.n * (L.step || 120)}ms;animation-timing-function:steps(${L.n}, jump-none)"></span>` : ''}</a><figcaption>${esc(BY[h].name)}, one of the 102 elements, running in its demo. <a href="${P}dna/${h}/">Play it</a>.</figcaption></figure>`; })()}
 <div class="sc-md sc-post-body">${md2html(src, '')}</div>
 <div class="sc-cta"><div><h3>Try it on your game</h3><p class="sc-muted">Pick one element, copy its prompt, hand it to your agent.</p></div><a class="sc-btn sc-btn-hot lg" href="${P}start/">${ICON.play}Start in 5 minutes</a></div>
 </div></article>`;
