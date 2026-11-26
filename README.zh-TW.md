@@ -2,11 +2,11 @@
 
 # Game DNA
 
-**給 coding agent 用的 101 個遊戲元素。挑一個，拿出你的網頁遊戲，agent 就會把它接進你的程式碼，從傷害數字到動態光源都有。**
+**給 coding agent 用的 102 個遊戲元素。挑一個，拿出你的網頁遊戲，agent 就會把它接進你的程式碼，從傷害數字到動態光源都有。**
 
 ### ▶ [打開展示館](https://game-dna.pages.dev)
 
-[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![elements](https://img.shields.io/badge/elements-101-orange)](https://game-dna.pages.dev/site/preview/) [![cold-tested](https://img.shields.io/badge/cold--tested-on_unseen_games-brightgreen)](https://game-dna.pages.dev/site/preview/tests/) [![live demo](https://img.shields.io/badge/live_demo-game--dna.pages.dev-ff69b4)](https://game-dna.pages.dev/site/preview/)
+[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![elements](https://img.shields.io/badge/elements-102-orange)](https://game-dna.pages.dev/site/preview/) [![cold-tested](https://img.shields.io/badge/cold--tested-on_unseen_games-brightgreen)](https://game-dna.pages.dev/site/preview/tests/) [![live demo](https://img.shields.io/badge/live_demo-game--dna.pages.dev-ff69b4)](https://game-dna.pages.dev/site/preview/)
 
 <p align="center">
 <a href="https://game-dna.pages.dev/site/preview/#video"><img src="docs/media/promo-cover.jpg" width="720" alt="Game DNA 宣傳影片（31 秒）"></a>
@@ -47,7 +47,7 @@ Game DNA 給 agent 三樣東西，取代猜測：
 - **一份 prompt**（最多 600 字）：說明要接在*你的*遊戲哪裡、哪些不能動、常見的錯誤；
 - **一套檢查方式**：不用瀏覽器就能跑的自我檢查，加上肉眼看得到的驗收檢查。
 
-每個元素都有可以玩的示範。其中 81 個是外掛，可以放進任何遊戲（手感、特效、介面、音效、光影）；
+每個元素都有可以玩的示範。其中 82 個是外掛，可以放進任何遊戲（手感、特效、介面、音效、光影）；
 20 個是系統（戰鬥、地圖流程、賽車），附一個起手遊戲，讓 agent 在上面擴充。
 所有美術都是原創，大部分直接用程式畫。
 
@@ -60,7 +60,31 @@ Game DNA 給 agent 三樣東西，取代猜測：
 
 ## 元素目錄
 
-全部 101 個，依類別分組。元素名稱和說明維持英文。點 **試玩** 會打開該元素的頁面，有即時示範和 prompt。✦ = 示範用了 AI 生成的美術。
+全部 102 個，依類別分組。元素名稱和說明維持英文。點 **試玩** 會打開該元素的頁面，有即時示範和 prompt。✦ = 示範用了 AI 生成的美術。
+
+<a href="https://game-dna.pages.dev/site/preview/dna/horde-survival/"><img src="docs/media/og-horde-survival.jpg" width="360" alt="Horde survival auto-attacker"></a>
+
+<details><summary><b>戰鬥系統</b> Battle systems（15）</summary>
+
+| 元素 | 做什麼（英文） | 示範 |
+|---|---|---|
+| **Active-time gauge battle** | Every combatant's gauge fills in real time at a speed-based rate; a full hero gauge opens that hero's command window. *（起手遊戲）* | [試玩](https://game-dna.pages.dev/site/preview/dna/active-time-battle/) |
+| **Auto-resolved squad clash with forecast** ✦ | Two squads on 2x3 grids (front row takes melee, back row is shielded from it while the front stands) meet; before committing. *（起手遊戲）* | [試玩](https://game-dna.pages.dev/site/preview/dna/squad-clash/) |
+| **Bullet-pattern emitter** | Enemies cast bullet patterns described as data: fans and aimed bursts, rings, spirals, flowers whose speed dips between petals, weaving waves. | [試玩](https://game-dna.pages.dev/site/preview/dna/bullet-patterns/) |
+| **Card battle with intents** ✦ | A turn-based card battle: draw a fanned hand each turn, drag a card onto a foe (a target arrow follows; keys and taps work too) and pay its cost from a small… *（起手遊戲）* | [試玩](https://game-dna.pages.dev/site/preview/dna/card-battle/) |
+| **Combat forecast window** | Before an attack is confirmed, a two-sided window shows what will happen: both units' HP now and after, damage, hit and critical chances. | [試玩](https://game-dna.pages.dev/site/preview/dna/combat-forecast/) |
+| **Conditional tactic rules** ✦ | Every unit decides with an ordered list of rules, "condition → action (target)": ally HP under a threshold, a flying or armoured foe, a back-row target. | [試玩](https://game-dna.pages.dev/site/preview/dna/tactic-rules/) |
+| **Four-move menu battle with type matchups** | Turn-based creature battle, one on one (or two on two): each creature has up to four moves with uses left and a type; a type chart doubles. *（起手遊戲）* | [試玩](https://game-dna.pages.dev/site/preview/dna/four-move-battle/) |
+| **Horde survival auto-attacker** ✦ | The hero only walks (keys, WASD or a touch stick); weapons fire by themselves on timers: orbiting blades, a bolt at the nearest foe. *（起手遊戲）* | [試玩](https://game-dna.pages.dev/site/preview/dna/horde-survival/) |
+| **Match-3 battle board** ✦ | A puzzle battle on an 8 x 8 gem board: swap two neighbours to line up 3 or more; matches clear, gems fall and cascades chain (each step worth more). *（起手遊戲）* | [試玩](https://game-dna.pages.dev/site/preview/dna/match3-battle/) |
+| **Motion-input special moves** | Reads the stick and buttons once per fixed step into a short input buffer and recognises special-move motions written relative to the way the hero faces. | [試玩](https://game-dna.pages.dev/site/preview/dna/motion-inputs/) |
+| **On-map skirmish exchange** | The attack exchange plays on the map itself instead of cutting to a side-view scene (the alternative to Side-view clash cut-in clash-cutin). | [試玩](https://game-dna.pages.dev/site/preview/dna/on-map-skirmish/) |
+| **Real-time sword combat** | Top-down real-time melee on the map: a 4- or 8-way sword swing with anticipation, active and recovery frames and a sweeping arc hitbox. *（起手遊戲）* | [試玩](https://game-dna.pages.dev/site/preview/dna/sword-combat/) |
+| **Side-view clash cut-in** | When a turn or tactics battle confirms an attack, the game cuts to a staged side-view scene. | [試玩](https://game-dna.pages.dev/site/preview/dna/clash-cutin/) |
+| **Squad formation grid** | Each side fights as squads on a 2x3 grid: a front row that faces the enemy and a back row behind it. | [試玩](https://game-dna.pages.dev/site/preview/dna/squad-formation/) |
+| **Tower placement & wave spawner** | A tower-defense core: foes march along a fixed road through a grid (one or more paths from waypoint cells); towers go on the grass cells beside it. *（起手遊戲）* | [試玩](https://game-dna.pages.dev/site/preview/dna/tower-defense/) |
+
+</details>
 
 <a href="https://game-dna.pages.dev/site/preview/dna/modern-particles/"><img src="docs/media/og-modern-particles.jpg" width="360" alt="Modern particle system"></a>
 
@@ -83,29 +107,6 @@ Game DNA 給 agent 三樣東西，取代猜測：
 | **Time rewind** ✦ | Hold a key (or the touch button) and the world runs backwards: every fixed step the game's state is deep-copied into a ring buffer. | [試玩](https://game-dna.pages.dev/site/preview/dna/time-rewind/) |
 | **Verlet rope & cloth** ✦ | Capes, scarves, ribbons, hair tufts, banners, hanging ropes and chains that swing with movement and wind. | [試玩](https://game-dna.pages.dev/site/preview/dna/verlet-cloth/) |
 | **Weather & ambient particles** | Seeded weather drawn in three depth layers behind and in front of the sprites: rain that splashes on the game's own ground line, snow, drifting dust motes. | [試玩](https://game-dna.pages.dev/site/preview/dna/weather-particles/) |
-
-</details>
-
-<a href="https://game-dna.pages.dev/site/preview/dna/horde-survival/"><img src="docs/media/og-horde-survival.jpg" width="360" alt="Horde survival auto-attacker"></a>
-
-<details><summary><b>戰鬥系統</b> Battle systems（14）</summary>
-
-| 元素 | 做什麼（英文） | 示範 |
-|---|---|---|
-| **Active-time gauge battle** | Every combatant's gauge fills in real time at a speed-based rate; a full hero gauge opens that hero's command window. *（起手遊戲）* | [試玩](https://game-dna.pages.dev/site/preview/dna/active-time-battle/) |
-| **Auto-resolved squad clash with forecast** ✦ | Two squads on 2x3 grids (front row takes melee, back row is shielded from it while the front stands) meet; before committing. *（起手遊戲）* | [試玩](https://game-dna.pages.dev/site/preview/dna/squad-clash/) |
-| **Bullet-pattern emitter** | Enemies cast bullet patterns described as data: fans and aimed bursts, rings, spirals, flowers whose speed dips between petals, weaving waves. | [試玩](https://game-dna.pages.dev/site/preview/dna/bullet-patterns/) |
-| **Card battle with intents** ✦ | A turn-based card battle: draw a fanned hand each turn, drag a card onto a foe (a target arrow follows; keys and taps work too) and pay its cost from a small… *（起手遊戲）* | [試玩](https://game-dna.pages.dev/site/preview/dna/card-battle/) |
-| **Combat forecast window** | Before an attack is confirmed, a two-sided window shows what will happen: both units' HP now and after, damage, hit and critical chances. | [試玩](https://game-dna.pages.dev/site/preview/dna/combat-forecast/) |
-| **Conditional tactic rules** ✦ | Every unit decides with an ordered list of rules, "condition → action (target)": ally HP under a threshold, a flying or armoured foe, a back-row target. | [試玩](https://game-dna.pages.dev/site/preview/dna/tactic-rules/) |
-| **Four-move menu battle with type matchups** | Turn-based creature battle, one on one (or two on two): each creature has up to four moves with uses left and a type; a type chart doubles. *（起手遊戲）* | [試玩](https://game-dna.pages.dev/site/preview/dna/four-move-battle/) |
-| **Horde survival auto-attacker** ✦ | The hero only walks (keys, WASD or a touch stick); weapons fire by themselves on timers: orbiting blades, a bolt at the nearest foe. *（起手遊戲）* | [試玩](https://game-dna.pages.dev/site/preview/dna/horde-survival/) |
-| **Match-3 battle board** ✦ | A puzzle battle on an 8 x 8 gem board: swap two neighbours to line up 3 or more; matches clear, gems fall and cascades chain (each step worth more). *（起手遊戲）* | [試玩](https://game-dna.pages.dev/site/preview/dna/match3-battle/) |
-| **Motion-input special moves** | Reads the stick and buttons once per fixed step into a short input buffer and recognises special-move motions written relative to the way the hero faces. | [試玩](https://game-dna.pages.dev/site/preview/dna/motion-inputs/) |
-| **Real-time sword combat** | Top-down real-time melee on the map: a 4- or 8-way sword swing with anticipation, active and recovery frames and a sweeping arc hitbox. *（起手遊戲）* | [試玩](https://game-dna.pages.dev/site/preview/dna/sword-combat/) |
-| **Side-view clash cut-in** | When a turn or tactics battle confirms an attack, the game cuts to a staged side-view scene. | [試玩](https://game-dna.pages.dev/site/preview/dna/clash-cutin/) |
-| **Squad formation grid** | Each side fights as squads on a 2x3 grid: a front row that faces the enemy and a back row behind it. | [試玩](https://game-dna.pages.dev/site/preview/dna/squad-formation/) |
-| **Tower placement & wave spawner** | A tower-defense core: foes march along a fixed road through a grid (one or more paths from waypoint cells); towers go on the grass cells beside it. *（起手遊戲）* | [試玩](https://game-dna.pages.dev/site/preview/dna/tower-defense/) |
 
 </details>
 

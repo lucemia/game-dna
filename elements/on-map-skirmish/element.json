@@ -1,0 +1,68 @@
+{
+  "id": "on-map-skirmish",
+  "code": "A-18",
+  "kind": "addon",
+  "name": "On-map skirmish exchange",
+  "family": "battle-cutin",
+  "alternativeTo": ["clash-cutin"],
+  "oneLiner": "The attack exchange plays on the map itself instead of cutting to a side-view scene (the alternative to A-04 clash-cutin): the small map units fight in place. The attacker lunges 2-3 px toward its target but never enters its tile, the hit spark lands on the target's side that faces the attacker, only the target flashes a solid white silhouette for 2-3 frames, shows an opaque hurt pose and is knocked back 2 px, the damage number pops above its head where it covers no other unit, a miss sweeps a white arc and shows MISS while the target sidesteps, the counter-attack and a follow-up for the side at least 4 speed faster play in turn, both HP plates sit at the bottom of the screen (or the top when units stand there) and drain slowly, and a boss braces in place instead of lunging. The game passes the outcome it already decided; the module only stages it.",
+  "fits": [
+    "tactics / strategy RPG on a grid map (attack + counter exchanges)",
+    "turn-based map game that wants quick exchanges without leaving the map",
+    "a game whose separate battle screen should be replaced by fighting on the map",
+    "wargame or skirmish game with a 'map animations' option"
+  ],
+  "notFor": [
+    "real-time action games (the exchange pauses the world)",
+    "attacks that hit many units at once (stage one pair per exchange)",
+    "games that want a dramatic close-up: use A-04 clash-cutin instead (same family, pick one)"
+  ],
+  "interfaces": {
+    "time": "turn",
+    "coords": "grid",
+    "layer": "actor",
+    "needs": [
+      "the moment the game has confirmed a single-target attack and resolved it with its own rules: attacker and defender, each strike in order (who strikes, hit / miss / crit, damage) and both HP values after",
+      "each fighter's id, name, team, HP before, max HP and its sprite box on screen as drawn now (native px), optionally `boss: true`",
+      "the place where the game draws each unit (route it through drawActor so the lunge, flash, hurt pose and knock-back show), the other units' rects (getObstacles) and the HUD's rects (uiRects)",
+      "a fixed update step and a place to pause the game's world, autoplay and input while busy() is true"
+    ],
+    "provides": [
+      "onDone({att, def, skipped, ko}) when the exchange has closed: apply the HP and resume the game there",
+      "onImpact({i, by, target, result, dmg, after, ko}) once per strike when it lands (sound, rumble)",
+      "order({attSpd, defSpd, gap, counter}) -> ['att', 'def', 'att'] (counter and a follow-up for the side at least `gap` faster)",
+      "busy(), fighting(id), facing(id), dir(id), offset(id), gone(id), state()"
+    ]
+  },
+  "params": [
+    { "key": "speed", "label": "Speed", "type": "select", "options": ["1", "2"], "default": "1" },
+    { "key": "lunge", "label": "Lunge (px)", "type": "range", "min": 2, "max": 3, "step": 1, "default": 3 },
+    { "key": "knock", "label": "Knock-back (px)", "type": "range", "min": 0, "max": 3, "step": 1, "default": 2 },
+    { "key": "flash", "label": "White flash (frames)", "type": "range", "min": 2, "max": 3, "step": 1, "default": 3 },
+    { "key": "drain", "label": "HP drain (ms)", "type": "range", "min": 0, "max": 1500, "step": 20, "default": 520 },
+    { "key": "hold", "label": "Hold at the end (ms)", "type": "range", "min": 0, "max": 1500, "step": 20, "default": 420 },
+    { "key": "gap", "label": "Follow-up speed gap", "type": "range", "min": 1, "max": 8, "step": 1, "default": 4 },
+    { "key": "standoff", "label": "Boss stand-off (px)", "type": "range", "min": 0, "max": 6, "step": 1, "default": 4 },
+    { "key": "plates", "label": "Plates prefer", "type": "select", "options": ["bottom", "top"], "default": "bottom" },
+    { "key": "text", "label": "Text scale", "type": "select", "options": ["auto", "1", "2"], "default": "auto" },
+    { "key": "keys", "label": "Skip / x2 keys", "type": "select", "options": ["on", "off"], "default": "on" }
+  ],
+  "variants": [
+    { "name": "Classic", "params": { "speed": "1", "lunge": 3, "knock": 2, "flash": 3, "drain": 520, "hold": 420, "gap": 4 } },
+    { "name": "Brisk x2", "params": { "speed": "2", "drain": 320, "hold": 220 } },
+    { "name": "Slow drain", "params": { "drain": 1100, "hold": 700 } },
+    { "name": "Light touch", "params": { "lunge": 2, "knock": 1, "flash": 2 } },
+    { "name": "Plates on top", "params": { "plates": "top" } }
+  ],
+  "assets": [
+    "module/on-map-skirmish.js: the element as one dependency-free script (global GameDNA_OnMapSkirmish): timeline, lunge / knock-back / sidestep / brace offsets, solid white flash and opaque hurt tint through an offscreen layer, code-drawn hit sparks, swish arcs, KO shards, a 5x8 pixel font for numbers, MISS and plates, team and boss HP plates with a slow drain, placement of numbers and plates away from units and HUD",
+    "no image or audio files: fighters are the game's own sprites; the demo's map units are hand-pixelled in code (src/cast.js)"
+  ],
+  "status": "draft",
+  "module": {
+    "file": "module/on-map-skirmish.js",
+    "global": "GameDNA_OnMapSkirmish",
+    "version": "1.0.3",
+    "docs": "module/README.md"
+  }
+}

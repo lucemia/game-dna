@@ -212,6 +212,21 @@
    }
   },
   {
+   "id": "on-map-skirmish",
+   "name": "On-map skirmish exchange",
+   "description": "The attack exchange plays on the map itself instead of cutting to a side-view scene (the alternative to Side-view clash cut-in clash-cutin): the small map units fight in place. The attacker lunges 2-3 px toward its target but never enters its tile, the hit spark lands on the target's side that faces the attacker, only the target flashes a solid white silhouette for 2-3 frames, shows an opaque hurt pose and is knocked back 2 px, the damage number pops above its head where it covers no other unit, a miss sweeps a white arc and shows MISS while the target sidesteps, the counter-attack and a follow-up for the side at least 4 speed faster play in turn, both HP plates sit at the bottom of the screen (or the top when units stand there) and drain slowly, and a boss braces in place instead of lunging. The game passes the outcome it already decided; the module only stages it.",
+   "line": "The attack exchange plays on the map itself instead of cutting to a side-view scene (the alternative to Side-view clash cut-in clash-cutin).",
+   "category": "Battle systems",
+   "kind": "add-on",
+   "aiArt": false,
+   "paths": {
+    "page": "site/preview/dna/on-map-skirmish/",
+    "prompt": "site/preview/dna/on-map-skirmish/prompt.md",
+    "module": "elements/on-map-skirmish/module/on-map-skirmish.js",
+    "demo": "elements/on-map-skirmish/demo/index.html"
+   }
+  },
+  {
    "id": "grid-range-path",
    "name": "Grid movement range + path arrow",
    "description": "Select a unit on a tile map to see every tile it can reach (blue, terrain-cost aware) and every tile it can strike (red); a segmented arrow follows the cursor along the cheapest path and the unit walks it tile by tile on confirm.",

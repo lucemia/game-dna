@@ -2062,6 +2062,44 @@
    "h": 360
   }
  ],
+ "on-map-skirmish": [
+  {
+   "t": 2650,
+   "params": [],
+   "state": "Arden's hit lands on the map: a spark on the Brigand's near side, the Brigand in his hurt pose knocked back, 7 above his head.",
+   "query": "t=2650&freeze=1",
+   "img": "on-map-skirmish-A.webp",
+   "w": 600,
+   "h": 400
+  },
+  {
+   "t": 3450,
+   "params": [],
+   "state": "The Brigand's counter misses: a white swish past Arden, MISS over his head as he sidesteps.",
+   "query": "t=3450&freeze=1",
+   "img": "on-map-skirmish-B.webp",
+   "w": 600,
+   "h": 400
+  },
+  {
+   "t": 8500,
+   "params": [],
+   "state": "Enemy phase: a Pikeman strikes Bram by the bridge; the units stand low, so both plates sit at the top.",
+   "query": "t=8500&freeze=1",
+   "img": "on-map-skirmish-C.webp",
+   "w": 600,
+   "h": 400
+  },
+  {
+   "t": 13320,
+   "params": [],
+   "state": "Hale hits the Warlord: the boss braces in place instead of being knocked back; its plate carries a horned helm.",
+   "query": "t=13320&freeze=1",
+   "img": "on-map-skirmish-D.webp",
+   "w": 600,
+   "h": 400
+  }
+ ],
  "painted-parallax": [
   {
    "t": 4200,

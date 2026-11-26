@@ -76,12 +76,14 @@ const RELEASE = {
   M13: ['horde-survival', 'vision-cones', 'tower-defense', 'minimap', 'physics-debris'],
   M14: ['grapple-swing', 'clash-cutin', 'title-menu', 'quest-log', 'world-hud', 'wfc-town-3d'],
   M15: ['seeded-replay', 'water-surface', 'loot-beams', 'keyword-tooltips', 'kart-racer-3d', 'match3-battle', 'ik-creatures', 'dungeon-floors', 'motion-inputs', 'crafting-recipes', 'shaped-inventory', 'farming-plots', 'scripted-cutscenes'],
+  M17: ['on-map-skirmish'],
   M16: ['chip-music', 'beat-judge', 'adaptive-music', 'paper-doll', 'talking-portraits', 'sprite-stacking', 'belt-depth', 'raycast-dungeon'],
   M10: ['modern-particles', 'ribbon-trails', 'toasts', 'bark-bubbles', 'screen-distortion', 'squad-formation', 'tactic-rules', 'stamina-rest', 'squad-clash', 'normal-maps', 'normal-lighting', 'run-map', 'card-art', 'card-battle', 'cutout-characters']   // L-10 joined M10 later the same day (own What's new entry)
 };
 const STYLE_RELEASE = { 'painted-impasto': 'M10', 'glass-ui': 'M10' };   // styles added after M7 that carry a "New" mark
 const STYLE_GEN = { 'painted-impasto': true };   // styles whose look ships generated bitmaps (an L-00-locked pack)
 const CHANGELOG = [   // short, dated entries for the top of the home page (newest first); [release, date, text, label shown instead of the release]
+  ['M17', '2026-11-26', 'One element: on-map skirmish exchanges for tactics games. The small map units fight where they stand: the attacker lunges, the target flashes white and is knocked back, counters and follow-ups play in turn and both HP bars drain at the edge of the screen. It is the alternative to the side-view clash cut-in.'],
   ['M16', '2026-11-20', 'Eight elements: chip music synthesized in the browser with loops and jingles, a beat judge that rates each press Perfect, Good or Miss after a calibration, adaptive music whose layers follow the game state, a layered paper doll with a wardrobe, talking portraits whose mouths move with the text, sprite-stacked props that keep their depth as the camera turns, street depth for brawlers, and a first-person raycast dungeon crawler with a starter game.'],
   ['M15', '2026-11-19', 'Thirteen elements: four new systems with starter games (a 3D kart racer with drifts and a two-race cup, a match-3 board whose combos drive a party battle, dungeon floors generated room by room, and a farm through the seasons), plus seeded replays with a ghost, water that splashes, loot with rarity beams, keyword tooltips, creatures that walk on procedural legs, motion-input special moves, crafting with recipe discovery, a bag where items have shapes, and scripted cutscenes that walk the game\'s own characters through a scene.'],
   ['M14', '2026-11-19', 'Six elements: a grappling hook that swings and wraps around corners, side-view clash cut-ins for tactics fights, a title screen with menus and pause, a quest log with a tracker, name plates and arrows that float over the world, and a 3D town that builds itself from tiles with its own starter game.'],
@@ -187,6 +189,9 @@ const STATUS = {
   'sprite-stacking': { cold: [['Shipped module v1.0.0 into unseen top-down and HD top-down games', '6/6 integrated', 'solH']], issues: [] },
   'raycast-dungeon': { cold: [['Its starter game + a task (a new monster and a new item), v1.2.0', '2/3; one run wrote into GAME.shipped, the record of the shipped content that must stay unchanged', 'solH'], ['Its starter game + C-11 damage pop, v1.2.0', '1/3; the starter README sample passed the monsters\' screen rects without a margin, so numbers sat on monsters', 'solH'], ['v1.3.0: + a task', '3/3 integrated', 'solH'], ['v1.3.0: + C-11 damage pop', '2/3; the README sample kept a dead target\'s number at a stale spot on screen when the view turned', 'solH'], ['Shipped v1.3.1 (README sample only): + C-11 damage pop', '2/2 integrated', 'solH']],
     coldNote: 'Every damage-pop failure followed the starter README sample, which v1.3.0 and v1.3.1 fixed; v1.3.1 changed only that sample, so the task was not run again.', issues: [] },
+  // M17: hand-written from coldtests/sol/judge-m17-on-map-skirmish-r1.json (v1.0.2) and -r2.json (v1.0.3 reruns after the fix)
+  'on-map-skirmish': { cold: [['Module v1.0.2 into unseen tactics and top-down games', '4/6; tactics 3/3, top-down 1/3: a module bug, not the integrations (the top-down game starts a fight when the two units already overlap, and the module spaced the fighters apart only for a boss, so the hero covered the slime on the hit)', 'solH'], ['Shipped module v1.0.3 (every exchange spaces the pair along the attack axis), 3 runs', '3/3 integrated (tactics 1/1, top-down 2/2)', 'solH']],
+    coldNote: 'The top-down failures came from the module; v1.0.3 spaces every pair itself and was cold-tested again on both games.', issues: [] },
   'belt-depth': { cold: [['Shipped module v1.0.3 into unseen side-scroller and HD side-scroller games', '6/6 integrated', 'solH']], issues: [] },
   'scripted-cutscenes': { cold: [['Module v1.0.0 into unseen top-down and HD top-down games', '6/6 integrated', 'solH'], ['Module v1.1.0, both hosts', '4/4 integrated', 'solH'], ['Shipped module v1.2.0, both hosts', '4/4 integrated', 'solH']],
     coldNote: 'Every run sent the lines through the game\'s own dialogue box, and a held skip landed on the play-through positions, facings and calls. The repo judge read its manual check as failed on the HD top-down runs because its scripted walker opens menus while the scene still holds control; a walker that waits for the scene to end passed all of them.', issues: [] },
@@ -699,6 +704,7 @@ const PITCH = {   // the one-sentence template: 'Add <element> to <your game>: <
   'minimap': "a corner map that fills in as you explore, with an arrow, markers and a full-map view",
   'physics-debris': "crates, barrels and rocks that shatter into pieces that tumble, bounce off walls and settle",
   'grapple-swing': "a hook you fire at rings and rock, swing from with real momentum, and wrap around corners",
+  'on-map-skirmish': "attack exchanges that play on the map itself: lunge, white flash, knock-back, counters and draining HP plates",
   'clash-cutin': "a side-view cut-in where both fighters leap, strike, counter and land criticals",
   'title-menu': "a title screen, start menu, options and pause menu with screen wipes",
   'quest-log': "quest banners, a tracker that counts your steps and a log of what is left to do",

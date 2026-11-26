@@ -62,7 +62,7 @@ When an attack is confirmed, the two map units fight where they stand: the attac
 
 ## Self-check without a browser (report each)
 
-- Each module file is byte-identical to the one given: `on-map-skirmish.js` sha256 `2962dc926b4b9751...` (`shasum -a 256`).
+- Each module file is byte-identical to the one given: `on-map-skirmish.js` sha256 `ca347b746fec9cc9...` (`shasum -a 256`).
 - No function removed or renamed (compare name lists before/after).
 - Every identifier you call exists where called; each instance exists before first use.
 - [On-map skirmish exchange] For one exchange: HP before minus the strikes' dmg per target (clamped at 0) equals `after`, which equals what `onDone` applies.

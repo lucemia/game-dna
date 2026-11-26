@@ -1,4 +1,4 @@
-/* A-18 on-map-skirmish (GameDNA_OnMapSkirmish) v1.0.2 (r2: no outline-only KO rows, narrower plates; r1: shaped spark core, smaller slam spark, team-tone KO shards, no lingering outline row, slimmer plates)
+/* A-18 on-map-skirmish (GameDNA_OnMapSkirmish) v1.0.3 (cold r1: stand-off for every pair, drawn boxes never overlap; r2: no outline-only KO rows, narrower plates; r1: shaped spark core, smaller slam spark, team-tone KO shards, no lingering outline row, slimmer plates)
  * The attack exchange plays on the map itself: the small map units fight in place. The attacker lunges 2-3 px toward the
  * target (never into its tile), the hit spark lands on the target's side facing the attacker, only the target flashes a
  * solid white silhouette for 2-3 frames, then shows an opaque hurt pose and is knocked back 2 px; a damage number appears
@@ -11,7 +11,7 @@
  */
 (function (root) {
   'use strict';
-  var VERSION = '1.0.2';
+  var VERSION = '1.0.3';
   var DEFAULTS = { speed: 1, lunge: 3, knock: 2, flash: 3, drain: 520, hold: 420, gap: 4, standoff: 4, plates: 'auto', text: 'auto', keys: 'on' };
 
   /* ---------- timeline (ms at speed 1) ---------- */
@@ -189,14 +189,26 @@
       fa.facing = dx > 0.5 ? 'right' : dx < -0.5 ? 'left' : null; fd.facing = dx > 0.5 ? 'left' : dx < -0.5 ? 'right' : null;
       fa.dir4 = Math.abs(dx) >= Math.abs(dy) ? (dx >= 0 ? 'right' : 'left') : (dy >= 0 ? 'down' : 'up');
       fd.dir4 = Math.abs(dx) >= Math.abs(dy) ? (dx >= 0 ? 'left' : 'right') : (dy >= 0 ? 'up' : 'down');
-      // stand-off: a boss wider than its tile pushes its opponent back for the whole exchange (never overlapping)
-      var boss = fa.boss ? fa : fd.boss ? fd : null, other = boss === fa ? fd : fa;
-      [fa, fd].forEach(function (f) { f.stand = { x: 0, y: 0 }; });
-      if (boss && !(fa.boss && fd.boss)) {
-        var gapX = Math.abs(cx(boss.box) - cx(other.box)) - (boss.box.w + other.box.w) / 2, gapY = Math.abs(cy(boss.box) - cy(other.box)) - (boss.box.h + other.box.h) / 2;
-        var gap0 = Math.max(gapX, gapY);
-        if (gap0 < 2) { var back = clamp(Math.max(P.standoff, Math.ceil(P.lunge - gap0)), 0, 6); other.stand = { x: Math.round(other.dir.x * -back), y: Math.round(other.dir.y * -back) }; other.standPx = back; }
-      }
+      // stand-off (every exchange): the two drawn boxes never overlap. Along the attack axis the module steps the fighters
+      // apart (eased in at the open, out at the close; the game's own positions are never touched) so that at rest they are
+      // at least lunge + 1 px apart (>= 2 px), so a lunge stops short of the target's box. A boss stays put and its opponent
+      // takes the whole step, at least `standoff` px when they touch.
+      [fa, fd].forEach(function (f) { f.stand = { x: 0, y: 0 }; f.standPx = 0; });
+      (function () {
+        var A = fa.box, B = fd.box, ddx = cx(B) - cx(A), ddy = cy(B) - cy(A), horiz = Math.abs(ddx) >= Math.abs(ddy);
+        var gapAxis = horiz ? Math.abs(ddx) - (A.w + B.w) / 2 : Math.abs(ddy) - (A.h + B.h) / 2;
+        var perp = horiz ? Math.abs(ddy) < (A.h + B.h) / 2 : Math.abs(ddx) < (A.w + B.w) / 2;
+        if (!perp) return;
+        var need = Math.max(2, P.lunge + 1), oneBoss = (fa.boss || fd.boss) && !(fa.boss && fd.boss);
+        if (oneBoss && gapAxis < 2) need = Math.max(need, P.standoff + gapAxis);
+        var push = Math.max(0, Math.ceil(need - gapAxis)); if (!push) return;
+        var sg = (horiz ? ddx : ddy) >= 0 ? 1 : -1, pa, pd;
+        if (oneBoss) { pa = fa.boss ? 0 : push; pd = fd.boss ? 0 : push; }
+        else { pa = Math.floor(push / 2); pd = push - pa; }
+        pa = Math.min(pa, 12); pd = Math.min(pd, 12);
+        if (horiz) { fa.stand.x = -sg * pa; fd.stand.x = sg * pd; } else { fa.stand.y = -sg * pa; fd.stand.y = sg * pd; }
+        fa.standPx = pa; fd.standPx = pd;
+      })();
       // strikes: hp per strike, follow-ups, KO
       var hp = { att: fa.hp0, def: fd.hp0 }, staged = [], cnt = { att: 0, def: 0 }, ko = null, list = spec.strikes || [];
       for (var i = 0; i < list.length; i++) {
@@ -295,7 +307,7 @@
       // closest to "centred above the head" wins (spots beside or below cost more)
       var v = view(), b = tgt.zone, top = b.y, ccx = tgt.sbox.x + tgt.stand.x + tgt.sbox.w / 2, ccy = tgt.sbox.y + tgt.stand.y + tgt.sbox.h / 2, rise = 4;
       var body = { x: tgt.zone.x, y: tgt.zone.y + 2, w: tgt.zone.w, h: tgt.zone.h - 2 };   // wherever the target is pushed, the label is not on it
-      var px0 = Math.round(ccx - w / 2), py0 = Math.round(top - h - 1 - rise), centres = [att.sbox].concat(oth);
+      var px0 = Math.round(ccx - w / 2), py0 = Math.round(top - h - 1 - rise), centres = [{ x: att.sbox.x + att.stand.x, y: att.sbox.y + att.stand.y, w: att.sbox.w, h: att.sbox.h }].concat(oth);
       var best = null, fallback = null;
       for (var dy = -24; dy <= 40; dy += 1) for (var dx = -36; dx <= 36; dx += 1) {
         var r = { x: px0 + dx, y: py0 + dy, w: w, h: h + rise };
@@ -463,7 +475,7 @@
           var f = p.F[k], ps = poseAt(f, t), b = f.sbox, c = cam(), ox = opts.camera ? p.cam.x - c.x : 0, oy = opts.camera ? p.cam.y - c.y : 0;
           if (ps.flash) out.flash = true;
           out.actors.push({ id: f.id, role: k, x: Math.round(b.x + ox + ps.x + b.w / 2), y: Math.round(b.y + oy + ps.y + b.h), box: { x: b.x + ox + ps.x, y: b.y + oy + ps.y, w: b.w, h: b.h },
-            off: { x: ps.x, y: ps.y }, facing: f.facing, dir: f.dir4, pose: ps.pose, flash: ps.flash, hurt: ps.hurt, ko: ps.ko, boss: f.boss,
+            off: { x: ps.x, y: ps.y }, stand: { x: f.stand.x, y: f.stand.y }, facing: f.facing, dir: f.dir4, pose: ps.pose, flash: ps.flash, hurt: ps.hurt, ko: ps.ko, boss: f.boss,
             target: p.F[k === 'att' ? 'def' : 'att'].id, hp: Math.round(hpAt(f, t) * 100) / 100, koRows: ps.ko > 0 ? (f.koRows || 0) : null, shownHp: Math.ceil(hpAt(f, t) - 1e-6), drawnFlip: f.drawnFlip, drawnFacing: f.drawnFacing });
         });
         p.staged.forEach(function (s) {

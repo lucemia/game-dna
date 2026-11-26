@@ -2,12 +2,12 @@ English | [繁體中文](README.zh-TW.md)
 
 # Game DNA
 
-**101 game elements for your coding agent. Pick one, bring your browser game, and the agent wires it into your code,
+**102 game elements for your coding agent. Pick one, bring your browser game, and the agent wires it into your code,
 from damage numbers to dynamic lights.**
 
 ### ▶ [Open the gallery](https://game-dna.pages.dev)
 
-[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![elements](https://img.shields.io/badge/elements-101-orange)](https://game-dna.pages.dev/site/preview/) [![cold-tested](https://img.shields.io/badge/cold--tested-on_unseen_games-brightgreen)](https://game-dna.pages.dev/site/preview/tests/) [![live demo](https://img.shields.io/badge/live_demo-game--dna.pages.dev-ff69b4)](https://game-dna.pages.dev/site/preview/)
+[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![elements](https://img.shields.io/badge/elements-102-orange)](https://game-dna.pages.dev/site/preview/) [![cold-tested](https://img.shields.io/badge/cold--tested-on_unseen_games-brightgreen)](https://game-dna.pages.dev/site/preview/tests/) [![live demo](https://img.shields.io/badge/live_demo-game--dna.pages.dev-ff69b4)](https://game-dna.pages.dev/site/preview/)
 
 <p align="center">
 <a href="https://game-dna.pages.dev/site/preview/#video"><img src="docs/media/promo-cover.jpg" width="720" alt="Watch the Game DNA promo video (31 s)"></a>
@@ -43,7 +43,7 @@ Game DNA gives the agent three things instead of a guess:
 - **a prompt** (at most 600 words) that says where to hook it into *your* game, what not to touch and the usual mistakes;
 - **a way to check it**: self-checks without a browser and acceptance checks you can see.
 
-Every element also has a playable demo. 81 are add-ons that drop into any game (feel, effects, UI, audio,
+Every element also has a playable demo. 82 are add-ons that drop into any game (feel, effects, UI, audio,
 lighting); 20 are systems (battles, map flows, a kart racer) that come as a starter game your agent extends.
 All art is original; most of it is drawn in code.
 
@@ -56,7 +56,31 @@ combined prompt plus a zip of the modules for your agent.
 
 ## The elements
 
-All 101, by category. Click **play** for the element's page with its live demo and prompt. ✦ = the demo uses AI-generated art.
+All 102, by category. Click **play** for the element's page with its live demo and prompt. ✦ = the demo uses AI-generated art.
+
+<a href="https://game-dna.pages.dev/site/preview/dna/horde-survival/"><img src="docs/media/og-horde-survival.jpg" width="360" alt="Horde survival auto-attacker"></a>
+
+<details><summary><b>Battle systems</b> (15)</summary>
+
+| Element | What it does | Demo |
+|---|---|---|
+| **Active-time gauge battle** | Every combatant's gauge fills in real time at a speed-based rate; a full hero gauge opens that hero's command window. *(starter game)* | [play](https://game-dna.pages.dev/site/preview/dna/active-time-battle/) |
+| **Auto-resolved squad clash with forecast** ✦ | Two squads on 2x3 grids (front row takes melee, back row is shielded from it while the front stands) meet; before committing. *(starter game)* | [play](https://game-dna.pages.dev/site/preview/dna/squad-clash/) |
+| **Bullet-pattern emitter** | Enemies cast bullet patterns described as data: fans and aimed bursts, rings, spirals, flowers whose speed dips between petals, weaving waves. | [play](https://game-dna.pages.dev/site/preview/dna/bullet-patterns/) |
+| **Card battle with intents** ✦ | A turn-based card battle: draw a fanned hand each turn, drag a card onto a foe (a target arrow follows; keys and taps work too) and pay its cost from a small… *(starter game)* | [play](https://game-dna.pages.dev/site/preview/dna/card-battle/) |
+| **Combat forecast window** | Before an attack is confirmed, a two-sided window shows what will happen: both units' HP now and after, damage, hit and critical chances. | [play](https://game-dna.pages.dev/site/preview/dna/combat-forecast/) |
+| **Conditional tactic rules** ✦ | Every unit decides with an ordered list of rules, "condition → action (target)": ally HP under a threshold, a flying or armoured foe, a back-row target. | [play](https://game-dna.pages.dev/site/preview/dna/tactic-rules/) |
+| **Four-move menu battle with type matchups** | Turn-based creature battle, one on one (or two on two): each creature has up to four moves with uses left and a type; a type chart doubles. *(starter game)* | [play](https://game-dna.pages.dev/site/preview/dna/four-move-battle/) |
+| **Horde survival auto-attacker** ✦ | The hero only walks (keys, WASD or a touch stick); weapons fire by themselves on timers: orbiting blades, a bolt at the nearest foe. *(starter game)* | [play](https://game-dna.pages.dev/site/preview/dna/horde-survival/) |
+| **Match-3 battle board** ✦ | A puzzle battle on an 8 x 8 gem board: swap two neighbours to line up 3 or more; matches clear, gems fall and cascades chain (each step worth more). *(starter game)* | [play](https://game-dna.pages.dev/site/preview/dna/match3-battle/) |
+| **Motion-input special moves** | Reads the stick and buttons once per fixed step into a short input buffer and recognises special-move motions written relative to the way the hero faces. | [play](https://game-dna.pages.dev/site/preview/dna/motion-inputs/) |
+| **On-map skirmish exchange** | The attack exchange plays on the map itself instead of cutting to a side-view scene (the alternative to Side-view clash cut-in clash-cutin). | [play](https://game-dna.pages.dev/site/preview/dna/on-map-skirmish/) |
+| **Real-time sword combat** | Top-down real-time melee on the map: a 4- or 8-way sword swing with anticipation, active and recovery frames and a sweeping arc hitbox. *(starter game)* | [play](https://game-dna.pages.dev/site/preview/dna/sword-combat/) |
+| **Side-view clash cut-in** | When a turn or tactics battle confirms an attack, the game cuts to a staged side-view scene. | [play](https://game-dna.pages.dev/site/preview/dna/clash-cutin/) |
+| **Squad formation grid** | Each side fights as squads on a 2x3 grid: a front row that faces the enemy and a back row behind it. | [play](https://game-dna.pages.dev/site/preview/dna/squad-formation/) |
+| **Tower placement & wave spawner** | A tower-defense core: foes march along a fixed road through a grid (one or more paths from waypoint cells); towers go on the grass cells beside it. *(starter game)* | [play](https://game-dna.pages.dev/site/preview/dna/tower-defense/) |
+
+</details>
 
 <a href="https://game-dna.pages.dev/site/preview/dna/modern-particles/"><img src="docs/media/og-modern-particles.jpg" width="360" alt="Modern particle system"></a>
 
@@ -79,29 +103,6 @@ All 101, by category. Click **play** for the element's page with its live demo a
 | **Time rewind** ✦ | Hold a key (or the touch button) and the world runs backwards: every fixed step the game's state is deep-copied into a ring buffer. | [play](https://game-dna.pages.dev/site/preview/dna/time-rewind/) |
 | **Verlet rope & cloth** ✦ | Capes, scarves, ribbons, hair tufts, banners, hanging ropes and chains that swing with movement and wind. | [play](https://game-dna.pages.dev/site/preview/dna/verlet-cloth/) |
 | **Weather & ambient particles** | Seeded weather drawn in three depth layers behind and in front of the sprites: rain that splashes on the game's own ground line, snow, drifting dust motes. | [play](https://game-dna.pages.dev/site/preview/dna/weather-particles/) |
-
-</details>
-
-<a href="https://game-dna.pages.dev/site/preview/dna/horde-survival/"><img src="docs/media/og-horde-survival.jpg" width="360" alt="Horde survival auto-attacker"></a>
-
-<details><summary><b>Battle systems</b> (14)</summary>
-
-| Element | What it does | Demo |
-|---|---|---|
-| **Active-time gauge battle** | Every combatant's gauge fills in real time at a speed-based rate; a full hero gauge opens that hero's command window. *(starter game)* | [play](https://game-dna.pages.dev/site/preview/dna/active-time-battle/) |
-| **Auto-resolved squad clash with forecast** ✦ | Two squads on 2x3 grids (front row takes melee, back row is shielded from it while the front stands) meet; before committing. *(starter game)* | [play](https://game-dna.pages.dev/site/preview/dna/squad-clash/) |
-| **Bullet-pattern emitter** | Enemies cast bullet patterns described as data: fans and aimed bursts, rings, spirals, flowers whose speed dips between petals, weaving waves. | [play](https://game-dna.pages.dev/site/preview/dna/bullet-patterns/) |
-| **Card battle with intents** ✦ | A turn-based card battle: draw a fanned hand each turn, drag a card onto a foe (a target arrow follows; keys and taps work too) and pay its cost from a small… *(starter game)* | [play](https://game-dna.pages.dev/site/preview/dna/card-battle/) |
-| **Combat forecast window** | Before an attack is confirmed, a two-sided window shows what will happen: both units' HP now and after, damage, hit and critical chances. | [play](https://game-dna.pages.dev/site/preview/dna/combat-forecast/) |
-| **Conditional tactic rules** ✦ | Every unit decides with an ordered list of rules, "condition → action (target)": ally HP under a threshold, a flying or armoured foe, a back-row target. | [play](https://game-dna.pages.dev/site/preview/dna/tactic-rules/) |
-| **Four-move menu battle with type matchups** | Turn-based creature battle, one on one (or two on two): each creature has up to four moves with uses left and a type; a type chart doubles. *(starter game)* | [play](https://game-dna.pages.dev/site/preview/dna/four-move-battle/) |
-| **Horde survival auto-attacker** ✦ | The hero only walks (keys, WASD or a touch stick); weapons fire by themselves on timers: orbiting blades, a bolt at the nearest foe. *(starter game)* | [play](https://game-dna.pages.dev/site/preview/dna/horde-survival/) |
-| **Match-3 battle board** ✦ | A puzzle battle on an 8 x 8 gem board: swap two neighbours to line up 3 or more; matches clear, gems fall and cascades chain (each step worth more). *(starter game)* | [play](https://game-dna.pages.dev/site/preview/dna/match3-battle/) |
-| **Motion-input special moves** | Reads the stick and buttons once per fixed step into a short input buffer and recognises special-move motions written relative to the way the hero faces. | [play](https://game-dna.pages.dev/site/preview/dna/motion-inputs/) |
-| **Real-time sword combat** | Top-down real-time melee on the map: a 4- or 8-way sword swing with anticipation, active and recovery frames and a sweeping arc hitbox. *(starter game)* | [play](https://game-dna.pages.dev/site/preview/dna/sword-combat/) |
-| **Side-view clash cut-in** | When a turn or tactics battle confirms an attack, the game cuts to a staged side-view scene. | [play](https://game-dna.pages.dev/site/preview/dna/clash-cutin/) |
-| **Squad formation grid** | Each side fights as squads on a 2x3 grid: a front row that faces the enemy and a back row behind it. | [play](https://game-dna.pages.dev/site/preview/dna/squad-formation/) |
-| **Tower placement & wave spawner** | A tower-defense core: foes march along a fixed road through a grid (one or more paths from waypoint cells); towers go on the grass cells beside it. *(starter game)* | [play](https://game-dna.pages.dev/site/preview/dna/tower-defense/) |
 
 </details>
 

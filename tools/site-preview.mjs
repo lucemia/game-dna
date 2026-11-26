@@ -23,7 +23,8 @@ const CHOSEN = 'damage-pop';   // the worked example on the home page and the ta
 const HERO_IDS = ['damage-pop', 'card-battle', 'grapple-swing', 'kart-racer-3d', 'tower-defense', 'billboard-sprites-3d', 'modern-particles', 'tactics-grid-3d', 'loot-beams', 'horde-survival', 'bullet-patterns', 'physics-debris'];
 // gallery "Featured" filter (the default view) and the two marquee rows
 const FEATURED = ['damage-pop', 'card-battle', 'grapple-swing', 'kart-racer-3d', 'tower-defense', 'billboard-sprites-3d', 'tactics-grid-3d', 'modern-particles', 'loot-beams', 'horde-survival', 'bullet-patterns', 'dynamic-lights',
-  'bloom-glow', 'weather-particles', 'verlet-cloth', 'physics-debris', 'water-surface', 'ribbon-trails', 'timing-bar', 'dialogue-box', 'grid-range-path', 'battle-transition', 'wfc-town-3d', 'match3-battle'];
+  'bloom-glow', 'weather-particles', 'verlet-cloth', 'physics-debris', 'water-surface', 'ribbon-trails', 'timing-bar', 'dialogue-box', 'grid-range-path', 'battle-transition', 'wfc-town-3d', 'match3-battle',
+  'on-map-skirmish'];   // M17
 const KITS = ['modern-lighting-kit', 'roguelite-run-kit', 'party-battle-kit', 'tactics-map-kit'];
 // per showcase element: small tested baskets shown under "Works well with" (each is a --verify case or a cold-tested pairing)
 const TRY_WITH = {
@@ -222,12 +223,21 @@ ${scripts.map(x => `<script src="${x.replace('@', P)}"></script>`).join('\n')}${
   const aiArt = e => !!(e.pack || AI_DEMO[e.id]);
   console.log(`showcase ✦ AI art: ${E.filter(aiArt).length} elements (${E.filter(e => e.pack).length} with a sample pack)`);
   const genMark = e => aiArt(e) ? `<span class="sc-gen" title="${e.pack ? 'Uses AI-generated art (a sample pack is included)' : 'The demo shows pictures made with an AI image generator'}">✦ AI art</span>` : '';
+  // alternatives (element.json alternativeTo): two elements that do the same job in different ways (A-04 cut-in vs A-18 on
+  // the map); each card and element page links the other. A card with one is a div holding the card link and the alt link
+  // (links cannot nest); the hover loop binds to the closest <a>, the card link.
+  const altsOf = e => (e.json.alternativeTo || []).filter(x => BY[x] && x !== e.id);
   function card(e, P) {
-    const feat = FEATURED.indexOf(e.id);
-    return `<a class="sc-card rv" href="${elHref(e.id, P)}" data-fam="${e.sfam}" data-cat="${e.sfam}"${feat >= 0 ? ` data-feat="${feat}"` : ''}>
-${thumb(e, P)}
-<span class="sc-card-body"><span class="sc-card-name">${esc(e.name)}</span><span class="sc-card-line">${esc(pitch(e))}</span><span class="sc-card-meta"><span class="sc-dot"></span>${kindWord(e)}${genMark(e)}</span></span>
+    const feat = FEATURED.indexOf(e.id), alts = altsOf(e);
+    const attrs = `data-fam="${e.sfam}" data-cat="${e.sfam}"${feat >= 0 ? ` data-feat="${feat}"` : ''}`;
+    const inner = `${thumb(e, P)}
+<span class="sc-card-body"><span class="sc-card-name">${esc(e.name)}</span><span class="sc-card-line">${esc(pitch(e))}</span><span class="sc-card-meta"><span class="sc-dot"></span>${kindWord(e)}${genMark(e)}</span></span>`;
+    if (!alts.length) return `<a class="sc-card rv" href="${elHref(e.id, P)}" ${attrs}>
+${inner}
 </a>`;
+    return `<div class="sc-card sc-card-alts rv" ${attrs}><a class="sc-card-main" href="${elHref(e.id, P)}">
+${inner}
+</a>${alts.map(a => `<a class="sc-card-alt" href="${elHref(a, P)}">Alternative: ${esc(BY[a].name)}</a>`).join('')}</div>`;
   }
   // the combine engine lower-cases names in the prompt heading; the showcase shows them as named (lines 1-6 only)
   const properNames = (md, ids) => md.split('\n').map((l, i) => i < 6 ? ids.reduce((s, id) => s.split(BY[id].name.toLowerCase()).join(BY[id].name), l) : l).join('\n');
@@ -410,7 +420,7 @@ ${kitPanels}
 <div class="sc-wrap">
 <nav class="sc-crumbs" aria-label="Breadcrumb"><a href="${P}">Game DNA</a><span>/</span><a href="${P}#gallery">${esc(SFAM_NAME[e.sfam])}</a>${aiArt(e) ? '<span class="sc-el-tag" title="Some pictures in this demo were made with an AI image generator (see below the demo)">✦ AI art</span>' : ''}</nav>
 <div class="sc-el-head">
-<div><h1>${esc(e.name)}</h1><p class="sc-lede">${esc(pitch(e))} ${e.kind === 'system' ? 'A complete starter game you can extend.' : 'An add-on for any game.'}</p></div>
+<div><h1>${esc(e.name)}</h1><p class="sc-lede">${esc(pitch(e))} ${e.kind === 'system' ? 'A complete starter game you can extend.' : 'An add-on for any game.'}</p>${altsOf(e).map(a => `<p class="sc-el-alt">Alternative: <a href="${elHref(a, P)}">${esc(BY[a].name)}</a> <span>(the same job done another way; pick one)</span></p>`).join('')}</div>
 <div class="sc-btns"><button type="button" class="sc-btn sc-btn-hot" data-copy-url="prompt.md" data-label="Prompt">${ICON.copy}Copy prompt</button><button type="button" class="sc-btn" data-sc-add="${id}"${e.requires.length ? ` data-req="${e.requires.join(',')}"` : ''}>${ICON.plus}<span class="lab">Add to basket</span></button></div>
 </div>
 <div class="sc-demo">
