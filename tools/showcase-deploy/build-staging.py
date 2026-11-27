@@ -25,6 +25,7 @@ Staging-only edits: robots meta in every .html, the "Build records" links to int
 _headers (X-Robots-Tag), robots.txt, _redirects, root index.html redirect, and THIRD-PARTY notices.
 """
 import argparse, json, os, re, shutil, subprocess, sys, urllib.parse
+import html
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ap = argparse.ArgumentParser()
@@ -100,6 +101,30 @@ for d, _, fs in os.walk(os.path.join(REPO, 'site/preview')):
         rel = os.path.relpath(os.path.join(d, f), REPO)
         if not rel.startswith('site/preview/internal'):
             add(rel, 'showcase')
+# 1b. home hero: showcase.js loads hero/<id>.webp and hero/<id>-poster.webp for every item of the data-hero JSON (ids
+# only, HTML-escaped, so neither the static scan nor a short crawl sees them; 10 of 12 were missing on 2026-11-27)
+HERO_ATTR = re.compile(r"data-hero='([^']*)'")
+HERO_POSTER = re.compile(r"""url\('([^']*/)[^/']+-poster\.webp'\)""")
+hero_need = []
+for d, _, fs in os.walk(os.path.join(REPO, 'site/preview')):
+    for f in fs:
+        if not f.endswith('.html'):
+            continue
+        rel = os.path.relpath(os.path.join(d, f), REPO)
+        if rel.startswith('site/preview/internal'):
+            continue
+        s = open(os.path.join(REPO, rel), encoding='utf-8').read()
+        m = HERO_ATTR.search(s)
+        if not m:
+            continue
+        pm = HERO_POSTER.search(s[m.end():])
+        if not pm:
+            sys.exit(f'{rel}: data-hero without a poster url to take the hero folder from')
+        for it in json.loads(html.unescape(m.group(1))):
+            for suf in ('.webp', '-poster.webp'):
+                h = os.path.normpath(os.path.join(os.path.dirname(rel), pm.group(1) + it['id'] + suf)).replace(os.sep, '/')
+                add(h, 'hero:' + rel)
+                hero_need.append(h)
 # 2. crawl
 for c in A.crawl:
     if not os.path.exists(c):
@@ -174,6 +199,8 @@ if os.path.exists(A.out):
 ROBOTS = '<meta name="robots" content="noindex, nofollow">'
 INTERNAL_A = re.compile(r'<a class="sc-internal-link" href="[^"]*internal/">[^<]*</a>')
 RECORDS = re.compile(r'<section class="sc-sec sc-tight"><div class="sc-wrap"><a class="sc-records" href="[^"]*internal/[^"]*">.*?</a></div></section>', re.S)
+# element pages now put the anchor after "Request an element" (not in its own section): strip the anchor itself too
+RECORDS_A = re.compile(r'<a class="sc-records" href="[^"]*internal/[^"]*">.*?</a>', re.S)
 edits = {'robots_meta': 0, 'internal_links_removed': 0, 'share_urls_rewritten': 0, 'canonical_urls_rewritten': 0}
 # share cards (og:url, og:image, twitter:image) carry absolute URLs from GAME_DNA_ORIGIN at site build time (default the
 # preview origin, tools/site-preview.mjs); the staging copy points them at this build's origin: --origin for --public,
@@ -192,6 +219,8 @@ for r in sorted(need):
         s = open(src, encoding='utf-8').read()
         n0 = len(INTERNAL_A.findall(s)) + len(RECORDS.findall(s))
         s = RECORDS.sub('', INTERNAL_A.sub('', s))
+        s, n = RECORDS_A.subn('', s)
+        n0 += n
         edits['internal_links_removed'] += n0
         s, n = SHARE_URL.subn(lambda m: m.group(1) + SHARE_ORIGIN + m.group(2), s)
         edits['share_urls_rewritten'] += n
@@ -377,6 +406,9 @@ for d, _, fs in os.walk(A.out):
         p = os.path.join(d, f)
         man.append((os.path.relpath(p, A.out), os.path.getsize(p)))
 man.sort()
+lost = sorted(set(h for h in hero_need if h not in need))
+if lost:
+    sys.exit('home hero files missing from the build: ' + ', '.join(lost))
 with open(os.path.join(HERE, 'manifest' + SUF + '.tsv'), 'w') as fh:
     fh.write('path\tbytes\treason\n')
     for p, b in man:

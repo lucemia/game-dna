@@ -330,7 +330,7 @@ pops.spawn(<span class="s">'imp'</span>, <span class="n">47</span>, <span class=
 </div>`;
     }).join('');
 
-    const body = `<section class="sc-hero" data-hero='${esc(JSON.stringify(hero))}' style="--glow:var(--fam-${h0.sfam})">
+    const body = `<section class="sc-hero" data-hero='${esc(JSON.stringify(hero))}' style="--glow:var(--fam-${h0.fam})">
 <div class="sc-aurora" aria-hidden="true"></div>
 <div class="sc-wrap sc-hero-grid">
 <div class="sc-hero-copy">
@@ -341,8 +341,8 @@ pops.spawn(<span class="s">'imp'</span>, <span class="n">47</span>, <span class=
 </div>
 <div class="sc-hero-stage">
 <div class="sc-screen"><div class="sc-loop on" style="background-image:url('${P}../assets/hero/${h0.id}-poster.webp')"></div><div class="sc-loop"></div><div class="sc-scan" aria-hidden="true"></div></div>
-<div class="sc-hero-cap"><span class="sc-hero-dot" data-fam="${h0.sfam}"></span><span class="sc-hero-txt"><a class="sc-hero-name" href="${h0.href}">${esc(h0.name)}</a><span class="sc-hero-line">${esc(h0.line)}</span></span><a class="sc-btn sm" href="${h0.href}">${h0.play ? 'Play' : 'Open'} ${ARROW}</a></div>
-<div class="sc-hero-dots">${hero.map((h, i) => `<button type="button" data-fam="${h.sfam}" aria-label="Show ${esc(h.name)}"${i ? '' : ' aria-current="true"'}></button>`).join('')}</div>
+<div class="sc-hero-cap"><span class="sc-hero-dot" data-fam="${h0.fam}"></span><span class="sc-hero-txt"><a class="sc-hero-name" href="${h0.href}">${esc(h0.name)}</a><span class="sc-hero-line">${esc(h0.line)}</span></span><a class="sc-btn sm" href="${h0.href}">${h0.play ? 'Play' : 'Open'} ${ARROW}</a></div>
+<div class="sc-hero-dots">${hero.map((h, i) => `<button type="button" data-fam="${h.fam}" aria-label="Show ${esc(h.name)}"${i ? '' : ' aria-current="true"'}></button>`).join('')}</div>
 </div>
 </div>
 </section>

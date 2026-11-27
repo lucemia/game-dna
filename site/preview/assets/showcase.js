@@ -91,7 +91,18 @@
         var step = function () { layer.style.backgroundPosition = (k / (it.n - 1) * 100) + '% 0'; k = (k + 1) % it.n; };
         step(); tick = setInterval(function () { if (visible && !document.hidden) step(); }, it.step || 120); };
       if (loaded[it.id]) return go();
-      var im = new Image(); im.onload = function () { loaded[it.id] = true; go(); }; im.src = base + it.id + '.webp';
+      fetchStrip(it, go);
+    }
+    // one request per strip; a failed strip keeps its poster and is not waited for
+    var pending = {};
+    function fetchStrip(it, cb) {
+      if (loaded[it.id]) return cb && cb();
+      (pending[it.id] = pending[it.id] || []).push(cb);
+      if (pending[it.id].length > 1) return;
+      var im = new Image();
+      im.onload = function () { loaded[it.id] = true; var q = pending[it.id]; pending[it.id] = null; q.forEach(function (f) { f && f(); }); };
+      im.onerror = function () { loaded[it.id] = 'err'; pending[it.id] = null; };
+      im.src = base + it.id + '.webp';
     }
     function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
     function show(i) {
@@ -104,12 +115,19 @@
         '<a class="sc-btn sm" href="' + it.href + '">' + (it.play ? 'Play' : 'Open') + ' <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 8h10m-4-4 4 4-4 4"/></svg></a>';
       cap.classList.remove('swap'); void cap.offsetWidth; cap.classList.add('swap');
       play(next, it);
-      (new Image()).src = base + list[(idx + 1) % list.length].id + '-poster.webp';
-      schedule();
+      var nx = list[(idx + 1) % list.length]; (new Image()).src = base + nx.id + '-poster.webp';
+      if (!reduced && loaded[it.id]) fetchStrip(nx);   // the next loop downloads while this one plays
+      held = 0; schedule();
     }
-    function schedule() { clearTimeout(slideT); slideT = null; if (!reduced) slideT = setTimeout(function () { slideT = null; if (visible && !document.hidden) show(idx + 1); else schedule(); }, DUR); }
+    // a slide whose loop is still downloading stays up (at most two more periods) instead of rotating past it as a still
+    var held = 0;
+    function schedule() { clearTimeout(slideT); slideT = null; if (!reduced) slideT = setTimeout(function () { slideT = null;
+      if (!visible || document.hidden) return schedule();
+      if (!loaded[list[idx].id] && held < 2) { held++; return schedule(); }
+      show(idx + 1); }, DUR); }
     if (hasIO) new IntersectionObserver(function (es) { visible = es[0].isIntersecting; }).observe(hero);
     layers[0].classList.add('on'); play(layers[0], list[0]); schedule();
+    fetchStrip(list[0], function () { if (!reduced && list.length > 1) fetchStrip(list[1]); });
   })();
 
   // ---------- gallery filter ----------
