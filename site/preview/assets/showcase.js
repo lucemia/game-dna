@@ -16,6 +16,12 @@
     toastEl.textContent = msg; toastEl.style.opacity = '1'; toastEl.style.transform = 'translateX(-50%)';
     clearTimeout(toast.t); toast.t = setTimeout(function () { toastEl.style.opacity = '0'; toastEl.style.transform = 'translateX(-50%) translateY(20px)'; }, 1900);
   }
+  // ---------- event counts (GoatCounter, cookieless; only an event name and an element/kit id are sent) ----------
+  function track(name, id) {
+    try { var gc = window.goatcounter; if (gc && gc.count) gc.count({ path: name + (id ? ':' + id : ''), title: name, event: true }); } catch (e) { }
+  }
+  var pageEl = (location.pathname.match(/\/dna\/([^\/]+)\//) || [])[1] || '';
+  window.GameDNATrack = track;
   function fetchText(url) { return fetch(url).then(function (r) { if (!r.ok) throw new Error(url); return r.text(); }); }
   function copy(textP, label, btn) {
     var done = function () { toast(label + ' copied: paste it to your agent'); if (btn) { btn.classList.add('done'); setTimeout(function () { btn.classList.remove('done'); }, 1400); } };
@@ -31,8 +37,13 @@
       try { document.execCommand('copy') ? done() : fail(); } catch (e) { fail(); } ta.remove(); }
   }
   document.addEventListener('click', function (ev) {
+    var dl = ev.target.closest('a[download]');
+    if (dl && !/^blob:/.test(dl.getAttribute('href') || '')) { var m = (dl.getAttribute('href') || '').match(/elements\/([^\/]+)\//); track('download-module', m ? m[1] : pageEl); return; }
+    if (dl) return;
     var b = ev.target.closest('[data-copy-url]'); if (!b) return;
-    copy(fetchText(b.getAttribute('data-copy-url')), b.getAttribute('data-label') || 'Text', b);
+    var u = b.getAttribute('data-copy-url'), kit = (u.match(/combos\/([^\/]+)\.md$/) || [])[1];
+    track(kit ? 'copy-kit-prompt' : 'copy-prompt', kit || pageEl || u);
+    copy(fetchText(u), b.getAttribute('data-label') || 'Text', b);
   });
 
   // ---------- loop thumbnails (frames/<id>.webp strips): poster when near view, loop on hover / in view ----------
@@ -317,7 +328,7 @@
     var i = bk.ids.indexOf(id);
     if (i >= 0) { bk.ids.splice(i, 1); toast('Removed from your basket'); }
     else { var req = (window.SC_EL && SC_EL[id] && SC_EL[id].req) || (reqAttr ? reqAttr.split(',') : []), added = [];
-      req.forEach(function (r) { if (bk.ids.indexOf(r) < 0) { bk.ids.push(r); added.push(r); } }); bk.ids.push(id);
+      req.forEach(function (r) { if (bk.ids.indexOf(r) < 0) { bk.ids.push(r); added.push(r); } }); bk.ids.push(id); track('add-to-basket', id);
       toast(added.length ? 'Added, with the element it needs' : 'Added to your basket'); }
     bkSave();
   }
@@ -401,12 +412,12 @@
       Promise.all(files.map(function (f) { return fetch('../../../' + f.path).then(function (r) { if (!r.ok) throw new Error(f.name); return r.arrayBuffer(); }).then(function (b) { return { name: f.name, data: new Uint8Array(b) }; }); }))
         .then(function (got) {
           var blob = GameDNAZip.make([{ name: 'COMBO.md', data: last.md }].concat(got)), a = document.createElement('a');
-          a.href = URL.createObjectURL(blob); a.download = 'game-dna-' + bk.ids.length + '-elements.zip'; document.body.appendChild(a); a.click();
+          a.href = URL.createObjectURL(blob); a.download = 'game-dna-' + bk.ids.length + '-elements.zip'; document.body.appendChild(a); a.click(); track('download-zip', bk.ids.join(','));
           setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000); toast('Zip with ' + (got.length + 1) + ' files');
         }).catch(function () { toast('Zip failed: open the site from a web server'); });
     }
     $('bk-gen').addEventListener('click', generate);
-    $('bk-copy').addEventListener('click', function () { if (last) copy(Promise.resolve(last.md), 'Prompt', $('bk-copy')); });
+    $('bk-copy').addEventListener('click', function () { if (last) { track('copy-basket-prompt', bk.ids.join(',')); copy(Promise.resolve(last.md), 'Prompt', $('bk-copy')); } });
     $('bk-zip').addEventListener('click', zip);
     $('bk-clear').addEventListener('click', function () { bk.ids = []; bk.starter = false; bkSave(); });
     $('bk-starter').addEventListener('change', function () { bk.starter = this.checked; bkSave(); });

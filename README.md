@@ -2,12 +2,12 @@ English | [繁體中文](README.zh-TW.md)
 
 # Game DNA
 
-**103 game elements for your coding agent. Pick one, bring your browser game, and the agent wires it into your code,
+**100+ game elements for your coding agent. Pick one, bring your browser game, and the agent wires it into your code,
 from damage numbers to dynamic lights.**
 
 ### ▶ [Open the gallery](https://game-dna.pages.dev)
 
-[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![elements](https://img.shields.io/badge/elements-103-orange)](https://game-dna.pages.dev/site/preview/) [![cold-tested](https://img.shields.io/badge/cold--tested-on_unseen_games-brightgreen)](https://game-dna.pages.dev/site/preview/tests/) [![live demo](https://img.shields.io/badge/live_demo-game--dna.pages.dev-ff69b4)](https://game-dna.pages.dev/site/preview/)
+[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![elements](https://img.shields.io/badge/elements-100%2B-orange)](https://game-dna.pages.dev/site/preview/) [![cold-tested](https://img.shields.io/badge/cold--tested-on_unseen_games-brightgreen)](https://game-dna.pages.dev/site/preview/tests/) [![live demo](https://img.shields.io/badge/live_demo-game--dna.pages.dev-ff69b4)](https://game-dna.pages.dev/site/preview/)
 
 <p align="center">
 <a href="https://game-dna.pages.dev/site/preview/#video"><img src="docs/media/promo-cover.jpg" width="720" alt="Watch the Game DNA promo video (35 s)"></a>
@@ -43,8 +43,8 @@ Game DNA gives the agent three things instead of a guess:
 - **a prompt** (at most 600 words) that says where to hook it into *your* game, what not to touch and the usual mistakes;
 - **a way to check it**: self-checks without a browser and acceptance checks you can see.
 
-Every element also has a playable demo. 83 are add-ons that drop into any game (feel, effects, UI, audio,
-lighting); 20 are systems (battles, map flows, a kart racer) that come as a starter game your agent extends.
+Every element also has a playable demo. Most are add-ons that drop into any game (feel, effects, UI, audio,
+lighting); the rest are systems (battles, map flows, a kart racer) that come as a starter game your agent extends.
 All art is original; most of it is drawn in code.
 
 ## Mix several elements
@@ -56,7 +56,7 @@ combined prompt plus a zip of the modules for your agent.
 
 ## The elements
 
-All 103, by category. Click **play** for the element's page with its live demo and prompt. ✦ = the demo uses AI-generated art.
+All of them, by category. Click **play** for the element's page with its live demo and prompt. ✦ = the demo uses AI-generated art.
 
 <a href="https://game-dna.pages.dev/site/preview/dna/horde-survival/"><img src="docs/media/og-horde-survival.jpg" width="360" alt="Horde survival auto-attacker"></a>
 

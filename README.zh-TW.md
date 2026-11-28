@@ -2,11 +2,11 @@
 
 # Game DNA
 
-**給 coding agent 用的 103 個遊戲元素。挑一個，拿出你的網頁遊戲，agent 就會把它接進你的程式碼，從傷害數字到動態光源都有。**
+**給 coding agent 用的 100+ 個遊戲元素。挑一個，拿出你的網頁遊戲，agent 就會把它接進你的程式碼，從傷害數字到動態光源都有。**
 
 ### ▶ [打開展示館](https://game-dna.pages.dev)
 
-[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![elements](https://img.shields.io/badge/elements-103-orange)](https://game-dna.pages.dev/site/preview/) [![cold-tested](https://img.shields.io/badge/cold--tested-on_unseen_games-brightgreen)](https://game-dna.pages.dev/site/preview/tests/) [![live demo](https://img.shields.io/badge/live_demo-game--dna.pages.dev-ff69b4)](https://game-dna.pages.dev/site/preview/)
+[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![elements](https://img.shields.io/badge/elements-100%2B-orange)](https://game-dna.pages.dev/site/preview/) [![cold-tested](https://img.shields.io/badge/cold--tested-on_unseen_games-brightgreen)](https://game-dna.pages.dev/site/preview/tests/) [![live demo](https://img.shields.io/badge/live_demo-game--dna.pages.dev-ff69b4)](https://game-dna.pages.dev/site/preview/)
 
 <p align="center">
 <a href="https://game-dna.pages.dev/site/preview/#video"><img src="docs/media/promo-cover.jpg" width="720" alt="Game DNA 宣傳影片（31 秒）"></a>
@@ -47,8 +47,8 @@ Game DNA 給 agent 三樣東西，取代猜測：
 - **一份 prompt**（最多 600 字）：說明要接在*你的*遊戲哪裡、哪些不能動、常見的錯誤；
 - **一套檢查方式**：不用瀏覽器就能跑的自我檢查，加上肉眼看得到的驗收檢查。
 
-每個元素都有可以玩的示範。其中 83 個是外掛，可以放進任何遊戲（手感、特效、介面、音效、光影）；
-20 個是系統（戰鬥、地圖流程、賽車），附一個起手遊戲，讓 agent 在上面擴充。
+每個元素都有可以玩的示範。大部分是外掛，可以放進任何遊戲（手感、特效、介面、音效、光影）；
+其餘是系統（戰鬥、地圖流程、賽車），附一個起手遊戲，讓 agent 在上面擴充。
 所有美術都是原創，大部分直接用程式畫。
 
 ## 組合籃：一次用好幾個元素
@@ -60,7 +60,7 @@ Game DNA 給 agent 三樣東西，取代猜測：
 
 ## 元素目錄
 
-全部 103 個，依類別分組。元素名稱和說明維持英文。點 **試玩** 會打開該元素的頁面，有即時示範和 prompt。✦ = 示範用了 AI 生成的美術。
+全部元素，依類別分組。元素名稱和說明維持英文。點 **試玩** 會打開該元素的頁面，有即時示範和 prompt。✦ = 示範用了 AI 生成的美術。
 
 <a href="https://game-dna.pages.dev/site/preview/dna/horde-survival/"><img src="docs/media/og-horde-survival.jpg" width="360" alt="Horde survival auto-attacker"></a>
 

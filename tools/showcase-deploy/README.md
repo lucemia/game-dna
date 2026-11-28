@@ -70,10 +70,17 @@ python3 -I tools/showcase-deploy/check-seo.py ../game-dna-public-dist    # exit 
 python3 -I tools/showcase-deploy/check-seo.py ../game-dna-preview-dist
 ```
 
-## Visitor counts (Cloudflare Web Analytics, owner only)
+## Visitor counts (owner only, all cookieless)
 
-No code change and no script in the repo. In the Cloudflare dashboard: Workers & Pages → the Pages project (`game-dna`)
-→ Metrics → Web Analytics → Enable. Cloudflare then injects its beacon at the edge on the next deploy. It sets no
-cookies and keeps no personal data (page views, referrers, countries, device types, Core Web Vitals only). Nothing else
-is tracked: the site has no other analytics, no cookies, no third-party requests (fonts are self-hosted) and the basket
-keeps its state in the visitor's own browser (localStorage and the URL). To turn it off, Disable in the same place.
+- **Cloudflare Web Analytics**: Cloudflare dashboard → Workers & Pages → `game-dna` → Metrics → Web Analytics →
+  Enable. Pages injects its beacon at the edge from the next deploy after enabling. Page views, referrers,
+  countries, device types, Core Web Vitals; no cookies, no personal data.
+- **GoatCounter** (events and UTM campaigns): `tools/showcase/analytics.json` names the count endpoint
+  (`https://gamedna.goatcounter.com/count`) and the hosts it loads on (`game-dna.pages.dev` only, so local and
+  preview builds send nothing). Every public page loads `gc.zgo.at/count.js` (page views; `utm_source` /
+  `utm_campaign` become GoatCounter campaigns) and `tools/showcase/showcase.js` sends four events, each as an event
+  name plus an element or kit id only: `copy-prompt:<id>`, `copy-kit-prompt:<kit>`, `copy-basket-prompt:<ids>`,
+  `add-to-basket:<id>`, `download-zip:<ids>`, `download-module:<id>`. Set `goatcounter` to `""` to turn it off.
+- The daily promotion review reads both through read-only keys kept in `~/.config/game-dna-promo/` (never in the
+  repo). The About page's Privacy paragraph says the same in plain words. The basket keeps its state in the
+  visitor's own browser (localStorage and the URL).

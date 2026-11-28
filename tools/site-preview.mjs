@@ -70,6 +70,9 @@ const GH_MARK = '<svg class="sc-gh" viewBox="0 0 16 16" width="16" height="16" a
 const LICENSE_URL = 'https://opensource.org/licenses/MIT';
 const AUTHOR = { '@type': 'Person', name: 'David Chen', url: 'https://github.com/lucemia' };
 const HOME_TITLE = 'Game DNA – Drop-in game elements for AI coding agents';
+// cookieless visit and event counts (GoatCounter), loaded only on the public host; see tools/showcase/analytics.json
+const ANALYTICS = JSON.parse(fs.readFileSync(new URL('./showcase/analytics.json', import.meta.url), 'utf8'));
+const ANALYTICS_TAG = ANALYTICS.goatcounter ? `<script>(function(){if(${JSON.stringify(ANALYTICS.hosts)}.indexOf(location.hostname)<0)return;var s=document.createElement('script');s.async=true;s.setAttribute('data-goatcounter',${JSON.stringify(ANALYTICS.goatcounter)});s.src='https://gc.zgo.at/count.js';document.head.appendChild(s);})();</script>\n` : '';
 const HOME_DESC = 'Add game feel to your browser game: every element is a playable demo, a small JS module and a prompt your AI coding agent follows to wire it into your code.';
 const BLOG_PUBLISHED = '2026-11-24', BLOG_MODIFIED = '2026-11-24';   // the post went live with the site on 2026-11-24
 const ldJson = o => JSON.stringify(o).replace(/</g, '\\u003c');
@@ -193,7 +196,7 @@ export function buildPreview(X) {
 ${internal ? '<meta name="robots" content="noindex">\n' : `<link rel="canonical" href="${esc(CANON_BASE + rel)}">\n` + shareMeta(rel, title, desc, og, ogType)}${!internal && jsonld ? `<script type="application/ld+json">${ldJson({ '@context': 'https://schema.org', '@graph': [].concat(jsonld) })}</script>\n` : ''}<link rel="stylesheet" href="${P}assets/fonts.css">
 <link rel="stylesheet" href="${P}../assets/families.css">
 <link rel="stylesheet" href="${P}assets/showcase.css">
-${head}</head>
+${internal ? '' : ANALYTICS_TAG}${head}</head>
 <body>
 <a class="sc-skip" href="#main">Skip to content</a>
 <header class="sc-top"><div class="sc-wrap">
@@ -292,7 +295,7 @@ ${inner}
     const featured = FEATURED.filter(id => BY[id]);
     const rowA = featured.filter((_, i) => i % 2 === 0), rowB = featured.filter((_, i) => i % 2 === 1);
     const cats = Object.entries(SFAM_NAME).filter(([k]) => E.some(e => e.sfam === k)).map(([k, name]) => [k, { name }]);
-    const chips = `<div class="sc-chips" role="toolbar" aria-label="Filter elements"><button type="button" class="sc-chip" data-filter="feat" aria-pressed="true">Featured</button><button type="button" class="sc-chip" data-filter="all" aria-pressed="false">All ${E.length}</button>` +
+    const chips = `<div class="sc-chips" role="toolbar" aria-label="Filter elements"><button type="button" class="sc-chip" data-filter="feat" aria-pressed="true">Featured</button><button type="button" class="sc-chip" data-filter="all" aria-pressed="false">All</button>` +
       cats.map(([k, f]) => `<button type="button" class="sc-chip" data-filter="${k}" data-fam="${k}" aria-pressed="false"><i></i>${esc(f.name)}</button>`).join('') + '</div>';
     // what you get: the chosen element as the worked example
     const cp = plain(defaultPrompt[chosen.id] || '');
@@ -336,8 +339,8 @@ pops.spawn(<span class="s">'imp'</span>, <span class="n">47</span>, <span class=
 <div class="sc-hero-copy">
 <p class="sc-eyebrow">For games you build with an AI coding agent</p>
 <h1>Drop game feel into <span class="sc-grad">your own game.</span></h1>
-<p class="sc-lede">Game DNA is a library of ${E.length} playable game elements: hit effects, battle systems, lights, menus, 3D scenes. Play one, copy its prompt, and your coding agent adds it to your browser game.</p>
-<div class="sc-btns"><a class="sc-btn sc-btn-hot lg" href="${elHref(chosen.id, P)}">${ICON.play}Play a demo</a><a class="sc-btn lg ghost" href="#gallery">See all ${E.length} elements ${ARROW}</a><a class="sc-btn lg ghost" href="${REPO_URL}" rel="noopener">${GH_MARK}View on GitHub</a></div>
+<p class="sc-lede">Game DNA is a library of 100+ playable game elements: hit effects, battle systems, lights, menus, 3D scenes. Play one, copy its prompt, and your coding agent adds it to your browser game.</p>
+<div class="sc-btns"><a class="sc-btn sc-btn-hot lg" href="${elHref(chosen.id, P)}">${ICON.play}Play a demo</a><a class="sc-btn lg ghost" href="#gallery">See all elements ${ARROW}</a><a class="sc-btn lg ghost" href="${REPO_URL}" rel="noopener">${GH_MARK}View on GitHub</a></div>
 </div>
 <div class="sc-hero-stage">
 <div class="sc-screen"><div class="sc-loop on" style="background-image:url('${P}../assets/hero/${h0.id}-poster.webp')"></div><div class="sc-loop"></div><div class="sc-scan" aria-hidden="true"></div></div>
@@ -539,6 +542,7 @@ ${pairs ? `<h3 class="sc-h3">Also pairs well with</h3><div class="sc-grid sc-gri
 <article><h2>How we test the prompts</h2><p>Before an element goes up, a fresh coding agent gets only a game it has never seen, the module and the prompt, and an independent reviewer plays the result. Each element's demo is also reviewed for how it looks and feels.</p></article>
 <article id="credits"><h2>Art</h2><p>All art is original. Most of it is drawn in code. Some demo art (painted scenes, portraits, UI frames, card art, some HD sprites and backgrounds) was made with an AI image generator; the game code, the pixel art drawn in code and the prompts are our own. Elements whose demo shows such pictures are marked ✦ AI art. Each picture was made once, checked against resemblance to existing games, characters or brands, and its prompt and generation record are kept with the project. The modules themselves never call a generator.</p></article>
 <article><h2>Licences</h2><ul><li>Code (modules, demos, starter games, this site): MIT, see the LICENSE file that ships with the code.</li><li>Style descriptions follow the structure of <a href="https://github.com/lemomo-ai/lemo-opuscar" rel="noopener"><i>lemo-opuscar</i></a> by lemomo-ai, adapted (rewritten for game art styles) under <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener">CC BY 4.0</a>.</li><li>3D elements use three.js 0.149.0 (MIT), bundled with them.</li><li>Fonts: Inter and JetBrains Mono (SIL Open Font License 1.1), served from this site; no font requests go to third parties.</li></ul></article>
+<article id="privacy"><h2>Privacy</h2><p>No cookies, no sign-up, no ads. To learn which elements are useful, the site counts page views (Cloudflare Web Analytics and GoatCounter, both cookieless) and three actions: copying a prompt, downloading a zip or module, and adding an element to the basket. Each action is sent as its name and the element or kit id only; nothing about you is stored. The basket lives in your own browser.</p></article>
 <article><h2>Not affiliated</h2><p>Game DNA is not affiliated with, endorsed by or connected to any game company. Element names are plain descriptions of common game mechanics.</p></article>
 </div>
 <div class="sc-cta rv"><div><h3>Try one</h3><p class="sc-muted">Every element has a demo you can play right now.</p></div><a class="sc-btn sc-btn-hot lg" href="${P}#gallery">${ICON.play}Browse the elements</a></div>
@@ -565,7 +569,7 @@ ${pairs ? `<h3 class="sc-h3">Also pairs well with</h3><div class="sc-grid sc-gri
 <article><h2>1. Visual review</h2><p>Each demo is reviewed by a separate agent against commercial indie games, character by character and at 2x zoom. It passes at <b>7.5 out of 10 with no major issue</b> (parts not joined, placeholder art, debug leftovers, unreadable text on phones). Most elements needed several rounds.</p></article>
 <article><h2>2. Runs on unseen games</h2><p>A fresh coding agent gets <b>only a game it has never seen, the module and the prompt</b>: no browser, no access to this project. A different agent then plays the result. A run passes when the element works, nothing in the game broke, and the game still plays to the end. When a run fails we fix the prompt or the module and run again; the old result stays below.</p></article>
 </div>
-<p class="sc-sub" style="margin-top:28px">${E.length} elements · ${passed} of ${reviewed} reviewed demos at or above the bar · <b>${tp}/${tn}</b> runs on unseen games passed, all versions counted. Open a row for each round and what went wrong.</p>
+<p class="sc-sub" style="margin-top:28px">100+ elements · ${passed} of ${reviewed} reviewed demos at or above the bar · <b>${tp}/${tn}</b> runs on unseen games passed, all versions counted. Open a row for each round and what went wrong.</p>
 <div class="sc-tbl"><table><thead><tr><th>Element</th><th>Visual review</th><th>Runs passed</th><th>Rounds and failures</th></tr></thead><tbody>${rows}</tbody></table></div>
 </div></section>`;
     write('tests/index.html', shell({ rel: 'tests/', title: 'How we test · Game DNA', desc: 'How every Game DNA element is tested: visual review scores and runs by a fresh coding agent on games it never saw, failures included.', body }));
@@ -591,7 +595,7 @@ ${pairs ? `<h3 class="sc-h3">Also pairs well with</h3><div class="sc-grid sc-gri
 </div>
 <h2 style="margin-top:40px">Good first picks</h2>
 <div class="sc-grid sc-grid-sm">${picks}</div>
-<p class="sc-sub"><a href="${P}#gallery">All ${E.length} elements</a> · <a href="${P}tests/">How we test them</a></p>
+<p class="sc-sub"><a href="${P}#gallery">All elements</a> · <a href="${P}tests/">How we test them</a></p>
 </div></section>`;
     write('start/index.html', shell({ rel: 'start/', title: 'Start in 5 minutes · Game DNA', desc: 'Pick a Game DNA element, copy its prompt, paste it to your coding agent with your game, then check the result.', body }));
   }
@@ -600,7 +604,7 @@ ${pairs ? `<h3 class="sc-h3">Also pairs well with</h3><div class="sc-grid sc-gri
   // blog: the method post (source tools/showcase/blog/<slug>.md; links written as @/<path> resolve to this showcase)
   {
     const slug = 'how-game-dna-works', rel = `blog/${slug}/`, P = '../../';
-    const title = "I let AI agents add 103 game features to games they'd never seen. A lot of the bugs were mine.";
+    const title = "I let AI agents add 100+ game features to games they'd never seen. A lot of the bugs were mine.";
     const desc = 'How Game DNA elements are built and tested: cold tests by a fresh agent on unseen games, a judge that plays, a strict visual critic, and four failures that changed the method.';
     const src = fs.readFileSync(path.join(ROOT, 'tools', 'showcase', 'blog', slug + '.md'), 'utf8').replace(/\(@\//g, '(' + P);
     const missing = [...src.matchAll(/\]\((\.\.\/\.\.\/[^)]*)\)/g)].map(m => m[1].slice(P.length)).filter(u => !/^(tests|start|basket|styles|about)\/$/.test(u) && !(u.startsWith('dna/') && BY[u.split('/')[1]]));
@@ -609,7 +613,7 @@ ${pairs ? `<h3 class="sc-h3">Also pairs well with</h3><div class="sc-grid sc-gri
 <p class="sc-eyebrow"><a href="${P}#how">How it works</a> · Method</p>
 <h1 class="sc-post-h1">${esc(title)}</h1>
 <p class="sc-post-meta">David Chen · <time datetime="${BLOG_PUBLISHED}">${new Date(BLOG_PUBLISHED + 'T12:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}</time> · about 6 minutes to read</p>
-${(() => { const h = 'kart-racer-3d', L = HERO_LOOPS[h]; return `<figure class="sc-post-hero"><a href="${P}dna/${h}/" aria-label="Play the ${esc(BY[h].name)} demo" style="background-image:url('${P}../assets/hero/${h}-poster.webp')">${L ? `<span class="sc-post-loop" style="background-image:url('${P}../assets/hero/${h}.webp');background-size:${L.n * 100}% 100%;animation-duration:${L.n * (L.step || 120)}ms;animation-timing-function:steps(${L.n}, jump-none)"></span>` : ''}</a><figcaption>${esc(BY[h].name)}, one of the 103 elements, running in its demo. <a href="${P}dna/${h}/">Play it</a>.</figcaption></figure>`; })()}
+${(() => { const h = 'kart-racer-3d', L = HERO_LOOPS[h]; return `<figure class="sc-post-hero"><a href="${P}dna/${h}/" aria-label="Play the ${esc(BY[h].name)} demo" style="background-image:url('${P}../assets/hero/${h}-poster.webp')">${L ? `<span class="sc-post-loop" style="background-image:url('${P}../assets/hero/${h}.webp');background-size:${L.n * 100}% 100%;animation-duration:${L.n * (L.step || 120)}ms;animation-timing-function:steps(${L.n}, jump-none)"></span>` : ''}</a><figcaption>${esc(BY[h].name)}, one of the 100+ elements, running in its demo. <a href="${P}dna/${h}/">Play it</a>.</figcaption></figure>`; })()}
 <div class="sc-md sc-post-body">${md2html(src, '')}</div>
 <div class="sc-cta"><div><h3>Try it on your game</h3><p class="sc-muted">Pick one element, copy its prompt, hand it to your agent.</p></div><a class="sc-btn sc-btn-hot lg" href="${P}start/">${ICON.play}Start in 5 minutes</a></div>
 </div></article>`;

@@ -1,0 +1,5 @@
+{
+  "_doc": "Cookieless visit and event counts (GoatCounter). Loaded only on the hosts listed, so local and preview builds send nothing. Events carry only an event name and an element/kit id. Set goatcounter to \"\" to turn it off.",
+  "goatcounter": "https://gamedna.goatcounter.com/count",
+  "hosts": ["game-dna.pages.dev"]
+}
